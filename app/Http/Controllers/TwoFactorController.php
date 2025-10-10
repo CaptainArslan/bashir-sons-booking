@@ -85,7 +85,6 @@ class TwoFactorController extends Controller
 
     public function challenge()
     {
-        dd(session('2fa:user_id'));
         $user = User::find(session('2fa:user_id'));
 
         if (! $user) {
@@ -109,7 +108,7 @@ class TwoFactorController extends Controller
         if ($google2fa->verifyKey($secret, $request->code)) {
             session()->forget('2fa:user_id');
             Auth::login($user);
-            return redirect()->intended('/');
+            return redirect()->intended(route('dashboard', absolute: false));
         }
 
         return back()->with('error', 'Invalid authentication code.');
