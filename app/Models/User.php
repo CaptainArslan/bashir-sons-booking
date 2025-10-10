@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Crypt;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,5 +47,37 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    // ============================= 
+    // Two Factor Authentication 
+    // =============================
+    public function hasTwoFactorEnabled(): bool
+    {
+        return ! is_null($this->two_factor_secret);
+    }
+
+
+
+    // =============================
+    // Two Factor Authentication Helper Methods
+    // =============================
+    public function enableTwoFactorAuthentication(string $secret, array $recoveryCodes): void
+    {
+        $this->update([
+            'two_factor_secret' => Crypt::encryptString($secret),
+            'two_factor_recovery_codes' => Crypt::encryptString(json_encode($recoveryCodes)),
+            'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    public function disableTwoFactorAuthentication(): void
+    {
+        $this->update([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
     }
 }
