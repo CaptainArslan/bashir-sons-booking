@@ -45,9 +45,4 @@
     </form>
 
 
-    <div class="mt-4">
-        <x-secondary-button type="button" onclick="window.location='{{ route('2fa.show') }}'">
-            Manage Two-Factor Authentication
-        </x-secondary-button>
-    </div>
 </section>
