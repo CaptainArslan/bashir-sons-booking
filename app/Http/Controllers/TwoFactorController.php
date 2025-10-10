@@ -19,34 +19,42 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user->two_factor_secret) {
-            $google2fa = new Google2FA();
-
-            // Generate new secret key
-            $secret = $google2fa->generateSecretKey();
-
-            // Create Google Authenticator QR code URL
-            $qrCodeUrl = $google2fa->getQRCodeUrl(
-                config('app.name'),
-                $user->email,
-                $secret
-            );
-
-            // Generate inline SVG QR code
-            $writer = new Writer(
-                new ImageRenderer(
-                    new RendererStyle(200),
-                    new SvgImageBackEnd()
-                )
-            );
-
-            $QR_Image = $writer->writeString($qrCodeUrl);
-
-            return view('profile.2fa', compact('secret', 'QR_Image'));
+        // If 2FA already enabled
+        if ($user->two_factor_secret) {
+            return view('profile.2fa', ['enabled' => true]);
         }
 
-        return view('profile.2fa', ['enabled' => true]);
+        // Try to use a pending secret from session
+        $secret = session('2fa_secret');
+
+        if (! $secret) {
+            $google2fa = new Google2FA();
+            $secret = $google2fa->generateSecretKey();
+
+            // Store temporary secret in session until user verifies
+            session(['2fa_secret' => $secret]);
+        }
+
+        // Generate QR code
+        $google2fa = new Google2FA();
+        $qrCodeUrl = $google2fa->getQRCodeUrl(
+            config('app.name'),
+            $user->email,
+            $secret
+        );
+
+        $writer = new \BaconQrCode\Writer(
+            new \BaconQrCode\Renderer\ImageRenderer(
+                new \BaconQrCode\Renderer\RendererStyle\RendererStyle(200),
+                new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+            )
+        );
+
+        $QR_Image = $writer->writeString($qrCodeUrl);
+
+        return view('profile.2fa', compact('secret', 'QR_Image'));
     }
+
 
     public function enable(Request $request)
     {
@@ -54,7 +62,7 @@ class TwoFactorController extends Controller
         $valid = $google2fa->verifyKey($request->secret, $request->code);
 
         if (! $valid) {
-            return back()->with('error', 'Invalid 2FA code');
+            return back()->with('error', 'Invalid 2FA code -> ' . var_dump($valid));
         }
 
         $user = Auth::user();
@@ -77,6 +85,7 @@ class TwoFactorController extends Controller
 
     public function challenge()
     {
+        dd(session('2fa:user_id'));
         $user = User::find(session('2fa:user_id'));
 
         if (! $user) {
