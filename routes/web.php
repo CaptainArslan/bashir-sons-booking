@@ -12,14 +12,9 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('guest')->group(function () {
-    Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])
-        ->middleware('2fa.pending')
-        ->name('2fa.challenge');
-
-    Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])
-        ->middleware('2fa.pending')
-        ->name('2fa.verify');
+Route::middleware(['guest', '2fa.pending'])->group(function () {
+    Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('2fa.challenge');
+    Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify');
 });
 
 Route::middleware('auth')->group(function () {
@@ -33,3 +28,17 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
+
+
+
+// Route::middleware(['auth', 'role:admin'])->group(function () {
+//     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+// });
+
+// Route::middleware(['auth', 'role:employee'])->group(function () {
+//     Route::get('/employee/dashboard', [EmployeeController::class, 'index'])->name('employee.dashboard');
+// });
+
+// Route::middleware(['auth', 'role:customer'])->group(function () {
+//     Route::get('/customer/dashboard', [CustomerController::class, 'index'])->name('customer.dashboard');
+// });

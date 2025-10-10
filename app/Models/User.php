@@ -15,6 +15,13 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
     use HasRoles;
 
+    const DEFAULT_ROLES = [
+        'superadmin',
+        'employee',
+        'customer',
+        'admin'
+    ];
+    
     /**
      * The attributes that are mass assignable.
      *

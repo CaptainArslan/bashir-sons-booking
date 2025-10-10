@@ -24,14 +24,35 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Step 1: Authenticate user
         $request->authenticate();
 
+        // Step 2: Regenerate session to prevent fixation
         $request->session()->regenerate();
 
-        if ($request->user()->hasTwoFactorEnabled()) {
+        // Step 3: Check if the user has 2FA enabled
+        $user = Auth::user();
+
+        if ($user && $user->hasTwoFactorEnabled()) {
+            // Logout temporarily until they pass 2FA challenge
+            Auth::logout();
+
+            // Store user ID in session for later 2FA verification
+            session(['2fa:user_id' => $user->id]);
+
             return redirect()->route('2fa.challenge');
         }
 
+        // Step 4: Redirect to correct dashboard based on role
+        // if ($user->hasRole('admin') || $user->hasRole('employee')) {
+        //     return redirect()->intended(route('admin.dashboard'));
+        // }
+
+        // if ($user->hasRole('customer')) {
+        //     return redirect()->intended(route('customer.dashboard'));
+        // }
+
+        // Default fallback
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

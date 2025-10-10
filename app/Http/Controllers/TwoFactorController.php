@@ -77,13 +77,13 @@ class TwoFactorController extends Controller
 
     public function challenge()
     {
-        $user = \App\Models\User::find(session('2fa:user_id'));
+        $user = User::find(session('2fa:user_id'));
 
         if (! $user) {
             return redirect()->route('login')->withErrors(['login' => 'Session expired.']);
         }
 
-        return view('auth.twofactor-challenge', compact('user'));
+        return view('profile.twofactor-challenge', compact('user'));
     }
 
     public function verifyChallenge(Request $request)
@@ -94,8 +94,8 @@ class TwoFactorController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'Session expired.']);
         }
 
-        $google2fa = new \PragmaRX\Google2FA\Google2FA();
-        $secret = decrypt($user->two_factor_secret);
+        $google2fa = new Google2FA();
+        $secret = Crypt::decryptString($user->two_factor_secret);
 
         if ($google2fa->verifyKey($secret, $request->code)) {
             session()->forget('2fa:user_id');
