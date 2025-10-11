@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Facility;
+use App\Models\Bus;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+
+class BusFacility extends Pivot
+{
+    protected $fillable = [
+        'bus_id',
+        'facility_id',
+    ];
+
+    protected $casts = [
+        'bus_id' => 'integer',
+        'facility_id' => 'integer',
+    ];
+
+    public function bus()
+    {
+        return $this->belongsTo(Bus::class);
+    }
+
+    public function facility()
+    {
+        return $this->belongsTo(Facility::class);
+    }
+}

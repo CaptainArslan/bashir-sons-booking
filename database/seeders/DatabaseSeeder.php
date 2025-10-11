@@ -9,6 +9,7 @@ use Database\Seeders\UserSeeder;
 use Database\Seeders\FacilitySeeder;
 use Database\Seeders\BusLayoutSeeder;
 use Database\Seeders\BusTypeSeeder;
+use Database\Seeders\BusSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,6 +26,7 @@ class DatabaseSeeder extends Seeder
             FacilitySeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
+            BusSeeder::class,
         ]);
     }
 }

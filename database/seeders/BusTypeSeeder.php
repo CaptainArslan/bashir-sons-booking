@@ -65,6 +65,26 @@ class BusTypeSeeder extends Seeder
                 'description' => 'Specially designed bus for transporting students with safety features.',
                 'status' => BusTypeEnum::ACTIVE->value,
             ],
+            [
+                'name' => 'Executive Bus',
+                'description' => 'Premium executive bus for VIP transportation with maximum comfort and privacy.',
+                'status' => BusTypeEnum::ACTIVE->value,
+            ],
+            [
+                'name' => 'High Capacity Bus',
+                'description' => 'High-capacity bus designed for maximum passenger load on busy routes.',
+                'status' => BusTypeEnum::ACTIVE->value,
+            ],
+            [
+                'name' => 'Express Bus',
+                'description' => 'Express bus for comfortable city and intercity travel.',
+                'status' => BusTypeEnum::ACTIVE->value,
+            ],
+            [
+                'name' => 'Luxury Bus',
+                'description' => 'Premium luxury bus for long-distance travel with entertainment system and reclining seats.',
+                'status' => BusTypeEnum::ACTIVE->value,
+            ]
         ];
 
         foreach ($busTypes as $busType) {
