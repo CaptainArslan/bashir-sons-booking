@@ -28,6 +28,6 @@ class Facility extends Model
     // =============================
     public function buses()
     {
-        return $this->belongsToMany(Bus::class, 'bus_facilities');
+        return $this->belongsToMany(Bus::class, 'bus_facility');
     }
 }
