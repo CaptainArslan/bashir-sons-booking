@@ -96,4 +96,12 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => null,
         ]);
     }
+
+    // =============================
+    // Relationships
+    // =============================
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
 }
