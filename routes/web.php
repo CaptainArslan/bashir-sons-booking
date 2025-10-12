@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -25,20 +27,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/two-factor', [TwoFactorController::class, 'show'])->name('2fa.show');
     Route::post('/user/two-factor/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/user/two-factor/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
+
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    });
+
+    Route::middleware(['role:customer'])->group(function () {
+        Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
+    });
 });
 
 require __DIR__ . '/auth.php';
-
-
-
-// Route::middleware(['auth', 'role:admin'])->group(function () {
-//     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-// });
-
-// Route::middleware(['auth', 'role:employee'])->group(function () {
-//     Route::get('/employee/dashboard', [EmployeeController::class, 'index'])->name('employee.dashboard');
-// });
-
-// Route::middleware(['auth', 'role:customer'])->group(function () {
-//     Route::get('/customer/dashboard', [CustomerController::class, 'index'])->name('customer.dashboard');
-// });
