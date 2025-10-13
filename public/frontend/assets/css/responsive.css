@@ -1,0 +1,47 @@
+
+    @media only screen and (max-width: 900px) {
+        section.features>div{
+            display: block !important;
+        }
+        .card-custom{
+            margin: 10px auto;
+        }
+    }
+
+     @media only screen and (max-width: 768px) {
+        .hero-text {
+    margin-top: -50px;
+}
+.hero-text h1{
+    font-size: 24px;
+}
+.hero-text p{
+    font-size: 16px;
+    line-height: 130%;
+}
+section.hero{
+    background-size: 100%;
+    min-height: 500px;
+}
+.search-card-box{
+    position: relative;
+    bottom: -110px;
+    width: auto;
+    margin-left: auto;
+}
+.section-title, .whyuse h2, .booking h2, .testimonial h2, .faq-heading{
+    font-size: 32px;
+}
+.uan-number{
+    display: inline-block;
+    margin: 5px 0;
+}
+}
+ @media only screen and (max-width: 576px) {
+section.hero{
+    background-image: url('./../img/website\ banner\ copy.png');
+}
+.hero-text{
+    display: none;
+}
+ }
