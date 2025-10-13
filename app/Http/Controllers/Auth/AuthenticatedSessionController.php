@@ -45,11 +45,11 @@ class AuthenticatedSessionController extends Controller
 
         // Step 4: Redirect to correct dashboard based on role
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
-            return redirect()->intended(route('admin.dashboard'));
+            return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
         if ($user->hasRole('customer')) {
-            return redirect()->intended(route('customer.dashboard'));
+            return redirect()->intended(route('customer.dashboard', absolute: false));
         }
 
         // Default fallback

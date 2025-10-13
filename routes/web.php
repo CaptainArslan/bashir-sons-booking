@@ -2,17 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
 Route::get('/', function () {
+    // return redirect()->intended(route('dashboard', absolute: false));
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['guest', '2fa.pending'])->group(function () {
     Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('2fa.challenge');
@@ -28,12 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/user/two-factor/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/user/two-factor/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
 
-    Route::middleware(['role:super_admin'])->group(function () {
+    Route::middleware(['role:super_admin|admin'])->group(function () {
         Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    });
-
-    Route::middleware(['role:customer'])->group(function () {
-        Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
     });
 });
 
