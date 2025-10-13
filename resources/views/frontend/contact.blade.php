@@ -3,76 +3,97 @@
 @section('title', 'Contact Us')
 
 @section('content')
-<div class="container py-5">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="text-center mb-5">Contact Us</h1>
+
+    <section class="contactus">
+        <div class="container">
             <div class="row">
-                <div class="col-lg-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="card-title">Get in Touch</h3>
-                            <div class="contact-info">
-                                <div class="mb-3">
-                                    <i class="bi bi-telephone-fill text-primary me-2"></i>
-                                    <strong>UAN:</strong> 041-111-737-737
-                                </div>
-                                <div class="mb-3">
-                                    <i class="bi bi-envelope-fill text-primary me-2"></i>
-                                    <strong>Email:</strong> info@bashirsonsgroup.com
-                                </div>
-                                <div class="mb-3">
-                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                                    <strong>Head Office:</strong><br>
-                                    Bashir Sons Office<br>
-                                    P-68, Pakimari,<br>
-                                    Behind General Bus Stand,<br>
-                                    Faisalabad - Pakistan.
-                                </div>
-                                <div class="mb-3">
-                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                                    <strong>Sub Office:</strong><br>
-                                    Bashir Sons Office<br>
-                                    Nadir Bus Terminal,<br>
-                                    Jinnah Colony,<br>
-                                    Faisalabad - Pakistan.
-                                </div>
+                <div class="box-contactus">
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                        <div class="d-flex">
+                            <div class="icon">
+                                <span class="circle">
+                                    <img src="{{ asset('frontend/assets/img/Icon (1).svg') }}" alt="">
+                                </span>
+                            </div>
+                            <div class="text">
+                                <small>Phone:</small>
+                                <h4>041 111 737 737</h4>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="card-title">Send us a Message</h3>
-                            <form>
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Name</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="phone" class="form-label">Phone</label>
-                                    <input type="tel" class="form-control" id="phone">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="subject" class="form-label">Subject</label>
-                                    <input type="text" class="form-control" id="subject" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message" class="form-label">Message</label>
-                                    <textarea class="form-control" id="message" rows="4" required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Send Message</button>
-                            </form>
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                        <div class="d-flex">
+                            <div class="icon">
+                                <span class="circle">
+                                    <img src="{{ asset('frontend/assets/img/Icon (1).svg') }}" alt="">
+                                </span>
+                            </div>
+                            <div class="text">
+                                <small>E-mail:</small>
+                                <h4>info@bashirsons.com</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                        <div class="d-flex">
+                            <div class="icon">
+                                <span class="circle">
+                                    <img src="{{ asset('frontend/assets/img/Icon (1).svg') }}" alt="">
+                                </span>
+                            </div>
+                            <div class="text">
+                                <small>Address:</small>
+                                <h4>Nadir Bus Terminal,
+                                    Jinnah Colony,
+                                    Faisalabad</h4>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
+
+
+    <section id="form-box-contactus">
+        <div class="container">
+            <div class="text-center">
+                <span class="left-border-button">Contact us</span>
+            </div>
+            <div class="contact-bg">
+                <h1 class="text-center">Get in Touch</h1>
+                <form action="">
+                    <div class="row mt-5">
+                        <div class="col-lg-6">
+                            <input type="text" class="form-control" placeholder="Full Name:">
+                        </div>
+                        <div class="col-lg-6">
+                            <input type="email" class="form-control" placeholder="Email:">
+                        </div>
+                        <div class="col-lg-6">
+                            <input type="text" class="form-control" placeholder="Phone:">
+                        </div>
+                        <div class="col-lg-6">
+                            <select name="" id="" class="form-select">
+                                <option value="" selected disabled>Choose services</option>
+                                <option value="">Option 2</option>
+                                <option value="">Option 3</option>
+                                <option value="">Option 4</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-12">
+                            <textarea name="" placeholder="Write messag" class="form-control" rows="4" id=""></textarea>
+                        </div>
+                        <div class="col-lg-12 text-center">
+                            <button class="sub-button">Submit Now <i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="map-fixed">
+
+        </div>
+    </section>
+
 @endsection
