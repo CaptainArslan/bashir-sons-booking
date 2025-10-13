@@ -19,23 +19,26 @@ class Rolecontroller extends Controller
     {
         if ($request->ajax()) {
             $roles = Role::query()
-                ->withCount('permissions')
-                ->with('permissions:id,name')
+                ->with(['permissions:id,name'])
                 ->select('id', 'name', 'created_at');
-            
+
             return DataTables::eloquent($roles)
+                ->addColumn('formatted_name', function ($role) {
+                    return '<span class="fw-bold text-primary">' . e(ucwords(str_replace('_', ' ', $role->name))) . '</span>';
+                })
                 ->addColumn('permissions_list', function ($role) {
                     if ($role->permissions->isEmpty()) {
                         return '<span class="badge bg-secondary">No permissions</span>';
                     }
-                    
-                    $permissionBadges = $role->permissions->map(function ($permission) {
-                        return '<span class="badge bg-info me-1 mb-1">' . 
-                               e($permission->name) . 
-                               '</span>';
+
+                    return $role->permissions->map(function ($p) {
+                        return '<span class="badge bg-info me-1 mb-1">' . e(ucfirst($p->name)) . '</span>';
                     })->implode('');
-                    
-                    return $permissionBadges;
+                })
+                ->addColumn('permissions_count', function ($role) {
+                    $count = $role->permissions->count();
+                    $badgeClass = $count > 0 ? 'bg-success' : 'bg-warning';
+                    return '<span class="badge ' . $badgeClass . '">' . $count . ' permission' . ($count !== 1 ? 's' : '') . '</span>';
                 })
                 ->addColumn('actions', function ($role) {
                     return '
@@ -51,16 +54,11 @@ class Rolecontroller extends Controller
                                     title="Delete Role">
                                 <i class="bx bx-trash"></i>
                             </button>
-                        </div>
-                    ';
+                        </div>';
                 })
-                ->editColumn('created_at', function ($role) {
-                    return $role->created_at->format('d M Y');
-                })
-                ->editColumn('permissions_count', function ($role) {
-                    return '<span class="badge bg-primary">' . $role->permissions_count . '</span>';
-                })
-                ->rawColumns(['permissions_list', 'actions', 'permissions_count'])
+                ->editColumn('created_at', fn($r) => $r->created_at->format('d M Y'))
+                ->escapeColumns([]) // <– ensures HTML isn’t escaped
+                ->rawColumns(['formatted_name', 'permissions_list', 'actions', 'permissions_count'])
                 ->make(true);
         }
     }
@@ -89,7 +87,7 @@ class Rolecontroller extends Controller
     {
         try {
             $role = Role::findOrFail($id);
-            
+
             // Check if role has users assigned
             if ($role->users()->count() > 0) {
                 return response()->json([
@@ -97,9 +95,9 @@ class Rolecontroller extends Controller
                     'message' => 'Cannot delete role. It has users assigned to it.'
                 ], 400);
             }
-            
+
             $role->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Role deleted successfully.'

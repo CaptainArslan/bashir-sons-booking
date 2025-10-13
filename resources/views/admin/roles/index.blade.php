@@ -55,53 +55,49 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.roles.data') }}",
-                responsive: true,
+                // responsive: true,
                 pageLength: 25,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                order: [[0, 'desc']],
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
                 columns: [
                     {
                         data: 'id',
                         name: 'id',
-                        width: '5%'
                     },
                     {
-                        data: 'name',
+                        data: 'formatted_name',
                         name: 'name',
-                        width: '20%'
                     },
                     {
                         data: 'permissions_count',
                         name: 'permissions_count',
                         searchable: false,
                         orderable: true,
-                        width: '10%'
                     },
                     {
                         data: 'permissions_list',
                         name: 'permissions_list',
                         searchable: false,
                         orderable: false,
-                        width: '35%'
                     },
                     {
                         data: 'created_at',
                         name: 'created_at',
-                        width: '15%'
                     },
                     {
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
-                        width: '15%'
                     }
                 ],
-                language: {
-                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
-                    emptyTable: "No roles found",
-                    zeroRecords: "No matching roles found"
-                }
+                // language: {
+                //     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                //     emptyTable: "No roles found",
+                //     zeroRecords: "No matching roles found"
+                // }
             });
         });
 

@@ -5,24 +5,56 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $permissions = User::DEFAULT_PERMISSIONS;
-        foreach ($permissions as $permissionName) {
-            Permission::firstOrCreate(['name' => $permissionName]);
-        }
-        $roles = User::DEFAULT_ROLES;
-
+        $roles = [
+            'super_admin',
+            'admin',
+            'customer',
+            'employee',
+        ];
+        // Create roles
         foreach ($roles as $roleName) {
             Role::firstOrCreate(['name' => $roleName]);
         }
+
+        $permissions = [
+            'access admin panel',
+            'manage users',
+            'manage roles',
+            'manage permissions',
+            'view reports',
+            'manage enquiries',
+        ];
+
+        // Create permissions
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
+
+        // Assign all permissions to super admin
+        $superAdminRole = Role::where('name', 'super_admin')->first();
+        $allPermissions = Permission::all();
+        $superAdminRole->syncPermissions($allPermissions);
+
+        // Assign limited permissions to admin
+        $adminRole = Role::where('name', 'admin')->first();
+        $adminPermissions = Permission::whereIn('name', [
+            'access admin panel',
+            'manage users',
+            'view reports',
+            'manage enquiries',
+        ])->get();
+        $adminRole->syncPermissions($adminPermissions);
+
+        // Customer and Employee have minimal or no permissions
+        $customerRole = Role::where('name', 'customer')->first();
+        $employeeRole = Role::where('name', 'employee')->first();
+
+        $customerRole->syncPermissions([]);
+        $employeeRole->syncPermissions([]);
     }
 }
