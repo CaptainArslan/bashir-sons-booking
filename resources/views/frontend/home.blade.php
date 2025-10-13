@@ -107,7 +107,7 @@
             <div class="col-lg-12">
                 <!-- Search Card -->
                 <div class="search-card-box">
-                    <div class="card p-4 shadow-lg border-0 rounded-4">
+                    <div class="card p-4 shadow-md border-0 rounded-4">
                         <form>
                             <div class="row g-3 align-items-end justify-content-center">
                                 <!-- From -->
