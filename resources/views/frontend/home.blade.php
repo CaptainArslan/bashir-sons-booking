@@ -183,6 +183,339 @@
 
         </div>
     </section>
+
+    <!-- Features -->
+    <section class="features py-5 mt-5">
+        <div class="container d-flex justify-content-center gap-3">
+            <div class="card-custom">
+                <div class="icon-wrap mx-auto mb-2">
+                    <img src="{{ asset('frontend/assets/img/Frame 1369.svg') }}" alt="">
+                </div>
+                <div>
+                    <h6>Download Our App</h6>
+                    <small>In iOS & Android mobile app</small>
+                </div>
+            </div>
+            <div class="card-custom">
+                <div class="icon-wrap mx-auto mb-2">
+                    <img src="{{ asset('frontend/assets/img/Ringer Volume.svg') }}" alt="">
+                </div>
+                <div>
+                    <h6>Help Center</h6>
+                    <small>Contact our live support team</small>
+                </div>
+            </div>
+            <div class="card-custom">
+                <div class="icon-wrap mx-auto mb-2">
+                    <img src="{{ asset('frontend/assets/img/Delivery Time.svg') }}" alt="">
+                </div>
+                <div>
+                    <h6>Advance Booking</h6>
+                    <small>Reserve booking days in advance</small>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Solutions -->
+    <section id="services" class="py-5">
+        <div class="container text-center">
+            <h2 class="section-title">Comprehensive Solutions <br> for All Your Needs</h2>
+            <div class="row mt-4 g-4">
+                <div class="col-md-3">
+                    <div class="h-100">
+                        <img src="{{ asset('frontend/assets/img/image.png') }}" class="card-img-top" alt="Cargo">
+                        <div class="card-body">
+                            <h6>Cargo Services</h6>
+                            <a href="#" class="btn btn-sm btn-search">Need more info?</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="h-100">
+                        <img src="{{ asset('frontend/assets/img/bus watermark free.png') }}" class="card-img-top"
+                            alt="Transport">
+                        <div class="card-body">
+                            <h6>Transport Services</h6>
+                            <a href="#" class="btn btn-sm btn-search">Need more info?</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="h-100">
+                        <img src="{{ asset('frontend/assets/img/image-1.png') }}" class="card-img-top"
+                            alt="Logistics">
+                        <div class="card-body">
+                            <h6>Logistics Solutions</h6>
+                            <a href="#" class="btn btn-sm btn-search">Need more info?</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="h-100">
+                        <img src="{{ asset('frontend/assets/img/image-2.png') }}" class="card-img-top"
+                            alt="Oil & Gas">
+                        <div class="card-body">
+                            <h6>Oil &amp; Gas</h6>
+                            <a href="#" class="btn btn-sm btn-search">Need more info?</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Use Section -->
+    <section class="py-5 bg-white whyuse">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <img src="{{ asset('frontend/assets/img/DSC_0026.png') }}" class="img-fluid rounded shadow-sm"
+                        alt="Why Us">
+                </div>
+                <div class="col-md-6">
+                    <h2 class="fw-bold">Why Use Bashir Sons?</h2>
+                    <p>Enjoy more benefits than ever with our fast, reliable, and modern service. From the very beginning we
+                        offer top-tier amenities to make every journey better.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <img src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt="">
+                            Lowest Fares
+                        </li>
+                        <li class="mb-2">
+                            <img src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt="">
+                            Excellent Customer Support
+                        </li>
+                        <li class="mb-2"> <img
+                                src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt="">
+                            Punctual Departures</li>
+                        <li class="mb-2"> <img
+                                src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt="">
+                            Luxury & Comfort</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 stat">
+                    <div>
+                        <h3>1.5M</h3>
+                        <p>Happy Customer</p>
+                    </div>
+                </div>
+                <div class="col-md-3 stat">
+                    <div>
+                        <h3>60+</h3>
+                        <p>Years of Experience</p>
+                    </div>
+                </div>
+                <div class="col-md-3 stat">
+                    <div>
+                        <h3>10+</h3>
+                        <p> Terminals</p>
+                    </div>
+                </div>
+                <div class="col-md-3 stat">
+                    <div>
+                        <h3>500+</h3>
+                        <p>Vehicles</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking CTA -->
+    <section class="booking">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <img src="{{ asset('frontend/assets/img/image-3.png') }}" class="img-fluid rounded shadow-sm"
+                        alt="Support">
+                </div>
+                <div class="col-md-6">
+                    <h2 class="fw-bold">Plan Ahead with Advance Booking</h2>
+                    <p>Secure your seat in advance with our hassle-free booking service for all routes.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><img
+                                src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt=""> Guaranteed Seat</li>
+                        <li class="mb-2"><img
+                                src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt=""> Save Time</li>
+                        <li class="mb-2"><img
+                                src="{{ asset('frontend/assets/img/solar_shield-check-bold.svg') }}"
+                                alt=""> Easy Booking</li>
+                    </ul>
+                    <button class="btn btn-cta mt-3">Call Now</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonial py-5">
+        <div class="container text-center">
+            <div class="heading-testimonial">
+                <h2 class="fw-bold mb-4 text-left">What people<br>are saying</h2>
+                <div class="google"> <img src="{{ asset('frontend/assets/img/Rectangle.png') }}" alt="">
+                    <p>Google Rating <br>
+                        4.9(1,300+)</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <div class="stars mb-2">★★★★★</div>
+                        <p>I booked online and they showed up right on time. The team was super friendly and cleared
+                            everything out in no time. Great service at a great price—highly recommended!</p>
+                        <p class="fw-bold mb-0">— Jessica L.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <div class="stars mb-2">★★★★★</div>
+                        <p>I booked online and they showed up right on time. The team was super friendly and cleared
+                            everything out in no time. Great service at a great price—highly recommended!</p>
+                        <p class="fw-bold mb-0">— Ahmed K.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq py-5">
+        <div class="container py-5">
+            <!-- Section Title -->
+            <div class="text-center mb-5">
+                <h2 class="faq-heading mb-2">Frequently Asked Question</h2>
+                <p class="faq-subtitle">
+                    Find answers to commonly asked questions about our services, routes,
+                    and facilities.
+                </p>
+            </div>
+
+            <!-- FAQ Grid: 3 rows × 2 columns -->
+            <div class="row gx-4 gy-4">
+                <!-- Row 1, Col 1 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">What facilities are available during the journey?</h5>
+                                <p class="faq-answer">
+                                    We offer movies and entertainment, refreshments, spacious
+                                    luggage compartments, and free Wi-Fi to make your journey
+                                    comfortable.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 1, Col 2 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">
+                                    How can I get updated information about fares and schedules?
+                                </h5>
+                                <p class="faq-answer">
+                                    You can visit our terminal, check our website, or call our UAN
+                                    at <strong>041-111-737-737</strong> for the latest fare and
+                                    schedule details.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2, Col 1 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">
+                                    What should I do if I lose an item during travel?
+                                </h5>
+                                <p class="faq-answer">
+                                    If you lose any belongings, please contact our support team
+                                    immediately. Our staff ensures lost items are safely returned
+                                    to their owners.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2, Col 2 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">What routes do Bashir Sons cover?</h5>
+                                <p class="faq-answer">
+                                    We provide transport services across major cities, including
+                                    Lahore, Toba Tek Singh, and Rajhana.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3, Col 1 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">Does Bashir Sons provide advance ticket booking?</h5>
+                                <p class="faq-answer">
+                                    Yes, we offer an easy and convenient advance ticket booking
+                                    service for all routes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3, Col 2 -->
+                <div class="col-md-6">
+                    <div class="faq-card">
+                        <div class="faq-item">
+                            <img src="{{ asset('frontend/assets/img/icon.svg') }}" alt="">
+                            <div>
+                                <h5 class="faq-question">How can I book my tickets?</h5>
+                                <p class="faq-answer">
+                                    You can book your tickets online through our website or by
+                                    calling our UAN: <strong>041-111-737-737</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- .row -->
+        </div>
+        <!-- .container -->
+    </section>
+
 @endsection
 
 @section('scripts')
