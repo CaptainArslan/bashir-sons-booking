@@ -17,6 +17,7 @@ Route::get('/services', [DashboardController::class, 'services'])->name('service
 Route::get('/bookings', [DashboardController::class, 'bookings'])->name('bookings');
 Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us');
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
+Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
 Route::get('/booking', [DashboardController::class, 'booking'])->name('booking');
 
 // Frontend Routes

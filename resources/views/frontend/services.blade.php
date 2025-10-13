@@ -10,7 +10,7 @@
                     <!-- Search Card -->
                     <div class="search-card-box">
                         <div class="card p-4 shadow-md border-0 rounded-4">
-                            <form>
+                            <form action="{{ route('bookings') }}" method="GET">
                                 <div class="row g-3 align-items-end justify-content-center">
                                     <!-- From -->
                                     <div class="col-lg-3 col-md-6">

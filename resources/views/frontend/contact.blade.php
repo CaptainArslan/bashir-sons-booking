@@ -62,33 +62,66 @@
             </div>
             <div class="contact-bg">
                 <h1 class="text-center">Get in Touch</h1>
-                <form action="">
+                <form action="{{ route('enquiry.submit') }}" method="POST">
+                    @csrf
+
+                    {{-- Include the alert partial for errors & success --}}
+                    @include('frontend.partials.alerts')
+
                     <div class="row mt-5">
-                        <div class="col-lg-6">
-                            <input type="text" class="form-control" placeholder="Full Name:">
+                        <div class="col-lg-6 mb-3">
+                            <input type="text" name="name" value="{{ old('name') }}"
+                                class="form-control @error('name') is-invalid @enderror" placeholder="Full Name:">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-lg-6">
-                            <input type="email" class="form-control" placeholder="Email:">
+
+                        <div class="col-lg-6 mb-3">
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                class="form-control @error('email') is-invalid @enderror" placeholder="Email:">
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-lg-6">
-                            <input type="text" class="form-control" placeholder="Phone:">
+
+                        <div class="col-lg-6 mb-3">
+                            <input type="text" name="phone" value="{{ old('phone') }}"
+                                class="form-control @error('phone') is-invalid @enderror" placeholder="Phone:">
+                            @error('phone')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-lg-6">
-                            <select name="" id="" class="form-select">
-                                <option value="" selected disabled>Choose services</option>
-                                <option value="">Option 2</option>
-                                <option value="">Option 3</option>
-                                <option value="">Option 4</option>
+
+                        <div class="col-lg-6 mb-3">
+                            <select name="service" class="form-select @error('service') is-invalid @enderror">
+                                <option value="" selected disabled>Choose service</option>
+                                <option value="Transport" {{ old('service') == 'Transport' ? 'selected' : '' }}>Transport
+                                </option>
+                                <option value="Logistics" {{ old('service') == 'Logistics' ? 'selected' : '' }}>Logistics
+                                </option>
+                                <option value="Freight" {{ old('service') == 'Freight' ? 'selected' : '' }}>Freight
+                                </option>
                             </select>
+                            @error('service')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-lg-12">
-                            <textarea name="" placeholder="Write messag" class="form-control" rows="4" id=""></textarea>
+
+                        <div class="col-lg-12 mb-3">
+                            <textarea name="message" class="form-control @error('message') is-invalid @enderror" placeholder="Write message"
+                                rows="4">{{ old('message') }}</textarea>
+                            @error('message')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
+
                         <div class="col-lg-12 text-center">
-                            <button class="sub-button">Submit Now <i class="bi bi-arrow-right"></i></button>
+                            <button type="submit" class="sub-button">Submit Now <i class="bi bi-arrow-right"></i></button>
                         </div>
                     </div>
                 </form>
+
             </div>
         </div>
         <div class="map-fixed">
