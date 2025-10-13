@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class RoleAndPermissionSeeder extends Seeder
@@ -13,12 +14,7 @@ class RoleAndPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = [
-            'super_admin',
-            'admin',
-            'customer',
-            'employee',
-        ];
+        $roles = User::DEFAULT_ROLES;
 
         foreach ($roles as $roleName) {
             Role::firstOrCreate(['name' => $roleName]);

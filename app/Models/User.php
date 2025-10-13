@@ -16,10 +16,10 @@ class User extends Authenticatable
     use HasRoles;
 
     const DEFAULT_ROLES = [
-        'superadmin',
-        'employee',
+        'super_admin',
+        'admin',
         'customer',
-        'admin'
+        'employee',
     ];
 
     /**
