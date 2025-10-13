@@ -15,7 +15,6 @@ class DashboardController extends Controller
             abort(403, 'You do not have access to the admin panel.');
         }
 
-        return 'Admin Dashboard';
-        // return view('admin.dashboard');
+        return view('admin.dashboard');
     }
 }
