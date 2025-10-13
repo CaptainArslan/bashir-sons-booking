@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ asset('frontend/assets/css/responsive.css') }}" />
     <link rel="stylesheet" href="{{ asset('frontend/assets/css/sweetalert2.min.css') }}">
     <script src="{{ asset('frontend/assets/js/jquery-3.7.1.js') }}"></script>
+    @yield('styles')
 </head>
 
 <body>
@@ -25,7 +26,7 @@
 
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="{{ route('home') }}">
                 <img src="{{ asset('frontend/assets/img/logo 1.png') }}" alt="Logo" />
             </a>
             <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -39,21 +40,37 @@
 
 
                     <li class="nav-item">
-                        @if (session()->has('user_auth') && session('user_auth')->type == 'user')
+                        @auth
                             <a class="nav-link" href="{{ route('bookings') }}">Book your Ticket</a>
-                        @endif
+                        @endauth
                     </li>
-
 
                     <li class="nav-item"><a class="nav-link" href="{{ route('about-us') }}">About us</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact
                             us</a>
                     </li>
 
-                    @if (!session()->has('user_auth'))
-                        <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Login</a>
+                    @auth
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ Auth::user()->name }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ route('dashboard') }}">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
-                    @endif
+                    @else
+                        <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Register</a></li>
+                    @endauth
                 </ul>
                 <span class="navbar-text ms-lg-3 bg-light text-theme h4 p-2 rounded uan-number">
                     UAN: 041 111 737 737
@@ -169,7 +186,7 @@
     <script src="{{ asset('frontend/assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('frontend/assets/js/script.js') }}"></script>
     <script src="{{ asset('frontend/assets/js/sweetalert2.min.js') }}"></script>
-
+    @yield('scripts')
     <script>
         @if (Session::has('message'))
             const Toast = Swal.mixin({

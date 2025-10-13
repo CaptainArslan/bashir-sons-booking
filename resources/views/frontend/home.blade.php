@@ -2,6 +2,14 @@
 
 @section('title', 'Home')
 
+@section('styles')
+@endsection
+
 @section('content')
-    <h1>Home</h1>
+@endsection
+
+@section('scripts')
+    <script>
+        console.log('Home');
+    </script>
 @endsection
