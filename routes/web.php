@@ -14,8 +14,8 @@ Route::get('/', function () {
 
 Route::get('/home', [DashboardController::class, 'home'])->name('home');
 Route::get('/services', [DashboardController::class, 'services'])->name('services');
-Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us');
 Route::get('/bookings', [DashboardController::class, 'bookings'])->name('bookings');
+Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us');
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
 Route::get('/booking', [DashboardController::class, 'booking'])->name('booking');
 
