@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Database\Seeders\RoleAndPermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\UserSeeder;
 use Database\Seeders\FacilitySeeder;
 use Database\Seeders\BusLayoutSeeder;
@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleAndPermissionSeeder::class,
+            RolePermissionSeeder::class,
             UserSeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,

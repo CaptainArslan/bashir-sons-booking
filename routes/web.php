@@ -5,10 +5,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
+// use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
 Route::get('/', function () {
-    // return redirect()->intended(route('dashboard', absolute: false));
+    return redirect()->intended(route('dashboard', absolute: false));
     return view('welcome');
 });
 
@@ -28,8 +28,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/user/two-factor/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/user/two-factor/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
 
-    Route::middleware(['role:super_admin|admin'])->group(function () {
-        Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        // other admin routes, controllers will authorize
     });
 });
 

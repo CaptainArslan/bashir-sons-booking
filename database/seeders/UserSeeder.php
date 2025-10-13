@@ -38,6 +38,7 @@ class UserSeeder extends Seeder
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
         $user->assignRole(['super_admin']);
+        $user->givePermissionTo(['access admin panel', 'manage users']);
 
         $user = User::create([
             'name' => 'Employee',
@@ -47,7 +48,7 @@ class UserSeeder extends Seeder
             'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
-
+        $user->givePermissionTo(['access admin panel']);
         $user->assignRole(['employee']);
     }
 }
