@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap'); */
+@import url('https://fonts.googleapis.com/css2?family=Lemon&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
     --bs-primary: #0A1D44;
@@ -144,7 +145,8 @@ section.hero {
     min-height: 400px;
     background-repeat: no-repeat;
     background-size: cover;
-
+    background-position: center;
+    position: relative;
 }
 
 .hero-text {
@@ -161,7 +163,7 @@ section.hero {
     margin-top: 30px;
 }
 
-.search-card-box {
+/* .search-card-box {
     position: absolute;
     bottom: -25px;
     width: 80%;
@@ -173,7 +175,7 @@ section.hero {
     border: 2px solid var(--border-color);
     border-radius: 12px;
     color: #23262F;
-}
+} */
 
 .theme-label {
     font-size: 12px;
@@ -645,10 +647,10 @@ h1.solution-heading {
     text-align: right;
 }
 
-.search-card-box.ticket-page {
+/* .search-card-box.ticket-page {
     position: relative !important;
     bottom: 0 !important;
-}
+} */
 
 .box-blue {
     background-color: var(--blue-footer);
