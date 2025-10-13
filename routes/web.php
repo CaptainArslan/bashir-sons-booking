@@ -12,32 +12,14 @@ Route::get('/', function () {
     // return view('welcome');
 });
 
-Route::get('/home', [DashboardController::class, 'home'])->middleware(['auth', 'verified'])->name('home');
+Route::get('/home', [DashboardController::class, 'home'])->name('home');
+Route::get('/services', [DashboardController::class, 'services'])->name('services');
+Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us');
+Route::get('/bookings', [DashboardController::class, 'bookings'])->name('bookings');
+Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
+Route::get('/booking', [DashboardController::class, 'booking'])->name('booking');
 
 // Frontend Routes
-Route::get('/services', function () {
-    return view('frontend.services');
-})->name('services');
-
-Route::get('/bookings', function () {
-    return view('frontend.bookings');
-})->name('bookings');
-
-Route::get('/about-us', function () {
-    return view('frontend.about');
-})->name('about-us');
-
-Route::get('/about', function () {
-    return view('frontend.about');
-})->name('about');
-
-Route::get('/contact', function () {
-    return view('frontend.contact');
-})->name('contact');
-
-Route::get('/booking', function () {
-    return view('frontend.booking');
-})->name('booking');
 
 Route::middleware(['guest', '2fa.pending'])->group(function () {
     Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('2fa.challenge');
