@@ -15,10 +15,10 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // permissions
-        Permission::firstOrCreate(['name' => 'access admin panel']);
-        // add other permissions 
-        Permission::firstOrCreate(['name' => 'manage users']);
+        $permissions = User::DEFAULT_PERMISSIONS;
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
         $roles = User::DEFAULT_ROLES;
 
         foreach ($roles as $roleName) {

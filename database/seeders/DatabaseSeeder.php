@@ -10,6 +10,7 @@ use Database\Seeders\FacilitySeeder;
 use Database\Seeders\BusLayoutSeeder;
 use Database\Seeders\BusTypeSeeder;
 use Database\Seeders\BusSeeder;
+use Database\Seeders\CitySeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolePermissionSeeder::class,
             UserSeeder::class,
+            CitySeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
             FacilitySeeder::class,

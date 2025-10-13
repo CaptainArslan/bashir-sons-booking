@@ -22,6 +22,11 @@ class User extends Authenticatable
         'employee',
     ];
 
+    const DEFAULT_PERMISSIONS = [
+        'access admin panel',
+        'manage users',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *

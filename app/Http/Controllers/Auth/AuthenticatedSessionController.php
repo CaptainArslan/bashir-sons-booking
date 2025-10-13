@@ -43,15 +43,6 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('2fa.challenge');
         }
 
-        // Step 4: Redirect to correct dashboard based on role
-        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
-        }
-
-        if ($user->hasRole('customer')) {
-            return redirect()->intended(route('customer.dashboard', absolute: false));
-        }
-
         // Default fallback
         return redirect()->intended(route('dashboard', absolute: false));
     }
