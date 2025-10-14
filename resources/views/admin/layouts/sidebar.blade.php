@@ -21,13 +21,6 @@
           </li>
 
           <li class="menu-label">Roles Management</li>
-          {{-- <li>
-              <a href="{{ route('admin.roles.index') }}">
-                  <div class="parent-icon"><i class='bx bx-cookie'></i>
-                  </div>
-                  <div class="menu-title">Roles</div>
-              </a>
-          </li> --}}
           <li>
               <a href="javascript:;" class="has-arrow">
                   <div class="parent-icon"><i class='bx bx-cart'></i>
@@ -42,11 +35,17 @@
               </ul>
           </li>
           <li>
-              <a href="{{ route('admin.cities.index') }}">
-                  <div class="parent-icon"><i class='bx bx-city'></i>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-cart'></i>
                   </div>
-                  <div class="menu-title">Cities</div>
+                  <div class="menu-title">Cities Management</div>
               </a>
+              <ul>
+                  <li> <a href="{{ route('admin.cities.index') }}"><i class='bx bx-radio-circle'></i>Cities</a>
+                  </li>
+                  <li> <a href="{{ route('admin.cities.create') }}"><i class='bx bx-radio-circle'></i>Create City</a>
+                  </li>
+              </ul>
           </li>
       </ul>
       <!--end navigation-->

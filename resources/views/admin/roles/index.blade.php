@@ -25,8 +25,7 @@
         </div>
     </div>
     <!--end breadcrumb-->
-    <h6 class="mb-0 text-uppercase">Roles</h6>
-    <hr>
+
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
@@ -55,11 +54,8 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.roles.data') }}",
-                // responsive: true,
-                pageLength: 25,
-                lengthMenu: [
-                    [10, 25, 50, 100],
-                    [10, 25, 50, 100]
+                order: [
+                    [0, 'desc']
                 ],
                 columns: [{
                         data: 'id',

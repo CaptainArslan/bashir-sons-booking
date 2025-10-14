@@ -17,10 +17,13 @@
                 </ol>
             </nav>
         </div>
+        <div class="ms-auto">
+                <a href="{{ route('admin.cities.create') }}" class="btn btn-primary">
+                <i class="bx bx-plus"></i> Add New City
+            </a>
+        </div>
     </div>
     <!--end breadcrumb-->
-    <h6 class="mb-0 text-uppercase">Cities</h6>
-    <hr>
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
@@ -48,39 +51,42 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.cities.data') }}",
+                order: [
+                    [0, 'desc']
+                ],
                 columns: [{
-                    data: 'id',
-                    name: 'id',
-                },
-                {
-                    data: 'formatted_name',
-                    name: 'name',
-                },
-                {
-                    data: 'status_badge',
-                    name: 'status',
-                },
-                {
-                    data: 'created_at',
-                    name: 'created_at',
-                },
-                {
-                    data: 'actions',
-                    name: 'actions',
-                    orderable: false,
-                    searchable: false,
-                }
-            ],
+                        data: 'id',
+                        name: 'id',
+                    },
+                    {
+                        data: 'formatted_name',
+                        name: 'name',
+                    },
+                    {
+                        data: 'status_badge',
+                        name: 'status',
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at',
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                    }
+                ],
+            });
         });
-    });
 
-    // Delete city function
-    function deleteCity(cityId) {
-        if (confirm('Are you sure you want to delete this city?')) {
-            // You can implement the delete functionality here
-            // For now, just show an alert
-            alert('Delete functionality for city ID: ' + cityId + ' would be implemented here');
+        // Delete city function
+        function deleteCity(cityId) {
+            if (confirm('Are you sure you want to delete this city?')) {
+                // You can implement the delete functionality here
+                // For now, just show an alert
+                alert('Delete functionality for city ID: ' + cityId + ' would be implemented here');
+            }
         }
-    }
-</script>
+    </script>
 @endsection

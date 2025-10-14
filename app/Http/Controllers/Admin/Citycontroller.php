@@ -57,7 +57,7 @@ class Citycontroller extends Controller
                                 </li>
                             </ul>
                         </div>';
-                    
+
                     return $actions;
                 })
                 ->editColumn('created_at', fn($city) => $city->created_at->format('d M Y'))
@@ -65,5 +65,70 @@ class Citycontroller extends Controller
                 ->rawColumns(['formatted_name', 'status_badge', 'actions'])
                 ->make(true);
         }
+    }
+
+    public function create()
+    {
+        $statuses = CityEnum::getStatuses();
+        return view('admin.cities.create', get_defined_vars());
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+        ], [
+            'name.required' => 'City name is required',
+            'name.string' => 'City name must be a string',
+            'name.max' => 'City name must be less than 255 characters',
+            'status.required' => 'Status is required',
+            'status.string' => 'Status must be a string',
+            'status.in' => 'Status must be a valid status',
+        ]);
+
+        City::create([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+        ]);
+
+        return redirect()->route('admin.cities.index')->with('success', 'City created successfully');
+    }
+
+    public function edit($id)
+    {
+        $city = City::findOrFail($id);
+        $statuses = CityEnum::getStatuses();
+        return view('admin.cities.edit', get_defined_vars());
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+        ], [
+            'name.required' => 'City name is required',
+            'name.string' => 'City name must be a string',
+            'name.max' => 'City name must be less than 255 characters',
+            'status.required' => 'Status is required',
+            'status.string' => 'Status must be a string',
+            'status.in' => 'Status must be a valid status',
+        ]);
+
+        $city = City::findOrFail($id);
+        $city->update([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+        ]);
+
+        return redirect()->route('admin.cities.index')->with('success', 'City updated successfully');
+    }
+
+    public function destroy($id)
+    {
+        $city = City::findOrFail($id);
+        $city->delete();
+        return redirect()->route('admin.cities.index')->with('success', 'City deleted successfully');
     }
 }
