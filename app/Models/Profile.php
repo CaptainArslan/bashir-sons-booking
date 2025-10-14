@@ -23,6 +23,7 @@ class profile extends Model
     ];
 
     protected $casts = [
+        'date_of_birth' => 'date',
         'gender' => GenderEnum::class,
     ];
 

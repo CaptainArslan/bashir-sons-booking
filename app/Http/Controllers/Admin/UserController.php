@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
 class UserController extends Controller
@@ -27,16 +28,16 @@ class UserController extends Controller
                 ->with(['roles:id,name', 'profile'])
                 ->select('id', 'name', 'email', 'created_at');
 
-            // Filter by user type if specified
-            if ($request->has('type') && $request->type !== 'all') {
-                $users->whereHas('roles', function ($query) use ($request) {
-                    $query->where('name', $request->type);
-                });
-            }
-
             return DataTables::eloquent($users)
-                ->addColumn('formatted_name', function ($user) {
-                    return '<span class="fw-bold text-primary">' . e($user->name) . '</span>';
+                ->addColumn('user_info', function ($user) {
+                    // User name and email only
+                    $userInfo = '<div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fw-bold text-primary">' . e($user->name) . '</h6>
+                            <small class="text-muted"><i class="bx bx-envelope me-1"></i>' . e($user->email) . '</small>
+                        </div>
+                    </div>';
+                    return $userInfo;
                 })
                 ->addColumn('contact_info', function ($user) {
                     $profile = $user->profile;
@@ -44,51 +45,75 @@ class UserController extends Controller
                         return '<span class="text-muted">No profile</span>';
                     }
                     
-                    $phone = $profile->phone ? '<div><i class="bx bx-phone me-1"></i>' . e($profile->phone) . '</div>' : '';
-                    $cnic = $profile->cnic ? '<div><i class="bx bx-id-card me-1"></i>' . e($profile->cnic) . '</div>' : '';
-                    return $phone . $cnic;
+                    $contactInfo = '';
+                    if ($profile->phone) {
+                        $contactInfo .= '<div><i class="bx bx-phone me-1"></i>' . e($profile->phone) . '</div>';
+                    }
+                    if ($profile->cnic) {
+                        $contactInfo .= '<div><i class="bx bx-id-card me-1"></i>' . e($profile->cnic) . '</div>';
+                    }
+                    
+                    return $contactInfo ?: '<span class="text-muted">No contact info</span>';
                 })
-                ->addColumn('profile_info', function ($user) {
+                ->addColumn('personal_info', function ($user) {
                     $profile = $user->profile;
                     if (!$profile) {
                         return '<span class="text-muted">No profile</span>';
                     }
                     
-                    $gender = $profile->gender ? 
-                        '<span class="badge bg-' . ($profile->gender->value === 'male' ? 'primary' : ($profile->gender->value === 'female' ? 'danger' : 'secondary')) . '">' . 
-                        e(GenderEnum::getGenderName($profile->gender->value)) . '</span>' : '';
+                    $personalInfo = '';
                     
-                    $dob = $profile->date_of_birth ? 
-                        '<div class="mt-1"><i class="bx bx-calendar me-1"></i>' . e($profile->date_of_birth->format('d M Y')) . '</div>' : '';
+                    // Gender
+                    if ($profile->gender) {
+                        $genderColor = $profile->gender->value === 'male' ? 'primary' : ($profile->gender->value === 'female' ? 'danger' : 'secondary');
+                        $personalInfo .= '<div><span class="badge bg-' . $genderColor . '">' . e(GenderEnum::getGenderName($profile->gender->value)) . '</span></div>';
+                    }
                     
-                    return $gender . $dob;
+                    // Date of Birth
+                    if ($profile->date_of_birth) {
+                        $personalInfo .= '<div class="mt-1"><i class="bx bx-calendar me-1"></i>' . e($profile->date_of_birth->format('d M Y')) . '</div>';
+                    }
+                    
+                    return $personalInfo ?: '<span class="text-muted">No personal info</span>';
                 })
-                ->addColumn('user_type', function ($user) {
+                ->addColumn('address_info', function ($user) {
+                    $profile = $user->profile;
+                    if (!$profile) {
+                        return '<span class="text-muted">No profile</span>';
+                    }
+                    
+                    $addressInfo = '';
+                    
+                    // Address
+                    if ($profile->address) {
+                        $addressInfo .= '<div><i class="bx bx-map me-1"></i>' . e(Str::limit($profile->address, 60)) . '</div>';
+                    }
+                    
+                    // Reference ID
+                    if ($profile->reference_id) {
+                        $addressInfo .= '<div class="mt-1"><i class="bx bx-link me-1"></i>Ref: ' . e($profile->reference_id) . '</div>';
+                    }
+                    
+                    return $addressInfo ?: '<span class="text-muted">No address info</span>';
+                })
+                ->addColumn('roles_info', function ($user) {
                     $roles = $user->roles->pluck('name')->toArray();
                     if (empty($roles)) {
                         return '<span class="badge bg-secondary">No Role</span>';
                     }
-                    
+
                     $badges = '';
                     foreach ($roles as $role) {
-                        $color = match($role) {
+                        $color = match ($role) {
                             'super_admin' => 'danger',
                             'admin' => 'warning',
                             'employee' => 'info',
                             'customer' => 'success',
                             default => 'secondary'
                         };
-                        $badges .= '<span class="badge bg-' . $color . ' me-1">' . e(ucfirst($role)) . '</span>';
+                        $badges .= '<span class="badge bg-' . $color . ' me-1 mb-1">' . e(ucfirst($role)) . '</span>';
                     }
                     return $badges;
-                })
-                ->addColumn('roles_list', function ($user) {
-                    if ($user->roles->isEmpty()) {
-                        return '<span class="text-muted">No roles assigned</span>';
-                    }
-                    return $user->roles->map(function ($role) {
-                        return '<span class="badge bg-info me-1 mb-1">' . e(ucfirst($role->name)) . '</span>';
-                    })->implode('');
                 })
                 ->addColumn('actions', function ($user) {
                     $actions = '
@@ -116,12 +141,12 @@ class UserController extends Controller
                                 </li>
                             </ul>
                         </div>';
-                    
+
                     return $actions;
                 })
                 ->editColumn('created_at', fn($user) => $user->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['formatted_name', 'contact_info', 'profile_info', 'user_type', 'roles_list', 'actions'])
+                ->rawColumns(['user_info', 'contact_info', 'personal_info', 'address_info', 'roles_info', 'actions'])
                 ->make(true);
         }
     }
@@ -143,7 +168,7 @@ class UserController extends Controller
             'roles.*' => ['exists:roles,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
-            'cnic' => ['required', 'string', 'max:15', 'unique:user_profiles,cnic'],
+            'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic'],
             'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
@@ -168,7 +193,7 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -189,12 +214,11 @@ class UserController extends Controller
             // Assign roles
             $roles = Role::whereIn('id', $validated['roles'])->get();
             $user->assignRole($roles);
-            
+
             DB::commit();
-            
+
             return redirect()->route('admin.users.index')
                 ->with('success', 'User created successfully with ' . count($validated['roles']) . ' role(s)!');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -214,7 +238,7 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
@@ -223,7 +247,7 @@ class UserController extends Controller
             'roles.*' => ['exists:roles,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
-            'cnic' => ['required', 'string', 'max:15', 'unique:user_profiles,cnic,' . ($user->profile->id ?? 0)],
+            'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic,' . ($user->profile->id ?? 0)],
             'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
@@ -247,7 +271,7 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $updateData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -280,12 +304,11 @@ class UserController extends Controller
             // Sync roles
             $roles = Role::whereIn('id', $validated['roles'])->get();
             $user->syncRoles($roles);
-            
+
             DB::commit();
-            
+
             return redirect()->route('admin.users.index')
                 ->with('success', 'User updated successfully!');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -298,7 +321,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             // Prevent deletion of super admin users
             if ($user->hasRole('super_admin')) {
                 return response()->json([
@@ -306,9 +329,9 @@ class UserController extends Controller
                     'message' => 'Cannot delete super admin user.'
                 ], 400);
             }
-            
+
             $user->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'User deleted successfully.'

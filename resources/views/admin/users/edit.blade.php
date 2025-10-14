@@ -80,7 +80,7 @@
                                 <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
                                     name="phone" placeholder="Enter Phone Number" 
-                                    value="{{ old('phone', $user->userProfile->phone ?? '') }}" required>
+                                    value="{{ old('phone', $user->profile->phone ?? '') }}" required>
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -90,7 +90,7 @@
                                 <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
                                     name="cnic" placeholder="Enter CNIC" 
-                                    value="{{ old('cnic', $user->userProfile->cnic ?? '') }}" required>
+                                    value="{{ old('cnic', $user->profile->cnic ?? '') }}" required>
                                 @error('cnic')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -102,7 +102,7 @@
                                     <option value="">Select Gender</option>
                                     @foreach ($genders as $gender)
                                         <option value="{{ $gender }}" 
-                                            {{ old('gender', $user->userProfile->gender->value ?? '') == $gender ? 'selected' : '' }}>
+                                            {{ old('gender', $user->profile && $user->profile->gender ? $user->profile->gender->value : '') == $gender ? 'selected' : '' }}>
                                             {{ ucfirst($gender) }}
                                         </option>
                                     @endforeach
@@ -116,7 +116,7 @@
                                 <label for="date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror" id="date_of_birth"
                                     name="date_of_birth" 
-                                    value="{{ old('date_of_birth', $user->userProfile->date_of_birth ? $user->userProfile->date_of_birth->format('Y-m-d') : '') }}" required>
+                                    value="{{ old('date_of_birth', $user->profile && $user->profile->date_of_birth ? $user->profile->date_of_birth->format('Y-m-d') : '') }}" required>
                                 @error('date_of_birth')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -125,7 +125,7 @@
                             <div class="col-md-12">
                                 <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
                                 <textarea class="form-control @error('address') is-invalid @enderror" id="address"
-                                    name="address" rows="3" placeholder="Enter Address" required>{{ old('address', $user->userProfile->address ?? '') }}</textarea>
+                                    name="address" rows="3" placeholder="Enter Address" required>{{ old('address', $user->profile->address ?? '') }}</textarea>
                                 @error('address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -135,7 +135,7 @@
                                 <label for="reference_id" class="form-label">Reference ID</label>
                                 <input type="text" class="form-control @error('reference_id') is-invalid @enderror" id="reference_id"
                                     name="reference_id" placeholder="Enter Reference ID (Optional)" 
-                                    value="{{ old('reference_id', $user->userProfile->reference_id ?? '') }}">
+                                    value="{{ old('reference_id', $user->profile->reference_id ?? '') }}">
                                 @error('reference_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
