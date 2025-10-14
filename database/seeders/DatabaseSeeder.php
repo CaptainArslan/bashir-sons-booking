@@ -11,6 +11,7 @@ use Database\Seeders\BusLayoutSeeder;
 use Database\Seeders\BusTypeSeeder;
 use Database\Seeders\BusSeeder;
 use Database\Seeders\CitySeeder;
+use Database\Seeders\TerminalSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             CitySeeder::class,
+            TerminalSeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
             FacilitySeeder::class,
