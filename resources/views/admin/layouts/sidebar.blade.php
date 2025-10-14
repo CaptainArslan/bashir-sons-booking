@@ -41,6 +41,13 @@
                   </li>
               </ul>
           </li>
+          <li>
+              <a href="{{ route('admin.cities.index') }}">
+                  <div class="parent-icon"><i class='bx bx-city'></i>
+                  </div>
+                  <div class="menu-title">Cities</div>
+              </a>
+          </li>
       </ul>
       <!--end navigation-->
   </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\Citycontroller;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -48,10 +49,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/roles/data', [RoleController::class, 'getData'])->name('roles.data');
         Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-        Route::get('/roles/{id}', [RoleController::class, 'show'])->name('roles.show');
         Route::get('/roles/{id}/edit', [RoleController::class, 'edit'])->name('roles.edit');
         Route::put('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
         Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
+
+        // Cities Routes
+        Route::get('/cities', [CityController::class, 'index'])->name('cities.index');
+        Route::get('/cities/data', [CityController::class, 'getData'])->name('cities.data');
+        Route::get('/cities/create', [CityController::class, 'create'])->name('cities.create');
+        Route::post('/cities', [CityController::class, 'store'])->name('cities.store');
+        Route::get('/cities/{id}/edit', [CityController::class, 'edit'])->name('cities.edit');
+        Route::put('/cities/{id}', [CityController::class, 'update'])->name('cities.update');
+        Route::delete('/cities/{id}', [CityController::class, 'destroy'])->name('cities.destroy');
+        
     });
 });
 
