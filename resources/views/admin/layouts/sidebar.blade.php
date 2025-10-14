@@ -23,26 +23,24 @@
           <li class="menu-label">Roles Management</li>
           <li>
               <a href="javascript:;" class="has-arrow">
-                  <div class="parent-icon"><i class='bx bx-cart'></i>
+                  <div class="parent-icon"><i class='bx bx-shield-quarter'></i>
                   </div>
                   <div class="menu-title">Roles Management</div>
               </a>
               <ul>
-                  <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Roles</a>
-                  </li>
+                  <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Roles</a></li>
                   <li> <a href="{{ route('admin.roles.create') }}"><i class='bx bx-radio-circle'></i>Create Role</a>
                   </li>
               </ul>
           </li>
           <li>
               <a href="javascript:;" class="has-arrow">
-                  <div class="parent-icon"><i class='bx bx-cart'></i>
+                  <div class="parent-icon"><i class='bx bx-building'></i>
                   </div>
                   <div class="menu-title">Cities Management</div>
               </a>
               <ul>
-                  <li> <a href="{{ route('admin.cities.index') }}"><i class='bx bx-radio-circle'></i>Cities</a>
-                  </li>
+                  <li> <a href="{{ route('admin.cities.index') }}"><i class='bx bx-radio-circle'></i>Cities</a></li>
                   <li> <a href="{{ route('admin.cities.create') }}"><i class='bx bx-radio-circle'></i>Create City</a>
                   </li>
               </ul>
