@@ -70,6 +70,8 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Contact Info</th>
+                                    <th>Profile Info</th>
                                     <th>User Type</th>
                                     <th>Roles</th>
                                     <th>Created Date</th>
@@ -93,6 +95,8 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Contact Info</th>
+                                    <th>Profile Info</th>
                                     <th>User Type</th>
                                     <th>Roles</th>
                                     <th>Created Date</th>
@@ -116,6 +120,8 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Contact Info</th>
+                                    <th>Profile Info</th>
                                     <th>User Type</th>
                                     <th>Roles</th>
                                     <th>Created Date</th>
@@ -139,6 +145,8 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Contact Info</th>
+                                    <th>Profile Info</th>
                                     <th>User Type</th>
                                     <th>Roles</th>
                                     <th>Created Date</th>
@@ -196,6 +204,16 @@
                 {
                     data: 'email',
                     name: 'email',
+                },
+                {
+                    data: 'contact_info',
+                    name: 'userProfile.phone',
+                    orderable: false,
+                },
+                {
+                    data: 'profile_info',
+                    name: 'userProfile.gender',
+                    orderable: false,
                 },
                 {
                     data: 'user_type',

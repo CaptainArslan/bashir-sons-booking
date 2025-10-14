@@ -69,6 +69,72 @@
                     </div>
 
                     <div class="card-body p-4">
+                        <h5 class="mb-4">Profile Information</h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
+                                    name="phone" placeholder="Enter Phone Number" value="{{ old('phone') }}" required>
+                                @error('phone')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
+                                    name="cnic" placeholder="Enter CNIC" value="{{ old('cnic') }}" required>
+                                @error('cnic')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select @error('gender') is-invalid @enderror" id="gender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender }}" {{ old('gender') == $gender ? 'selected' : '' }}>
+                                            {{ ucfirst($gender) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('gender')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror" id="date_of_birth"
+                                    name="date_of_birth" value="{{ old('date_of_birth') }}" required>
+                                @error('date_of_birth')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control @error('address') is-invalid @enderror" id="address"
+                                    name="address" rows="3" placeholder="Enter Address" required>{{ old('address') }}</textarea>
+                                @error('address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label for="reference_id" class="form-label">Reference ID</label>
+                                <input type="text" class="form-control @error('reference_id') is-invalid @enderror" id="reference_id"
+                                    name="reference_id" placeholder="Enter Reference ID (Optional)" value="{{ old('reference_id') }}">
+                                @error('reference_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
                         <h5 class="mb-4">Assign Roles</h5>
                         
                         <div class="row">

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\profile;
+use App\Enums\GenderEnum;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -22,7 +24,7 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
             $users = User::query()
-                ->with(['roles:id,name'])
+                ->with(['roles:id,name', 'profile'])
                 ->select('id', 'name', 'email', 'created_at');
 
             // Filter by user type if specified
@@ -35,6 +37,31 @@ class UserController extends Controller
             return DataTables::eloquent($users)
                 ->addColumn('formatted_name', function ($user) {
                     return '<span class="fw-bold text-primary">' . e($user->name) . '</span>';
+                })
+                ->addColumn('contact_info', function ($user) {
+                    $profile = $user->profile;
+                    if (!$profile) {
+                        return '<span class="text-muted">No profile</span>';
+                    }
+                    
+                    $phone = $profile->phone ? '<div><i class="bx bx-phone me-1"></i>' . e($profile->phone) . '</div>' : '';
+                    $cnic = $profile->cnic ? '<div><i class="bx bx-id-card me-1"></i>' . e($profile->cnic) . '</div>' : '';
+                    return $phone . $cnic;
+                })
+                ->addColumn('profile_info', function ($user) {
+                    $profile = $user->profile;
+                    if (!$profile) {
+                        return '<span class="text-muted">No profile</span>';
+                    }
+                    
+                    $gender = $profile->gender ? 
+                        '<span class="badge bg-' . ($profile->gender->value === 'male' ? 'primary' : ($profile->gender->value === 'female' ? 'danger' : 'secondary')) . '">' . 
+                        e(GenderEnum::getGenderName($profile->gender->value)) . '</span>' : '';
+                    
+                    $dob = $profile->date_of_birth ? 
+                        '<div class="mt-1"><i class="bx bx-calendar me-1"></i>' . e($profile->date_of_birth->format('d M Y')) . '</div>' : '';
+                    
+                    return $gender . $dob;
                 })
                 ->addColumn('user_type', function ($user) {
                     $roles = $user->roles->pluck('name')->toArray();
@@ -94,7 +121,7 @@ class UserController extends Controller
                 })
                 ->editColumn('created_at', fn($user) => $user->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['formatted_name', 'user_type', 'roles_list', 'actions'])
+                ->rawColumns(['formatted_name', 'contact_info', 'profile_info', 'user_type', 'roles_list', 'actions'])
                 ->make(true);
         }
     }
@@ -102,6 +129,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
+        $genders = GenderEnum::getGenders();
         return view('admin.users.create', get_defined_vars());
     }
 
@@ -113,6 +141,13 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],
+            // Profile fields
+            'phone' => ['required', 'string', 'max:20'],
+            'cnic' => ['required', 'string', 'max:15', 'unique:user_profiles,cnic'],
+            'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'address' => ['required', 'string', 'max:500'],
+            'reference_id' => ['nullable', 'string', 'max:255'],
         ], [
             'name.required' => 'Name is required',
             'email.required' => 'Email is required',
@@ -122,6 +157,13 @@ class UserController extends Controller
             'roles.required' => 'Please select at least one role',
             'roles.min' => 'Please select at least one role',
             'roles.*.exists' => 'One or more selected roles are invalid',
+            'phone.required' => 'Phone number is required',
+            'cnic.required' => 'CNIC is required',
+            'cnic.unique' => 'CNIC already exists',
+            'gender.required' => 'Gender is required',
+            'date_of_birth.required' => 'Date of birth is required',
+            'date_of_birth.before' => 'Date of birth must be in the past',
+            'address.required' => 'Address is required',
         ]);
 
         try {
@@ -131,6 +173,17 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
+            ]);
+
+            // Create user profile
+            profile::create([
+                'user_id' => $user->id,
+                'phone' => $validated['phone'],
+                'cnic' => $validated['cnic'],
+                'gender' => $validated['gender'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'address' => $validated['address'],
+                'reference_id' => $validated['reference_id'] ?? null,
             ]);
 
             // Assign roles
@@ -152,8 +205,9 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('profile')->findOrFail($id);
         $roles = Role::all();
+        $genders = GenderEnum::getGenders();
         return view('admin.users.edit', get_defined_vars());
     }
 
@@ -167,6 +221,13 @@ class UserController extends Controller
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],
+            // Profile fields
+            'phone' => ['required', 'string', 'max:20'],
+            'cnic' => ['required', 'string', 'max:15', 'unique:user_profiles,cnic,' . ($user->profile->id ?? 0)],
+            'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'address' => ['required', 'string', 'max:500'],
+            'reference_id' => ['nullable', 'string', 'max:255'],
         ], [
             'name.required' => 'Name is required',
             'email.required' => 'Email is required',
@@ -175,6 +236,13 @@ class UserController extends Controller
             'roles.required' => 'Please select at least one role',
             'roles.min' => 'Please select at least one role',
             'roles.*.exists' => 'One or more selected roles are invalid',
+            'phone.required' => 'Phone number is required',
+            'cnic.required' => 'CNIC is required',
+            'cnic.unique' => 'CNIC already exists',
+            'gender.required' => 'Gender is required',
+            'date_of_birth.required' => 'Date of birth is required',
+            'date_of_birth.before' => 'Date of birth must be in the past',
+            'address.required' => 'Address is required',
         ]);
 
         try {
@@ -191,6 +259,23 @@ class UserController extends Controller
             }
 
             $user->update($updateData);
+
+            // Update or create user profile
+            $profileData = [
+                'phone' => $validated['phone'],
+                'cnic' => $validated['cnic'],
+                'gender' => $validated['gender'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'address' => $validated['address'],
+                'reference_id' => $validated['reference_id'] ?? null,
+            ];
+
+            if ($user->profile) {
+                $user->profile->update($profileData);
+            } else {
+                $profileData['user_id'] = $user->id;
+                profile::create($profileData);
+            }
 
             // Sync roles
             $roles = Role::whereIn('id', $validated['roles'])->get();

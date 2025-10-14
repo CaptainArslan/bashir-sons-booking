@@ -8,6 +8,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -71,6 +72,8 @@ class User extends Authenticatable
     }
 
 
+
+
     // ============================= 
     // Two Factor Authentication 
     // =============================
@@ -105,8 +108,8 @@ class User extends Authenticatable
     // =============================
     // Relationships
     // =============================
-    public function profile()
+    public function profile(): HasOne
     {
-        return $this->hasOne(UserProfile::class);
+        return $this->hasOne(profile::class);
     }
 }
