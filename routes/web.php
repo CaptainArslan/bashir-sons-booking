@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -61,7 +62,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/cities/{id}/edit', [CityController::class, 'edit'])->name('cities.edit');
         Route::put('/cities/{id}', [CityController::class, 'update'])->name('cities.update');
         Route::delete('/cities/{id}', [CityController::class, 'destroy'])->name('cities.destroy');
-        
+
+        // Counter/Terminal Routes
+        Route::get('/counter-terminals', [CounterTerminalController::class, 'index'])->name('counter-terminals.index');
+        Route::get('/counter-terminals/data', [CounterTerminalController::class, 'getData'])->name('counter-terminals.data');
+        Route::get('/counter-terminals/create', [CounterTerminalController::class, 'create'])->name('counter-terminals.create');
+        Route::post('/counter-terminals', [CounterTerminalController::class, 'store'])->name('counter-terminals.store');
+        Route::get('/counter-terminals/{id}/edit', [CounterTerminalController::class, 'edit'])->name('counter-terminals.edit');
+        Route::put('/counter-terminals/{id}', [CounterTerminalController::class, 'update'])->name('counter-terminals.update');
+        Route::delete('/counter-terminals/{id}', [CounterTerminalController::class, 'destroy'])->name('counter-terminals.destroy');
+
     });
 });
 

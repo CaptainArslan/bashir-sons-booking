@@ -20,7 +20,7 @@
               </a>
           </li>
 
-          <li class="menu-label">Roles Management</li>
+          <li class="menu-label">User Management</li>
           <li>
               <a href="javascript:;" class="has-arrow">
                   <div class="parent-icon"><i class='bx bx-shield-quarter'></i>
@@ -35,6 +35,19 @@
           </li>
           <li>
               <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-user'></i>
+                  </div>
+                  <div class="menu-title">User Management</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Employees</a></li>
+                  <li> <a href="{{ route('admin.roles.create') }}"><i class='bx bx-radio-circle'></i>Create Employee</a>
+                  </li>
+              </ul>
+          </li>
+          <li class="menu-label">Cities Management</li>
+          <li>
+              <a href="javascript:;" class="has-arrow">
                   <div class="parent-icon"><i class='bx bx-building'></i>
                   </div>
                   <div class="menu-title">Cities Management</div>
@@ -42,6 +55,19 @@
               <ul>
                   <li> <a href="{{ route('admin.cities.index') }}"><i class='bx bx-radio-circle'></i>Cities</a></li>
                   <li> <a href="{{ route('admin.cities.create') }}"><i class='bx bx-radio-circle'></i>Create City</a>
+                  </li>
+              </ul>
+          </li>
+          <li class="menu-label">Transport Management</li>
+          <li>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-chair'></i>
+                  </div>
+                  <div class="menu-title">Counter/Terminal Management</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.counter-terminals.index') }}"><i class='bx bx-radio-circle'></i>Terminals</a></li>
+                  <li> <a href="{{ route('admin.counter-terminals.create') }}"><i class='bx bx-radio-circle'></i>Create Counter</a>
                   </li>
               </ul>
           </li>
