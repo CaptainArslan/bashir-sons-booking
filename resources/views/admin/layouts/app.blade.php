@@ -38,6 +38,7 @@
         <!--start page wrapper -->
         <div class="page-wrapper">
             <div class="page-content">
+                @include('admin.layouts.alerts')
                 @yield('content')
             </div>
         </div>

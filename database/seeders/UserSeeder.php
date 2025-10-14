@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
             'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
-        $user->assignRole('customer');
+        $user->assignRole('Customer');
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
             'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
-        $user->assignRole(['super_admin']);
+        $user->assignRole(['Super Admin']);
 
 
         $user = User::create([
@@ -48,6 +48,6 @@ class UserSeeder extends Seeder
             'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
-        $user->assignRole(['employee']);
+        $user->assignRole(['Employee']);
     }
 }

@@ -8,12 +8,13 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
 
 
 class Rolecontroller extends Controller
 {
     public $breadcrumbs;
-    
+
     public function __construct()
     {
         $this->breadcrumbs = [
@@ -105,22 +106,63 @@ class Rolecontroller extends Controller
     {
         $permissions = Permission::all();
 
-        return view('admin.roles.create', compact('permissions'));
+        return view('admin.roles.create', get_defined_vars());
     }
 
     public function store(Request $request)
     {
-        return view('admin.roles.store');
+        // ✅ 1. Validate incoming data
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
+            'permissions' => ['required', 'array', 'min:1'],
+            'permissions.*' => ['exists:permissions,id'],
+        ], [
+            'name.required' => 'Role name is required.',
+            'name.unique' => 'A role with this name already exists.',
+            'permissions.required' => 'Please select at least one permission.',
+            'permissions.min' => 'Please select at least one permission.',
+            'permissions.*.exists' => 'One or more selected permissions are invalid.',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            // ✅ 2. Create the new role
+            $role = Role::create([
+                'name' => $validated['name'],
+                'guard_name' => 'web',
+            ]);
+
+            // ✅ 3. Sync permissions to the role using IDs
+            $permissions = Permission::whereIn('id', $validated['permissions'])->get();
+            $role->syncPermissions($permissions);
+            DB::commit();
+
+            // ✅ 4. Return success response
+            return redirect()->route('admin.roles.index')
+                ->with('success', 'Role "' . $role->name . '" created successfully with ' . count($validated['permissions']) . ' permission(s)!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // ✅ 5. Handle any errors during creation
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create role: ' . $e->getMessage());
+        }
     }
 
     public function edit($id)
     {
-        return view('admin.roles.edit', compact('id'));
+        $role = Role::findOrFail($id);
+        $permissions = Permission::all();
+
+        return view('admin.roles.edit', get_defined_vars());
     }
 
     public function update(Request $request, $id)
     {
-        return view('admin.roles.update', compact('id'));
+        $role = Role::findOrFail($id);
+        $permissions = Permission::all();
+
+        return view('admin.roles.update', get_defined_vars());
     }
 
     public function destroy($id)

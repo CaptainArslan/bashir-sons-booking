@@ -8,155 +8,157 @@
 @section('content')
     <!--breadcrumb-->
     <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-        <div class="breadcrumb-title pe-3">Forms</div>
+        <div class="breadcrumb-title pe-3">Roles Management</div>
         <div class="ps-3">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 p-0">
-                    <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">Roles</li>
+                    <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create Role</li>
                 </ol>
             </nav>
         </div>
-        <div class="ms-auto">
+        {{-- <div class="ms-auto">
             <div class="btn-group">
                 <button type="button" class="btn btn-primary">Settings</button>
                 <button type="button" class="btn btn-primary split-bg-primary dropdown-toggle dropdown-toggle-split"
-                    data-bs-toggle="dropdown"> <span class="visually-hidden">Toggle Dropdown</span>
-                </button>
-                <div class="dropdown-menu dropdown-menu-right dropdown-menu-lg-end"> <a class="dropdown-item"
-                        href="javascript:;">Action</a>
+                    data-bs-toggle="dropdown"> <span class="visually-hidden">Toggle Dropdown</span> </button>
+                <div class="dropdown-menu dropdown-menu-right dropdown-menu-lg-end">
+                    <a class="dropdown-item" href="javascript:;">Action</a>
                     <a class="dropdown-item" href="javascript:;">Another action</a>
                     <a class="dropdown-item" href="javascript:;">Something else here</a>
-                    <div class="dropdown-divider"></div> <a class="dropdown-item" href="javascript:;">Separated link</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="javascript:;">Separated link</a>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
     <!--end breadcrumb-->
-    <div class="row">
-        <div class="col-xl-6 mx-auto">
-            <div class="card">
-                <div class="card-body p-4">
-                    <h5 class="mb-4">Create Role</h5>
-                    <form class="row g-3">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" id="input1" placeholder="Enter Role Name">
-                        </div>
-                        {{-- <div class="col-md-6 d-flex align-items-center">
-                            <button type="button" class="btn btn-primary px-4 me-2">Submit</button>
-                            <button type="button" class="btn btn-light px-4">Reset</button>
-                        </div> --}}
-                    </form>
-                </div>
 
-                <div class="card-body p-4">
-                    <h5 class="mb-4">Permissions</h5>
-                    <form class="row g-3">
-                        <div class="col-md-6">
-                            <label for="input13" class="form-label">Permission Name</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input13" placeholder="First Name">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-user'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="input14" class="form-label">Permission Description</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input14" placeholder="Last Name">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-user'></i></span>
-                            </div>
-                        </div>
+    <div class="row">
+        <div class="col-xl-10 mx-auto">
+            <form action="{{ route('admin.roles.store') }}" method="POST" class="row g-3">
+                @csrf
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h5 class="mb-4">Create Role</h5>
                         <div class="col-md-12">
-                            <label for="input15" class="form-label">Phone</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input15" placeholder="Phone">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-microphone'></i></span>
+                            <label for="name" class="form-label">Role Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
+                                name="name" placeholder="Enter Role Name" value="{{ old('name') }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <h5 class="mb-4">Assign Permissions</h5>
+
+                        <div class="row">
+                            @forelse ($permissions as $permission)
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox" type="checkbox"
+                                            name="permissions[]" value="{{ $permission->id }}"
+                                            id="permission_{{ $permission->id }}"
+                                            {{ in_array($permission->id, old('permissions', [])) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="permission_{{ $permission->id }}">
+                                            {{ ucwords(str_replace('_', ' ', $permission->name)) }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="bx bx-info-circle me-2"></i>
+                                        No permissions found. Please create permissions first.
+                                    </div>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        @if ($permissions->count() > 0)
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <div class="btn-group">
+                                            <button type="button" id="selectAllBtn" class="btn btn-outline-primary btn-sm">
+                                                <i class="bx bx-check-double me-1"></i>Select All
+                                            </button>
+                                            <button type="button" id="deselectAllBtn"
+                                                class="btn btn-outline-secondary btn-sm ms-2">
+                                                <i class="bx bx-x me-1"></i>Deselect All
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-light px-4 me-2" id="resetFormBtn">
+                                                <i class="bx bx-reset me-1"></i>Reset
+                                            </button>
+                                            <button type="submit" class="btn btn-primary px-4">
+                                                <i class="bx bx-save me-1"></i>Create Role
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input16" class="form-label">Email</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input16" placeholder="Email">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-envelope'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input17" class="form-label">Password</label>
-                            <div class="position-relative input-icon">
-                                <input type="password" class="form-control" id="input17" placeholder="Password">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-lock-alt'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input18" class="form-label">DOB</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input18" placeholder="DOB">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-calendar'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input19" class="form-label">Country</label>
-                            <select id="input19" class="form-select">
-                                <option selected="">Choose...</option>
-                                <option>One</option>
-                                <option>Two</option>
-                                <option>Three</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="input20" class="form-label">City</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input20" placeholder="City">
-                                <span class="position-absolute top-50 translate-middle-y"><i
-                                        class='bx bx-buildings'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="input21" class="form-label">State</label>
-                            <select id="input21" class="form-select">
-                                <option selected="">Choose...</option>
-                                <option>One</option>
-                                <option>Two</option>
-                                <option>Three</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="input22" class="form-label">Zip</label>
-                            <div class="position-relative input-icon">
-                                <input type="text" class="form-control" id="input22" placeholder="Zip">
-                                <span class="position-absolute top-50 translate-middle-y"><i class='bx bx-pin'></i></span>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input23" class="form-label">Address</label>
-                            <textarea class="form-control" id="input23" placeholder="Address ..." rows="3"></textarea>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="input24">
-                                <label class="form-check-label" for="input24">Check me out</label>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="d-md-flex d-grid align-items-center gap-3">
-                                <button type="button" class="btn btn-primary px-4">Submit</button>
-                                <button type="button" class="btn btn-light px-4">Reset</button>
-                            </div>
-                        </div>
-                    </form>
+                        @endif
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-    <!--end row-->
 @endsection
 
 @section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const deselectAllBtn = document.getElementById('deselectAllBtn');
+            const resetBtn = document.getElementById('resetFormBtn');
+            const checkboxes = document.querySelectorAll('.permission-checkbox');
+            const nameInput = document.getElementById('name');
+
+            // ✅ Helper: Update button states dynamically
+            function updateButtonStates() {
+                const checkedCount = document.querySelectorAll('.permission-checkbox:checked').length;
+                const total = checkboxes.length;
+
+                selectAllBtn.disabled = checkedCount === total;
+                deselectAllBtn.disabled = checkedCount === 0;
+
+                selectAllBtn.classList.toggle('btn-outline-primary', !selectAllBtn.disabled);
+                selectAllBtn.classList.toggle('btn-outline-secondary', selectAllBtn.disabled);
+
+                deselectAllBtn.classList.toggle('btn-outline-secondary', deselectAllBtn.disabled);
+                deselectAllBtn.classList.toggle('btn-outline-primary', !deselectAllBtn.disabled);
+            }
+
+            // ✅ Select all permissions
+            selectAllBtn.addEventListener('click', () => {
+                checkboxes.forEach(checkbox => checkbox.checked = true);
+                updateButtonStates();
+            });
+
+            // ✅ Deselect all permissions
+            deselectAllBtn.addEventListener('click', () => {
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+                updateButtonStates();
+            });
+
+            // ✅ Reset form
+            resetBtn.addEventListener('click', () => {
+                nameInput.value = '';
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+                nameInput.classList.remove('is-invalid');
+                nameInput.focus();
+                updateButtonStates();
+            });
+
+            // ✅ Update button states whenever a checkbox changes
+            checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateButtonStates));
+
+            // ✅ Initialize state on page load
+            updateButtonStates();
+        });
+    </script>
 @endsection

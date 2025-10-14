@@ -11,10 +11,10 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         $roles = [
-            'super_admin',
-            'admin',
-            'customer',
-            'employee',
+            'Super Admin',
+            'Admin',
+            'Customer',
+            'Employee',
         ];
         // Create roles
         foreach ($roles as $roleName) {
@@ -36,12 +36,12 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Assign all permissions to super admin
-        $superAdminRole = Role::where('name', 'super_admin')->first();
+        $superAdminRole = Role::where('name', 'Super Admin')->first();
         $allPermissions = Permission::all();
         $superAdminRole->syncPermissions($allPermissions);
 
         // Assign limited permissions to admin
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole = Role::where('name', 'Admin')->first();
         $adminPermissions = Permission::whereIn('name', [
             'access admin panel',
             'manage users',
@@ -51,8 +51,8 @@ class RolePermissionSeeder extends Seeder
         $adminRole->syncPermissions($adminPermissions);
 
         // Customer and Employee have minimal or no permissions
-        $customerRole = Role::where('name', 'customer')->first();
-        $employeeRole = Role::where('name', 'employee')->first();
+        $customerRole = Role::where('name', 'Customer')->first();
+        $employeeRole = Role::where('name', 'Employee')->first();
 
         $customerRole->syncPermissions([]);
         $employeeRole->syncPermissions([]);
