@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\Citycontroller;
 use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
@@ -71,6 +72,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/counter-terminals/{id}/edit', [CounterTerminalController::class, 'edit'])->name('counter-terminals.edit');
         Route::put('/counter-terminals/{id}', [CounterTerminalController::class, 'update'])->name('counter-terminals.update');
         Route::delete('/counter-terminals/{id}', [CounterTerminalController::class, 'destroy'])->name('counter-terminals.destroy');
+
+        // users Routes
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/data', [UserController::class, 'getData'])->name('users.data');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
     });
 });

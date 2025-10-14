@@ -40,9 +40,8 @@
                   <div class="menu-title">User Management</div>
               </a>
               <ul>
-                  <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Employees</a></li>
-                  <li> <a href="{{ route('admin.roles.create') }}"><i class='bx bx-radio-circle'></i>Create Employee</a>
-                  </li>
+                  <li> <a href="{{ route('admin.users.index') }}"><i class='bx bx-radio-circle'></i>All Users</a></li>
+                  <li> <a href="{{ route('admin.users.create') }}"><i class='bx bx-radio-circle'></i>Create User</a></li>
               </ul>
           </li>
           <li class="menu-label">Cities Management</li>
