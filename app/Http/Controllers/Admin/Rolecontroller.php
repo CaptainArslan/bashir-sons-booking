@@ -154,15 +154,52 @@ class Rolecontroller extends Controller
         $role = Role::findOrFail($id);
         $permissions = Permission::all();
 
+        // Check if this is a default role that shouldn't be editable
+        $defaultRoles = User::DEFAULT_ROLES;
+        $isDefaultRole = in_array($role->name, $defaultRoles);
+
         return view('admin.roles.edit', get_defined_vars());
     }
 
     public function update(Request $request, $id)
     {
         $role = Role::findOrFail($id);
-        $permissions = Permission::all();
 
-        return view('admin.roles.update', get_defined_vars());
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name,' . $role->id],
+            'permissions' => ['required', 'array', 'min:1'],
+            'permissions.*' => ['exists:permissions,id'],
+        ], [
+            'name.required' => 'Role name is required.',
+            'name.unique' => 'A role with this name already exists.',
+            'permissions.required' => 'Please select at least one permission.',
+            'permissions.min' => 'Please select at least one permission.',
+            'permissions.*.exists' => 'One or more selected permissions are invalid.',
+        ]);
+
+        $defaultRoles = User::DEFAULT_ROLES;
+        $isDefaultRole = in_array($role->name, $defaultRoles);
+
+        abort_if($isDefaultRole, 403, 'Cannot edit default role.');
+
+        try {
+            DB::beginTransaction();
+            $role->update([
+                'name' => $validated['name'],
+            ]);
+
+            $permissions = Permission::whereIn('id', $validated['permissions'])->get();
+            $role->syncPermissions($permissions);
+            DB::commit();
+
+            return redirect()->route('admin.roles.index')
+                ->with('success', 'Role "' . $role->name . '" updated successfully with ' . count($validated['permissions']) . ' permission(s)!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update role: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)
