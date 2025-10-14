@@ -2,14 +2,28 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
+use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\Facades\DataTables;
 
 
 class Rolecontroller extends Controller
 {
+    public $breadcrumbs;
+    
+    public function __construct()
+    {
+        $this->breadcrumbs = [
+            [
+                'title' => 'Roles',
+                'url' => route('admin.roles.index')
+            ]
+        ];
+    }
+
     public function index()
     {
         return view('admin.roles.index');
@@ -41,20 +55,44 @@ class Rolecontroller extends Controller
                     return '<span class="badge ' . $badgeClass . '">' . $count . ' permission' . ($count !== 1 ? 's' : '') . '</span>';
                 })
                 ->addColumn('actions', function ($role) {
-                    return '
-                        <div class="btn-group" role="group">
-                            <a href="' . route('admin.roles.edit', $role->id) . '" 
-                               class="btn btn-sm btn-outline-primary" 
-                               title="Edit Role">
-                                <i class="bx bx-edit"></i>
-                            </a>
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-danger" 
-                                    onclick="deleteRole(' . $role->id . ')" 
-                                    title="Delete Role">
-                                <i class="bx bx-trash"></i>
+                    // Define default roles that should not be deletable
+                    $defaultRoles = User::DEFAULT_ROLES;
+                    $isDefaultRole = in_array($role->name, $defaultRoles);
+
+                    $actions = '
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="bx bx-dots-horizontal-rounded"></i>
                             </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="' . route('admin.roles.edit', $role->id) . '">
+                                        <i class="bx bx-edit me-2"></i>Edit Role
+                                    </a>
+                                </li>';
+
+                    // Only show delete option for non-default roles
+                    if (!$isDefaultRole) {
+                        $actions .= '
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" 
+                                       href="javascript:void(0)" 
+                                       onclick="deleteRole(' . $role->id . ')">
+                                        <i class="bx bx-trash me-2"></i>Delete Role
+                                    </a>
+                                </li>';
+                    }
+
+                    $actions .= '
+                            </ul>
                         </div>';
+
+                    return $actions;
                 })
                 ->editColumn('created_at', fn($r) => $r->created_at->format('d M Y'))
                 ->escapeColumns([]) // <– ensures HTML isn’t escaped
@@ -65,7 +103,9 @@ class Rolecontroller extends Controller
 
     public function create()
     {
-        return view('admin.roles.create');
+        $permissions = Permission::all();
+
+        return view('admin.roles.create', compact('permissions'));
     }
 
     public function store(Request $request)

@@ -2,11 +2,11 @@
   <div class="sidebar-wrapper" data-simplebar="true">
       <div class="sidebar-header">
           <div>
-              <img src="{{ asset('admin/assets/images/logo-icon.png') }}" class="logo-icon" alt="logo icon">
+              <img src="{{ asset('frontend/assets/img/logo 1.png') }}" alt="logo icon">
           </div>
-          <div>
+          {{-- <div>
               <h4 class="logo-text">Rocker</h4>
-          </div>
+          </div> --}}
           <div class="toggle-icon ms-auto"><i class='bx bx-arrow-back'></i>
           </div>
       </div>
@@ -21,30 +21,26 @@
           </li>
 
           <li class="menu-label">Roles Management</li>
-          <li>
+          {{-- <li>
               <a href="{{ route('admin.roles.index') }}">
                   <div class="parent-icon"><i class='bx bx-cookie'></i>
                   </div>
                   <div class="menu-title">Roles</div>
               </a>
-          </li>
-          {{-- <li>
+          </li> --}}
+          <li>
               <a href="javascript:;" class="has-arrow">
                   <div class="parent-icon"><i class='bx bx-cart'></i>
                   </div>
-                  <div class="menu-title">eCommerce</div>
+                  <div class="menu-title">Roles Management</div>
               </a>
               <ul>
-                  <li> <a href="ecommerce-products.html"><i class='bx bx-radio-circle'></i>Products</a>
+                  <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Roles</a>
                   </li>
-                  <li> <a href="ecommerce-products-details.html"><i class='bx bx-radio-circle'></i>Product Details</a>
-                  </li>
-                  <li> <a href="ecommerce-add-new-products.html"><i class='bx bx-radio-circle'></i>Add New Products</a>
-                  </li>
-                  <li> <a href="ecommerce-orders.html"><i class='bx bx-radio-circle'></i>Orders</a>
+                  <li> <a href="{{ route('admin.roles.create') }}"><i class='bx bx-radio-circle'></i>Create Role</a>
                   </li>
               </ul>
-          </li> --}}
+          </li>
       </ul>
       <!--end navigation-->
   </div>

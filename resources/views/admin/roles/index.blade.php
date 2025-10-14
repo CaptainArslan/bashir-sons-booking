@@ -3,7 +3,7 @@
 @section('title', 'Roles')
 
 @section('styles')
-
+    <link href="assets/plugins/datatable/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 @endsection
 
 @section('content')
@@ -61,8 +61,7 @@
                     [10, 25, 50, 100],
                     [10, 25, 50, 100]
                 ],
-                columns: [
-                    {
+                columns: [{
                         data: 'id',
                         name: 'id',
                     },

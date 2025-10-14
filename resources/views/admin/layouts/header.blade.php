@@ -5,9 +5,9 @@
             <div class="mobile-toggle-menu"><i class='bx bx-menu'></i>
             </div>
 
-            <div class="search-bar d-lg-block d-none" data-bs-toggle="modal" data-bs-target="#SearchModal">
+            {{-- <div class="search-bar d-lg-block d-none" data-bs-toggle="modal" data-bs-target="#SearchModal">
                 <a href="avascript:;" class="btn d-flex align-items-center"><i class='bx bx-search'></i>Search</a>
-            </div>
+            </div> --}}
 
             <div class="top-menu ms-auto">
             </div>
