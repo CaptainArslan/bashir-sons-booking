@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\BusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Bus extends Model
 {
@@ -31,17 +33,17 @@ class Bus extends Model
     // =============================
     // Relationships
     // =============================
-    public function busType()
+    public function busType(): BelongsTo
     {
         return $this->belongsTo(BusType::class);
     }
 
-    public function busLayout()
+    public function busLayout(): BelongsTo
     {
         return $this->belongsTo(BusLayout::class);
     }
 
-    public function facilities()
+    public function facilities(): BelongsToMany
     {
         return $this->belongsToMany(Facility::class, 'bus_facility');
     }

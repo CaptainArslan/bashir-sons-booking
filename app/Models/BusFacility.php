@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Facility;
 use App\Models\Bus;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class BusFacility extends Pivot
@@ -18,12 +19,15 @@ class BusFacility extends Pivot
         'facility_id' => 'integer',
     ];
 
-    public function bus()
+    // =============================
+    // Relationships
+    // =============================
+    public function bus(): BelongsTo
     {
         return $this->belongsTo(Bus::class);
     }
 
-    public function facility()
+    public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);
     }

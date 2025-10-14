@@ -3,7 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Terminal;
+use App\Models\City;
+use App\Enums\TerminalEnum;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
 
 class CounterTerminalController extends Controller
 {
@@ -14,31 +19,178 @@ class CounterTerminalController extends Controller
 
     public function getData(Request $request)
     {
-        return view('admin.counter-terminals.index');
+        if ($request->ajax()) {
+            $terminals = Terminal::query()
+                ->with(['city:id,name'])
+                ->select('id', 'city_id', 'name', 'address', 'phone', 'email', 'status', 'created_at');
+
+            return DataTables::eloquent($terminals)
+                ->addColumn('formatted_name', function ($terminal) {
+                    return '<span class="fw-bold text-primary">' . e($terminal->name) . '</span>';
+                })
+                ->addColumn('city_name', function ($terminal) {
+                    return $terminal->city ? '<span class="badge bg-info">' . e($terminal->city->name) . '</span>' : '<span class="text-muted">No City</span>';
+                })
+                ->addColumn('contact_info', function ($terminal) {
+                    $phone = $terminal->phone ? '<div><i class="bx bx-phone me-1"></i>' . e($terminal->phone) . '</div>' : '';
+                    $email = $terminal->email ? '<div><i class="bx bx-envelope me-1"></i>' . e($terminal->email) . '</div>' : '';
+                    return $phone . $email;
+                })
+                ->addColumn('status_badge', function ($terminal) {
+                    $statusValue = $terminal->status instanceof TerminalEnum ? $terminal->status->value : $terminal->status;
+                    $statusName = TerminalEnum::getStatusName($statusValue);
+                    $statusColor = TerminalEnum::getStatusColor($statusValue);
+                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+                })
+                ->addColumn('actions', function ($terminal) {
+                    $actions = '
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="bx bx-dots-horizontal-rounded"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="' . route('admin.counter-terminals.edit', $terminal->id) . '">
+                                        <i class="bx bx-edit me-2"></i>Edit Terminal
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" 
+                                       href="javascript:void(0)" 
+                                       onclick="deleteTerminal(' . $terminal->id . ')">
+                                        <i class="bx bx-trash me-2"></i>Delete Terminal
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>';
+                    
+                    return $actions;
+                })
+                ->editColumn('created_at', fn($terminal) => $terminal->created_at->format('d M Y'))
+                ->escapeColumns([]) // ensures HTML isn't escaped
+                ->rawColumns(['formatted_name', 'city_name', 'contact_info', 'status_badge', 'actions'])
+                ->make(true);
+        }
     }
 
     public function create()
     {
-        return view('admin.counter-terminals.create');
+        $cities = City::where('status', 'active')->get();
+        $statuses = TerminalEnum::getStatuses();
+        return view('admin.counter-terminals.create', get_defined_vars());
     }
     
     public function store(Request $request)
     {
-        return view('admin.counter-terminals.create');
+        $validated = $request->validate([
+            'city_id' => 'required|exists:cities,id',
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'landmark' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:50',
+            'longitude' => 'nullable|string|max:50',
+            'status' => 'required|string|in:' . implode(',', TerminalEnum::getStatuses()),
+        ], [
+            'city_id.required' => 'City is required',
+            'city_id.exists' => 'Selected city is invalid',
+            'name.required' => 'Terminal name is required',
+            'address.required' => 'Address is required',
+            'phone.required' => 'Phone number is required',
+            'email.email' => 'Please enter a valid email address',
+            'status.required' => 'Status is required',
+            'status.in' => 'Status must be a valid status',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            Terminal::create($validated);
+            
+            DB::commit();
+            
+            return redirect()->route('admin.counter-terminals.index')
+                ->with('success', 'Terminal created successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create terminal: ' . $e->getMessage());
+        }
     }
     
     public function edit($id)
     {
-        return view('admin.counter-terminals.edit');
+        $terminal = Terminal::findOrFail($id);
+        $cities = City::where('status', 'active')->get();
+        $statuses = TerminalEnum::getStatuses();
+        return view('admin.counter-terminals.edit', get_defined_vars());
     }
     
     public function update(Request $request, $id)
     {
-        return view('admin.counter-terminals.edit');
+        $validated = $request->validate([
+            'city_id' => 'required|exists:cities,id',
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
+            'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'landmark' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:50',
+            'longitude' => 'nullable|string|max:50',
+            'status' => 'required|string|in:' . implode(',', TerminalEnum::getStatuses()),
+        ], [
+            'city_id.required' => 'City is required',
+            'city_id.exists' => 'Selected city is invalid',
+            'name.required' => 'Terminal name is required',
+            'address.required' => 'Address is required',
+            'phone.required' => 'Phone number is required',
+            'email.email' => 'Please enter a valid email address',
+            'status.required' => 'Status is required',
+            'status.in' => 'Status must be a valid status',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $terminal = Terminal::findOrFail($id);
+            $terminal->update($validated);
+            
+            DB::commit();
+            
+            return redirect()->route('admin.counter-terminals.index')
+                ->with('success', 'Terminal updated successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update terminal: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)
     {
-        return view('admin.counter-terminals.index');
+        try {
+            $terminal = Terminal::findOrFail($id);
+            $terminal->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Terminal deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting terminal: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

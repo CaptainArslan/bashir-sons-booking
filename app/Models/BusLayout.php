@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\BusLayoutEnum;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BusLayout extends Model
 {
@@ -25,4 +26,12 @@ class BusLayout extends Model
         'status' => BusLayoutEnum::class,
         'seat_map' => 'array',
     ];
+
+    // =============================
+    // Relationships
+    // =============================
+    public function buses(): HasMany
+    {
+        return $this->hasMany(Bus::class);
+    }
 }
