@@ -110,6 +110,7 @@ class RouteController extends Controller
         $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
+        $terminals = Terminal::with('city')->where('status', 'active')->get();
 
         return view('admin.routes.create', get_defined_vars());
     }
@@ -149,6 +150,39 @@ class RouteController extends Controller
                 'string',
                 'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
+            'stops' => [
+                'required',
+                'array',
+                'min:2',
+            ],
+            'stops.*.terminal_id' => [
+                'required',
+                'exists:terminals,id',
+            ],
+            'stops.*.sequence' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'stops.*.distance_from_previous' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:10000',
+            ],
+            'stops.*.approx_travel_time' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:1440',
+            ],
+            'stops.*.is_pickup_allowed' => [
+                'boolean',
+            ],
+            'stops.*.is_dropoff_allowed' => [
+                'boolean',
+            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -170,17 +204,40 @@ class RouteController extends Controller
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
             'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
+            'stops.required' => 'At least 2 stops are required for a route',
+            'stops.min' => 'A route must have at least 2 stops',
+            'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
+            'stops.*.terminal_id.exists' => 'Selected terminal does not exist',
+            'stops.*.sequence.required' => 'Sequence number is required for each stop',
+            'stops.*.sequence.integer' => 'Sequence must be a whole number',
+            'stops.*.sequence.min' => 'Sequence must be at least 1',
+            'stops.*.sequence.max' => 'Sequence cannot exceed 100',
+            'stops.*.distance_from_previous.numeric' => 'Distance must be a valid number',
+            'stops.*.distance_from_previous.min' => 'Distance cannot be negative',
+            'stops.*.distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
+            'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
+            'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
+            'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
             DB::beginTransaction();
 
-            Route::create($validated);
+            // Create the route
+            $route = Route::create($validated);
+
+            // Create route stops
+            $stops = $validated['stops'];
+            foreach ($stops as $stopData) {
+                $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
+                $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                $route->routeStops()->create($stopData);
+            }
 
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route created successfully!');
+                ->with('success', 'Route created successfully with ' . count($stops) . ' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -191,10 +248,11 @@ class RouteController extends Controller
 
     public function edit($id)
     {
-        $route = Route::findOrFail($id);
+        $route = Route::with('routeStops.terminal.city')->findOrFail($id);
         $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->where('id', '!=', $id)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
+        $terminals = Terminal::with('city')->where('status', 'active')->get();
 
         return view('admin.routes.edit', get_defined_vars());
     }
@@ -238,6 +296,39 @@ class RouteController extends Controller
                 'string',
                 'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
+            'stops' => [
+                'required',
+                'array',
+                'min:2',
+            ],
+            'stops.*.terminal_id' => [
+                'required',
+                'exists:terminals,id',
+            ],
+            'stops.*.sequence' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'stops.*.distance_from_previous' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:10000',
+            ],
+            'stops.*.approx_travel_time' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:1440',
+            ],
+            'stops.*.is_pickup_allowed' => [
+                'boolean',
+            ],
+            'stops.*.is_dropoff_allowed' => [
+                'boolean',
+            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -259,17 +350,60 @@ class RouteController extends Controller
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
             'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
+            'stops.required' => 'At least 2 stops are required for a route',
+            'stops.min' => 'A route must have at least 2 stops',
+            'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
+            'stops.*.terminal_id.exists' => 'Selected terminal does not exist',
+            'stops.*.sequence.required' => 'Sequence number is required for each stop',
+            'stops.*.sequence.integer' => 'Sequence must be a whole number',
+            'stops.*.sequence.min' => 'Sequence must be at least 1',
+            'stops.*.sequence.max' => 'Sequence cannot exceed 100',
+            'stops.*.distance_from_previous.numeric' => 'Distance must be a valid number',
+            'stops.*.distance_from_previous.min' => 'Distance cannot be negative',
+            'stops.*.distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
+            'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
+            'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
+            'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
             DB::beginTransaction();
 
+            // Update the route
             $route->update($validated);
+
+            // Handle route stops
+            $stops = $validated['stops'];
+            $existingStopIds = [];
+            $newStops = [];
+
+            foreach ($stops as $key => $stopData) {
+                if (is_numeric($key)) {
+                    // Existing stop
+                    $existingStopIds[] = $key;
+                    $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
+                    $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                    $route->routeStops()->where('id', $key)->update($stopData);
+                } else {
+                    // New stop
+                    $newStops[] = $stopData;
+                }
+            }
+
+            // Delete removed stops
+            $route->routeStops()->whereNotIn('id', $existingStopIds)->delete();
+
+            // Create new stops
+            foreach ($newStops as $stopData) {
+                $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
+                $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                $route->routeStops()->create($stopData);
+            }
 
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route updated successfully!');
+                ->with('success', 'Route updated successfully with ' . count($stops) . ' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()

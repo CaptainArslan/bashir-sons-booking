@@ -113,6 +113,88 @@
                             </div>
                         </div>
                         
+                        <!-- Route Stops Section -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bx bx-map me-2"></i>Route Stops
+                                        </h5>
+                                        <p class="text-muted mb-0">Manage terminals for this route</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="stops-container">
+                                            @foreach($route->routeStops->sortBy('sequence') as $stop)
+                                                <div class="stop-item border rounded p-3 mb-3" data-stop-id="{{ $stop->id }}">
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                                        <h6 class="mb-0">
+                                                            <i class="bx bx-map-pin me-2 text-primary"></i>
+                                                            Stop {{ $stop->sequence }}
+                                                        </h6>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn">
+                                                            <i class="bx bx-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Terminal <span class="text-danger">*</span></label>
+                                                            <select class="form-select terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
+                                                                <option value="">Select Terminal</option>
+                                                                @foreach ($terminals as $terminal)
+                                                                    <option value="{{ $terminal->id }}" {{ $stop->terminal_id == $terminal->id ? 'selected' : '' }}>
+                                                                        {{ $terminal->name }} - {{ $terminal->city->name }} ({{ $terminal->code }})
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Sequence <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
+                                                                   value="{{ $stop->sequence }}" min="1" required>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Distance (km)</label>
+                                                            <input type="number" class="form-control distance-input" name="stops[{{ $stop->id }}][distance_from_previous]" 
+                                                                   value="{{ $stop->distance_from_previous }}" placeholder="0.0" step="0.1" min="0">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Travel Time (min)</label>
+                                                            <input type="number" class="form-control travel-time-input" name="stops[{{ $stop->id }}][approx_travel_time]" 
+                                                                   value="{{ $stop->approx_travel_time }}" placeholder="0" min="0">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="form-check mt-4">
+                                                                <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
+                                                                       value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
+                                                                <label class="form-check-label" for="pickup_{{ $stop->id }}">
+                                                                    Pickup Allowed
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="form-check mt-4">
+                                                                <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
+                                                                       value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
+                                                                <label class="form-check-label" for="dropoff_{{ $stop->id }}">
+                                                                    Dropoff Allowed
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-outline-primary" id="add-stop-btn">
+                                                <i class="bx bx-plus"></i> Add Stop
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex justify-content-end gap-2">
@@ -208,9 +290,131 @@ document.addEventListener('DOMContentLoaded', function() {
     directionSelect.addEventListener('change', generateRouteCode);
 
     // Initialize code generation if there are existing values
-    if (nameInput.value || directionSelect.value) {
-        generateRouteCode();
-    }
-});
+        if (nameInput.value || directionSelect.value) {
+            generateRouteCode();
+        }
+
+        // Route Stops Management
+        let stopCounter = {{ $route->routeStops->max('sequence') ?? 0 }};
+        const stopsContainer = document.getElementById('stops-container');
+        const addStopBtn = document.getElementById('add-stop-btn');
+
+        addStopBtn.addEventListener('click', function() {
+            addStop();
+        });
+
+        // Add event listeners to existing stops
+        document.querySelectorAll('.remove-stop-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.stop-item').remove();
+                updateSequences();
+            });
+        });
+
+        document.querySelectorAll('.distance-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const distance = parseFloat(this.value);
+                const travelTimeInput = this.closest('.stop-item').querySelector('.travel-time-input');
+                if (distance && !travelTimeInput.value) {
+                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
+                    travelTimeInput.value = travelTime;
+                }
+            });
+        });
+
+        function addStop() {
+            stopCounter++;
+            const stopDiv = document.createElement('div');
+            stopDiv.className = 'stop-item border rounded p-3 mb-3';
+            stopDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="mb-0">
+                        <i class="bx bx-map-pin me-2 text-primary"></i>
+                        Stop ${stopCounter}
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn">
+                        <i class="bx bx-trash"></i>
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Terminal <span class="text-danger">*</span></label>
+                        <select class="form-select terminal-select" name="stops[new_${stopCounter}][terminal_id]" required>
+                            <option value="">Select Terminal</option>
+                            @foreach ($terminals as $terminal)
+                                <option value="{{ $terminal->id }}">
+                                    {{ $terminal->name }} - {{ $terminal->city->name }} ({{ $terminal->code }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sequence <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
+                               value="${stopCounter}" min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Distance (km)</label>
+                        <input type="number" class="form-control distance-input" name="stops[new_${stopCounter}][distance_from_previous]" 
+                               placeholder="0.0" step="0.1" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Travel Time (min)</label>
+                        <input type="number" class="form-control travel-time-input" name="stops[new_${stopCounter}][approx_travel_time]" 
+                               placeholder="0" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
+                                   value="1" id="pickup_new_${stopCounter}" checked>
+                            <label class="form-check-label" for="pickup_new_${stopCounter}">
+                                Pickup Allowed
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
+                                   value="1" id="dropoff_new_${stopCounter}" checked>
+                            <label class="form-check-label" for="dropoff_new_${stopCounter}">
+                                Dropoff Allowed
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            stopsContainer.appendChild(stopDiv);
+
+            // Add event listeners for this stop
+            const removeBtn = stopDiv.querySelector('.remove-stop-btn');
+            const distanceInput = stopDiv.querySelector('.distance-input');
+            const travelTimeInput = stopDiv.querySelector('.travel-time-input');
+
+            removeBtn.addEventListener('click', function() {
+                stopDiv.remove();
+                updateSequences();
+            });
+
+            // Auto-calculate travel time based on distance
+            distanceInput.addEventListener('input', function() {
+                const distance = parseFloat(this.value);
+                if (distance && !travelTimeInput.value) {
+                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
+                    travelTimeInput.value = travelTime;
+                }
+            });
+        }
+
+        function updateSequences() {
+            const stopItems = stopsContainer.querySelectorAll('.stop-item');
+            stopItems.forEach((item, index) => {
+                const sequenceInput = item.querySelector('.sequence-input');
+                const stopNumber = item.querySelector('h6');
+                sequenceInput.value = index + 1;
+                stopNumber.innerHTML = `<i class="bx bx-map-pin me-2 text-primary"></i>Stop ${index + 1}`;
+            });
+        }
+    });
 </script>
 @endsection
