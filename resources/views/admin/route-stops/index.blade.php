@@ -17,13 +17,13 @@
                 </ol>
             </nav>
         </div>
-        <div class="ms-auto">
+        {{-- <div class="ms-auto">
             @can('create route stops')
                 <a href="{{ route('admin.route-stops.create') }}" class="btn btn-primary">
                     <i class="bx bx-plus"></i> Add New Route Stop
                 </a>
             @endcan
-        </div>
+        </div> --}}
     </div>
     <!--end breadcrumb-->
     <div class="card">

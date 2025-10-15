@@ -151,7 +151,8 @@
                                                         <div class="col-md-3">
                                                             <label class="form-label">Sequence <span class="text-danger">*</span></label>
                                                             <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
-                                                                   value="{{ $stop->sequence }}" min="1" required>
+                                                                   value="{{ $stop->sequence }}" min="1" required readonly>
+                                                            <div class="form-text">Sequence is automatically managed</div>
                                                         </div>
                                                         <div class="col-md-3">
                                                             <label class="form-label">Distance (km)</label>
@@ -351,7 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-md-3">
                         <label class="form-label">Sequence <span class="text-danger">*</span></label>
                         <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
-                               value="${stopCounter}" min="1" required>
+                               value="${stopCounter}" min="1" required readonly>
+                        <div class="form-text">Sequence is automatically managed</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Distance (km)</label>

@@ -97,82 +97,77 @@ class RouteStopController extends Controller
         }
     }
 
-    public function create()
-    {
-        $routes = Route::where('status', 'active')->get();
-        $terminals = Terminal::with('city')->where('status', 'active')->get();
-        
-        return view('admin.route-stops.create', get_defined_vars());
-    }
+    // public function create()
+    // {
+    //     $routes = Route::where('status', 'active')->get();
+    //     $terminals = Terminal::with('city')->where('status', 'active')->get();
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'route_id' => 'required|exists:routes,id',
-            'terminal_id' => 'required|exists:terminals,id',
-            'sequence' => 'required|integer|min:1',
-            'distance_from_previous' => 'nullable|numeric|min:0',
-            'approx_travel_time' => 'nullable|integer|min:0',
-            'is_pickup_allowed' => 'boolean',
-            'is_dropoff_allowed' => 'boolean',
-        ], [
-            'route_id.required' => 'Route is required',
-            'route_id.exists' => 'Selected route is invalid',
-            'terminal_id.required' => 'Terminal is required',
-            'terminal_id.exists' => 'Selected terminal is invalid',
-            'sequence.required' => 'Sequence is required',
-            'sequence.integer' => 'Sequence must be a number',
-            'sequence.min' => 'Sequence must be at least 1',
-            'distance_from_previous.numeric' => 'Distance must be a number',
-            'distance_from_previous.min' => 'Distance cannot be negative',
-            'approx_travel_time.integer' => 'Travel time must be a number',
-            'approx_travel_time.min' => 'Travel time cannot be negative',
-        ]);
+    //     return view('admin.route-stops.create', get_defined_vars());
+    // }
 
-        try {
-            DB::beginTransaction();
-            
-            // Check if terminal already exists in this route
-            if (RouteStop::where('route_id', $validated['route_id'])
-                ->where('terminal_id', $validated['terminal_id'])
-                ->exists()) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Terminal already exists in this route.');
-            }
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'route_id' => 'required|exists:routes,id',
+    //         'terminal_id' => 'required|exists:terminals,id',
+    //         'distance_from_previous' => 'nullable|numeric|min:0',
+    //         'approx_travel_time' => 'nullable|integer|min:0',
+    //         'is_pickup_allowed' => 'boolean',
+    //         'is_dropoff_allowed' => 'boolean',
+    //     ], [
+    //         'route_id.required' => 'Route is required',
+    //         'route_id.exists' => 'Selected route is invalid',
+    //         'terminal_id.required' => 'Terminal is required',
+    //         'terminal_id.exists' => 'Selected terminal is invalid',
+    //         'distance_from_previous.numeric' => 'Distance must be a number',
+    //         'distance_from_previous.min' => 'Distance cannot be negative',
+    //         'approx_travel_time.integer' => 'Travel time must be a number',
+    //         'approx_travel_time.min' => 'Travel time cannot be negative',
+    //     ]);
 
-            RouteStop::create($validated);
-            
-            DB::commit();
-            
-            return redirect()->route('admin.route-stops.index')
-                ->with('success', 'Route stop created successfully!');
-                
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Failed to create route stop: ' . $e->getMessage());
-        }
-    }
+    //     try {
+    //         DB::beginTransaction();
+
+    //         // Check if terminal already exists in this route
+    //         if (RouteStop::where('route_id', $validated['route_id'])
+    //             ->where('terminal_id', $validated['terminal_id'])
+    //             ->exists()
+    //         ) {
+    //             return redirect()->back()
+    //                 ->withInput()
+    //                 ->with('error', 'Terminal already exists in this route.');
+    //         }
+
+    //         RouteStop::create($validated);
+
+    //         DB::commit();
+
+    //         return redirect()->route('admin.route-stops.index')
+    //             ->with('success', 'Route stop created successfully!');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return redirect()->back()
+    //             ->withInput()
+    //             ->with('error', 'Failed to create route stop: ' . $e->getMessage());
+    //     }
+    // }
 
     public function edit($id)
     {
         $routeStop = RouteStop::with(['route', 'terminal.city'])->findOrFail($id);
         $routes = Route::where('status', 'active')->get();
         $terminals = Terminal::with('city')->where('status', 'active')->get();
-        
+
         return view('admin.route-stops.edit', get_defined_vars());
     }
 
     public function update(Request $request, $id)
     {
         $routeStop = RouteStop::findOrFail($id);
-        
+
         $validated = $request->validate([
             'route_id' => 'required|exists:routes,id',
             'terminal_id' => 'required|exists:terminals,id',
-            'sequence' => 'required|integer|min:1',
             'distance_from_previous' => 'nullable|numeric|min:0',
             'approx_travel_time' => 'nullable|integer|min:0',
             'is_pickup_allowed' => 'boolean',
@@ -182,9 +177,6 @@ class RouteStopController extends Controller
             'route_id.exists' => 'Selected route is invalid',
             'terminal_id.required' => 'Terminal is required',
             'terminal_id.exists' => 'Selected terminal is invalid',
-            'sequence.required' => 'Sequence is required',
-            'sequence.integer' => 'Sequence must be a number',
-            'sequence.min' => 'Sequence must be at least 1',
             'distance_from_previous.numeric' => 'Distance must be a number',
             'distance_from_previous.min' => 'Distance cannot be negative',
             'approx_travel_time.integer' => 'Travel time must be a number',
@@ -193,24 +185,24 @@ class RouteStopController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             // Check if terminal already exists in this route (excluding current record)
             if (RouteStop::where('route_id', $validated['route_id'])
                 ->where('terminal_id', $validated['terminal_id'])
                 ->where('id', '!=', $id)
-                ->exists()) {
+                ->exists()
+            ) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Terminal already exists in this route.');
             }
 
             $routeStop->update($validated);
-            
+
             DB::commit();
-            
+
             return redirect()->route('admin.route-stops.index')
                 ->with('success', 'Route stop updated successfully!');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -224,7 +216,7 @@ class RouteStopController extends Controller
         try {
             $routeStop = RouteStop::findOrFail($id);
             $routeStop->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Route stop deleted successfully.'

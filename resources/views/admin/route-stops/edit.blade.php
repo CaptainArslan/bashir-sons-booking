@@ -63,8 +63,8 @@
                             <div class="col-md-6">
                                 <label for="sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('sequence') is-invalid @enderror" id="sequence"
-                                    name="sequence" placeholder="Enter sequence number" value="{{ old('sequence', $routeStop->sequence) }}" min="1" required>
-                                <div class="form-text">Enter the order of this stop in the route (1, 2, 3, etc.)</div>
+                                    name="sequence" placeholder="Enter sequence number" value="{{ old('sequence', $routeStop->sequence) }}" min="1" readonly>
+                                <div class="form-text">Sequence is automatically managed and cannot be edited</div>
                                 @error('sequence')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

@@ -177,12 +177,11 @@ Route::middleware('auth')->group(function () {
         // Route Stops Management
         Route::get('/route-stops', [RouteStopController::class, 'index'])->can('view route stops')->name('route-stops.index');
         Route::get('/route-stops/data', [RouteStopController::class, 'getData'])->can('view route stops')->name('route-stops.data');
-        Route::get('/route-stops/create', [RouteStopController::class, 'create'])->can('create route stops')->name('route-stops.create');
-        Route::post('/route-stops', [RouteStopController::class, 'store'])->can('create route stops')->name('route-stops.store');
+        // Route::get('/route-stops/create', [RouteStopController::class, 'create'])->can('create route stops')->name('route-stops.create');
+        // Route::post('/route-stops', [RouteStopController::class, 'store'])->can('create route stops')->name('route-stops.store');
         Route::get('/route-stops/{id}/edit', [RouteStopController::class, 'edit'])->can('edit route stops')->name('route-stops.edit');
         Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
         Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
-
     });
 });
 
