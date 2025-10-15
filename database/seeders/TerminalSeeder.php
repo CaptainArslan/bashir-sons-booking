@@ -114,7 +114,24 @@ class TerminalSeeder extends Seeder
      */
     private function generateUniqueTerminalCode(string $cityName, int $index): string
     {
-        return strtoupper($cityName . $index);
+        // Get first 3 letters of city name
+        $cityCode = strtoupper(substr($cityName, 0, 3));
+        
+        // Add index with padding
+        $number = str_pad($index, 2, '0', STR_PAD_LEFT);
+        
+        $code = $cityCode . $number;
+        
+        // Check if code already exists and add suffix if needed
+        $originalCode = $code;
+        $counter = 1;
+        
+        while (Terminal::where('code', $code)->exists()) {
+            $code = $originalCode . chr(64 + $counter); // Add A, B, C, etc.
+            $counter++;
+        }
+        
+        return $code;
     }
 
     /**

@@ -22,11 +22,14 @@ class CounterTerminalController extends Controller
         if ($request->ajax()) {
             $terminals = Terminal::query()
                 ->with(['city:id,name'])
-                ->select('id', 'city_id', 'name', 'address', 'phone', 'email', 'status', 'created_at');
+                ->select('id', 'city_id', 'name', 'code', 'address', 'phone', 'email', 'status', 'created_at');
 
             return DataTables::eloquent($terminals)
                 ->addColumn('formatted_name', function ($terminal) {
-                    return '<span class="fw-bold text-primary">' . e($terminal->name) . '</span>';
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-primary">' . e($terminal->name) . '</span>
+                                <small class="text-muted">Code: ' . e($terminal->code) . '</small>
+                            </div>';
                 })
                 ->addColumn('city_name', function ($terminal) {
                     return $terminal->city ? '<span class="badge bg-info">' . e($terminal->city->name) . '</span>' : '<span class="text-muted">No City</span>';
@@ -89,9 +92,10 @@ class CounterTerminalController extends Controller
     {
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\.]+$/',
+            'code' => 'required|string|max:10|unique:terminals,code|regex:/^[A-Z0-9]+$/',
             'address' => 'required|string|max:500',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|regex:/^[\d\-\+\(\)\s]+$/',
             'email' => 'nullable|email|max:255',
             'landmark' => 'nullable|string|max:255',
             'latitude' => 'nullable|string|max:50',
@@ -101,8 +105,13 @@ class CounterTerminalController extends Controller
             'city_id.required' => 'City is required',
             'city_id.exists' => 'Selected city is invalid',
             'name.required' => 'Terminal name is required',
+            'name.regex' => 'Terminal name can only contain letters, spaces, hyphens, and periods',
+            'code.required' => 'Terminal code is required',
+            'code.unique' => 'Terminal code already exists',
+            'code.regex' => 'Terminal code can only contain uppercase letters and numbers',
             'address.required' => 'Address is required',
             'phone.required' => 'Phone number is required',
+            'phone.regex' => 'Please enter a valid phone number',
             'email.email' => 'Please enter a valid email address',
             'status.required' => 'Status is required',
             'status.in' => 'Status must be a valid status',
@@ -136,11 +145,14 @@ class CounterTerminalController extends Controller
     
     public function update(Request $request, $id)
     {
+        $terminal = Terminal::findOrFail($id);
+        
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\.]+$/',
+            'code' => 'required|string|max:10|unique:terminals,code,' . $terminal->id . '|regex:/^[A-Z0-9]+$/',
             'address' => 'required|string|max:500',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|regex:/^[\d\-\+\(\)\s]+$/',
             'email' => 'nullable|email|max:255',
             'landmark' => 'nullable|string|max:255',
             'latitude' => 'nullable|string|max:50',
@@ -150,8 +162,13 @@ class CounterTerminalController extends Controller
             'city_id.required' => 'City is required',
             'city_id.exists' => 'Selected city is invalid',
             'name.required' => 'Terminal name is required',
+            'name.regex' => 'Terminal name can only contain letters, spaces, hyphens, and periods',
+            'code.required' => 'Terminal code is required',
+            'code.unique' => 'Terminal code already exists',
+            'code.regex' => 'Terminal code can only contain uppercase letters and numbers',
             'address.required' => 'Address is required',
             'phone.required' => 'Phone number is required',
+            'phone.regex' => 'Please enter a valid phone number',
             'email.email' => 'Please enter a valid email address',
             'status.required' => 'Status is required',
             'status.in' => 'Status must be a valid status',

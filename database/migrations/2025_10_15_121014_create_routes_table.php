@@ -16,7 +16,7 @@ return new class extends Migration
             // Each route belongs to an operator/company (optional if multi-company)
             $table->foreignId('operator_id')
                 ->nullable()
-                ->constrained('companies')
+                ->constrained('users')
                 ->nullOnDelete();
 
             // Code unique per operator (e.g., “KHI-HYD-01”)

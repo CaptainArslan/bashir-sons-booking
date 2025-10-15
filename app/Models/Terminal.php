@@ -64,7 +64,7 @@ class Terminal extends Model
     {
         return Attribute::make(
             get: fn($value) => strtoupper($value),
-            set: fn($value) => strtolower($value),
+            set: fn($value) => strtoupper($value),
         );
     }
 }

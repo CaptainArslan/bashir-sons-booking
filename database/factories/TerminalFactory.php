@@ -61,6 +61,7 @@ class TerminalFactory extends Factory
         return [
             'city_id' => $city->id,
             'name' => $this->faker->randomElement($terminalNames) . ' ' . $city->name . ' ' . $this->faker->unique()->numberBetween(1, 999),
+            'code' => $this->generateTerminalCode($city->name),
             'address' => $this->faker->randomElement($addresses),
             'phone' => $this->faker->phoneNumber(),
             'email' => $this->faker->optional(0.7)->safeEmail(), // 70% chance of having email
@@ -114,5 +115,19 @@ class TerminalFactory extends Factory
                 'Behind City Hall', 'Near Airport', 'Close to University'
             ]),
         ]);
+    }
+
+    /**
+     * Generate a unique terminal code based on city name
+     */
+    private function generateTerminalCode(string $cityName): string
+    {
+        // Get first 3 letters of city name
+        $cityCode = strtoupper(substr($cityName, 0, 3));
+        
+        // Add a random number to make it unique
+        $number = $this->faker->unique()->numberBetween(1, 999);
+        
+        return $cityCode . $number;
     }
 }

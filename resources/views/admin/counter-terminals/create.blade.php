@@ -54,6 +54,17 @@
                                 @enderror
                             </div>
                             
+                            <div class="col-md-6">
+                                <label for="code" class="form-label">Terminal Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('code') is-invalid @enderror" id="code"
+                                    name="code" placeholder="Enter Terminal Code (e.g., KAR01)" value="{{ old('code') }}" 
+                                    style="text-transform: uppercase;" required>
+                                <div class="form-text">Enter unique terminal code (e.g., KAR01, LAH02)</div>
+                                @error('code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
                             <div class="col-md-12">
                                 <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
                                 <textarea class="form-control @error('address') is-invalid @enderror" id="address"
