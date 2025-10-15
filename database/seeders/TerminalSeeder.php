@@ -58,6 +58,7 @@ class TerminalSeeder extends Seeder
                     ->create([
                         'city_id' => $city->id,
                         'name' => $terminalName,
+                        'code' => $this->generateUniqueTerminalCode($city->name, $i + 1),
                         'address' => $this->generateAddress($city->name),
                         'phone' => $this->generatePhoneNumber(),
                         'email' => $this->generateEmail($city->name),
@@ -106,6 +107,14 @@ class TerminalSeeder extends Seeder
         }
         
         return $terminalName;
+    }
+
+    /**
+     * Generate unique terminal code
+     */
+    private function generateUniqueTerminalCode(string $cityName, int $index): string
+    {
+        return strtoupper($cityName . $index);
     }
 
     /**
