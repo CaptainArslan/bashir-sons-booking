@@ -40,31 +40,38 @@ class BusTypeController extends Controller
                     return '<span class="badge ' . $badgeClass . '">' . $count . ' bus' . ($count !== 1 ? 'es' : '') . '</span>';
                 })
                 ->addColumn('actions', function ($busType) {
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="' . route('admin.bus-types.edit', $busType->id) . '">
-                                        <i class="bx bx-edit me-2"></i>Edit Bus Type
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteBusType(' . $busType->id . ')">
-                                        <i class="bx bx-trash me-2"></i>Delete Bus Type
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
+
+                    // Edit button
+                    if (auth()->user()->can('edit bus types')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="' . route('admin.bus-types.edit', $busType->id) . '">
+                                <i class="bx bx-edit me-2"></i>Edit Bus Type
+                            </a>
+                        </li>';
+                    }
+
+                    // Delete button
+                    if (auth()->user()->can('delete bus types')) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteBusType(' . $busType->id . ')">
+                                <i class="bx bx-trash me-2"></i>Delete Bus Type
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })
