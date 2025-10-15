@@ -13,6 +13,7 @@ use Database\Seeders\BusTypeSeeder;
 use Database\Seeders\BusSeeder;
 use Database\Seeders\CitySeeder;
 use Database\Seeders\TerminalSeeder;
+use Database\Seeders\RouteSeeder;
 use Database\Seeders\BannerSeeder;
 use Database\Seeders\GeneralSettingSeeder;
 
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CitySeeder::class,
             TerminalSeeder::class,
+            RouteSeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
             FacilitySeeder::class,

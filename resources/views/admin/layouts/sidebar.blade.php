@@ -73,7 +73,7 @@
               </ul>
           </li>
           @endcan
-          @canany(['view terminals', 'view buses', 'view bus types', 'view bus layouts', 'view facilities'])
+          @canany(['view terminals', 'view buses', 'view bus types', 'view bus layouts', 'view facilities', 'view routes', 'view route stops'])
           <li class="menu-label">Transport Management</li>
           @endcanany
           
@@ -88,6 +88,25 @@
                   <li> <a href="{{ route('admin.counter-terminals.index') }}"><i class='bx bx-radio-circle'></i>Terminals</a></li>
                   @can('create terminals')
                   <li> <a href="{{ route('admin.counter-terminals.create') }}"><i class='bx bx-radio-circle'></i>Create Counter</a></li>
+                  @endcan
+              </ul>
+          </li>
+          @endcan
+          
+          @can('view routes')
+          <li>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-map'></i>
+                  </div>
+                  <div class="menu-title">Route Management</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.routes.index') }}"><i class='bx bx-radio-circle'></i>All Routes</a></li>
+                  @can('create routes')
+                  <li> <a href="{{ route('admin.routes.create') }}"><i class='bx bx-radio-circle'></i>Add New Route</a></li>
+                  @endcan
+                  @can('view route stops')
+                  <li> <a href="{{ route('admin.route-stops.index') }}"><i class='bx bx-radio-circle'></i>Route Stops</a></li>
                   @endcan
               </ul>
           </li>

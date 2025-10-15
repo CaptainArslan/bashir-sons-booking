@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\RouteStopController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -157,6 +159,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/enquiries/data', [EnquiryController::class, 'getData'])->can('view enquiries')->name('enquiries.data');
         Route::get('/enquiries/{id}', [EnquiryController::class, 'show'])->can('view enquiries')->name('enquiries.show');
         Route::delete('/enquiries/{id}', [EnquiryController::class, 'destroy'])->can('delete enquiries')->name('enquiries.destroy');
+
+        // Routes Management
+        Route::get('/routes', [RouteController::class, 'index'])->can('view routes')->name('routes.index');
+        Route::get('/routes/data', [RouteController::class, 'getData'])->can('view routes')->name('routes.data');
+        Route::get('/routes/create', [RouteController::class, 'create'])->can('create routes')->name('routes.create');
+        Route::post('/routes', [RouteController::class, 'store'])->can('create routes')->name('routes.store');
+        Route::get('/routes/{id}/edit', [RouteController::class, 'edit'])->can('edit routes')->name('routes.edit');
+        Route::put('/routes/{id}', [RouteController::class, 'update'])->can('edit routes')->name('routes.update');
+        Route::delete('/routes/{id}', [RouteController::class, 'destroy'])->can('delete routes')->name('routes.destroy');
+        Route::get('/routes/{id}/stops', [RouteController::class, 'stops'])->can('view routes')->name('routes.stops');
+        Route::post('/routes/{id}/stops', [RouteController::class, 'storeStop'])->can('create routes')->name('routes.stops.store');
+        Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update');
+        Route::delete('/routes/{id}/stops/{stopId}', [RouteController::class, 'destroyStop'])->can('delete routes')->name('routes.stops.destroy');
+
+        // Route Stops Management
+        Route::get('/route-stops', [RouteStopController::class, 'index'])->can('view route stops')->name('route-stops.index');
+        Route::get('/route-stops/data', [RouteStopController::class, 'getData'])->can('view route stops')->name('route-stops.data');
+        Route::get('/route-stops/create', [RouteStopController::class, 'create'])->can('create route stops')->name('route-stops.create');
+        Route::post('/route-stops', [RouteStopController::class, 'store'])->can('create route stops')->name('route-stops.store');
+        Route::get('/route-stops/{id}/edit', [RouteStopController::class, 'edit'])->can('edit route stops')->name('route-stops.edit');
+        Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
+        Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
 
     });
 });

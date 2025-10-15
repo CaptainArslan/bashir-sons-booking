@@ -84,6 +84,18 @@ class PermissionSeeder extends Seeder
             'edit general settings',
             'delete general settings',
             
+            // Route Management
+            'view routes',
+            'create routes',
+            'edit routes',
+            'delete routes',
+            
+            // Route Stop Management
+            'view route stops',
+            'create route stops',
+            'edit route stops',
+            'delete route stops',
+            
             // Enquiry Management
             'view enquiries',
             'delete enquiries',

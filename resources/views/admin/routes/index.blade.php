@@ -1,41 +1,43 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Roles')
-
+@section('title', 'Routes')
 @section('styles')
-    <link href="assets/plugins/datatable/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')
     <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-        <div class="breadcrumb-title pe-3">Roles Management</div>
+        <div class="breadcrumb-title pe-3">Transport Management</div>
         <div class="ps-3">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 p-0">
                     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a>
                     </li>
-                    <li class="breadcrumb-item active" aria-current="page">Roles</li>
+                    <li class="breadcrumb-item active" aria-current="page">Routes</li>
                 </ol>
             </nav>
         </div>
         <div class="ms-auto">
-            <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Role
-            </a>
+            @can('create routes')
+                <a href="{{ route('admin.routes.create') }}" class="btn btn-primary">
+                    <i class="bx bx-plus"></i> Add New Route
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->
-
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table id="roles-table" class="table table-striped table-bordered">
+                <table id="routes-table" class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Role Name</th>
-                            <th>Permissions Count</th>
-                            <th>Permissions</th>
+                            <th>Route</th>
+                            <th>Direction</th>
+                            <th>Return Route</th>
+                            <th>Stops</th>
+                            <th>Status</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -50,10 +52,10 @@
     @include('admin.layouts.datatables')
     <script>
         $(document).ready(function() {
-            $('#roles-table').DataTable({
+            $('#routes-table').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('admin.roles.data') }}",
+                ajax: "{{ route('admin.routes.data') }}",
                 order: [
                     [0, 'desc']
                 ],
@@ -66,17 +68,24 @@
                         name: 'name',
                     },
                     {
-                        data: 'permissions_count',
-                        name: 'permissions_count',
-                        searchable: false,
-                        orderable: true,
+                        data: 'direction_badge',
+                        name: 'direction',
                     },
                     {
-                        data: 'permissions_list',
-                        name: 'permissions_list',
-                        searchable: false,
+                        data: 'return_route',
+                        name: 'return_route',
                         orderable: false,
-
+                        searchable: false,
+                    },
+                    {
+                        data: 'stops_count',
+                        name: 'stops_count',
+                        orderable: false,
+                        searchable: false,
+                    },
+                    {
+                        data: 'status_badge',
+                        name: 'status',
                     },
                     {
                         data: 'created_at',
@@ -89,45 +98,32 @@
                         searchable: false,
                     }
                 ],
-                columnDefs: [{
-                    targets: [4],
-                    className: 'wrap-text',
-                }],
-                language: {
-                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
-                    emptyTable: "No roles found",
-                    zeroRecords: "No matching roles found"
-                }
             });
         });
 
-        // Delete role function
-        function deleteRole(roleId) {
-            if (confirm('Are you sure you want to delete this role?')) {
+        // Delete route function
+        function deleteRoute(routeId) {
+            if (confirm('Are you sure you want to delete this route?')) {
                 $.ajax({
-                    url: "{{ route('admin.roles.destroy', ':id') }}".replace(':id', roleId),
+                    url: "{{ route('admin.routes.destroy', ':id') }}".replace(':id', routeId),
                     type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
                         if (response.success) {
-                            $('#roles-table').DataTable().ajax.reload();
+                            $('#routes-table').DataTable().ajax.reload();
                             toastr.success(response.message);
                         } else {
                             toastr.error(response.message);
                         }
                     },
                     error: function(xhr) {
-                        let message = 'An error occurred while deleting the role.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            message = xhr.responseJSON.message;
-                        }
-                        toastr.error(message);
+                        const response = xhr.responseJSON;
+                        toastr.error(response.message || 'An error occurred while deleting the route.');
                     }
                 });
             }
         }
     </script>
-
 @endsection

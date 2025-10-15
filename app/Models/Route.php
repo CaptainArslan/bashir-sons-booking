@@ -59,6 +59,21 @@ class Route extends Model
     | Accessors & Mutators
     |--------------------------------------------------------------------------
     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => ucfirst($value),
+        );
+    }
+
+    protected function code(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => strtoupper($value),
+            set: fn($value) => strtoupper($value),
+        );
+    }
+    
     protected function firstTerminal(): Attribute
     {
         return Attribute::make(
