@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Models\GeneralSetting;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
+
+class GeneralSettingController extends Controller
+{
+    public function index()
+    {
+        $settings = GeneralSetting::first();
+        return view('admin.general-settings.index', get_defined_vars());
+    }
+
+    public function create()
+    {
+        return view('admin.general-settings.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'alternate_phone' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'country' => 'required|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'website_url' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,ico|max:1024',
+            'tagline' => 'nullable|string|max:255',
+            'facebook_url' => 'nullable|url|max:255',
+            'instagram_url' => 'nullable|url|max:255',
+            'twitter_url' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
+            'youtube_url' => 'nullable|url|max:255',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:20',
+            'business_hours' => 'nullable|string|max:500',
+        ], [
+            'company_name.required' => 'Company name is required',
+            'email.required' => 'Email is required',
+            'email.email' => 'Email must be a valid email address',
+            'phone.required' => 'Phone number is required',
+            'address.required' => 'Address is required',
+            'city.required' => 'City is required',
+            'state.required' => 'State is required',
+            'country.required' => 'Country is required',
+            'website_url.url' => 'Website URL must be a valid URL',
+            'logo.image' => 'Logo must be an image',
+            'logo.mimes' => 'Logo must be jpeg, png, jpg, or gif',
+            'logo.max' => 'Logo size must be less than 2MB',
+            'favicon.image' => 'Favicon must be an image',
+            'favicon.mimes' => 'Favicon must be jpeg, png, jpg, gif, or ico',
+            'favicon.max' => 'Favicon size must be less than 1MB',
+            'facebook_url.url' => 'Facebook URL must be a valid URL',
+            'instagram_url.url' => 'Instagram URL must be a valid URL',
+            'twitter_url.url' => 'Twitter URL must be a valid URL',
+            'linkedin_url.url' => 'LinkedIn URL must be a valid URL',
+            'youtube_url.url' => 'YouTube URL must be a valid URL',
+            'support_email.email' => 'Support email must be a valid email address',
+        ]);
+
+        // Handle file uploads
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('settings', 'public');
+        }
+
+        if ($request->hasFile('favicon')) {
+            $validated['favicon'] = $request->file('favicon')->store('settings', 'public');
+        }
+
+        GeneralSetting::create($validated);
+
+        return redirect()->route('admin.general-settings.index')->with('success', 'General settings created successfully');
+    }
+
+    public function edit($id)
+    {
+        $settings = GeneralSetting::findOrFail($id);
+        return view('admin.general-settings.edit', get_defined_vars());
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'alternate_phone' => 'nullable|string|max:20',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'country' => 'required|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'website_url' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,ico|max:1024',
+            'tagline' => 'nullable|string|max:255',
+            'facebook_url' => 'nullable|url|max:255',
+            'instagram_url' => 'nullable|url|max:255',
+            'twitter_url' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
+            'youtube_url' => 'nullable|url|max:255',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:20',
+            'business_hours' => 'nullable|string|max:500',
+        ], [
+            'company_name.required' => 'Company name is required',
+            'email.required' => 'Email is required',
+            'email.email' => 'Email must be a valid email address',
+            'phone.required' => 'Phone number is required',
+            'address.required' => 'Address is required',
+            'city.required' => 'City is required',
+            'state.required' => 'State is required',
+            'country.required' => 'Country is required',
+            'website_url.url' => 'Website URL must be a valid URL',
+            'logo.image' => 'Logo must be an image',
+            'logo.mimes' => 'Logo must be jpeg, png, jpg, or gif',
+            'logo.max' => 'Logo size must be less than 2MB',
+            'favicon.image' => 'Favicon must be an image',
+            'favicon.mimes' => 'Favicon must be jpeg, png, jpg, gif, or ico',
+            'favicon.max' => 'Favicon size must be less than 1MB',
+            'facebook_url.url' => 'Facebook URL must be a valid URL',
+            'instagram_url.url' => 'Instagram URL must be a valid URL',
+            'twitter_url.url' => 'Twitter URL must be a valid URL',
+            'linkedin_url.url' => 'LinkedIn URL must be a valid URL',
+            'youtube_url.url' => 'YouTube URL must be a valid URL',
+            'support_email.email' => 'Support email must be a valid email address',
+        ]);
+
+        $settings = GeneralSetting::findOrFail($id);
+
+        // Handle file uploads
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($settings->logo && Storage::disk('public')->exists($settings->logo)) {
+                Storage::disk('public')->delete($settings->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('settings', 'public');
+        } else {
+            unset($validated['logo']);
+        }
+
+        if ($request->hasFile('favicon')) {
+            // Delete old favicon if exists
+            if ($settings->favicon && Storage::disk('public')->exists($settings->favicon)) {
+                Storage::disk('public')->delete($settings->favicon);
+            }
+            $validated['favicon'] = $request->file('favicon')->store('settings', 'public');
+        } else {
+            unset($validated['favicon']);
+        }
+
+        $settings->update($validated);
+
+        return redirect()->route('admin.general-settings.index')->with('success', 'General settings updated successfully');
+    }
+
+    public function destroy($id)
+    {
+        $settings = GeneralSetting::findOrFail($id);
+        
+        // Delete associated files
+        if ($settings->logo && Storage::disk('public')->exists($settings->logo)) {
+            Storage::disk('public')->delete($settings->logo);
+        }
+        if ($settings->favicon && Storage::disk('public')->exists($settings->favicon)) {
+            Storage::disk('public')->delete($settings->favicon);
+        }
+
+        $settings->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'General settings deleted successfully.'
+        ]);
+    }
+}

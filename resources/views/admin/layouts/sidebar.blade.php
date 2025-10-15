@@ -70,6 +70,56 @@
                   </li>
               </ul>
           </li>
+          <li>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-bus'></i>
+                  </div>
+                  <div class="menu-title">Bus Management</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.buses.index') }}"><i class='bx bx-radio-circle'></i>All Buses</a></li>
+                  <li> <a href="{{ route('admin.buses.create') }}"><i class='bx bx-radio-circle'></i>Add New Bus</a></li>
+              </ul>
+          </li>
+          <li>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-category'></i>
+                  </div>
+                  <div class="menu-title">Bus Configuration</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.bus-types.index') }}"><i class='bx bx-radio-circle'></i>Bus Types</a></li>
+                  <li> <a href="{{ route('admin.bus-layouts.index') }}"><i class='bx bx-radio-circle'></i>Bus Layouts</a></li>
+                  <li> <a href="{{ route('admin.facilities.index') }}"><i class='bx bx-radio-circle'></i>Facilities</a></li>
+              </ul>
+          </li>
+          <li class="menu-label">Content Management</li>
+          <li>
+              <a href="javascript:;" class="has-arrow">
+                  <div class="parent-icon"><i class='bx bx-image'></i>
+                  </div>
+                  <div class="menu-title">Banner Management</div>
+              </a>
+              <ul>
+                  <li> <a href="{{ route('admin.banners.index') }}"><i class='bx bx-radio-circle'></i>All Banners</a></li>
+                  <li> <a href="{{ route('admin.banners.create') }}"><i class='bx bx-radio-circle'></i>Add New Banner</a></li>
+              </ul>
+          </li>
+          <li>
+              <a href="{{ route('admin.general-settings.index') }}">
+                  <div class="parent-icon"><i class='bx bx-cog'></i>
+                  </div>
+                  <div class="menu-title">General Settings</div>
+              </a>
+          </li>
+          <li class="menu-label">Customer Support</li>
+          <li>
+              <a href="{{ route('admin.enquiries.index') }}">
+                  <div class="parent-icon"><i class='bx bx-message-dots'></i>
+                  </div>
+                  <div class="menu-title">Customer Enquiries</div>
+              </a>
+          </li>
       </ul>
       <!--end navigation-->
   </div>

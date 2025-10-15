@@ -9,6 +9,13 @@ use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\BusController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\BusLayoutController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\EnquiryController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -81,6 +88,65 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Bus Types Routes
+        Route::get('/bus-types', [BusTypeController::class, 'index'])->name('bus-types.index');
+        Route::get('/bus-types/data', [BusTypeController::class, 'getData'])->name('bus-types.data');
+        Route::get('/bus-types/create', [BusTypeController::class, 'create'])->name('bus-types.create');
+        Route::post('/bus-types', [BusTypeController::class, 'store'])->name('bus-types.store');
+        Route::get('/bus-types/{id}/edit', [BusTypeController::class, 'edit'])->name('bus-types.edit');
+        Route::put('/bus-types/{id}', [BusTypeController::class, 'update'])->name('bus-types.update');
+        Route::delete('/bus-types/{id}', [BusTypeController::class, 'destroy'])->name('bus-types.destroy');
+
+        // Bus Layouts Routes
+        Route::get('/bus-layouts', [BusLayoutController::class, 'index'])->name('bus-layouts.index');
+        Route::get('/bus-layouts/data', [BusLayoutController::class, 'getData'])->name('bus-layouts.data');
+        Route::get('/bus-layouts/create', [BusLayoutController::class, 'create'])->name('bus-layouts.create');
+        Route::post('/bus-layouts', [BusLayoutController::class, 'store'])->name('bus-layouts.store');
+        Route::get('/bus-layouts/{id}/edit', [BusLayoutController::class, 'edit'])->name('bus-layouts.edit');
+        Route::put('/bus-layouts/{id}', [BusLayoutController::class, 'update'])->name('bus-layouts.update');
+        Route::delete('/bus-layouts/{id}', [BusLayoutController::class, 'destroy'])->name('bus-layouts.destroy');
+
+        // Facilities Routes
+        Route::get('/facilities', [FacilityController::class, 'index'])->name('facilities.index');
+        Route::get('/facilities/data', [FacilityController::class, 'getData'])->name('facilities.data');
+        Route::get('/facilities/create', [FacilityController::class, 'create'])->name('facilities.create');
+        Route::post('/facilities', [FacilityController::class, 'store'])->name('facilities.store');
+        Route::get('/facilities/{id}/edit', [FacilityController::class, 'edit'])->name('facilities.edit');
+        Route::put('/facilities/{id}', [FacilityController::class, 'update'])->name('facilities.update');
+        Route::delete('/facilities/{id}', [FacilityController::class, 'destroy'])->name('facilities.destroy');
+
+        // Buses Routes
+        Route::get('/buses', [BusController::class, 'index'])->name('buses.index');
+        Route::get('/buses/data', [BusController::class, 'getData'])->name('buses.data');
+        Route::get('/buses/create', [BusController::class, 'create'])->name('buses.create');
+        Route::post('/buses', [BusController::class, 'store'])->name('buses.store');
+        Route::get('/buses/{id}/edit', [BusController::class, 'edit'])->name('buses.edit');
+        Route::put('/buses/{id}', [BusController::class, 'update'])->name('buses.update');
+        Route::delete('/buses/{id}', [BusController::class, 'destroy'])->name('buses.destroy');
+
+        // Banners Routes
+        Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
+        Route::get('/banners/data', [BannerController::class, 'getData'])->name('banners.data');
+        Route::get('/banners/create', [BannerController::class, 'create'])->name('banners.create');
+        Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
+        Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->name('banners.edit');
+        Route::put('/banners/{id}', [BannerController::class, 'update'])->name('banners.update');
+        Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->name('banners.destroy');
+
+        // General Settings Routes
+        Route::get('/general-settings', [GeneralSettingController::class, 'index'])->name('general-settings.index');
+        Route::get('/general-settings/create', [GeneralSettingController::class, 'create'])->name('general-settings.create');
+        Route::post('/general-settings', [GeneralSettingController::class, 'store'])->name('general-settings.store');
+        Route::get('/general-settings/{id}/edit', [GeneralSettingController::class, 'edit'])->name('general-settings.edit');
+        Route::put('/general-settings/{id}', [GeneralSettingController::class, 'update'])->name('general-settings.update');
+        Route::delete('/general-settings/{id}', [GeneralSettingController::class, 'destroy'])->name('general-settings.destroy');
+
+        // Enquiries Routes
+        Route::get('/enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
+        Route::get('/enquiries/data', [EnquiryController::class, 'getData'])->name('enquiries.data');
+        Route::get('/enquiries/{id}', [EnquiryController::class, 'show'])->name('enquiries.show');
+        Route::delete('/enquiries/{id}', [EnquiryController::class, 'destroy'])->name('enquiries.destroy');
 
     });
 });
