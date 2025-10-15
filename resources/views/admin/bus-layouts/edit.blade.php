@@ -102,4 +102,39 @@
 @endsection
 
 @section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const totalRowsInput = document.getElementById('total_rows');
+    const totalColumnsInput = document.getElementById('total_columns');
+    const currentTotalSeats = {{ $busLayout->total_seats }};
+    
+    function updateSeatCalculation() {
+        const rows = parseInt(totalRowsInput.value) || 0;
+        const columns = parseInt(totalColumnsInput.value) || 0;
+        const totalSeats = rows * columns;
+        
+        // Update the info alert
+        const alertDiv = document.querySelector('.alert-info');
+        if (alertDiv) {
+            if (totalSeats > 0) {
+                alertDiv.innerHTML = `
+                    <i class="bx bx-info-circle me-2"></i>
+                    <strong>Note:</strong> Total seats will be calculated automatically: <strong>${totalSeats} seats</strong> (${rows} rows × ${columns} columns). Current total: <strong>${currentTotalSeats} seats</strong>
+                `;
+            } else {
+                alertDiv.innerHTML = `
+                    <i class="bx bx-info-circle me-2"></i>
+                    <strong>Note:</strong> Total seats will be calculated automatically (Rows × Columns). Current total: <strong>${currentTotalSeats} seats</strong>
+                `;
+            }
+        }
+    }
+    
+    totalRowsInput.addEventListener('input', updateSeatCalculation);
+    totalColumnsInput.addEventListener('input', updateSeatCalculation);
+    
+    // Initial calculation
+    updateSeatCalculation();
+});
+</script>
 @endsection

@@ -78,19 +78,21 @@ class BusTypeController extends Controller
     public function create()
     {
         $statuses = BusTypeEnum::getStatuses();
-        return view('admin.bus-types.create', get_defined_vars());
+        return view('admin.bus-types.create', compact('statuses'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:bus_types,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
             'status' => 'required|string|in:' . implode(',', BusTypeEnum::getStatuses()),
         ], [
             'name.required' => 'Bus type name is required',
             'name.string' => 'Bus type name must be a string',
             'name.max' => 'Bus type name must be less than 255 characters',
+            'name.unique' => 'Bus type name already exists',
+            'name.regex' => 'Bus type name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'status.required' => 'Status is required',
@@ -111,19 +113,23 @@ class BusTypeController extends Controller
     {
         $busType = BusType::findOrFail($id);
         $statuses = BusTypeEnum::getStatuses();
-        return view('admin.bus-types.edit', get_defined_vars());
+        return view('admin.bus-types.edit', compact('busType', 'statuses'));
     }
 
     public function update(Request $request, $id)
     {
+        $busType = BusType::findOrFail($id);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:bus_types,name,' . $busType->id . '|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
             'status' => 'required|string|in:' . implode(',', BusTypeEnum::getStatuses()),
         ], [
             'name.required' => 'Bus type name is required',
             'name.string' => 'Bus type name must be a string',
             'name.max' => 'Bus type name must be less than 255 characters',
+            'name.unique' => 'Bus type name already exists',
+            'name.regex' => 'Bus type name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'status.required' => 'Status is required',
@@ -131,7 +137,6 @@ class BusTypeController extends Controller
             'status.in' => 'Status must be a valid status',
         ]);
 
-        $busType = BusType::findOrFail($id);
         $busType->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
@@ -143,20 +148,27 @@ class BusTypeController extends Controller
 
     public function destroy($id)
     {
-        $busType = BusType::findOrFail($id);
-        
-        // Check if bus type has buses assigned
-        if ($busType->buses()->count() > 0) {
+        try {
+            $busType = BusType::findOrFail($id);
+            
+            // Check if bus type has buses assigned
+            if ($busType->buses()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete bus type. It has buses assigned to it.'
+                ], 400);
+            }
+
+            $busType->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Bus type deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete bus type. It has buses assigned to it.'
-            ], 400);
+                'message' => 'Error deleting bus type: ' . $e->getMessage()
+            ], 500);
         }
-
-        $busType->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Bus type deleted successfully.'
-        ]);
     }
 }

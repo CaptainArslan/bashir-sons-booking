@@ -65,16 +65,21 @@
                             <div class="col-12">
                                 <label for="path" class="form-label">Banner Image</label>
                                 <input type="file" class="form-control @error('path') is-invalid @enderror" id="path"
-                                    name="path" accept="image/*">
+                                    name="path" accept="image/*" onchange="previewImage(this)">
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
-                                    Supported formats: JPEG, PNG, JPG, GIF. Maximum size: 2MB. Leave empty to keep current image.
+                                    Supported formats: JPEG, PNG, JPG, GIF, WebP. Maximum size: 2MB. Leave empty to keep current image.
                                 </div>
                                 @if($banner->path)
                                     <div class="mt-2">
+                                        <strong>Current Image:</strong><br>
                                         <img src="{{ asset('storage/' . $banner->path) }}" alt="{{ $banner->title }}" class="img-thumbnail" style="max-width: 200px;">
                                     </div>
                                 @endif
+                                <div id="image-preview" class="mt-2" style="display: none;">
+                                    <strong>New Image Preview:</strong><br>
+                                    <img id="preview-img" src="" alt="Preview" class="img-thumbnail mt-2" style="max-width: 300px; max-height: 200px;">
+                                </div>
                                 @error('path')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -101,4 +106,23 @@
 @endsection
 
 @section('scripts')
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
 @endsection

@@ -133,13 +133,18 @@
                             <div class="col-md-6">
                                 <label for="logo" class="form-label">Logo</label>
                                 <input type="file" class="form-control @error('logo') is-invalid @enderror" id="logo"
-                                    name="logo" accept="image/*">
-                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF. Maximum size: 2MB. Leave empty to keep current logo.</div>
+                                    name="logo" accept="image/*" onchange="previewImage(this, 'logo-preview')">
+                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF, WebP. Maximum size: 2MB. Leave empty to keep current logo.</div>
                                 @if($settings->logo)
                                     <div class="mt-2">
+                                        <strong>Current Logo:</strong><br>
                                         <img src="{{ asset('storage/' . $settings->logo) }}" alt="Current Logo" class="img-thumbnail" style="max-width: 200px;">
                                     </div>
                                 @endif
+                                <div id="logo-preview" class="mt-2" style="display: none;">
+                                    <strong>New Logo Preview:</strong><br>
+                                    <img id="logo-preview-img" src="" alt="Logo Preview" class="img-thumbnail mt-2" style="max-width: 200px; max-height: 100px;">
+                                </div>
                                 @error('logo')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -147,13 +152,18 @@
                             <div class="col-md-6">
                                 <label for="favicon" class="form-label">Favicon</label>
                                 <input type="file" class="form-control @error('favicon') is-invalid @enderror" id="favicon"
-                                    name="favicon" accept="image/*">
-                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF, ICO. Maximum size: 1MB. Leave empty to keep current favicon.</div>
+                                    name="favicon" accept="image/*" onchange="previewImage(this, 'favicon-preview')">
+                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF, ICO, WebP. Maximum size: 1MB. Leave empty to keep current favicon.</div>
                                 @if($settings->favicon)
                                     <div class="mt-2">
+                                        <strong>Current Favicon:</strong><br>
                                         <img src="{{ asset('storage/' . $settings->favicon) }}" alt="Current Favicon" class="img-thumbnail" style="max-width: 100px;">
                                     </div>
                                 @endif
+                                <div id="favicon-preview" class="mt-2" style="display: none;">
+                                    <strong>New Favicon Preview:</strong><br>
+                                    <img id="favicon-preview-img" src="" alt="Favicon Preview" class="img-thumbnail mt-2" style="max-width: 100px; max-height: 100px;">
+                                </div>
                                 @error('favicon')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -258,4 +268,23 @@
 @endsection
 
 @section('scripts')
+<script>
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const previewImg = document.getElementById(previewId + '-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
 @endsection

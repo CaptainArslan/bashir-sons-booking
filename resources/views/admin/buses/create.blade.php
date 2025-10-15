@@ -40,7 +40,9 @@
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label">Registration Number <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('registration_number') is-invalid @enderror" id="registration_number"
-                                    name="registration_number" placeholder="Enter Registration Number" value="{{ old('registration_number') }}" required>
+                                    name="registration_number" placeholder="Enter Registration Number (e.g., ABC-123)" value="{{ old('registration_number') }}" 
+                                    style="text-transform: uppercase;" required>
+                                <div class="form-text">Enter in format: ABC-123 (will be converted to uppercase)</div>
                                 @error('registration_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

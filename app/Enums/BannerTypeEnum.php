@@ -42,4 +42,14 @@ enum BannerTypeEnum: string
             self::OTHER->value => 'secondary',
         };
     }
+
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    public function getName(): string
+    {
+        return self::getTypeName($this->value);
+    }
 }

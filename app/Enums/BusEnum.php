@@ -6,14 +6,12 @@ enum BusEnum: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
-    case DELETED = 'deleted';
 
     public static function getStatuses(): array
     {
         return [
             self::ACTIVE->value,
             self::INACTIVE->value,
-            self::DELETED->value,
         ];
     }
 
@@ -22,7 +20,6 @@ enum BusEnum: string
         return match ($status) {
             self::ACTIVE->value => 'Active',
             self::INACTIVE->value => 'Inactive',
-            self::DELETED->value => 'Deleted',
         };
     }
 
@@ -31,7 +28,6 @@ enum BusEnum: string
         return match ($status) {
             self::ACTIVE->value => 'success',
             self::INACTIVE->value => 'warning',
-            self::DELETED->value => 'danger',
         };
     }
 
@@ -42,6 +38,6 @@ enum BusEnum: string
 
     public function getName(): string
     {
-        return $this->getName();
+        return self::getStatusName($this->value);
     }
 }

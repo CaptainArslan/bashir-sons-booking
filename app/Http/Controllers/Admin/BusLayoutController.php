@@ -85,13 +85,13 @@ class BusLayoutController extends Controller
     public function create()
     {
         $statuses = BusLayoutEnum::getStatuses();
-        return view('admin.bus-layouts.create', get_defined_vars());
+        return view('admin.bus-layouts.create', compact('statuses'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:bus_layouts,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
             'total_rows' => 'required|integer|min:1|max:50',
             'total_columns' => 'required|integer|min:1|max:10',
@@ -101,6 +101,8 @@ class BusLayoutController extends Controller
             'name.required' => 'Bus layout name is required',
             'name.string' => 'Bus layout name must be a string',
             'name.max' => 'Bus layout name must be less than 255 characters',
+            'name.unique' => 'Bus layout name already exists',
+            'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'total_rows.required' => 'Total rows is required',
@@ -136,13 +138,15 @@ class BusLayoutController extends Controller
     {
         $busLayout = BusLayout::findOrFail($id);
         $statuses = BusLayoutEnum::getStatuses();
-        return view('admin.bus-layouts.edit', get_defined_vars());
+        return view('admin.bus-layouts.edit', compact('busLayout', 'statuses'));
     }
 
     public function update(Request $request, $id)
     {
+        $busLayout = BusLayout::findOrFail($id);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:bus_layouts,name,' . $busLayout->id . '|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
             'total_rows' => 'required|integer|min:1|max:50',
             'total_columns' => 'required|integer|min:1|max:10',
@@ -152,6 +156,8 @@ class BusLayoutController extends Controller
             'name.required' => 'Bus layout name is required',
             'name.string' => 'Bus layout name must be a string',
             'name.max' => 'Bus layout name must be less than 255 characters',
+            'name.unique' => 'Bus layout name already exists',
+            'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'total_rows.required' => 'Total rows is required',
@@ -170,7 +176,6 @@ class BusLayoutController extends Controller
         // Calculate total seats
         $totalSeats = $validated['total_rows'] * $validated['total_columns'];
 
-        $busLayout = BusLayout::findOrFail($id);
         $busLayout->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
@@ -186,20 +191,27 @@ class BusLayoutController extends Controller
 
     public function destroy($id)
     {
-        $busLayout = BusLayout::findOrFail($id);
-        
-        // Check if bus layout has buses assigned
-        if ($busLayout->buses()->count() > 0) {
+        try {
+            $busLayout = BusLayout::findOrFail($id);
+            
+            // Check if bus layout has buses assigned
+            if ($busLayout->buses()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete bus layout. It has buses assigned to it.'
+                ], 400);
+            }
+
+            $busLayout->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Bus layout deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete bus layout. It has buses assigned to it.'
-            ], 400);
+                'message' => 'Error deleting bus layout: ' . $e->getMessage()
+            ], 500);
         }
-
-        $busLayout->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Bus layout deleted successfully.'
-        ]);
     }
 }

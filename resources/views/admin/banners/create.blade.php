@@ -64,10 +64,14 @@
                             <div class="col-12">
                                 <label for="path" class="form-label">Banner Image <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control @error('path') is-invalid @enderror" id="path"
-                                    name="path" accept="image/*" required>
+                                    name="path" accept="image/*" onchange="previewImage(this)" required>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
-                                    Supported formats: JPEG, PNG, JPG, GIF. Maximum size: 2MB
+                                    Supported formats: JPEG, PNG, JPG, GIF, WebP. Maximum size: 2MB
+                                </div>
+                                <div id="image-preview" class="mt-2" style="display: none;">
+                                    <strong>Preview:</strong><br>
+                                    <img id="preview-img" src="" alt="Preview" class="img-thumbnail mt-2" style="max-width: 300px; max-height: 200px;">
                                 </div>
                                 @error('path')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -95,4 +99,23 @@
 @endsection
 
 @section('scripts')
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
 @endsection

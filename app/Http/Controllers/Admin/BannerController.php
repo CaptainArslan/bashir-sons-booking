@@ -8,6 +8,7 @@ use App\Enums\BannerStatusEnum;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
 {
@@ -84,46 +85,53 @@ class BannerController extends Controller
     {
         $types = BannerTypeEnum::getTypes();
         $statuses = BannerStatusEnum::getStatuses();
-        return view('admin.banners.create', get_defined_vars());
+        return view('admin.banners.create', compact('types', 'statuses'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'type' => 'required|string|in:' . implode(',', BannerTypeEnum::getTypes()),
-            'path' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'path' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'status' => 'required|string|in:' . implode(',', BannerStatusEnum::getStatuses()),
         ], [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
             'title.max' => 'Banner title must be less than 255 characters',
+            'title.regex' => 'Banner title can only contain letters, numbers, spaces, hyphens, and underscores',
             'type.required' => 'Banner type is required',
             'type.string' => 'Banner type must be a string',
             'type.in' => 'Banner type must be a valid type',
             'path.required' => 'Banner image is required',
             'path.image' => 'File must be an image',
-            'path.mimes' => 'Image must be jpeg, png, jpg, or gif',
+            'path.mimes' => 'Image must be jpeg, png, jpg, gif, or webp',
             'path.max' => 'Image size must be less than 2MB',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
-        // Handle file upload
-        if ($request->hasFile('path')) {
-            $path = $request->file('path')->store('banners', 'public');
-            $validated['path'] = $path;
+        try {
+            // Handle file upload
+            if ($request->hasFile('path')) {
+                $path = $request->file('path')->store('banners', 'public');
+                $validated['path'] = $path;
+            }
+
+            Banner::create([
+                'title' => $validated['title'],
+                'type' => $validated['type'],
+                'path' => $validated['path'],
+                'status' => $validated['status'],
+            ]);
+
+            return redirect()->route('admin.banners.index')->with('success', 'Banner created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create banner: ' . $e->getMessage());
         }
-
-        Banner::create([
-            'title' => $validated['title'],
-            'type' => $validated['type'],
-            'path' => $validated['path'],
-            'status' => $validated['status'],
-        ]);
-
-        return redirect()->route('admin.banners.index')->with('success', 'Banner created successfully');
     }
 
     public function edit($id)
@@ -131,63 +139,77 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
         $types = BannerTypeEnum::getTypes();
         $statuses = BannerStatusEnum::getStatuses();
-        return view('admin.banners.edit', get_defined_vars());
+        return view('admin.banners.edit', compact('banner', 'types', 'statuses'));
     }
 
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'type' => 'required|string|in:' . implode(',', BannerTypeEnum::getTypes()),
-            'path' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'status' => 'required|string|in:' . implode(',', BannerStatusEnum::getStatuses()),
         ], [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
             'title.max' => 'Banner title must be less than 255 characters',
+            'title.regex' => 'Banner title can only contain letters, numbers, spaces, hyphens, and underscores',
             'type.required' => 'Banner type is required',
             'type.string' => 'Banner type must be a string',
             'type.in' => 'Banner type must be a valid type',
             'path.image' => 'File must be an image',
-            'path.mimes' => 'Image must be jpeg, png, jpg, or gif',
+            'path.mimes' => 'Image must be jpeg, png, jpg, gif, or webp',
             'path.max' => 'Image size must be less than 2MB',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
-        $banner = Banner::findOrFail($id);
+        try {
+            $banner = Banner::findOrFail($id);
 
-        // Handle file upload
-        if ($request->hasFile('path')) {
-            // Delete old image if exists
-            if ($banner->path && \Storage::disk('public')->exists($banner->path)) {
-                \Storage::disk('public')->delete($banner->path);
+            // Handle file upload
+            if ($request->hasFile('path')) {
+                // Delete old image if exists
+                if ($banner->path && Storage::disk('public')->exists($banner->path)) {
+                    Storage::disk('public')->delete($banner->path);
+                }
+                $path = $request->file('path')->store('banners', 'public');
+                $validated['path'] = $path;
+            } else {
+                unset($validated['path']);
             }
-            $path = $request->file('path')->store('banners', 'public');
-            $validated['path'] = $path;
-        } else {
-            unset($validated['path']);
+
+            $banner->update($validated);
+
+            return redirect()->route('admin.banners.index')->with('success', 'Banner updated successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update banner: ' . $e->getMessage());
         }
-
-        $banner->update($validated);
-
-        return redirect()->route('admin.banners.index')->with('success', 'Banner updated successfully');
     }
 
     public function destroy($id)
     {
-        $banner = Banner::findOrFail($id);
-        
-        // Delete associated image file
-        if ($banner->path && \Storage::disk('public')->exists($banner->path)) {
-            \Storage::disk('public')->delete($banner->path);
-        }
+        try {
+            $banner = Banner::findOrFail($id);
+            
+            // Delete associated image file
+            if ($banner->path && Storage::disk('public')->exists($banner->path)) {
+                Storage::disk('public')->delete($banner->path);
+            }
 
-        $banner->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Banner deleted successfully.'
-        ]);
+            $banner->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Banner deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting banner: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

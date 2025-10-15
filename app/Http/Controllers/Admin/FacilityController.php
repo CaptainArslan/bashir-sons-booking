@@ -81,25 +81,28 @@ class FacilityController extends Controller
     public function create()
     {
         $statuses = FacilityEnum::getStatuses();
-        return view('admin.facilities.create', get_defined_vars());
+        return view('admin.facilities.create', compact('statuses'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:facilities,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
-            'icon' => 'required|string|max:255',
+            'icon' => 'required|string|max:255|regex:/^bx\s+bx-[a-zA-Z0-9\-]+$/',
             'status' => 'required|string|in:' . implode(',', FacilityEnum::getStatuses()),
         ], [
             'name.required' => 'Facility name is required',
             'name.string' => 'Facility name must be a string',
             'name.max' => 'Facility name must be less than 255 characters',
+            'name.unique' => 'Facility name already exists',
+            'name.regex' => 'Facility name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'icon.required' => 'Icon is required',
             'icon.string' => 'Icon must be a string',
             'icon.max' => 'Icon must be less than 255 characters',
+            'icon.regex' => 'Icon must be a valid Boxicons class (e.g., bx bx-wifi)',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -119,31 +122,35 @@ class FacilityController extends Controller
     {
         $facility = Facility::findOrFail($id);
         $statuses = FacilityEnum::getStatuses();
-        return view('admin.facilities.edit', get_defined_vars());
+        return view('admin.facilities.edit', compact('facility', 'statuses'));
     }
 
     public function update(Request $request, $id)
     {
+        $facility = Facility::findOrFail($id);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:facilities,name,' . $facility->id . '|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
-            'icon' => 'required|string|max:255',
+            'icon' => 'required|string|max:255|regex:/^bx\s+bx-[a-zA-Z0-9\-]+$/',
             'status' => 'required|string|in:' . implode(',', FacilityEnum::getStatuses()),
         ], [
             'name.required' => 'Facility name is required',
             'name.string' => 'Facility name must be a string',
             'name.max' => 'Facility name must be less than 255 characters',
+            'name.unique' => 'Facility name already exists',
+            'name.regex' => 'Facility name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
             'icon.required' => 'Icon is required',
             'icon.string' => 'Icon must be a string',
             'icon.max' => 'Icon must be less than 255 characters',
+            'icon.regex' => 'Icon must be a valid Boxicons class (e.g., bx bx-wifi)',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
-        $facility = Facility::findOrFail($id);
         $facility->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
@@ -156,20 +163,27 @@ class FacilityController extends Controller
 
     public function destroy($id)
     {
-        $facility = Facility::findOrFail($id);
-        
-        // Check if facility has buses assigned
-        if ($facility->buses()->count() > 0) {
+        try {
+            $facility = Facility::findOrFail($id);
+            
+            // Check if facility has buses assigned
+            if ($facility->buses()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete facility. It has buses assigned to it.'
+                ], 400);
+            }
+
+            $facility->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Facility deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete facility. It has buses assigned to it.'
-            ], 400);
+                'message' => 'Error deleting facility: ' . $e->getMessage()
+            ], 500);
         }
-
-        $facility->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Facility deleted successfully.'
-        ]);
     }
 }

@@ -60,11 +60,19 @@
                             </div>
                             <div class="col-12">
                                 <label for="icon" class="form-label">Icon Class <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('icon') is-invalid @enderror" id="icon"
-                                    name="icon" placeholder="e.g., bx bx-wifi, bx bx-air-conditioning" value="{{ old('icon', $facility->icon) }}" required>
+                                <div class="input-group">
+                                    <input type="text" class="form-control @error('icon') is-invalid @enderror" id="icon"
+                                        name="icon" placeholder="e.g., bx bx-wifi, bx bx-air-conditioning" value="{{ old('icon', $facility->icon) }}" required>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="showIconPreview()">
+                                        <i class="bx bx-preview"></i> Preview
+                                    </button>
+                                </div>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
                                     Use Boxicons classes (e.g., bx bx-wifi, bx bx-air-conditioning, bx bx-tv, bx bx-music)
+                                </div>
+                                <div id="icon-preview" class="mt-2">
+                                    <strong>Preview:</strong> <span id="preview-icon"><i class="{{ $facility->icon }} me-2"></i>{{ $facility->icon }}</span>
                                 </div>
                                 @error('icon')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -92,4 +100,25 @@
 @endsection
 
 @section('scripts')
+<script>
+function showIconPreview() {
+    const iconInput = document.getElementById('icon');
+    const iconValue = iconInput.value.trim();
+    const previewDiv = document.getElementById('icon-preview');
+    const previewIcon = document.getElementById('preview-icon');
+    
+    if (iconValue) {
+        previewIcon.innerHTML = `<i class="${iconValue} me-2"></i>${iconValue}`;
+        previewDiv.style.display = 'block';
+    } else {
+        previewDiv.style.display = 'none';
+    }
+}
+
+// Auto-preview on input change
+document.addEventListener('DOMContentLoaded', function() {
+    const iconInput = document.getElementById('icon');
+    iconInput.addEventListener('input', showIconPreview);
+});
+</script>
 @endsection

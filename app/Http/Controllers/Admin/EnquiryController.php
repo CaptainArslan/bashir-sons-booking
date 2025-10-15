@@ -18,7 +18,8 @@ class EnquiryController extends Controller
     {
         if ($request->ajax()) {
             $enquiries = Enquiry::query()
-                ->select('id', 'name', 'email', 'phone', 'service', 'message', 'created_at');
+                ->select('id', 'name', 'email', 'phone', 'service', 'message', 'created_at')
+                ->orderBy('created_at', 'desc');
 
             return DataTables::eloquent($enquiries)
                 ->addColumn('contact_info', function ($enquiry) {
@@ -53,6 +54,18 @@ class EnquiryController extends Controller
                                         <i class="bx bx-show me-2"></i>View Details
                                     </a>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="mailto:' . e($enquiry->email) . '?subject=Re: Your Enquiry #' . $enquiry->id . '">
+                                        <i class="bx bx-envelope me-2"></i>Reply via Email
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="tel:' . e($enquiry->phone) . '">
+                                        <i class="bx bx-phone me-2"></i>Call Customer
+                                    </a>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" 
@@ -76,16 +89,23 @@ class EnquiryController extends Controller
     public function show($id)
     {
         $enquiry = Enquiry::findOrFail($id);
-        return view('admin.enquiries.show', get_defined_vars());
+        return view('admin.enquiries.show', compact('enquiry'));
     }
 
     public function destroy($id)
     {
-        $enquiry = Enquiry::findOrFail($id);
-        $enquiry->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Enquiry deleted successfully.'
-        ]);
+        try {
+            $enquiry = Enquiry::findOrFail($id);
+            $enquiry->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Enquiry deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting enquiry: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

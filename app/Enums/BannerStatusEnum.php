@@ -6,14 +6,12 @@ enum BannerStatusEnum: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
-    case DELETED = 'deleted';
 
     public static function getStatuses(): array
     {
         return [
             self::ACTIVE->value,
             self::INACTIVE->value,
-            self::DELETED->value,
         ];
     }
 
@@ -22,7 +20,6 @@ enum BannerStatusEnum: string
         return match ($status) {
             self::ACTIVE->value => 'Active',
             self::INACTIVE->value => 'Inactive',
-            self::DELETED->value => 'Deleted',
         };
     }
 
@@ -31,17 +28,16 @@ enum BannerStatusEnum: string
         return match ($status) {
             self::ACTIVE->value => 'success',
             self::INACTIVE->value => 'warning',
-            self::DELETED->value => 'danger',
         };
     }
 
-    public static function getStatusValue(string $status): string
+    public function getValue(): string
     {
-        return match ($status) {
-            self::ACTIVE->value => 'success',
-            self::INACTIVE->value => 'warning',
-            self::DELETED->value => 'danger',
-            default => 'unknown',
-        };
+        return $this->value;
+    }
+
+    public function getName(): string
+    {
+        return self::getStatusName($this->value);
     }
 }
