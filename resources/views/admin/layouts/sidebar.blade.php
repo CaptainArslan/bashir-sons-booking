@@ -105,9 +105,15 @@
                   @can('create routes')
                   <li> <a href="{{ route('admin.routes.create') }}"><i class='bx bx-radio-circle'></i>Add New Route</a></li>
                   @endcan
-                  @can('view route stops')
-                  <li> <a href="{{ route('admin.route-stops.index') }}"><i class='bx bx-radio-circle'></i>Route Stops</a></li>
-                  @endcan
+          @can('view route stops')
+          <li> <a href="{{ route('admin.route-stops.index') }}"><i class='bx bx-radio-circle'></i>Route Stops</a></li>
+          @endcan
+          @can('view route fares')
+          <li> <a href="{{ route('admin.route-fares.index') }}"><i class='bx bx-radio-circle'></i>All Route Fares</a></li>
+          @endcan
+          @can('create route fares')
+          <li> <a href="{{ route('admin.route-fares.manage') }}"><i class='bx bx-radio-circle'></i>Manage Fares</a></li>
+          @endcan
               </ul>
           </li>
           @endcan

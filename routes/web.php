@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\RouteFareController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -182,6 +183,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/route-stops/{id}/edit', [RouteStopController::class, 'edit'])->can('edit route stops')->name('route-stops.edit');
         Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
         Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
+
+        // Route Fares Management
+        Route::get('/route-fares', [RouteFareController::class, 'index'])->can('view route fares')->name('route-fares.index');
+        Route::get('/route-fares/data', [RouteFareController::class, 'getData'])->can('view route fares')->name('route-fares.data');
+        Route::get('/route-fares/manage', [RouteFareController::class, 'manage'])->can('create route fares')->name('route-fares.manage');
+        Route::post('/route-fares/bulk-save', [RouteFareController::class, 'bulkSave'])->can('create route fares')->name('route-fares.bulk-save');
+        Route::get('/route-fares/create', [RouteFareController::class, 'create'])->can('create route fares')->name('route-fares.create');
+        Route::post('/route-fares', [RouteFareController::class, 'store'])->can('create route fares')->name('route-fares.store');
+        Route::get('/route-fares/{id}/edit', [RouteFareController::class, 'edit'])->can('edit route fares')->name('route-fares.edit');
+        Route::put('/route-fares/{id}', [RouteFareController::class, 'update'])->can('edit route fares')->name('route-fares.update');
+        Route::delete('/route-fares/{id}', [RouteFareController::class, 'destroy'])->can('delete route fares')->name('route-fares.destroy');
+        Route::get('/route-fares/route/{routeId}/stops', [RouteFareController::class, 'getRouteStops'])->can('view route fares')->name('route-fares.route-stops');
+        Route::get('/route-fares/route/{routeId}/fares', [RouteFareController::class, 'getRouteFares'])->can('view route fares')->name('route-fares.route-fares');
     });
 });
 

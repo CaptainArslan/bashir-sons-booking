@@ -90,11 +90,17 @@ class PermissionSeeder extends Seeder
             'edit routes',
             'delete routes',
             
-            // Route Stop Management
-            'view route stops',
-            'create route stops',
-            'edit route stops',
-            'delete route stops',
+        // Route Stop Management
+        'view route stops',
+        'create route stops',
+        'edit route stops',
+        'delete route stops',
+        
+        // Route Fare Management
+        'view route fares',
+        'create route fares',
+        'edit route fares',
+        'delete route fares',
             
             // Enquiry Management
             'view enquiries',
