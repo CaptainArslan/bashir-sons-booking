@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -30,7 +31,7 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->string('base_currency', 3)->default('PKR');
-            $table->boolean('status')->default(true); // active/inactive
+            $table->string('status')->default(RouteStatusEnum::ACTIVE->value); // active/inactive
 
             $table->timestamps();
 

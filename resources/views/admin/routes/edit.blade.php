@@ -101,8 +101,11 @@
                                 <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                                 <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
                                     <option value="">Select Status</option>
-                                    <option value="1" {{ old('status', $route->status) == '1' || $route->status == true ? 'selected' : '' }}>Active</option>
-                                    <option value="0" {{ old('status', $route->status) == '0' || $route->status == false ? 'selected' : '' }}>Inactive</option>
+                                    @foreach ($statuses as $value => $label)
+                                        <option value="{{ $value }}" {{ old('status', $route->status) == $value ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
                                 </select>
                                 @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>

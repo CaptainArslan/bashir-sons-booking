@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
+use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -32,42 +33,42 @@ class RouteSeeder extends Seeder
                 'code' => 'KAR-LAH-001',
                 'direction' => 'forward',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
             [
                 'name' => 'Lahore to Karachi Express',
                 'code' => 'LAH-KAR-001',
                 'direction' => 'return',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
             [
                 'name' => 'Islamabad to Karachi',
                 'code' => 'ISL-KAR-001',
                 'direction' => 'forward',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
             [
                 'name' => 'Karachi to Islamabad',
                 'code' => 'KAR-ISL-001',
                 'direction' => 'return',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
             [
                 'name' => 'Lahore to Peshawar',
                 'code' => 'LAH-PES-001',
                 'direction' => 'forward',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
             [
                 'name' => 'Peshawar to Lahore',
                 'code' => 'PES-LAH-001',
                 'direction' => 'return',
                 'base_currency' => 'PKR',
-                'status' => true,
+                'status' => RouteStatusEnum::ACTIVE->value,
             ],
         ];
 

@@ -19,6 +19,14 @@ class RouteStop extends Model
         'is_dropoff_allowed',
     ];
 
+    protected $casts = [
+        'distance_from_previous' => 'float',
+        'approx_travel_time' => 'integer',
+        'sequence' => 'integer',
+        'is_pickup_allowed' => 'boolean',
+        'is_dropoff_allowed' => 'boolean',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | Relationships

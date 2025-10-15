@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Route;
 use App\Models\User;
 use App\Models\Terminal;
+use App\Enums\RouteStatusEnum;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
@@ -48,10 +49,8 @@ class RouteController extends Controller
                     return '<span class="badge ' . $badgeClass . '">' . $count . ' stop' . ($count !== 1 ? 's' : '') . '</span>';
                 })
                 ->addColumn('status_badge', function ($route) {
-                    $statusValue = $route->status;
-                    $statusName = $statusValue ? 'Active' : 'Inactive';
-                    $statusColor = $statusValue ? 'bg-success' : 'bg-danger';
-                    return '<span class="badge ' . $statusColor . '">' . e($statusName) . '</span>';
+                    $statusValue = $route->status instanceof RouteStatusEnum ? $route->status->value : $route->status;
+                    return RouteStatusEnum::getStatusBadge($statusValue);
                 })
                 ->addColumn('actions', function ($route) {
                     $actions = '<div class="dropdown">
@@ -108,8 +107,9 @@ class RouteController extends Controller
 
     public function create()
     {
-        $routes = Route::where('status', 'active')->get();
+        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->get();
         $currencies = ['PKR'];
+        $statuses = RouteStatusEnum::getStatusOptions();
 
         return view('admin.routes.create', get_defined_vars());
     }
@@ -146,7 +146,8 @@ class RouteController extends Controller
             ],
             'status' => [
                 'required',
-                'boolean',
+                'string',
+                'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
         ], [
             'code.required' => 'Route code is required',
@@ -168,7 +169,7 @@ class RouteController extends Controller
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
-            'status.boolean' => 'Status must be true (Active) or false (Inactive)',
+            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
         ]);
 
         try {
@@ -191,8 +192,9 @@ class RouteController extends Controller
     public function edit($id)
     {
         $route = Route::findOrFail($id);
-        $routes = Route::where('status', 'active')->where('id', '!=', $id)->get();
+        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->where('id', '!=', $id)->get();
         $currencies = ['PKR'];
+        $statuses = RouteStatusEnum::getStatusOptions();
 
         return view('admin.routes.edit', get_defined_vars());
     }
@@ -233,7 +235,8 @@ class RouteController extends Controller
             ],
             'status' => [
                 'required',
-                'boolean',
+                'string',
+                'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
         ], [
             'code.required' => 'Route code is required',
@@ -255,7 +258,7 @@ class RouteController extends Controller
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
-            'status.boolean' => 'Status must be true (Active) or false (Inactive)',
+            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
         ]);
 
         try {
@@ -306,7 +309,7 @@ class RouteController extends Controller
         $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
         $terminals = Terminal::with('city')->where('status', 'active')->get();
 
-        return view('admin.routes.stops', get_defined_vars());
+        return view('admin.routes.stops', compact('route', 'terminals'));
     }
 
     public function storeStop(Request $request, $id)
@@ -367,6 +370,10 @@ class RouteController extends Controller
                     'message' => 'Terminal already exists in this route.'
                 ], 400);
             }
+
+            // Handle checkbox values
+            $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
+            $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
 
             $route->routeStops()->create($validated);
 
@@ -431,6 +438,10 @@ class RouteController extends Controller
         try {
             DB::beginTransaction();
 
+            // Handle checkbox values
+            $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
+            $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
+
             $stop->update($validated);
 
             DB::commit();
@@ -464,6 +475,37 @@ class RouteController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting stop: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getStopData($id, $stopId)
+    {
+        try {
+            $route = Route::findOrFail($id);
+            $stop = $route->routeStops()->with('terminal.city')->findOrFail($stopId);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $stop->id,
+                    'sequence' => $stop->sequence,
+                    'distance_from_previous' => $stop->distance_from_previous,
+                    'approx_travel_time' => $stop->approx_travel_time,
+                    'is_pickup_allowed' => $stop->is_pickup_allowed,
+                    'is_dropoff_allowed' => $stop->is_dropoff_allowed,
+                    'terminal' => [
+                        'id' => $stop->terminal->id,
+                        'name' => $stop->terminal->name,
+                        'code' => $stop->terminal->code,
+                        'city' => $stop->terminal->city->name,
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching stop data: ' . $e->getMessage()
             ], 500);
         }
     }

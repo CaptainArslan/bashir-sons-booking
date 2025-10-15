@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -18,6 +19,10 @@ class Route extends Model
         'is_return_of',
         'base_currency',
         'status',
+    ];
+
+    protected $casts = [
+        'status' => RouteStatusEnum::class,
     ];
 
     /*
@@ -73,7 +78,42 @@ class Route extends Model
             set: fn($value) => strtoupper($value),
         );
     }
-    
+
+    protected function totalTravelTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
+        );
+    }
+
+    protected function totalDistance(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
+        );
+    }
+
+    protected function totalStops(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->routeStops()->count(),
+        );
+    }
+
+    protected function totalDropoffAllowed(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
+        );
+    }
+
+    protected function totalPickupAllowed(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
+        );
+    }
+
     protected function firstTerminal(): Attribute
     {
         return Attribute::make(
