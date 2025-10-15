@@ -51,204 +51,112 @@ Route::middleware('auth')->group(function () {
     Route::post('/user/two-factor/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/user/two-factor/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
 
-    Route::prefix('admin')->name('admin.')->middleware(['permission:access admin panel'])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['can:access admin panel'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
         // Roles Routes
-        Route::middleware(['permission:view roles'])->group(function () {
-            Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-            Route::get('/roles/data', [RoleController::class, 'getData'])->name('roles.data');
-        });
-        Route::middleware(['permission:create roles'])->group(function () {
-            Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
-            Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-        });
-        Route::middleware(['permission:edit roles'])->group(function () {
-            Route::get('/roles/{id}/edit', [RoleController::class, 'edit'])->name('roles.edit');
-            Route::put('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
-        });
-        Route::middleware(['permission:delete roles'])->group(function () {
-            Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
-        });
+        Route::get('/roles', [RoleController::class, 'index'])->can('view roles')->name('roles.index');
+        Route::get('/roles/data', [RoleController::class, 'getData'])->can('view roles')->name('roles.data');
+        Route::get('/roles/create', [RoleController::class, 'create'])->can('create roles')->name('roles.create');
+        Route::post('/roles', [RoleController::class, 'store'])->can('create roles')->name('roles.store');
+        Route::get('/roles/{id}/edit', [RoleController::class, 'edit'])->can('edit roles')->name('roles.edit');
+        Route::put('/roles/{id}', [RoleController::class, 'update'])->can('edit roles')->name('roles.update');
+        Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->can('delete roles')->name('roles.destroy');
 
         // Permissions Routes
-        Route::middleware(['permission:view permissions'])->group(function () {
-            Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-            Route::get('/permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');
-        });
-        Route::middleware(['permission:create permissions'])->group(function () {
-            Route::get('/permissions/create', [PermissionController::class, 'create'])->name('permissions.create');
-            Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
-        });
-        Route::middleware(['permission:edit permissions'])->group(function () {
-            Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
-            Route::put('/permissions/{id}', [PermissionController::class, 'update'])->name('permissions.update');
-        });
-        Route::middleware(['permission:delete permissions'])->group(function () {
-            Route::delete('/permissions/{id}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
-        });
+        Route::get('/permissions', [PermissionController::class, 'index'])->can('view permissions')->name('permissions.index');
+        Route::get('/permissions/data', [PermissionController::class, 'getData'])->can('view permissions')->name('permissions.data');
+        Route::get('/permissions/create', [PermissionController::class, 'create'])->can('create permissions')->name('permissions.create');
+        Route::post('/permissions', [PermissionController::class, 'store'])->can('create permissions')->name('permissions.store');
+        Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit'])->can('edit permissions')->name('permissions.edit');
+        Route::put('/permissions/{id}', [PermissionController::class, 'update'])->can('edit permissions')->name('permissions.update');
+        Route::delete('/permissions/{id}', [PermissionController::class, 'destroy'])->can('delete permissions')->name('permissions.destroy');
 
         // Cities Routes
-        Route::middleware(['permission:view cities'])->group(function () {
-            Route::get('/cities', [CityController::class, 'index'])->name('cities.index');
-            Route::get('/cities/data', [CityController::class, 'getData'])->name('cities.data');
-        });
-        Route::middleware(['permission:create cities'])->group(function () {
-            Route::get('/cities/create', [CityController::class, 'create'])->name('cities.create');
-            Route::post('/cities', [CityController::class, 'store'])->name('cities.store');
-        });
-        Route::middleware(['permission:edit cities'])->group(function () {
-            Route::get('/cities/{id}/edit', [CityController::class, 'edit'])->name('cities.edit');
-            Route::put('/cities/{id}', [CityController::class, 'update'])->name('cities.update');
-        });
-        Route::middleware(['permission:delete cities'])->group(function () {
-            Route::delete('/cities/{id}', [CityController::class, 'destroy'])->name('cities.destroy');
-        });
+        Route::get('/cities', [CityController::class, 'index'])->can('view cities')->name('cities.index');
+        Route::get('/cities/data', [CityController::class, 'getData'])->can('view cities')->name('cities.data');
+        Route::get('/cities/create', [CityController::class, 'create'])->can('create cities')->name('cities.create');
+        Route::post('/cities', [CityController::class, 'store'])->can('create cities')->name('cities.store');
+        Route::get('/cities/{id}/edit', [CityController::class, 'edit'])->can('edit cities')->name('cities.edit');
+        Route::put('/cities/{id}', [CityController::class, 'update'])->can('edit cities')->name('cities.update');
+        Route::delete('/cities/{id}', [CityController::class, 'destroy'])->can('delete cities')->name('cities.destroy');
 
         // Counter/Terminal Routes
-        Route::middleware(['permission:view terminals'])->group(function () {
-            Route::get('/counter-terminals', [CounterTerminalController::class, 'index'])->name('counter-terminals.index');
-            Route::get('/counter-terminals/data', [CounterTerminalController::class, 'getData'])->name('counter-terminals.data');
-        });
-        Route::middleware(['permission:create terminals'])->group(function () {
-            Route::get('/counter-terminals/create', [CounterTerminalController::class, 'create'])->name('counter-terminals.create');
-            Route::post('/counter-terminals', [CounterTerminalController::class, 'store'])->name('counter-terminals.store');
-        });
-        Route::middleware(['permission:edit terminals'])->group(function () {
-            Route::get('/counter-terminals/{id}/edit', [CounterTerminalController::class, 'edit'])->name('counter-terminals.edit');
-            Route::put('/counter-terminals/{id}', [CounterTerminalController::class, 'update'])->name('counter-terminals.update');
-        });
-        Route::middleware(['permission:delete terminals'])->group(function () {
-            Route::delete('/counter-terminals/{id}', [CounterTerminalController::class, 'destroy'])->name('counter-terminals.destroy');
-        });
+        Route::get('/counter-terminals', [CounterTerminalController::class, 'index'])->can('view terminals')->name('counter-terminals.index');
+        Route::get('/counter-terminals/data', [CounterTerminalController::class, 'getData'])->can('view terminals')->name('counter-terminals.data');
+        Route::get('/counter-terminals/create', [CounterTerminalController::class, 'create'])->can('create terminals')->name('counter-terminals.create');
+        Route::post('/counter-terminals', [CounterTerminalController::class, 'store'])->can('create terminals')->name('counter-terminals.store');
+        Route::get('/counter-terminals/{id}/edit', [CounterTerminalController::class, 'edit'])->can('edit terminals')->name('counter-terminals.edit');
+        Route::put('/counter-terminals/{id}', [CounterTerminalController::class, 'update'])->can('edit terminals')->name('counter-terminals.update');
+        Route::delete('/counter-terminals/{id}', [CounterTerminalController::class, 'destroy'])->can('delete terminals')->name('counter-terminals.destroy');
 
         // Users Routes
-        Route::middleware(['permission:view users'])->group(function () {
-            Route::get('/users', [UserController::class, 'index'])->name('users.index');
-            Route::get('/users/data', [UserController::class, 'getData'])->name('users.data');
-        });
-        Route::middleware(['permission:create users'])->group(function () {
-            Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-            Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        });
-        Route::middleware(['permission:edit users'])->group(function () {
-            Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-            Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-        });
-        Route::middleware(['permission:delete users'])->group(function () {
-            Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
-        });
+        Route::get('/users', [UserController::class, 'index'])->can('view users')->name('users.index');
+        Route::get('/users/data', [UserController::class, 'getData'])->can('view users')->name('users.data');
+        Route::get('/users/create', [UserController::class, 'create'])->can('create users')->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->can('create users')->name('users.store');
+        Route::get('/users/{id}/edit', [UserController::class, 'edit'])->can('edit users')->name('users.edit');
+        Route::put('/users/{id}', [UserController::class, 'update'])->can('edit users')->name('users.update');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->can('delete users')->name('users.destroy');
 
         // Bus Types Routes
-        Route::middleware(['permission:view bus types'])->group(function () {
-            Route::get('/bus-types', [BusTypeController::class, 'index'])->name('bus-types.index');
-            Route::get('/bus-types/data', [BusTypeController::class, 'getData'])->name('bus-types.data');
-        });
-        Route::middleware(['permission:create bus types'])->group(function () {
-            Route::get('/bus-types/create', [BusTypeController::class, 'create'])->name('bus-types.create');
-            Route::post('/bus-types', [BusTypeController::class, 'store'])->name('bus-types.store');
-        });
-        Route::middleware(['permission:edit bus types'])->group(function () {
-            Route::get('/bus-types/{id}/edit', [BusTypeController::class, 'edit'])->name('bus-types.edit');
-            Route::put('/bus-types/{id}', [BusTypeController::class, 'update'])->name('bus-types.update');
-        });
-        Route::middleware(['permission:delete bus types'])->group(function () {
-            Route::delete('/bus-types/{id}', [BusTypeController::class, 'destroy'])->name('bus-types.destroy');
-        });
+        Route::get('/bus-types', [BusTypeController::class, 'index'])->can('view bus types')->name('bus-types.index');
+        Route::get('/bus-types/data', [BusTypeController::class, 'getData'])->can('view bus types')->name('bus-types.data');
+        Route::get('/bus-types/create', [BusTypeController::class, 'create'])->can('create bus types')->name('bus-types.create');
+        Route::post('/bus-types', [BusTypeController::class, 'store'])->can('create bus types')->name('bus-types.store');
+        Route::get('/bus-types/{id}/edit', [BusTypeController::class, 'edit'])->can('edit bus types')->name('bus-types.edit');
+        Route::put('/bus-types/{id}', [BusTypeController::class, 'update'])->can('edit bus types')->name('bus-types.update');
+        Route::delete('/bus-types/{id}', [BusTypeController::class, 'destroy'])->can('delete bus types')->name('bus-types.destroy');
 
         // Bus Layouts Routes
-        Route::middleware(['permission:view bus layouts'])->group(function () {
-            Route::get('/bus-layouts', [BusLayoutController::class, 'index'])->name('bus-layouts.index');
-            Route::get('/bus-layouts/data', [BusLayoutController::class, 'getData'])->name('bus-layouts.data');
-        });
-        Route::middleware(['permission:create bus layouts'])->group(function () {
-            Route::get('/bus-layouts/create', [BusLayoutController::class, 'create'])->name('bus-layouts.create');
-            Route::post('/bus-layouts', [BusLayoutController::class, 'store'])->name('bus-layouts.store');
-        });
-        Route::middleware(['permission:edit bus layouts'])->group(function () {
-            Route::get('/bus-layouts/{id}/edit', [BusLayoutController::class, 'edit'])->name('bus-layouts.edit');
-            Route::put('/bus-layouts/{id}', [BusLayoutController::class, 'update'])->name('bus-layouts.update');
-        });
-        Route::middleware(['permission:delete bus layouts'])->group(function () {
-            Route::delete('/bus-layouts/{id}', [BusLayoutController::class, 'destroy'])->name('bus-layouts.destroy');
-        });
+        Route::get('/bus-layouts', [BusLayoutController::class, 'index'])->can('view bus layouts')->name('bus-layouts.index');
+        Route::get('/bus-layouts/data', [BusLayoutController::class, 'getData'])->can('view bus layouts')->name('bus-layouts.data');
+        Route::get('/bus-layouts/create', [BusLayoutController::class, 'create'])->can('create bus layouts')->name('bus-layouts.create');
+        Route::post('/bus-layouts', [BusLayoutController::class, 'store'])->can('create bus layouts')->name('bus-layouts.store');
+        Route::get('/bus-layouts/{id}/edit', [BusLayoutController::class, 'edit'])->can('edit bus layouts')->name('bus-layouts.edit');
+        Route::put('/bus-layouts/{id}', [BusLayoutController::class, 'update'])->can('edit bus layouts')->name('bus-layouts.update');
+        Route::delete('/bus-layouts/{id}', [BusLayoutController::class, 'destroy'])->can('delete bus layouts')->name('bus-layouts.destroy');
 
         // Facilities Routes
-        Route::middleware(['permission:view facilities'])->group(function () {
-            Route::get('/facilities', [FacilityController::class, 'index'])->name('facilities.index');
-            Route::get('/facilities/data', [FacilityController::class, 'getData'])->name('facilities.data');
-        });
-        Route::middleware(['permission:create facilities'])->group(function () {
-            Route::get('/facilities/create', [FacilityController::class, 'create'])->name('facilities.create');
-            Route::post('/facilities', [FacilityController::class, 'store'])->name('facilities.store');
-        });
-        Route::middleware(['permission:edit facilities'])->group(function () {
-            Route::get('/facilities/{id}/edit', [FacilityController::class, 'edit'])->name('facilities.edit');
-            Route::put('/facilities/{id}', [FacilityController::class, 'update'])->name('facilities.update');
-        });
-        Route::middleware(['permission:delete facilities'])->group(function () {
-            Route::delete('/facilities/{id}', [FacilityController::class, 'destroy'])->name('facilities.destroy');
-        });
+        Route::get('/facilities', [FacilityController::class, 'index'])->can('view facilities')->name('facilities.index');
+        Route::get('/facilities/data', [FacilityController::class, 'getData'])->can('view facilities')->name('facilities.data');
+        Route::get('/facilities/create', [FacilityController::class, 'create'])->can('create facilities')->name('facilities.create');
+        Route::post('/facilities', [FacilityController::class, 'store'])->can('create facilities')->name('facilities.store');
+        Route::get('/facilities/{id}/edit', [FacilityController::class, 'edit'])->can('edit facilities')->name('facilities.edit');
+        Route::put('/facilities/{id}', [FacilityController::class, 'update'])->can('edit facilities')->name('facilities.update');
+        Route::delete('/facilities/{id}', [FacilityController::class, 'destroy'])->can('delete facilities')->name('facilities.destroy');
 
         // Buses Routes
-        Route::middleware(['permission:view buses'])->group(function () {
-            Route::get('/buses', [BusController::class, 'index'])->name('buses.index');
-            Route::get('/buses/data', [BusController::class, 'getData'])->name('buses.data');
-        });
-        Route::middleware(['permission:create buses'])->group(function () {
-            Route::get('/buses/create', [BusController::class, 'create'])->name('buses.create');
-            Route::post('/buses', [BusController::class, 'store'])->name('buses.store');
-        });
-        Route::middleware(['permission:edit buses'])->group(function () {
-            Route::get('/buses/{id}/edit', [BusController::class, 'edit'])->name('buses.edit');
-            Route::put('/buses/{id}', [BusController::class, 'update'])->name('buses.update');
-        });
-        Route::middleware(['permission:delete buses'])->group(function () {
-            Route::delete('/buses/{id}', [BusController::class, 'destroy'])->name('buses.destroy');
-        });
+        Route::get('/buses', [BusController::class, 'index'])->can('view buses')->name('buses.index');
+        Route::get('/buses/data', [BusController::class, 'getData'])->can('view buses')->name('buses.data');
+        Route::get('/buses/create', [BusController::class, 'create'])->can('create buses')->name('buses.create');
+        Route::post('/buses', [BusController::class, 'store'])->can('create buses')->name('buses.store');
+        Route::get('/buses/{id}/edit', [BusController::class, 'edit'])->can('edit buses')->name('buses.edit');
+        Route::put('/buses/{id}', [BusController::class, 'update'])->can('edit buses')->name('buses.update');
+        Route::delete('/buses/{id}', [BusController::class, 'destroy'])->can('delete buses')->name('buses.destroy');
 
         // Banners Routes
-        Route::middleware(['permission:view banners'])->group(function () {
-            Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
-            Route::get('/banners/data', [BannerController::class, 'getData'])->name('banners.data');
-        });
-        Route::middleware(['permission:create banners'])->group(function () {
-            Route::get('/banners/create', [BannerController::class, 'create'])->name('banners.create');
-            Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
-        });
-        Route::middleware(['permission:edit banners'])->group(function () {
-            Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->name('banners.edit');
-            Route::put('/banners/{id}', [BannerController::class, 'update'])->name('banners.update');
-        });
-        Route::middleware(['permission:delete banners'])->group(function () {
-            Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->name('banners.destroy');
-        });
+        Route::get('/banners', [BannerController::class, 'index'])->can('view banners')->name('banners.index');
+        Route::get('/banners/data', [BannerController::class, 'getData'])->can('view banners')->name('banners.data');
+        Route::get('/banners/create', [BannerController::class, 'create'])->can('create banners')->name('banners.create');
+        Route::post('/banners', [BannerController::class, 'store'])->can('create banners')->name('banners.store');
+        Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->can('edit banners')->name('banners.edit');
+        Route::put('/banners/{id}', [BannerController::class, 'update'])->can('edit banners')->name('banners.update');
+        Route::delete('/banners/{id}', [BannerController::class, 'destroy'])->can('delete banners')->name('banners.destroy');
 
         // General Settings Routes
-        Route::middleware(['permission:view general settings'])->group(function () {
-            Route::get('/general-settings', [GeneralSettingController::class, 'index'])->name('general-settings.index');
-        });
-        Route::middleware(['permission:create general settings'])->group(function () {
-            Route::get('/general-settings/create', [GeneralSettingController::class, 'create'])->name('general-settings.create');
-            Route::post('/general-settings', [GeneralSettingController::class, 'store'])->name('general-settings.store');
-        });
-        Route::middleware(['permission:edit general settings'])->group(function () {
-            Route::get('/general-settings/{id}/edit', [GeneralSettingController::class, 'edit'])->name('general-settings.edit');
-            Route::put('/general-settings/{id}', [GeneralSettingController::class, 'update'])->name('general-settings.update');
-        });
-        Route::middleware(['permission:delete general settings'])->group(function () {
-            Route::delete('/general-settings/{id}', [GeneralSettingController::class, 'destroy'])->name('general-settings.destroy');
-        });
+        Route::get('/general-settings', [GeneralSettingController::class, 'index'])->can('view general settings')->name('general-settings.index');
+        Route::get('/general-settings/create', [GeneralSettingController::class, 'create'])->can('create general settings')->name('general-settings.create');
+        Route::post('/general-settings', [GeneralSettingController::class, 'store'])->can('create general settings')->name('general-settings.store');
+        Route::get('/general-settings/{id}/edit', [GeneralSettingController::class, 'edit'])->can('edit general settings')->name('general-settings.edit');
+        Route::put('/general-settings/{id}', [GeneralSettingController::class, 'update'])->can('edit general settings')->name('general-settings.update');
+        Route::delete('/general-settings/{id}', [GeneralSettingController::class, 'destroy'])->can('delete general settings')->name('general-settings.destroy');
 
         // Enquiries Routes
-        Route::middleware(['permission:view enquiries'])->group(function () {
-            Route::get('/enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
-            Route::get('/enquiries/data', [EnquiryController::class, 'getData'])->name('enquiries.data');
-            Route::get('/enquiries/{id}', [EnquiryController::class, 'show'])->name('enquiries.show');
-        });
-        Route::middleware(['permission:delete enquiries'])->group(function () {
-            Route::delete('/enquiries/{id}', [EnquiryController::class, 'destroy'])->name('enquiries.destroy');
-        });
+        Route::get('/enquiries', [EnquiryController::class, 'index'])->can('view enquiries')->name('enquiries.index');
+        Route::get('/enquiries/data', [EnquiryController::class, 'getData'])->can('view enquiries')->name('enquiries.data');
+        Route::get('/enquiries/{id}', [EnquiryController::class, 'show'])->can('view enquiries')->name('enquiries.show');
+        Route::delete('/enquiries/{id}', [EnquiryController::class, 'destroy'])->can('delete enquiries')->name('enquiries.destroy');
 
     });
 });
