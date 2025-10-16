@@ -18,13 +18,6 @@
                 </ol>
             </nav>
         </div>
-        <div class="ms-auto">
-            @can('create route fares')
-                <a href="{{ route('admin.route-fares.create') }}" class="btn btn-primary">
-                    <i class="bx bx-plus"></i> Add New Fare
-                </a>
-            @endcan
-        </div>
     </div>
     <!--end breadcrumb-->
 
@@ -50,7 +43,6 @@
                                     <th>Fare Information</th>
                                     <th>Status</th>
                                     <th>Created Date</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -105,12 +97,7 @@
                         data: 'created_at',
                         name: 'created_at',
                     },
-                    {
-                        data: 'actions',
-                        name: 'actions',
-                        orderable: false,
-                        searchable: false,
-                    },
+
                 ],
                 order: [[0, 'desc']],
                 pageLength: 25,
@@ -122,30 +109,5 @@
                 }
             });
         });
-
-        // Delete route fare function
-        function deleteRouteFare(id) {
-            if (confirm('Are you sure you want to delete this route fare?')) {
-                $.ajax({
-                    url: "{{ route('admin.route-fares.destroy', ':id') }}".replace(':id', id),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            $('#route-fares-table').DataTable().ajax.reload();
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response?.message || 'An error occurred while deleting the route fare.');
-                    }
-                });
-            }
-        }
     </script>
 @endsection
