@@ -4,34 +4,72 @@
 
 @section('styles')
     <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <style>
+        /* Compact Users Index Styling */
+        .users-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .users-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .users-header p {
+            margin: 0.25rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+        
+        .add-user-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            color: white;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .add-user-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+    </style>
 @endsection
 
 @section('content')
-    <!--breadcrumb-->
-    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-        <div class="breadcrumb-title pe-3">User Management</div>
-        <div class="ps-3">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 p-0">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">Users</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="ms-auto">
-            <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus me-1"></i>Add New User
-            </a>
+    <!-- Compact Header -->
+    <div class="users-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h4><i class="bx bx-user me-2"></i>Users Management</h4>
+                <p>Manage system users and their access permissions</p>
+            </div>
+            <div>
+                <a href="{{ route('admin.users.create') }}" class="add-user-btn">
+                    <i class="bx bx-plus me-1"></i>Add New User
+                </a>
+            </div>
         </div>
     </div>
-    <!--end breadcrumb-->
-    
-    <h6 class="mb-0 text-uppercase">Users Management</h6>
-    <hr>
-    
-    <div class="card">
-        <div class="card-body">
+    <!-- Compact Table -->
+    <div class="table-container">
+        <div class="p-3">
             <div class="table-responsive">
                 <table id="users-table" class="table table-striped table-bordered">
                     <thead>

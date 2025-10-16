@@ -1,8 +1,8 @@
   <!--sidebar wrapper -->
   <div class="sidebar-wrapper" data-simplebar="true">
-      <div class="sidebar-header">
+      <div class="sidebar-header" style="padding: 1rem 0.75rem;">
           <div>
-              <img src="{{ asset('frontend/assets/img/logo 1.png') }}" alt="logo icon">
+              <img src="{{ asset('frontend/assets/img/logo 1.png') }}" alt="logo icon" style="height: 32px;">
           </div>
           {{-- <div>
               <h4 class="logo-text">Rocker</h4>
@@ -11,33 +11,33 @@
           </div>
       </div>
       <!--navigation-->
-      <ul class="metismenu" id="menu">
+      <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
           <li>
-              <a href="{{ route('admin.dashboard') }}">
-                  <div class="parent-icon"><i class='bx bx-cookie'></i>
+              <a href="{{ route('admin.dashboard') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i class='bx bx-cookie'></i>
                   </div>
-                  <div class="menu-title">Dashboard</div>
+                  <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Dashboard</div>
               </a>
           </li>
 
           @canany(['view roles', 'view permissions', 'view users'])
-              <li class="menu-label">User Management</li>
+              <li class="menu-label" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">User Management</li>
           @endcanany
 
           @canany(['view roles', 'view permissions'])
               <li>
-                  <a href="javascript:;" class="has-arrow">
-                      <div class="parent-icon"><i class='bx bx-shield-quarter'></i>
+                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i class='bx bx-shield-quarter'></i>
                       </div>
-                      <div class="menu-title">Access Control</div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Access Control</div>
                   </a>
-                  <ul>
+                  <ul style="padding-left: 0;">
                       @can('view roles')
-                          <li> <a href="{{ route('admin.roles.index') }}"><i class='bx bx-radio-circle'></i>Roles</a></li>
+                          <li> <a href="{{ route('admin.roles.index') }}" style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle' style="font-size: 0.7rem;"></i>Roles</a></li>
                       @endcan
                       @can('view permissions')
-                          <li> <a href="{{ route('admin.permissions.index') }}"><i
-                                      class='bx bx-radio-circle'></i>Permissions</a></li>
+                          <li> <a href="{{ route('admin.permissions.index') }}" style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i
+                                      class='bx bx-radio-circle' style="font-size: 0.7rem;"></i>Permissions</a></li>
                       @endcan
                   </ul>
               </li>

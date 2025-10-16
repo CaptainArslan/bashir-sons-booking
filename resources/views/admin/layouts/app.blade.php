@@ -170,6 +170,41 @@
             padding: 0.75rem 1rem;
         }
         
+        /* Compact Sidebar Menu */
+        .metismenu a {
+            font-size: 0.875rem !important;
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .metismenu .parent-icon {
+            width: 20px !important;
+            height: 20px !important;
+            font-size: 1rem !important;
+        }
+        
+        .metismenu .menu-title {
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+        }
+        
+        .metismenu .menu-label {
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            padding: 0.5rem 1rem !important;
+            color: #6c757d !important;
+        }
+        
+        .metismenu ul li a {
+            padding: 0.5rem 1rem 0.5rem 2.5rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        .metismenu ul li a i {
+            font-size: 0.7rem !important;
+        }
+        
         /* Compact Buttons */
         .btn-primary {
             background: linear-gradient(45deg, #007bff, #0056b3);
