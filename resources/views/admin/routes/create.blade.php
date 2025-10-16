@@ -3,6 +3,72 @@
 @section('title', 'Create Route')
 
 @section('styles')
+    <style>
+        .stop-item {
+            transition: all 0.3s ease;
+            border-left: 4px solid #007bff !important;
+        }
+        
+        .stop-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        }
+        
+        .form-check-label {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .form-check-input:checked + .form-check-label {
+            color: #198754;
+            font-weight: 500;
+        }
+        
+        .time-input-group {
+            position: relative;
+        }
+        
+        .time-input-group::before {
+            content: "🕐";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .route-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stops-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .add-stop-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .add-stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -131,22 +197,23 @@
                         <!-- Route Stops Section -->
                         <div class="row mt-4">
                             <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="card-title mb-0">
-                                            <i class="bx bx-map me-2"></i>Route Stops
-                                        </h5>
-                                        <p class="text-muted mb-0">Add terminals to define the route path</p>
+                                <div class="stops-section">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="me-3">
+                                            <i class="bx bx-map text-primary" style="font-size: 2rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 fw-bold text-primary">Route Stops</h5>
+                                            <p class="text-muted mb-0">Add terminals to define the route path with timing information</p>
+                                        </div>
                                     </div>
-                                    <div class="card-body">
-                                        <div id="stops-container">
-                                            <!-- Stops will be added here dynamically -->
-                                        </div>
-                                        <div class="mt-3">
-                                            <button type="button" class="btn btn-outline-primary" id="add-stop-btn">
-                                                <i class="bx bx-plus"></i> Add Stop
-                                            </button>
-                                        </div>
+                                    <div id="stops-container">
+                                        <!-- Stops will be added here dynamically -->
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <button type="button" class="add-stop-btn" id="add-stop-btn">
+                                            <i class="bx bx-plus me-2"></i>Add New Stop
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -266,14 +333,16 @@
         function addStop() {
             stopCounter++;
             const stopDiv = document.createElement('div');
-            stopDiv.className = 'stop-item border rounded p-3 mb-3';
+            stopDiv.className = 'stop-item border rounded p-4 mb-4 shadow-sm bg-light';
             stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h6 class="mb-0">
-                        <i class="bx bx-map-pin me-2 text-primary"></i>
-                        Stop ${stopCounter}
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                            ${stopCounter}
+                        </div>
+                        <span class="text-primary fw-bold">Stop ${stopCounter}</span>
                     </h6>
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>
@@ -305,20 +374,49 @@
                                placeholder="0" min="0">
                     </div>
                     <div class="col-md-3">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_pickup_allowed]" 
-                                   value="1" id="pickup_${stopCounter}" checked>
-                            <label class="form-check-label" for="pickup_${stopCounter}">
-                                Pickup Allowed
-                            </label>
+                        <label class="form-label">
+                            <i class="bx bx-time me-1 text-success"></i>Arrival Time
+                        </label>
+                        <div class="time-input-group">
+                            <input type="time" class="form-control arrival-time-input" name="stops[${stopCounter}][arrival_time]" 
+                                   placeholder="HH:MM">
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-check mt-4">
+                        <label class="form-label">
+                            <i class="bx bx-time me-1 text-warning"></i>Departure Time
+                        </label>
+                        <div class="time-input-group">
+                            <input type="time" class="form-control departure-time-input" name="stops[${stopCounter}][departure_time]" 
+                                   placeholder="HH:MM">
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_pickup_allowed]" 
+                                   value="1" id="pickup_${stopCounter}" checked>
+                            <label class="form-check-label" for="pickup_${stopCounter}">
+                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup Allowed
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_dropoff_allowed]" 
                                    value="1" id="dropoff_${stopCounter}" checked>
                             <label class="form-check-label" for="dropoff_${stopCounter}">
-                                Dropoff Allowed
+                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff Allowed
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_online_booking_allowed]" 
+                                   value="1" id="booking_${stopCounter}" checked>
+                            <label class="form-check-label" for="booking_${stopCounter}">
+                                <i class="bx bx-globe me-1 text-info"></i>Online Booking
                             </label>
                         </div>
                     </div>

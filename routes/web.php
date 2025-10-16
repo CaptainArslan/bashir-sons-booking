@@ -187,7 +187,6 @@ Route::middleware('auth')->group(function () {
         // Route Fares Management
         Route::get('/route-fares', [RouteFareController::class, 'index'])->can('view route fares')->name('route-fares.index');
         Route::get('/route-fares/data', [RouteFareController::class, 'getData'])->can('view route fares')->name('route-fares.data');
-        // Route::delete('/route-fares/{id}', [RouteFareController::class, 'destroy'])->can('delete route fares')->name('route-fares.destroy');
     });
 });
 

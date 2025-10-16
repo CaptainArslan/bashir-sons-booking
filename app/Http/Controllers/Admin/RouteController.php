@@ -202,6 +202,17 @@ class RouteController extends Controller
             'stops.*.is_dropoff_allowed' => [
                 'boolean',
             ],
+            'stops.*.arrival_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'stops.*.departure_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'stops.*.is_online_booking_allowed' => [
+                'boolean',
+            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -237,6 +248,8 @@ class RouteController extends Controller
             'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
             'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
             'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
+            'stops.*.arrival_time.date_format' => 'Arrival time must be in HH:MM format',
+            'stops.*.departure_time.date_format' => 'Departure time must be in HH:MM format',
         ]);
 
         try {
@@ -250,6 +263,7 @@ class RouteController extends Controller
             foreach ($stops as $stopData) {
                 $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
                 $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                $stopData['is_online_booking_allowed'] = isset($stopData['is_online_booking_allowed']);
                 $route->routeStops()->create($stopData);
             }
 
@@ -348,6 +362,17 @@ class RouteController extends Controller
             'stops.*.is_dropoff_allowed' => [
                 'boolean',
             ],
+            'stops.*.arrival_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'stops.*.departure_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'stops.*.is_online_booking_allowed' => [
+                'boolean',
+            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -383,6 +408,8 @@ class RouteController extends Controller
             'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
             'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
             'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
+            'stops.*.arrival_time.date_format' => 'Arrival time must be in HH:MM format',
+            'stops.*.departure_time.date_format' => 'Departure time must be in HH:MM format',
         ]);
 
         try {
@@ -402,6 +429,7 @@ class RouteController extends Controller
                     $existingStopIds[] = $key;
                     $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
                     $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                    $stopData['is_online_booking_allowed'] = isset($stopData['is_online_booking_allowed']);
                     $route->routeStops()->where('id', $key)->update($stopData);
                 } else {
                     // New stop
@@ -416,6 +444,7 @@ class RouteController extends Controller
             foreach ($newStops as $stopData) {
                 $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
                 $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
+                $stopData['is_online_booking_allowed'] = isset($stopData['is_online_booking_allowed']);
                 $route->routeStops()->create($stopData);
             }
 
@@ -498,6 +527,17 @@ class RouteController extends Controller
             'is_dropoff_allowed' => [
                 'boolean',
             ],
+            'arrival_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'departure_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'is_online_booking_allowed' => [
+                'boolean',
+            ],
         ], [
             'terminal_id.required' => 'Terminal is required',
             'terminal_id.exists' => 'Selected terminal is invalid or does not exist',
@@ -527,6 +567,7 @@ class RouteController extends Controller
             // Handle checkbox values
             $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
             $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
+            $validated['is_online_booking_allowed'] = $request->has('is_online_booking_allowed');
 
             $route->routeStops()->create($validated);
 
@@ -575,6 +616,17 @@ class RouteController extends Controller
             'is_dropoff_allowed' => [
                 'boolean',
             ],
+            'arrival_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'departure_time' => [
+                'nullable',
+                'date_format:H:i',
+            ],
+            'is_online_booking_allowed' => [
+                'boolean',
+            ],
         ], [
             'sequence.required' => 'Sequence is required',
             'sequence.integer' => 'Sequence must be a whole number',
@@ -594,6 +646,7 @@ class RouteController extends Controller
             // Handle checkbox values
             $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
             $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
+            $validated['is_online_booking_allowed'] = $request->has('is_online_booking_allowed');
 
             $stop->update($validated);
 
@@ -647,6 +700,9 @@ class RouteController extends Controller
                     'approx_travel_time' => $stop->approx_travel_time,
                     'is_pickup_allowed' => $stop->is_pickup_allowed,
                     'is_dropoff_allowed' => $stop->is_dropoff_allowed,
+                    'arrival_time' => $stop->arrival_time,
+                    'departure_time' => $stop->departure_time,
+                    'is_online_booking_allowed' => $stop->is_online_booking_allowed,
                     'terminal' => [
                         'id' => $stop->terminal->id,
                         'name' => $stop->terminal->name,

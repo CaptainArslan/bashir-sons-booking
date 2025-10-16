@@ -47,7 +47,16 @@ class Terminal extends Model
     public function routes()
     {
         return $this->belongsToMany(Route::class, 'route_stops')
-            ->withPivot(['sequence', 'distance_from_previous', 'approx_travel_time'])
+            ->withPivot([
+                'sequence',
+                'distance_from_previous',
+                'approx_travel_time',
+                'is_pickup_allowed',
+                'is_dropoff_allowed',
+                'arrival_time',
+                'departure_time',
+                'is_online_booking_allowed',
+            ])
             ->orderBy('pivot_sequence');
     }
 
