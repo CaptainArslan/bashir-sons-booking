@@ -39,7 +39,7 @@
                             <th>Distance & Time</th>
                             <th>Services</th>
                             <th>Created Date</th>
-                            <th>Actions</th>
+                            {{-- <th>Actions</th> --}}
                         </tr>
                     </thead>
                 </table>
@@ -95,12 +95,12 @@
                         data: 'created_at',
                         name: 'created_at',
                     },
-                    {
-                        data: 'actions',
-                        name: 'actions',
-                        orderable: false,
-                        searchable: false,
-                    }
+                    // {
+                    //     data: 'actions',
+                    //     name: 'actions',
+                    //     orderable: false,
+                    //     searchable: false,
+                    // }
                 ],
             });
         });

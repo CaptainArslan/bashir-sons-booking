@@ -55,40 +55,41 @@ class RouteStopController extends Controller
                     return $pickup . $dropoff;
                 })
                 ->addColumn('actions', function ($routeStop) {
-                    $actions = '<div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                type="button" 
-                                data-bs-toggle="dropdown" 
-                                aria-expanded="false">
-                            <i class="bx bx-dots-horizontal-rounded"></i>
-                        </button>
-                        <ul class="dropdown-menu">';
+                    // $actions = '<div class="dropdown">
+                    //     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                    //             type="button" 
+                    //             data-bs-toggle="dropdown" 
+                    //             aria-expanded="false">
+                    //         <i class="bx bx-dots-horizontal-rounded"></i>
+                    //     </button>
+                    //     <ul class="dropdown-menu">';
 
-                    // Edit button
-                    if (auth()->user()->can('edit route stops')) {
-                        $actions .= '<li>
-                            <a class="dropdown-item" 
-                               href="' . route('admin.route-stops.edit', $routeStop->id) . '">
-                                <i class="bx bx-edit me-2"></i>Edit Stop
-                            </a>
-                        </li>';
-                    }
+                    // // Edit button
+                    // if (auth()->user()->can('edit route stops')) {
+                    //     $actions .= '<li>
+                    //         <a class="dropdown-item" 
+                    //            href="' . route('admin.route-stops.edit', $routeStop->id) . '">
+                    //             <i class="bx bx-edit me-2"></i>Edit Stop
+                    //         </a>
+                    //     </li>';
+                    // }
 
-                    // Delete button
-                    if (auth()->user()->can('delete route stops')) {
-                        $actions .= '<li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" 
-                               href="javascript:void(0)" 
-                               onclick="deleteRouteStop(' . $routeStop->id . ')">
-                                <i class="bx bx-trash me-2"></i>Delete Stop
-                            </a>
-                        </li>';
-                    }
+                    // // Delete button
+                    // if (auth()->user()->can('delete route stops')) {
+                    //     $actions .= '<li><hr class="dropdown-divider"></li>
+                    //     <li>
+                    //         <a class="dropdown-item text-danger" 
+                    //            href="javascript:void(0)" 
+                    //            onclick="deleteRouteStop(' . $routeStop->id . ')">
+                    //             <i class="bx bx-trash me-2"></i>Delete Stop
+                    //         </a>
+                    //     </li>';
+                    // }
 
-                    $actions .= '</ul></div>';
+                    // $actions .= '</ul></div>';
 
-                    return $actions;
+                    // return $actions;
+                    return '';
                 })
                 ->editColumn('created_at', fn($routeStop) => $routeStop->created_at->format('d M Y'))
                 ->escapeColumns([])

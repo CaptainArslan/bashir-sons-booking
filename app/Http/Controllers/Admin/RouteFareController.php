@@ -47,15 +47,15 @@ class RouteFareController extends Controller
                 ->addColumn('fare_info', function ($routeFare) {
                     $baseFare = 'PKR ' . number_format($routeFare->base_fare, 2);
                     $finalFare = 'PKR ' . number_format($routeFare->final_fare, 2);
-                    
+
                     $discountHtml = '';
                     if ($routeFare->discount_type && $routeFare->discount_value) {
-                        $discount = $routeFare->discount_type === 'percent' 
-                            ? $routeFare->discount_value . '%' 
+                        $discount = $routeFare->discount_type === 'percent'
+                            ? $routeFare->discount_value . '%'
                             : 'PKR ' . number_format($routeFare->discount_value, 2);
                         $discountHtml = '<small class="text-success">Discount: ' . $discount . '</small>';
                     }
-                    
+
                     return '<div class="d-flex flex-column">
                                 <span class="fw-bold text-success">' . $finalFare . '</span>
                                 <small class="text-muted">Base: ' . $baseFare . '</small>
@@ -113,7 +113,7 @@ class RouteFareController extends Controller
     {
         $routes = Route::where('status', RouteFareStatusEnum::ACTIVE->value)->get();
         $routeStops = RouteStop::with(['route', 'terminal.city'])
-            ->whereHas('route', function($query) {
+            ->whereHas('route', function ($query) {
                 $query->where('status', RouteFareStatusEnum::ACTIVE->value);
             })
             ->get();
@@ -201,7 +201,8 @@ class RouteFareController extends Controller
             if (RouteFare::where('route_id', $validated['route_id'])
                 ->where('from_stop_id', $validated['from_stop_id'])
                 ->where('to_stop_id', $validated['to_stop_id'])
-                ->exists()) {
+                ->exists()
+            ) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Fare already exists for this route and stops combination.');
@@ -222,7 +223,6 @@ class RouteFareController extends Controller
 
             return redirect()->route('admin.route-fares.index')
                 ->with('success', 'Route fare created successfully!');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -237,7 +237,7 @@ class RouteFareController extends Controller
             ->findOrFail($id);
         $routes = Route::where('status', RouteFareStatusEnum::ACTIVE->value)->get();
         $routeStops = RouteStop::with(['route', 'terminal.city'])
-            ->whereHas('route', function($query) {
+            ->whereHas('route', function ($query) {
                 $query->where('status', RouteFareStatusEnum::ACTIVE->value);
             })
             ->get();
@@ -328,7 +328,8 @@ class RouteFareController extends Controller
                 ->where('from_stop_id', $validated['from_stop_id'])
                 ->where('to_stop_id', $validated['to_stop_id'])
                 ->where('id', '!=', $id)
-                ->exists()) {
+                ->exists()
+            ) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Fare already exists for this route and stops combination.');
@@ -349,7 +350,6 @@ class RouteFareController extends Controller
 
             return redirect()->route('admin.route-fares.index')
                 ->with('success', 'Route fare updated successfully!');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -376,9 +376,6 @@ class RouteFareController extends Controller
         }
     }
 
-    /**
-     * Calculate final fare based on discount
-     */
     private function calculateFinalFare(float $baseFare, ?string $discountType, ?float $discountValue): float
     {
         if (!$discountType || !$discountValue) {
@@ -392,18 +389,12 @@ class RouteFareController extends Controller
         };
     }
 
-    /**
-     * Show fare management interface
-     */
     public function manage()
     {
         $routes = Route::where('status', RouteFareStatusEnum::ACTIVE->value)->get();
         return view('admin.route-fares.manage', compact('routes'));
     }
 
-    /**
-     * Get route stops for a specific route (AJAX)
-     */
     public function getRouteStops(Request $request, $routeId)
     {
         $routeStops = RouteStop::with('terminal.city')
@@ -423,9 +414,6 @@ class RouteFareController extends Controller
         ]);
     }
 
-    /**
-     * Bulk save route fares
-     */
     public function bulkSave(Request $request)
     {
         $validated = $request->validate([
@@ -517,7 +505,6 @@ class RouteFareController extends Controller
                 'updated_count' => $updatedCount,
                 'errors' => $errors
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -527,9 +514,6 @@ class RouteFareController extends Controller
         }
     }
 
-    /**
-     * Get existing fares for a specific route (AJAX)
-     */
     public function getRouteFares(Request $request, $routeId)
     {
         $routeFares = RouteFare::with(['fromStop.terminal.city', 'toStop.terminal.city'])

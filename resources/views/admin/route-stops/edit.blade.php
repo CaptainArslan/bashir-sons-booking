@@ -60,7 +60,7 @@
                                 @enderror
                             </div>
                             
-                            <div class="col-md-6">
+                            {{-- <div class="col-md-6">
                                 <label for="sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('sequence') is-invalid @enderror" id="sequence"
                                     name="sequence" placeholder="Enter sequence number" value="{{ old('sequence', $routeStop->sequence) }}" min="1" readonly>
@@ -68,7 +68,7 @@
                                 @error('sequence')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
+                            </div> --}}
                             
                             <div class="col-md-6">
                                 <label for="distance_from_previous" class="form-label">Distance from Previous (km)</label>
