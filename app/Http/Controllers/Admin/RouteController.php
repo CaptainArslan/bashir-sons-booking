@@ -8,7 +8,6 @@ use App\Models\Terminal;
 use App\Models\RouteFare;
 use App\Models\RouteStop;
 use App\Enums\RouteStatusEnum;
-use App\Enums\RouteFareStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -25,6 +24,7 @@ class RouteController extends Controller
         if ($request->ajax()) {
             $routes = Route::query()
                 ->with(['returnRoute:id,name', 'routeStops.terminal:id,name,code'])
+                ->withSum('routeFares', 'final_fare')
                 ->select('id', 'code', 'name', 'direction', 'is_return_of', 'base_currency', 'status', 'created_at');
 
             return DataTables::eloquent($routes)
@@ -49,6 +49,13 @@ class RouteController extends Controller
                     $count = $route->routeStops()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
                     return '<span class="badge ' . $badgeClass . '">' . $count . ' stop' . ($count !== 1 ? 's' : '') . '</span>';
+                })
+                ->addColumn('total_fare', function ($route) {
+                    $totalFare = $route->total_fares_amount;
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-success">PKR ' . number_format($totalFare, 2) . '</span>
+                                <small class="text-muted">Total Route Fare</small>
+                            </div>';
                 })
                 ->addColumn('status_badge', function ($route) {
                     $statusValue = $route->status instanceof RouteStatusEnum ? $route->status->value : $route->status;
@@ -112,7 +119,7 @@ class RouteController extends Controller
                 })
                 ->editColumn('created_at', fn($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'stops_count', 'status_badge', 'actions'])
+                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'stops_count', 'total_fare', 'status_badge', 'actions'])
                 ->make(true);
         }
     }
