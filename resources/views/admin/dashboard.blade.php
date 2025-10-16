@@ -515,7 +515,7 @@
                     </div>
                     <div class="col">
                         <div class="p-3 text-center">
-                            <h4 class="mb-0 text-success">{{ $stats['total_enquiries'] - $stats['pending_enquiries'] }}</h4>
+                            <h4 class="mb-0 text-success">{{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}</h4>
                             <p class="mb-0">Resolved</p>
                         </div>
                     </div>
@@ -567,8 +567,8 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: ['Active Buses', 'Inactive Buses'],
             datasets: [{
-                data: [{{ $chartData['buses_by_status']['active'] ?? 0 }}, {{ $chartData['buses_by_status']['inactive'] ?? 0 }}],
-                backgroundColor: ['#28a745', '#dc3545'],
+                data: [{{ isset($chartData['buses_by_status']['active']) ? $chartData['buses_by_status']['active'] : 0 }}, {{ isset($chartData['buses_by_status']['inactive']) ? $chartData['buses_by_status']['inactive'] : 0 }}],
+                backgroundColor: ['#28a745', '#6c757d'],
                 borderWidth: 0
             }]
         },
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: ['Active', 'Inactive'],
             datasets: [{
                 label: 'Routes',
-                data: [{{ $chartData['routes_by_status']['active'] ?? 0 }}, {{ $chartData['routes_by_status']['inactive'] ?? 0 }}],
+                data: [{{ isset($chartData['routes_by_status']['active']) ? $chartData['routes_by_status']['active'] : 0 }}, {{ isset($chartData['routes_by_status']['inactive']) ? $chartData['routes_by_status']['inactive'] : 0 }}],
                 backgroundColor: ['#28a745', '#6c757d'],
                 borderWidth: 0
             }]
@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: ['Pending', 'Resolved'],
             datasets: [{
-                data: [{{ $chartData['enquiries_by_status']['pending'] ?? 0 }}, {{ $chartData['enquiries_by_status']['resolved'] ?? 0 }}],
+                data: [{{ isset($chartData['enquiries_by_status']['pending']) ? $chartData['enquiries_by_status']['pending'] : 0 }}, {{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}],
                 backgroundColor: ['#ffc107', '#28a745'],
                 borderWidth: 0
             }]

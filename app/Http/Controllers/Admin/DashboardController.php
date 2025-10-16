@@ -10,7 +10,8 @@ use App\Models\User;
 use App\Models\Enquiry;
 use App\Models\RouteFare;
 use App\Models\RouteStop;
-use App\Enums\EnquieryStatusEnum;
+use App\Enums\EnquiryStatusEnum;
+use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -46,7 +47,7 @@ class DashboardController extends Controller
             'active_terminals' => Terminal::where('status', 'active')->count(),
             'total_users' => User::count(),
             'total_enquiries' => Enquiry::count(),
-            'pending_enquiries' => Enquiry::where('status', EnquieryStatusEnum::PENDING->value)->count(),
+            'pending_enquiries' => Enquiry::where('status', EnquiryStatusEnum::PENDING->value)->count(),
             'total_fares' => RouteFare::count(),
             'total_stops' => RouteStop::count(),
         ];
@@ -71,22 +72,25 @@ class DashboardController extends Controller
     private function getChartData()
     {
         // Routes by status
-        $routesByStatus = Route::select('status', DB::raw('count(*) as count'))
+        $routesByStatus = Route::selectRaw('CAST(status AS CHAR) as status_value, count(*) as count')
             ->groupBy('status')
             ->get()
-            ->pluck('count', 'status');
+            ->pluck('count', 'status_value')
+            ->toArray();
 
         // Buses by status
-        $busesByStatus = Bus::select('status', DB::raw('count(*) as count'))
+        $busesByStatus = Bus::selectRaw('CAST(status AS CHAR) as status_value, count(*) as count')
             ->groupBy('status')
             ->get()
-            ->pluck('count', 'status');
+            ->pluck('count', 'status_value')
+            ->toArray();
 
         // Enquiries by status
-        $enquiriesByStatus = Enquiry::select('status', DB::raw('count(*) as count'))
+        $enquiriesByStatus = Enquiry::selectRaw('CAST(status AS CHAR) as status_value, count(*) as count')
             ->groupBy('status')
             ->get()
-            ->pluck('count', 'status');
+            ->pluck('count', 'status_value')
+            ->toArray();
 
         // Monthly route creation
         $monthlyRoutes = Route::select(
