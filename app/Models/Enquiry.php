@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EnquiryStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -16,6 +17,7 @@ class Enquiry extends Model
         'phone',
         'message',
         'service',
+        'status',
     ];
 
     protected $casts = [
@@ -24,5 +26,6 @@ class Enquiry extends Model
         'phone' => 'string',
         'message' => 'string',
         'service' => 'string',
+        'status' => EnquiryStatusEnum::class,
     ];
 }
