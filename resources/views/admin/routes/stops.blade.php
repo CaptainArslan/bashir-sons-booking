@@ -4,117 +4,171 @@
 
 @section('styles')
     <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <style>
+        /* Compact Stops Management Styling */
+        .stops-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stops-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .stops-header p {
+            margin: 0.25rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+        
+        .add-stop-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            color: white;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .add-stop-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .route-info-card {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .route-summary-card {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #28a745;
+        }
+    </style>
 @endsection
 
 @section('content')
-    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-        <div class="breadcrumb-title pe-3">Transport Management</div>
-        <div class="ps-3">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 p-0">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.routes.index') }}">Routes</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Manage Stops - {{ $route->name }}</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="ms-auto">
-            @can('create routes')
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStopModal">
-                    <i class="bx bx-plus"></i> Add Stop
-                </button>
-            @endcan
+    <!-- Compact Header -->
+    <div class="stops-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h4><i class="bx bx-map me-2"></i>Manage Route Stops</h4>
+                <p>View, add, and edit stops for route: {{ $route->name }}</p>
+            </div>
+            <div>
+                @can('create routes')
+                    <button type="button" class="add-stop-btn" data-bs-toggle="modal" data-bs-target="#addStopModal">
+                        <i class="bx bx-plus me-1"></i>Add Stop
+                    </button>
+                @endcan
+            </div>
         </div>
     </div>
-    <!--end breadcrumb-->
 
     <!-- Route Information Card -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-8">
-                    <h5 class="card-title mb-3">Route Information</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Route Name:</strong> {{ $route->name }}</p>
-                            <p><strong>Route Code:</strong> <span class="badge bg-primary">{{ $route->code }}</span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Direction:</strong> 
-                                <span class="badge bg-{{ $route->direction === 'forward' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($route->direction) }}
-                                </span>
-                            </p>
-                            <p><strong>Status:</strong> 
-                                @if($route->status instanceof \App\Enums\RouteStatusEnum)
-                                    {!! \App\Enums\RouteStatusEnum::getStatusBadge($route->status->value) !!}
-                                @else
-                                    <span class="badge bg-secondary">{{ ucfirst($route->status) }}</span>
-                                @endif
-                            </p>
-                        </div>
+    <div class="route-info-card mb-3">
+        <div class="row">
+            <div class="col-md-8">
+                <h6 class="mb-2"><i class="bx bx-info-circle me-1"></i>Route Information</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Route Name:</strong> {{ $route->name }}</p>
+                        <p class="mb-1"><strong>Route Code:</strong> <span class="badge bg-primary">{{ $route->code }}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Direction:</strong> 
+                            <span class="badge bg-{{ $route->direction === 'forward' ? 'success' : 'warning' }}">
+                                {{ ucfirst($route->direction) }}
+                            </span>
+                        </p>
+                        <p class="mb-1"><strong>Status:</strong> 
+                            @if($route->status instanceof \App\Enums\RouteStatusEnum)
+                                {!! \App\Enums\RouteStatusEnum::getStatusBadge($route->status->value) !!}
+                            @else
+                                <span class="badge bg-secondary">{{ ucfirst($route->status) }}</span>
+                            @endif
+                        </p>
                     </div>
                 </div>
-                <div class="col-md-4 text-end">
-                    <a href="{{ route('admin.routes.edit', $route->id) }}" class="btn btn-outline-primary">
-                        <i class="bx bx-edit"></i> Edit Route
-                    </a>
-                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ route('admin.routes.edit', $route->id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bx bx-edit"></i> Edit Route
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Route Summary Card -->
     @if($route->routeStops->count() > 0)
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Route Summary</h5>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="bx bx-map text-primary fs-4"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">Total Stops</h6>
-                            <span class="text-muted">{{ $route->totalStops }} stops</span>
-                        </div>
+    <div class="route-summary-card mb-3">
+        <h6 class="mb-2"><i class="bx bx-stats me-1"></i>Route Summary</h6>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bx bx-map text-primary fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-2">
+                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Stops</h6>
+                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->count() }} stops</span>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="bx bx-tachometer text-success fs-4"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">Total Distance</h6>
-                            <span class="text-muted">{{ $route->totalDistance }} km</span>
-                        </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bx bx-tachometer text-success fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-2">
+                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Distance</h6>
+                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('distance_from_previous') }} km</span>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="bx bx-time text-warning fs-4"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">Total Travel Time</h6>
-                            <span class="text-muted">{{ $route->totalTravelTime }} min</span>
-                        </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bx bx-time text-warning fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-2">
+                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Travel Time</h6>
+                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('approx_travel_time') }} min</span>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="bx bx-map-pin text-info fs-4"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">Route Path</h6>
-                            <span class="text-muted">
-                                {{ $route->routeStops->first()->terminal->city->name ?? 'N/A' }} → 
-                                {{ $route->routeStops->last()->terminal->city->name ?? 'N/A' }}
-                            </span>
-                        </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bx bx-map-pin text-info fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-2">
+                        <h6 class="mb-0" style="font-size: 0.875rem;">Route Path</h6>
+                        <span class="text-muted" style="font-size: 0.8rem;">
+                            {{ $route->routeStops->first()->terminal->city->name ?? 'N/A' }} → 
+                            {{ $route->routeStops->last()->terminal->city->name ?? 'N/A' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -123,9 +177,9 @@
     @endif
 
     <!-- Route Stops Card -->
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Route Stops</h5>
+    <div class="table-container">
+        <div class="p-3">
+            <h6 class="mb-3"><i class="bx bx-list-ul me-1"></i>Route Stops</h6>
             <div class="table-responsive">
                 <table id="route-stops-table" class="table table-striped table-bordered">
                     <thead>
@@ -296,43 +350,54 @@
                 <form id="editStopForm">
                     @csrf
                     @method('PUT')
-                    <div class="modal-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="edit_sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="edit_sequence" name="sequence" 
-                                       placeholder="Enter sequence number" min="1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_distance_from_previous" class="form-label">Distance from Previous (km)</label>
-                                <input type="number" class="form-control" id="edit_distance_from_previous" 
-                                       name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_approx_travel_time" class="form-label">Travel Time (minutes)</label>
-                                <input type="number" class="form-control" id="edit_approx_travel_time" 
-                                       name="approx_travel_time" placeholder="Enter travel time" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="edit_is_pickup_allowed" 
-                                           name="is_pickup_allowed" value="1">
-                                    <label class="form-check-label" for="edit_is_pickup_allowed">
-                                        Pickup Allowed
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="edit_is_dropoff_allowed" 
-                                           name="is_dropoff_allowed" value="1">
-                                    <label class="form-check-label" for="edit_is_dropoff_allowed">
-                                        Dropoff Allowed
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                     <div class="modal-body">
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="edit_terminal_id" class="form-label">Terminal <span class="text-danger">*</span></label>
+                                 <select class="form-select" id="edit_terminal_id" name="terminal_id" required>
+                                     <option value="">Select Terminal</option>
+                                     @foreach ($terminals as $terminal)
+                                         <option value="{{ $terminal->id }}">
+                                             {{ $terminal->name }} - {{ $terminal->city->name }} ({{ $terminal->code }})
+                                         </option>
+                                     @endforeach
+                                 </select>
+                             </div>
+                             <div class="col-md-6">
+                                 <label for="edit_sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
+                                 <input type="number" class="form-control" id="edit_sequence" name="sequence" 
+                                        placeholder="Enter sequence number" min="1" required>
+                             </div>
+                             <div class="col-md-6">
+                                 <label for="edit_distance_from_previous" class="form-label">Distance from Previous (km)</label>
+                                 <input type="number" class="form-control" id="edit_distance_from_previous" 
+                                        name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
+                             </div>
+                             <div class="col-md-6">
+                                 <label for="edit_approx_travel_time" class="form-label">Travel Time (minutes)</label>
+                                 <input type="number" class="form-control" id="edit_approx_travel_time" 
+                                        name="approx_travel_time" placeholder="Enter travel time" min="0">
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="form-check">
+                                     <input class="form-check-input" type="checkbox" id="edit_is_pickup_allowed" 
+                                            name="is_pickup_allowed" value="1">
+                                     <label class="form-check-label" for="edit_is_pickup_allowed">
+                                         Pickup Allowed
+                                     </label>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="form-check">
+                                     <input class="form-check-input" type="checkbox" id="edit_is_dropoff_allowed" 
+                                            name="is_dropoff_allowed" value="1">
+                                     <label class="form-check-label" for="edit_is_dropoff_allowed">
+                                         Dropoff Allowed
+                                     </label>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Update Stop</button>
@@ -345,6 +410,8 @@
 @endsection
 
 @section('scripts')
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <script>
         let currentStopId = null;
 
@@ -356,46 +423,103 @@
         });
 
 
-        // Edit Stop Function
-        function editStop(stopId, sequence, distance, travelTime, pickupAllowed, dropoffAllowed) {
-            currentStopId = stopId;
-            
-            // Populate edit form with current values
-            document.getElementById('edit_sequence').value = sequence;
-            document.getElementById('edit_distance_from_previous').value = distance || '';
-            document.getElementById('edit_approx_travel_time').value = travelTime || '';
-            document.getElementById('edit_is_pickup_allowed').checked = pickupAllowed;
-            document.getElementById('edit_is_dropoff_allowed').checked = dropoffAllowed;
-            
-            // Show edit modal
-            const editModal = new bootstrap.Modal(document.getElementById('editStopModal'));
-            editModal.show();
-        }
+         // Edit Stop Function
+         function editStop(stopId, sequence, distance, travelTime, pickupAllowed, dropoffAllowed) {
+             currentStopId = stopId;
+             
+             // Get stop data via AJAX to populate terminal information
+             fetch(`{{ route('admin.routes.stops.data', [$route->id, ':stopId']) }}`.replace(':stopId', stopId), {
+                 method: 'GET',
+                 headers: {
+                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                 }
+             })
+             .then(response => response.json())
+             .then(data => {
+                 if (data.success) {
+                     // Populate edit form with current values
+                     document.getElementById('edit_terminal_id').value = data.data.terminal.id;
+                     document.getElementById('edit_sequence').value = sequence;
+                     document.getElementById('edit_distance_from_previous').value = distance || '';
+                     document.getElementById('edit_approx_travel_time').value = travelTime || '';
+                     document.getElementById('edit_is_pickup_allowed').checked = pickupAllowed;
+                     document.getElementById('edit_is_dropoff_allowed').checked = dropoffAllowed;
+                     
+                     // Show edit modal
+                     const editModal = new bootstrap.Modal(document.getElementById('editStopModal'));
+                     editModal.show();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Failed to load stop data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while loading stop data',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+         }
 
 
         // Delete Stop Function
         function deleteStop(stopId) {
-            if (confirm('Are you sure you want to delete this stop?')) {
-                fetch(`{{ route('admin.routes.stops.destroy', [$route->id, ':stopId']) }}`.replace(':stopId', stopId), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        toastr.success(data.message);
-                        location.reload(); // Reload to remove deleted stop
-                    } else {
-                        toastr.error(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    toastr.error('An error occurred while deleting the stop.');
-                });
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`{{ route('admin.routes.stops.destroy', [$route->id, ':stopId']) }}`.replace(':stopId', stopId), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: data.message,
+                                confirmButtonColor: '#28a745',
+                                timer: 2000,
+                                timerProgressBar: true
+                            }).then(() => {
+                                location.reload(); // Reload to remove deleted stop
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: data.message,
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'An error occurred while deleting the stop.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+            });
         }
 
         // Auto-calculate travel time based on distance
@@ -433,24 +557,34 @@
             currentStopId = null;
         });
 
-        // Form validation
-        function validateStopForm(formId) {
-            const form = document.getElementById(formId);
-            const sequence = form.querySelector('input[name="sequence"]').value;
-            const terminalId = form.querySelector('select[name="terminal_id"]')?.value;
-            
-            if (!sequence || sequence < 1) {
-                toastr.error('Please enter a valid sequence number.');
-                return false;
-            }
-            
-            if (formId === 'addStopForm' && !terminalId) {
-                toastr.error('Please select a terminal.');
-                return false;
-            }
-            
-            return true;
-        }
+         // Form validation
+         function validateStopForm(formId) {
+             const form = document.getElementById(formId);
+             const sequence = form.querySelector('input[name="sequence"]').value;
+             const terminalId = form.querySelector('select[name="terminal_id"]')?.value;
+             
+             if (!sequence || sequence < 1) {
+                 Swal.fire({
+                     icon: 'warning',
+                     title: 'Validation Error!',
+                     text: 'Please enter a valid sequence number.',
+                     confirmButtonColor: '#ffc107'
+                 });
+                 return false;
+             }
+             
+             if (!terminalId) {
+                 Swal.fire({
+                     icon: 'warning',
+                     title: 'Validation Error!',
+                     text: 'Please select a terminal.',
+                     confirmButtonColor: '#ffc107'
+                 });
+                 return false;
+             }
+             
+             return true;
+         }
 
         // Enhanced form submission with validation
         document.getElementById('addStopForm').addEventListener('submit', function(e) {
@@ -469,21 +603,58 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    toastr.success(data.message);
-                    // Close modal and reload
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addStopModal'));
-                    modal.hide();
-                    setTimeout(() => location.reload(), 1000);
+                    // Close modal first
+                    const modalElement = document.getElementById('addStopModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        // Fallback: hide modal manually
+                        modalElement.classList.remove('show');
+                        modalElement.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload(); // Reload page to show new stop
+                    });
                 } else {
-                    toastr.error(data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to add stop',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                toastr.error('An error occurred while adding the stop.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while adding the stop. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
             });
         });
 
@@ -506,21 +677,58 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    toastr.success(data.message);
-                    // Close modal and reload
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editStopModal'));
-                    modal.hide();
-                    setTimeout(() => location.reload(), 1000);
+                    // Close modal first
+                    const modalElement = document.getElementById('editStopModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        // Fallback: hide modal manually
+                        modalElement.classList.remove('show');
+                        modalElement.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: data.message,
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload(); // Reload page to show updated stop
+                    });
                 } else {
-                    toastr.error(data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to update stop',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                toastr.error('An error occurred while updating the stop.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while updating the stop. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
             });
         });
     </script>

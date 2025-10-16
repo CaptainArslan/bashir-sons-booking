@@ -551,6 +551,10 @@ class RouteController extends Controller
         $stop = $route->routeStops()->findOrFail($stopId);
 
         $validated = $request->validate([
+            'terminal_id' => [
+                'required',
+                'exists:terminals,id',
+            ],
             'sequence' => [
                 'required',
                 'integer',
@@ -576,6 +580,8 @@ class RouteController extends Controller
                 'boolean',
             ],
         ], [
+            'terminal_id.required' => 'Terminal is required',
+            'terminal_id.exists' => 'Selected terminal is invalid or does not exist',
             'sequence.required' => 'Sequence is required',
             'sequence.integer' => 'Sequence must be a whole number',
             'sequence.min' => 'Sequence must be at least 1',
@@ -590,6 +596,14 @@ class RouteController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Check if terminal already exists in this route (excluding current stop)
+            if ($route->routeStops()->where('terminal_id', $validated['terminal_id'])->where('id', '!=', $stopId)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terminal already exists in this route.'
+                ], 400);
+            }
 
             // Handle checkbox values
             $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
