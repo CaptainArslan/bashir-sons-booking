@@ -27,6 +27,212 @@
     <link rel="stylesheet" href="{{ asset('admin/assets/css/semi-dark.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/css/header-colors.css') }}">
     <title>@yield('title' ?? config('app.name'))</title>
+    
+    <!-- Compact Admin UI Styles -->
+    <style>
+        /* Global Compact Styling */
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+        
+        .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        .btn {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .btn-sm {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .table {
+            font-size: 0.875rem;
+        }
+        
+        .table th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.75rem 0.5rem;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .table td {
+            padding: 0.75rem 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .page-breadcrumb {
+            padding: 0.75rem 0;
+            margin-bottom: 1rem;
+        }
+        
+        .breadcrumb {
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            font-size: 0.8rem;
+        }
+        
+        /* Compact DataTables */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Compact Dropdowns */
+        .dropdown-menu {
+            font-size: 0.875rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #e9ecef;
+        }
+        
+        .dropdown-item {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Compact Alerts */
+        .alert {
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+        }
+        
+        /* Compact Modals */
+        .modal-header {
+            padding: 1rem 1.25rem;
+        }
+        
+        .modal-body {
+            padding: 1rem 1.25rem;
+        }
+        
+        .modal-footer {
+            padding: 0.75rem 1.25rem;
+        }
+        
+        /* Compact Navigation */
+        .sidebar-wrapper {
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-menu .sidebar-link {
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+        }
+        
+        /* Compact Buttons */
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+            border: none;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            border: none;
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            border: none;
+        }
+        
+        /* Hover Effects */
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transition: all 0.2s ease;
+        }
+        
+        /* Compact Forms */
+        .form-check {
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-check-label {
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        .form-text {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* Compact Pagination */
+        .pagination {
+            font-size: 0.875rem;
+        }
+        
+        .page-link {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    </style>
+    
     @yield('styles')
 </head>
 

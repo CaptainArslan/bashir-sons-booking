@@ -5,17 +5,18 @@
 @section('styles')
     <style>
         .stop-item {
-            transition: all 0.3s ease;
-            border-left: 4px solid #007bff !important;
+            transition: all 0.2s ease;
+            border-left: 3px solid #007bff !important;
+            background: #f8f9fa;
         }
         
         .stop-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
         }
         
         .form-check-label {
             cursor: pointer;
+            font-size: 0.875rem;
             transition: color 0.2s ease;
         }
         
@@ -31,42 +32,58 @@
         .time-input-group::before {
             content: "🕐";
             position: absolute;
-            right: 10px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
             pointer-events: none;
-        }
-        
-        .route-info-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+            font-size: 0.8rem;
         }
         
         .stops-section {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
         }
         
         .add-stop-btn {
             background: linear-gradient(45deg, #28a745, #20c997);
             border: none;
-            border-radius: 25px;
-            padding: 10px 20px;
+            border-radius: 20px;
+            padding: 8px 16px;
             color: white;
             font-weight: 500;
-            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
         }
         
         .add-stop-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.25);
             color: white;
+        }
+        
+        .form-control, .form-select {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .stop-header {
+            font-size: 0.9rem;
+            font-weight: 600;
         }
     </style>
 @endsection
@@ -180,34 +197,34 @@
                         </div>
                         
                         <!-- Route Stops Section -->
-                        <div class="row mt-4">
+                        <div class="row mt-3">
                             <div class="col-12">
                                 <div class="stops-section">
-                                    <div class="d-flex align-items-center mb-4">
-                                        <div class="me-3">
-                                            <i class="bx bx-map text-primary" style="font-size: 2rem;"></i>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bx bx-map text-primary me-2" style="font-size: 1.2rem;"></i>
+                                            <h6 class="mb-0 fw-bold text-primary">Route Stops</h6>
                                         </div>
-                                        <div>
-                                            <h5 class="mb-1 fw-bold text-primary">Route Stops</h5>
-                                            <p class="text-muted mb-0">Manage terminals for this route with timing information</p>
-                                        </div>
+                                        <button type="button" class="add-stop-btn" id="add-stop-btn">
+                                            <i class="bx bx-plus me-1"></i>Add Stop
+                                        </button>
                                     </div>
                                     <div id="stops-container">
                                         @foreach($route->routeStops->sortBy('sequence') as $stop)
-                                                <div class="stop-item border rounded p-4 mb-4 shadow-sm bg-light" data-stop-id="{{ $stop->id }}">
-                                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                                        <h6 class="mb-0 d-flex align-items-center">
-                                                            <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                                <div class="stop-item border rounded p-3 mb-3" data-stop-id="{{ $stop->id }}">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
                                                                 {{ $stop->sequence }}
                                                             </div>
-                                                            <span class="text-primary fw-bold">Stop {{ $stop->sequence }}</span>
-                                                        </h6>
+                                                            <span class="stop-header text-primary">Stop {{ $stop->sequence }}</span>
+                                                        </div>
                                                         <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
                                                             <i class="bx bx-trash"></i>
                                                         </button>
                                                     </div>
-                                                    <div class="row g-3">
-                                                        <div class="col-md-6">
+                                                    <div class="row g-2">
+                                                        <div class="col-md-4">
                                                             <label class="form-label">Terminal <span class="text-danger">*</span></label>
                                                             <select class="form-select terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
                                                                 <option value="">Select Terminal</option>
@@ -218,62 +235,57 @@
                                                                 @endforeach
                                                             </select>
                                                         </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Sequence <span class="text-danger">*</span></label>
+                                                        <div class="col-md-2">
+                                                            <label class="form-label">Sequence</label>
                                                             <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
                                                                    value="{{ $stop->sequence }}" min="1" required readonly>
-                                                            <div class="form-text">Sequence is automatically managed</div>
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <label class="form-label">Distance (km)</label>
                                                             <input type="number" class="form-control distance-input" name="stops[{{ $stop->id }}][distance_from_previous]" 
                                                                    value="{{ $stop->distance_from_previous }}" placeholder="0.0" step="0.1" min="0">
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-2">
                                                             <label class="form-label">Travel Time (min)</label>
                                                             <input type="number" class="form-control travel-time-input" name="stops[{{ $stop->id }}][approx_travel_time]" 
                                                                    value="{{ $stop->approx_travel_time }}" placeholder="0" min="0">
                                                         </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">
-                                                                <i class="bx bx-time me-1 text-success"></i>Arrival Time
-                                                            </label>
+                                                        <div class="col-md-2">
+                                                            <label class="form-label">Arrival Time</label>
                                                             <div class="time-input-group">
                                                                 <input type="time" class="form-control arrival-time-input" name="stops[{{ $stop->id }}][arrival_time]" 
                                                                        value="{{ $stop->arrival_time ? $stop->arrival_time->format('H:i') : '' }}" placeholder="HH:MM">
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">
-                                                                <i class="bx bx-time me-1 text-warning"></i>Departure Time
-                                                            </label>
+                                                    </div>
+                                                    <div class="row g-2 mt-2">
+                                                        <div class="col-md-2">
+                                                            <label class="form-label">Departure Time</label>
                                                             <div class="time-input-group">
                                                                 <input type="time" class="form-control departure-time-input" name="stops[{{ $stop->id }}][departure_time]" 
                                                                        value="{{ $stop->departure_time ? $stop->departure_time->format('H:i') : '' }}" placeholder="HH:MM">
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="row g-3 mt-2">
-                                                        <div class="col-md-4">
-                                                            <div class="form-check">
+                                                        <div class="col-md-3">
+                                                            <div class="form-check mt-4">
                                                                 <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
                                                                        value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
                                                                 <label class="form-check-label" for="pickup_{{ $stop->id }}">
-                                                                    <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup Allowed
+                                                                    <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
                                                                 </label>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-4">
-                                                            <div class="form-check">
+                                                        <div class="col-md-3">
+                                                            <div class="form-check mt-4">
                                                                 <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
                                                                        value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
                                                                 <label class="form-check-label" for="dropoff_{{ $stop->id }}">
-                                                                    <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff Allowed
+                                                                    <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
                                                                 </label>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
-                                                            <div class="form-check">
+                                                            <div class="form-check mt-4">
                                                                 <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_online_booking_allowed]" 
                                                                        value="1" id="booking_{{ $stop->id }}" {{ $stop->is_online_booking_allowed ? 'checked' : '' }}>
                                                                 <label class="form-check-label" for="booking_{{ $stop->id }}">
@@ -284,11 +296,6 @@
                                                     </div>
                                                 </div>
                                             @endforeach
-                                        </div>
-                                        <div class="mt-4 text-center">
-                                            <button type="button" class="add-stop-btn" id="add-stop-btn">
-                                                <i class="bx bx-plus me-2"></i>Add New Stop
-                                            </button>
                                         </div>
                                 </div>
                             </div>
@@ -424,21 +431,21 @@ document.addEventListener('DOMContentLoaded', function() {
         function addStop() {
             stopCounter++;
             const stopDiv = document.createElement('div');
-            stopDiv.className = 'stop-item border rounded p-4 mb-4 shadow-sm bg-light';
+            stopDiv.className = 'stop-item border rounded p-3 mb-3';
             stopDiv.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h6 class="mb-0 d-flex align-items-center">
-                        <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
                             ${stopCounter}
                         </div>
-                        <span class="text-primary fw-bold">Stop ${stopCounter}</span>
-                    </h6>
+                        <span class="stop-header text-primary">Stop ${stopCounter}</span>
+                    </div>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
+                <div class="row g-2">
+                    <div class="col-md-4">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                         <select class="form-select terminal-select" name="stops[new_${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
@@ -449,62 +456,57 @@ document.addEventListener('DOMContentLoaded', function() {
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Sequence <span class="text-danger">*</span></label>
+                    <div class="col-md-2">
+                        <label class="form-label">Sequence</label>
                         <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
-                        <div class="form-text">Sequence is automatically managed</div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Distance (km)</label>
                         <input type="number" class="form-control distance-input" name="stops[new_${stopCounter}][distance_from_previous]" 
                                placeholder="0.0" step="0.1" min="0">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Travel Time (min)</label>
                         <input type="number" class="form-control travel-time-input" name="stops[new_${stopCounter}][approx_travel_time]" 
                                placeholder="0" min="0">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">
-                            <i class="bx bx-time me-1 text-success"></i>Arrival Time
-                        </label>
+                    <div class="col-md-2">
+                        <label class="form-label">Arrival Time</label>
                         <div class="time-input-group">
                             <input type="time" class="form-control arrival-time-input" name="stops[new_${stopCounter}][arrival_time]" 
                                    placeholder="HH:MM">
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">
-                            <i class="bx bx-time me-1 text-warning"></i>Departure Time
-                        </label>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Departure Time</label>
                         <div class="time-input-group">
                             <input type="time" class="form-control departure-time-input" name="stops[new_${stopCounter}][departure_time]" 
                                    placeholder="HH:MM">
                         </div>
                     </div>
-                </div>
-                <div class="row g-3 mt-2">
-                    <div class="col-md-4">
-                        <div class="form-check">
+                    <div class="col-md-3">
+                        <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
                                    value="1" id="pickup_new_${stopCounter}" checked>
                             <label class="form-check-label" for="pickup_new_${stopCounter}">
-                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup Allowed
+                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-check">
+                    <div class="col-md-3">
+                        <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
                                    value="1" id="dropoff_new_${stopCounter}" checked>
                             <label class="form-check-label" for="dropoff_new_${stopCounter}">
-                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff Allowed
+                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
                             </label>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="form-check">
+                        <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_online_booking_allowed]" 
                                    value="1" id="booking_new_${stopCounter}" checked>
                             <label class="form-check-label" for="booking_new_${stopCounter}">
