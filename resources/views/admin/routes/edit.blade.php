@@ -250,23 +250,9 @@
                                                             <input type="number" class="form-control travel-time-input" name="stops[{{ $stop->id }}][approx_travel_time]" 
                                                                    value="{{ $stop->approx_travel_time }}" placeholder="0" min="0">
                                                         </div>
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Arrival Time</label>
-                                                            <div class="time-input-group">
-                                                                <input type="time" class="form-control arrival-time-input" name="stops[{{ $stop->id }}][arrival_time]" 
-                                                                       value="{{ $stop->arrival_time ? $stop->arrival_time->format('H:i') : '' }}" placeholder="HH:MM">
-                                                            </div>
-                                                        </div>
                                                     </div>
                                                     <div class="row g-2 mt-2">
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Departure Time</label>
-                                                            <div class="time-input-group">
-                                                                <input type="time" class="form-control departure-time-input" name="stops[{{ $stop->id }}][departure_time]" 
-                                                                       value="{{ $stop->departure_time ? $stop->departure_time->format('H:i') : '' }}" placeholder="HH:MM">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-6">
                                                             <div class="form-check mt-4">
                                                                 <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
                                                                        value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
@@ -275,21 +261,12 @@
                                                                 </label>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-3">
+                                                        <div class="col-md-6">
                                                             <div class="form-check mt-4">
                                                                 <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
                                                                        value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
                                                                 <label class="form-check-label" for="dropoff_{{ $stop->id }}">
                                                                     <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="form-check mt-4">
-                                                                <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_online_booking_allowed]" 
-                                                                       value="1" id="booking_{{ $stop->id }}" {{ $stop->is_online_booking_allowed ? 'checked' : '' }}>
-                                                                <label class="form-check-label" for="booking_{{ $stop->id }}">
-                                                                    <i class="bx bx-globe me-1 text-info"></i>Online Booking
                                                                 </label>
                                                             </div>
                                                         </div>
@@ -471,23 +448,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="number" class="form-control travel-time-input" name="stops[new_${stopCounter}][approx_travel_time]" 
                                placeholder="0" min="0">
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Arrival Time</label>
-                        <div class="time-input-group">
-                            <input type="time" class="form-control arrival-time-input" name="stops[new_${stopCounter}][arrival_time]" 
-                                   placeholder="HH:MM">
-                        </div>
-                    </div>
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-2">
-                        <label class="form-label">Departure Time</label>
-                        <div class="time-input-group">
-                            <input type="time" class="form-control departure-time-input" name="stops[new_${stopCounter}][departure_time]" 
-                                   placeholder="HH:MM">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
                                    value="1" id="pickup_new_${stopCounter}" checked>
@@ -496,21 +459,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
                                    value="1" id="dropoff_new_${stopCounter}" checked>
                             <label class="form-check-label" for="dropoff_new_${stopCounter}">
                                 <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_online_booking_allowed]" 
-                                   value="1" id="booking_new_${stopCounter}" checked>
-                            <label class="form-check-label" for="booking_new_${stopCounter}">
-                                <i class="bx bx-globe me-1 text-info"></i>Online Booking
                             </label>
                         </div>
                     </div>
