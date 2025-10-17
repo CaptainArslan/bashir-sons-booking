@@ -126,16 +126,55 @@ class BusController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'description' => 'nullable|string|max:1000',
-            'bus_type_id' => 'required|exists:bus_types,id',
-            'bus_layout_id' => 'required|exists:bus_layouts,id',
-            'registration_number' => 'required|string|max:50|unique:buses,registration_number|regex:/^[A-Z0-9\-]+$/',
-            'model' => 'required|string|max:100|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'color' => 'required|string|max:50|regex:/^[a-zA-Z\s]+$/',
-            'facilities' => 'nullable|array',
-            'facilities.*' => 'exists:facilities,id',
-            'status' => 'required|string|in:' . implode(',', BusEnum::getStatuses()),
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+            ],
+            'description' => [
+                'nullable',
+                'string',
+                'max:1000'
+            ],
+            'bus_type_id' => [
+                'required',
+                'exists:bus_types,id'
+            ],
+            'bus_layout_id' => [
+                'required',
+                'exists:bus_layouts,id'
+            ],
+            'registration_number' => [
+                'required',
+                'string',
+                'max:50',
+                'unique:buses,registration_number'
+            ],
+            'model' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+            ],
+            'color' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[a-zA-Z\s]+$/'
+            ],
+            'facilities' => [
+                'nullable',
+                'array'
+            ],
+            'facilities.*' => [
+                'exists:facilities,id'
+            ],
+            'status' => [
+                'required',
+                'string',
+                'in:' . implode(',', BusEnum::getStatuses())
+            ],
         ], [
             'name.required' => 'Bus name is required',
             'name.string' => 'Bus name must be a string',
@@ -149,7 +188,6 @@ class BusController extends Controller
             'bus_layout_id.exists' => 'Selected bus layout is invalid',
             'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
-            'registration_number.regex' => 'Registration number can only contain uppercase letters, numbers, and hyphens',
             'model.required' => 'Model is required',
             'model.regex' => 'Model can only contain letters, numbers, spaces, hyphens, and underscores',
             'color.required' => 'Color is required',
@@ -206,16 +244,55 @@ class BusController extends Controller
         $bus = Bus::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'description' => 'nullable|string|max:1000',
-            'bus_type_id' => 'required|exists:bus_types,id',
-            'bus_layout_id' => 'required|exists:bus_layouts,id',
-            'registration_number' => 'required|string|max:50|unique:buses,registration_number,' . $bus->id . '|regex:/^[A-Z0-9\-]+$/',
-            'model' => 'required|string|max:100|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'color' => 'required|string|max:50|regex:/^[a-zA-Z\s]+$/',
-            'facilities' => 'nullable|array',
-            'facilities.*' => 'exists:facilities,id',
-            'status' => 'required|string|in:' . implode(',', BusEnum::getStatuses()),
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+            ],
+            'description' => [
+                'nullable',
+                'string',
+                'max:1000'
+            ],
+            'bus_type_id' => [
+                'required',
+                'exists:bus_types,id'
+            ],
+            'bus_layout_id' => [
+                'required',
+                'exists:bus_layouts,id'
+            ],
+            'registration_number' => [
+                'required',
+                'string',
+                'max:50',
+                'unique:buses,registration_number,' . $bus->id
+            ],
+            'model' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+            ],
+            'color' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[a-zA-Z\s]+$/'
+            ],
+            'facilities' => [
+                'nullable',
+                'array'
+            ],
+            'facilities.*' => [
+                'exists:facilities,id'
+            ],
+            'status' => [
+                'required',
+                'string',
+                'in:' . implode(',', BusEnum::getStatuses())
+            ]
         ], [
             'name.required' => 'Bus name is required',
             'name.string' => 'Bus name must be a string',
@@ -229,7 +306,6 @@ class BusController extends Controller
             'bus_layout_id.exists' => 'Selected bus layout is invalid',
             'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
-            'registration_number.regex' => 'Registration number can only contain uppercase letters, numbers, and hyphens',
             'model.required' => 'Model is required',
             'model.regex' => 'Model can only contain letters, numbers, spaces, hyphens, and underscores',
             'color.required' => 'Color is required',
