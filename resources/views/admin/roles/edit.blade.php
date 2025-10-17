@@ -1,8 +1,73 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Roles')
+@section('title', 'Edit Role')
 
 @section('styles')
+<style>
+    .role-card {
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .card-header-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .card-header-info h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .permission-group {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .permission-group:hover {
+        background: #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .permission-checkbox {
+        cursor: pointer;
+    }
+    
+    .permission-label {
+        cursor: pointer;
+        user-select: none;
+        font-weight: 500;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .role-info-card {
+        border-left: 3px solid #0dcaf0;
+    }
+    
+    .stats-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    
+    .permission-counter {
+        position: sticky;
+        top: 20px;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
 @endsection
 
 @section('content')
@@ -12,7 +77,8 @@
         <div class="ps-3">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 p-0">
-                    <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.roles.index') }}">Roles</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Edit Role</li>
                 </ol>
             </nav>
@@ -22,98 +88,159 @@
 
     <div class="row">
         <div class="col-xl-10 mx-auto">
-            <form action="{{ route('admin.roles.update', $role->id) }}" method="POST" class="row g-3">
-                @csrf
-                @method('PUT')
-                <div class="card">
+            <div class="card role-card">
+                <div class="card-header-info">
+                    <h5><i class="bx bx-edit me-2"></i>Edit Role: {{ $role->name }}</h5>
+                </div>
+                
+                <form action="{{ route('admin.roles.update', $role->id) }}" method="POST" class="row g-3">
+                    @csrf
+                    @method('PUT')
+                    
                     <div class="card-body p-4">
-                        <h5 class="mb-4">Edit Role</h5>
-                        <div class="col-md-12">
-                            <label for="name" class="form-label">Role Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
-                                name="name" placeholder="Enter Role Name" 
-                                value="{{ old('name', $role->name) }}" 
-                                {{ $isDefaultRole ? 'readonly' : '' }} required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            @if($isDefaultRole)
-                                <div class="form-text text-warning">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    This is a system role and cannot be modified.
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="card-body p-4">
-                        <h5 class="mb-4">Assign Permissions</h5>
-
+                        <!-- Role Name Section -->
                         <div class="row">
-                            @forelse ($permissions as $permission)
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input permission-checkbox" type="checkbox"
-                                            name="permissions[]" value="{{ $permission->id }}"
-                                            id="permission_{{ $permission->id }}"
-                                            {{ in_array($permission->id, old('permissions', $role->permissions->pluck('id')->toArray())) ? 'checked' : '' }}
-                                            {{ $isDefaultRole ? 'disabled' : '' }}>
-                                        <label class="form-check-label" for="permission_{{ $permission->id }}">
-                                            {{ ucwords(str_replace('_', ' ', $permission->name)) }}
-                                        </label>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="col-12">
-                                    <div class="alert alert-info">
+                            <div class="col-md-12">
+                                <label for="name" class="form-label">
+                                    Role Name 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('name') is-invalid @enderror" 
+                                       id="name"
+                                       name="name" 
+                                       placeholder="Enter Role Name" 
+                                       value="{{ old('name', $role->name) }}" 
+                                       {{ $isDefaultRole ? 'readonly' : '' }} 
+                                       required
+                                       autofocus>
+                                
+                                @error('name')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                
+                                @if($isDefaultRole)
+                                    <div class="alert alert-warning mt-2 mb-0">
                                         <i class="bx bx-info-circle me-2"></i>
-                                        No permissions found. Please create permissions first.
+                                        This is a system role and cannot be modified.
                                     </div>
-                                </div>
-                            @endforelse
+                                @endif
+                            </div>
                         </div>
-
-                        @if ($permissions->count() > 0)
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                        @if(!$isDefaultRole)
-                                            <div class="btn-group">
-                                                <button type="button" id="selectAllBtn" class="btn btn-outline-primary btn-sm">
-                                                    <i class="bx bx-check-double me-1"></i>Select All
-                                                </button>
-                                                <button type="button" id="deselectAllBtn"
-                                                    class="btn btn-outline-secondary btn-sm ms-2">
-                                                    <i class="bx bx-x me-1"></i>Deselect All
-                                                </button>
+                        
+                        <!-- Role Information Card -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card role-info-card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <p class="mb-2">
+                                                    <strong>Role ID:</strong> 
+                                                    <span class="badge bg-secondary">{{ $role->id }}</span>
+                                                </p>
                                             </div>
-                                        @else
-                                            <div class="text-muted">
-                                                <i class="bx bx-lock me-1"></i>
-                                                System role permissions cannot be modified
+                                            <div class="col-md-3">
+                                                <p class="mb-2">
+                                                    <strong>Current Permissions:</strong> 
+                                                    <span class="badge bg-info stats-badge" id="permissionCount">
+                                                        {{ $role->permissions->count() }}
+                                                    </span>
+                                                </p>
                                             </div>
-                                        @endif
-                                        <div>
-                                            @if(!$isDefaultRole)
-                                                <button type="button" class="btn btn-light px-4 me-2" id="resetFormBtn">
-                                                    <i class="bx bx-reset me-1"></i>Reset
-                                                </button>
-                                                <button type="submit" class="btn btn-primary px-4">
-                                                    <i class="bx bx-save me-1"></i>Update Role
-                                                </button>
-                                            @else
-                                                <a href="{{ route('admin.roles.index') }}" class="btn btn-secondary px-4">
-                                                    <i class="bx bx-arrow-back me-1"></i>Back to Roles
-                                                </a>
-                                            @endif
+                                            <div class="col-md-3">
+                                                <p class="mb-2">
+                                                    <strong>Created:</strong> 
+                                                    {{ $role->created_at->format('M d, Y') }}
+                                                </p>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-2">
+                                                    <strong>Last Updated:</strong> 
+                                                    {{ $role->updated_at->format('M d, Y') }}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Permissions Section -->
+                    <div class="card-body p-4 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0">
+                                <i class="bx bx-shield-quarter me-2"></i>Assign Permissions
+                            </h5>
+                            @if(!$isDefaultRole && $permissions->count() > 0)
+                                <div class="btn-group">
+                                    <button type="button" id="selectAllBtn" class="btn btn-outline-primary btn-sm">
+                                        <i class="bx bx-check-double me-1"></i>Select All
+                                    </button>
+                                    <button type="button" id="deselectAllBtn" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bx bx-x me-1"></i>Deselect All
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+
+                        @if($permissions->count() > 0)
+                            <div class="row">
+                                @foreach ($permissions as $permission)
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="permission-group">
+                                            <div class="form-check">
+                                                <input class="form-check-input permission-checkbox" 
+                                                       type="checkbox"
+                                                       name="permissions[]" 
+                                                       value="{{ $permission->id }}"
+                                                       id="permission_{{ $permission->id }}"
+                                                       {{ in_array($permission->id, old('permissions', $role->permissions->pluck('id')->toArray())) ? 'checked' : '' }}
+                                                       {{ $isDefaultRole ? 'disabled' : '' }}>
+                                                <label class="form-check-label permission-label" 
+                                                       for="permission_{{ $permission->id }}">
+                                                    {{ ucwords(str_replace('_', ' ', $permission->name)) }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="alert alert-info">
+                                <i class="bx bx-info-circle me-2"></i>
+                                No permissions found. Please create permissions first.
+                            </div>
                         @endif
                     </div>
-                </div>
-            </form>
+
+                    <!-- Action Buttons -->
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <a href="{{ route('admin.roles.index') }}" class="btn btn-light px-4">
+                                    <i class="bx bx-arrow-back me-1"></i>Back to List
+                                </a>
+                            </div>
+                            <div class="d-flex gap-2">
+                                @if(!$isDefaultRole && $permissions->count() > 0)
+                                    <button type="button" class="btn btn-secondary px-4" id="resetFormBtn">
+                                        <i class="bx bx-reset me-1"></i>Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bx bx-save me-1"></i>Update Role
+                                    </button>
+                                @else
+                                    <a href="{{ route('admin.roles.index') }}" class="btn btn-secondary px-4">
+                                        <i class="bx bx-arrow-back me-1"></i>Back to Roles
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 @endsection
@@ -126,11 +253,20 @@
             const resetBtn = document.getElementById('resetFormBtn');
             const checkboxes = document.querySelectorAll('.permission-checkbox');
             const nameInput = document.getElementById('name');
+            const permissionCount = document.getElementById('permissionCount');
             const isDefaultRole = {{ $isDefaultRole ? 'true' : 'false' }};
+
+            // ✅ Update permission counter
+            function updatePermissionCounter() {
+                const checkedCount = document.querySelectorAll('.permission-checkbox:checked').length;
+                if (permissionCount) {
+                    permissionCount.textContent = checkedCount;
+                }
+            }
 
             // ✅ Helper: Update button states dynamically
             function updateButtonStates() {
-                if (isDefaultRole) return; // Skip for default roles
+                if (isDefaultRole) return;
                 
                 const checkedCount = document.querySelectorAll('.permission-checkbox:checked').length;
                 const total = checkboxes.length;
@@ -146,6 +282,8 @@
                     deselectAllBtn.classList.toggle('btn-outline-secondary', deselectAllBtn.disabled);
                     deselectAllBtn.classList.toggle('btn-outline-primary', !deselectAllBtn.disabled);
                 }
+                
+                updatePermissionCounter();
             }
 
             // ✅ Select all permissions
@@ -191,6 +329,29 @@
                 // ✅ Initialize state on page load
                 updateButtonStates();
             }
+            
+            // ✅ Add visual feedback on checkbox change
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const label = this.closest('.permission-group');
+                    if (this.checked) {
+                        label.style.background = '#d1ecf1';
+                        label.style.borderLeft = '3px solid #0dcaf0';
+                    } else {
+                        label.style.background = '#f8f9fa';
+                        label.style.borderLeft = 'none';
+                    }
+                });
+            });
+            
+            // ✅ Initialize visual state
+            checkboxes.forEach(checkbox => {
+                const label = checkbox.closest('.permission-group');
+                if (checkbox.checked) {
+                    label.style.background = '#d1ecf1';
+                    label.style.borderLeft = '3px solid #0dcaf0';
+                }
+            });
         });
     </script>
 @endsection

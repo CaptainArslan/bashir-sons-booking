@@ -3,6 +3,38 @@
 @section('title', 'Permissions')
 @section('styles')
     <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <style>
+        #permissions-table {
+            table-layout: auto;
+            width: 100% !important;
+        }
+        
+        #permissions-table td {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 200px;
+        }
+        
+        #permissions-table th {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #permissions-table td:nth-child(2) {
+            max-width: 300px;
+        }
+        
+        #permissions-table td:nth-child(3) {
+            max-width: 150px;
+            text-align: center;
+        }
+        
+        #permissions-table td:nth-child(4) {
+            max-width: 180px;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -17,13 +49,6 @@
                 </ol>
             </nav>
         </div>
-        <div class="ms-auto">
-            @can('create permissions')
-                <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">
-                    <i class="bx bx-plus"></i> Add New Permission
-                </a>
-            @endcan
-        </div>
     </div>
     <!--end breadcrumb-->
     <div class="card">
@@ -36,7 +61,6 @@
                             <th>Permission</th>
                             <th>Roles Count</th>
                             <th>Created Date</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                 </table>
@@ -59,54 +83,33 @@
                 columns: [{
                         data: 'id',
                         name: 'id',
+                        width: '10%'
                     },
                     {
                         data: 'formatted_name',
                         name: 'name',
+                        width: '50%'
                     },
                     {
                         data: 'roles_count',
                         name: 'roles_count',
                         orderable: false,
                         searchable: false,
+                        width: '15%'
                     },
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
-                        data: 'actions',
-                        name: 'actions',
-                        orderable: false,
-                        searchable: false,
+                        width: '25%'
                     }
                 ],
+                responsive: true,
+                autoWidth: false,
+                pageLength: 25,
+                language: {
+                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
+                }
             });
         });
-
-        // Delete permission function
-        function deletePermission(permissionId) {
-            if (confirm('Are you sure you want to delete this permission?')) {
-                $.ajax({
-                    url: "{{ route('admin.permissions.destroy', ':id') }}".replace(':id', permissionId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#permissions-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the permission.');
-                    }
-                });
-            }
-        }
     </script>
 @endsection

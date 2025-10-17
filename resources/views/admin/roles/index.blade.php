@@ -54,6 +54,9 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.roles.data') }}",
+                // responsive: true,
+                autoWidth: true,
+                pageLength: 25,
                 order: [
                     [0, 'desc']
                 ],
@@ -76,7 +79,6 @@
                         name: 'permissions_list',
                         searchable: false,
                         orderable: false,
-
                     },
                     {
                         data: 'created_at',

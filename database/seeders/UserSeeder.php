@@ -15,9 +15,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $twoFactorSecret = "eyJpdiI6ImFTUldPU0QwNFZmM1FzbUlNeXJRblE9PSIsInZhbHVlIjoicmxjbHg0bVRCQ09pRVJzampkOXNRQUxNVVRTRW1rK1FFdEE2UlowdHpUbz0iLCJtYWMiOiJhNTk4YzljNWEwY2Y2N2NlMDQ1MTVmODZiMWQyZGQ0YmM4ZmE1YTUwYTY0ZDg5NmQ0ODQxNmQyOGNhNzBhOGE3IiwidGFnIjoiIn0";
-        $twoFactorRecoveryCodes = "eyJpdiI6IlQvME4rbFdRQUsyUVllc00zMVJ6RWc9PSIsInZhbHVlIjoiaDFlOG9WS3dicFVaT1NWQ1B0SnBua2Q2N3hNdEZ4UUxQUVdXWGZyRE1oaWN0QUlkMitQQ1Y4MUp0MnpaOTFjQTR1aUFHVGV0L1IvYXJXZnN5RFFBSkpuYnptOWpYWmJ1TVluTmJQQWw0dE1xZ3hnMzR0eEROR3REeFZEaHJRdFIiLCJtYWMiOiIwMDJjOTM5Y2IwYmM4YThhYTgxN2FhNGFmY2VlYzQyODBjMmNjNDZkNzMyZjEwZmUwOTNkNjFjNjg1YjY2ZmY3IiwidGFnIjoiIn0";
-        $twoFactorConfirmedAt = Carbon::now();
+        // $twoFactorSecret = "eyJpdiI6ImFTUldPU0QwNFZmM1FzbUlNeXJRblE9PSIsInZhbHVlIjoicmxjbHg0bVRCQ09pRVJzampkOXNRQUxNVVRTRW1rK1FFdEE2UlowdHpUbz0iLCJtYWMiOiJhNTk4YzljNWEwY2Y2N2NlMDQ1MTVmODZiMWQyZGQ0YmM4ZmE1YTUwYTY0ZDg5NmQ0ODQxNmQyOGNhNzBhOGE3IiwidGFnIjoiIn0";
+        // $twoFactorRecoveryCodes = "eyJpdiI6IlQvME4rbFdRQUsyUVllc00zMVJ6RWc9PSIsInZhbHVlIjoiaDFlOG9WS3dicFVaT1NWQ1B0SnBua2Q2N3hNdEZ4UUxQUVdXWGZyRE1oaWN0QUlkMitQQ1Y4MUp0MnpaOTFjQTR1aUFHVGV0L1IvYXJXZnN5RFFBSkpuYnptOWpYWmJ1TVluTmJQQWw0dE1xZ3hnMzR0eEROR3REeFZEaHJRdFIiLCJtYWMiOiIwMDJjOTM5Y2IwYmM4YThhYTgxN2FhNGFmY2VlYzQyODBjMmNjNDZkNzMyZjEwZmUwOTNkNjFjNjg1YjY2ZmY3IiwidGFnIjoiIn0";
+        // $twoFactorConfirmedAt = Carbon::now();
+        $twoFactorSecret = null;
+        $twoFactorRecoveryCodes = null;
+        $twoFactorConfirmedAt = null;
 
         $user = User::create([
             'name' => 'Omar',
