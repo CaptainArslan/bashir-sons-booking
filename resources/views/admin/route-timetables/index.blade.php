@@ -2,152 +2,215 @@
 
 @section('title', 'Route Timetables')
 
+@section('styles')
+    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <style>
+        #timetables-table {
+            table-layout: auto;
+            width: 100% !important;
+        }
+        
+        #timetables-table td {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 200px;
+        }
+        
+        #timetables-table th {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #timetables-table td:nth-child(1) {
+            max-width: 80px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(2) {
+            max-width: 150px;
+            font-weight: 600;
+        }
+        
+        #timetables-table td:nth-child(3) {
+            max-width: 200px;
+        }
+        
+        #timetables-table td:nth-child(4) {
+            max-width: 120px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(5) {
+            max-width: 120px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(6) {
+            max-width: 120px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(7) {
+            max-width: 200px;
+        }
+        
+        #timetables-table td:nth-child(8) {
+            max-width: 100px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(9) {
+            max-width: 120px;
+            text-align: center;
+        }
+        
+        #timetables-table td:nth-child(10) {
+            max-width: 150px;
+            text-align: center;
+        }
+        
+        .actions-column {
+            white-space: nowrap;
+        }
+        
+        .actions-column .btn {
+            margin: 1px;
+        }
+    </style>
+@endsection
+
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Route Timetables</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('admin.route-timetables.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Add New Timetable
-                        </a>
-                    </div>
-                </div>
+    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+        <div class="breadcrumb-title pe-3">Transport Management</div>
+        <div class="ps-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 p-0">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Route Timetables</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="ms-auto">
+            <a href="{{ route('admin.route-timetables.create') }}" class="btn btn-primary">
+                <i class="bx bx-plus"></i> Add New Timetable
+            </a>
+        </div>
+    </div>
+    <!--end breadcrumb-->
 
-                <div class="card-body">
-                    <!-- Filters -->
-                    <form method="GET" class="mb-3">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <select name="route_id" class="form-control">
-                                    <option value="">All Routes</option>
-                                    @foreach($routes as $route)
-                                        <option value="{{ $route->id }}" {{ request('route_id') == $route->id ? 'selected' : '' }}>
-                                            {{ $route->name }} ({{ $route->code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select name="status" class="form-control">
-                                    <option value="">All Status</option>
-                                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-info">Filter</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <!-- Timetables Table -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Trip Code</th>
-                                    <th>Route</th>
-                                    <th>Departure Time</th>
-                                    <th>Arrival Time</th>
-                                    <th>Frequency</th>
-                                    <th>Operating Days</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($timetables as $timetable)
-                                    <tr>
-                                        <td>
-                                            <strong>{{ $timetable->trip_code }}</strong>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <strong>{{ $timetable->route->name }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ $timetable->route->code }}</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-info">{{ $timetable->departure_time }}</span>
-                                        </td>
-                                        <td>
-                                            @if($timetable->arrival_time)
-                                                <span class="badge badge-success">{{ $timetable->arrival_time }}</span>
-                                            @else
-                                                <span class="text-muted">Not set</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-{{ $timetable->frequency->getFrequencyTypeColor($timetable->frequency->value) }}">
-                                                {{ $timetable->frequency->getName() }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if($timetable->frequency->value === 'custom' && $timetable->operating_days)
-                                                @foreach($timetable->operating_days as $day)
-                                                    <span class="badge badge-secondary">{{ ucfirst($day) }}</span>
-                                                @endforeach
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($timetable->is_active)
-                                                <span class="badge badge-success">Active</span>
-                                            @else
-                                                <span class="badge badge-danger">Inactive</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.route-timetables.show', $timetable) }}" 
-                                                   class="btn btn-info btn-sm" title="View">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.route-timetables.edit', $timetable) }}" 
-                                                   class="btn btn-warning btn-sm" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form method="POST" action="{{ route('admin.route-timetables.toggle-status', $timetable) }}" 
-                                                      class="d-inline">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn btn-{{ $timetable->is_active ? 'secondary' : 'success' }} btn-sm" 
-                                                            title="{{ $timetable->is_active ? 'Deactivate' : 'Activate' }}">
-                                                        <i class="fas fa-{{ $timetable->is_active ? 'pause' : 'play' }}"></i>
-                                                    </button>
-                                                </form>
-                                                <form method="POST" action="{{ route('admin.route-timetables.destroy', $timetable) }}" 
-                                                      class="d-inline" onsubmit="return confirm('Are you sure you want to delete this timetable?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center">No timetables found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center">
-                        {{ $timetables->links() }}
-                    </div>
-                </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="timetables-table" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Trip Code</th>
+                            <th>Route</th>
+                            <th>Departure Time</th>
+                            <th>Arrival Time</th>
+                            <th>Frequency</th>
+                            <th>Operating Days</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
     </div>
-</div>
+@endsection
+
+@section('scripts')
+    @include('admin.layouts.datatables')
+    <script>
+        $(document).ready(function() {
+            $('#timetables-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('admin.route-timetables.getData') }}",
+                responsive: true,
+                autoWidth: false,
+                pageLength: 25,
+                order: [
+                    [0, 'desc']
+                ],
+                columns: [{
+                        data: 'id',
+                        name: 'id',
+                        width: '8%'
+                    },
+                    {
+                        data: 'formatted_trip_code',
+                        name: 'trip_code',
+                        width: '15%'
+                    },
+                    {
+                        data: 'route_info',
+                        name: 'route_info',
+                        searchable: false,
+                        orderable: false,
+                        width: '20%'
+                    },
+                    {
+                        data: 'formatted_departure_time',
+                        name: 'departure_time',
+                        searchable: false,
+                        orderable: true,
+                        width: '12%'
+                    },
+                    {
+                        data: 'formatted_arrival_time',
+                        name: 'arrival_time',
+                        searchable: false,
+                        orderable: true,
+                        width: '12%'
+                    },
+                    {
+                        data: 'formatted_frequency',
+                        name: 'frequency',
+                        searchable: false,
+                        orderable: true,
+                        width: '12%'
+                    },
+                    {
+                        data: 'operating_days_list',
+                        name: 'operating_days_list',
+                        searchable: false,
+                        orderable: false,
+                        width: '20%'
+                    },
+                    {
+                        data: 'status_badge',
+                        name: 'is_active',
+                        searchable: false,
+                        orderable: true,
+                        width: '10%'
+                    },
+                    {
+                        data: 'formatted_created_at',
+                        name: 'created_at',
+                        width: '12%'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        width: '15%',
+                        className: 'actions-column'
+                    }
+                ],
+                language: {
+                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                    emptyTable: "No timetables found",
+                    zeroRecords: "No matching timetables found"
+                }
+            });
+        });
+    </script>
 @endsection

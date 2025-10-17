@@ -24,8 +24,9 @@ class StoreRouteStopTimeRequest extends FormRequest
     {
         return [
             'stop_times' => 'required|array|min:1',
-            'stop_times.*.route_stop_id' => 'required|exists:route_stops,id',
-            'stop_times.*.sequence' => 'required|integer|min:1',
+            'stop_times.*.selected' => 'sometimes|in:1',
+            'stop_times.*.route_stop_id' => 'required_with:stop_times.*.selected|exists:route_stops,id',
+            'stop_times.*.sequence' => 'required_with:stop_times.*.selected|integer|min:1',
             'stop_times.*.arrival_time' => 'nullable|date_format:H:i',
             'stop_times.*.departure_time' => 'nullable|date_format:H:i',
             'stop_times.*.allow_online_booking' => 'boolean',
@@ -64,11 +65,21 @@ class StoreRouteStopTimeRequest extends FormRequest
                 return;
             }
 
+            // Filter only selected stop times
+            $selectedStopTimes = collect($stopTimes)->filter(function ($stopTime) {
+                return isset($stopTime['selected']) && $stopTime['selected'] == '1';
+            })->values();
+
+            if ($selectedStopTimes->isEmpty()) {
+                $validator->errors()->add('stop_times', 'Please select at least one stop.');
+                return;
+            }
+
             // Validate that all route_stop_ids belong to the same route as the timetable
             $routeTimetable = $this->route('routeTimetable');
             if ($routeTimetable) {
                 $validRouteStopIds = $routeTimetable->route->routeStops->pluck('id');
-                $providedRouteStopIds = collect($stopTimes)->pluck('route_stop_id');
+                $providedRouteStopIds = $selectedStopTimes->pluck('route_stop_id');
 
                 if (!$providedRouteStopIds->every(fn($id) => $validRouteStopIds->contains($id))) {
                     $validator->errors()->add('stop_times', 'Invalid route stops provided.');
@@ -76,15 +87,15 @@ class StoreRouteStopTimeRequest extends FormRequest
             }
 
             // Validate sequence order
-            $sequences = collect($stopTimes)->pluck('sequence')->sort();
-            $expectedSequences = range(1, count($stopTimes));
+            $sequences = $selectedStopTimes->pluck('sequence')->sort()->values();
+            $expectedSequences = range(1, $selectedStopTimes->count());
 
-            if ($sequences->values()->toArray() !== $expectedSequences) {
+            if ($sequences->toArray() !== $expectedSequences) {
                 $validator->errors()->add('stop_times', 'Stop sequences must be consecutive starting from 1.');
             }
 
             // Validate time sequence
-            $this->validateTimeSequence($validator, $stopTimes);
+            $this->validateTimeSequence($validator, $selectedStopTimes->toArray());
         });
     }
 
@@ -99,14 +110,18 @@ class StoreRouteStopTimeRequest extends FormRequest
             $current = $sortedStopTimes[$i];
             $next = $sortedStopTimes[$i + 1];
 
-            // Skip if times are not set or don't exist
-            if (empty($current['departure_time']) || empty($next['arrival_time'])) {
+            // Get departure time from current stop (use departure_time or arrival_time)
+            $currentDepartureTime = $current['departure_time'] ?? $current['arrival_time'];
+            $nextArrivalTime = $next['arrival_time'] ?? $next['departure_time'];
+
+            // Skip if times are not set
+            if (empty($currentDepartureTime) || empty($nextArrivalTime)) {
                 continue;
             }
 
             try {
-                $currentTime = Carbon::parse($current['departure_time']);
-                $nextTime = Carbon::parse($next['arrival_time']);
+                $currentTime = Carbon::createFromFormat('H:i', $currentDepartureTime);
+                $nextTime = Carbon::createFromFormat('H:i', $nextArrivalTime);
 
                 if ($currentTime->gte($nextTime)) {
                     $validator->errors()->add('stop_times', 'Stop times must be in chronological order.');

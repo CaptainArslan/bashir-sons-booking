@@ -35,6 +35,36 @@ class RouteStopTimeController extends Controller
      */
     public function store(StoreRouteStopTimeRequest $request, RouteTimetable $routeTimetable)
     {
+        // Filter out unchecked rows and validate
+        $validStopTimes = collect($request->stop_times)->filter(function ($stopTime) {
+            return isset($stopTime['selected']) && $stopTime['selected'] == '1';
+        })->values();
+
+        if ($validStopTimes->isEmpty()) {
+            return back()->withInput()->with('error', 'Please select at least one stop.');
+        }
+
+        // Validate sequence order
+        $sequences = $validStopTimes->pluck('sequence')->sort()->values();
+        $expectedSequences = range(1, $validStopTimes->count());
+        
+        if ($sequences->toArray() !== $expectedSequences) {
+            return back()->withInput()->with('error', 'Stop sequences must be consecutive starting from 1.');
+        }
+
+        // Validate chronological order
+        $previousTime = null;
+        foreach ($validStopTimes->sortBy('sequence') as $stopTime) {
+            $departureTime = $stopTime['departure_time'] ?? $stopTime['arrival_time'];
+            
+            if ($departureTime && $previousTime) {
+                if (Carbon::createFromFormat('H:i', $departureTime)->lte(Carbon::createFromFormat('H:i', $previousTime))) {
+                    return back()->withInput()->with('error', 'Stop times must be in chronological order.');
+                }
+            }
+            
+            $previousTime = $departureTime;
+        }
 
         DB::beginTransaction();
         try {
@@ -42,7 +72,7 @@ class RouteStopTimeController extends Controller
             $routeTimetable->stops()->delete();
 
             // Create new stop times
-            foreach ($request->stop_times as $stopTimeData) {
+            foreach ($validStopTimes as $stopTimeData) {
                 RouteStopTime::create([
                     'timetable_id' => $routeTimetable->id,
                     'route_stop_id' => $stopTimeData['route_stop_id'],
@@ -165,7 +195,19 @@ class RouteStopTimeController extends Controller
             return back()->with('error', 'No route stops found for this route.');
         }
 
-        $baseDepartureTime = Carbon::parse($routeTimetable->departure_time);
+        // Parse the base departure time safely
+        $baseDepartureTime = null;
+        try {
+            if (is_string($routeTimetable->departure_time)) {
+                $baseDepartureTime = Carbon::createFromFormat('H:i:s', $routeTimetable->departure_time);
+            } else {
+                $baseDepartureTime = Carbon::parse($routeTimetable->departure_time);
+            }
+        } catch (\Exception $e) {
+            // Fallback to 8:00 AM if parsing fails
+            $baseDepartureTime = Carbon::createFromTime(8, 0, 0);
+        }
+        
         $stopTimes = [];
 
         foreach ($routeStops as $index => $routeStop) {
@@ -176,10 +218,14 @@ class RouteStopTimeController extends Controller
                 // First stop - use the base departure time
                 $departureTime = $baseDepartureTime->format('H:i');
             } else {
-                // Calculate arrival time based on previous stop's travel time
-                $previousStop = $routeStops[$index - 1];
-                $travelTime = $previousStop->approx_travel_time ?? 30; // Default 30 minutes
-                $arrivalTime = $baseDepartureTime->addMinutes($travelTime)->format('H:i');
+                // Calculate cumulative travel time
+                $cumulativeMinutes = 0;
+                for ($i = 0; $i < $index; $i++) {
+                    $stop = $routeStops[$i];
+                    $cumulativeMinutes += $stop->approx_travel_time ?? 30;
+                }
+                
+                $arrivalTime = $baseDepartureTime->copy()->addMinutes($cumulativeMinutes)->format('H:i');
                 
                 // Departure time is same as arrival for intermediate stops
                 $departureTime = $arrivalTime;

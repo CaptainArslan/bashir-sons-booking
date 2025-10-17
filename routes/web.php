@@ -199,6 +199,7 @@ Route::middleware('auth')->group(function () {
 
         // Route Timetables Management
         Route::get('/route-timetables', [RouteTimetableController::class, 'index'])->can('view route timetables')->name('route-timetables.index');
+        Route::get('/route-timetables/data', [RouteTimetableController::class, 'getData'])->can('view route timetables')->name('route-timetables.getData');
         Route::get('/route-timetables/create', [RouteTimetableController::class, 'create'])->can('create route timetables')->name('route-timetables.create');
         Route::post('/route-timetables', [RouteTimetableController::class, 'store'])->can('create route timetables')->name('route-timetables.store');
         Route::get('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'show'])->can('view route timetables')->name('route-timetables.show');
