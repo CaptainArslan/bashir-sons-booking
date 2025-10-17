@@ -3,7 +3,68 @@
 @section('title', 'Roles')
 
 @section('styles')
-    <link href="assets/plugins/datatable/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+    <style>
+        #roles-table {
+            table-layout: auto;
+            width: 100% !important;
+        }
+        
+        #roles-table td {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 200px;
+        }
+        
+        #roles-table th {
+            white-space: normal !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #roles-table td:nth-child(1) {
+            max-width: 80px;
+            text-align: center;
+        }
+        
+        #roles-table td:nth-child(2) {
+            max-width: 200px;
+            font-weight: 600;
+        }
+        
+        #roles-table td:nth-child(3) {
+            max-width: 120px;
+            text-align: center;
+        }
+        
+        #roles-table td:nth-child(4) {
+            max-width: 300px;
+        }
+        
+        #roles-table td:nth-child(5) {
+            max-width: 150px;
+        }
+        
+        #roles-table td:nth-child(6) {
+            max-width: 150px;
+            text-align: center;
+        }
+        
+        .permission-badge {
+            font-size: 0.75rem;
+            margin: 2px;
+            display: inline-block;
+        }
+        
+        .actions-column {
+            white-space: nowrap;
+        }
+        
+        .actions-column .btn {
+            margin: 1px;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -54,8 +115,8 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.roles.data') }}",
-                // responsive: true,
-                autoWidth: true,
+                responsive: true,
+                autoWidth: false,
                 pageLength: 25,
                 order: [
                     [0, 'desc']
@@ -63,38 +124,41 @@
                 columns: [{
                         data: 'id',
                         name: 'id',
+                        width: '8%'
                     },
                     {
                         data: 'formatted_name',
                         name: 'name',
+                        width: '20%'
                     },
                     {
                         data: 'permissions_count',
                         name: 'permissions_count',
                         searchable: false,
                         orderable: true,
+                        width: '12%'
                     },
                     {
                         data: 'permissions_list',
                         name: 'permissions_list',
                         searchable: false,
                         orderable: false,
+                        width: '35%'
                     },
                     {
                         data: 'created_at',
                         name: 'created_at',
+                        width: '15%'
                     },
                     {
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
+                        width: '10%',
+                        className: 'actions-column'
                     }
                 ],
-                columnDefs: [{
-                    targets: [4],
-                    className: 'wrap-text',
-                }],
                 language: {
                     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
                     emptyTable: "No roles found",

@@ -59,6 +59,7 @@ class Rolecontroller extends Controller
                     // Define default roles that should not be deletable
                     $defaultRoles = User::DEFAULT_ROLES;
                     $isDefaultRole = in_array($role->name, $defaultRoles);
+                    $superAdmin = auth()->user()->hasRole('super_admin');
 
                     $actions = '
                         <div class="dropdown">
