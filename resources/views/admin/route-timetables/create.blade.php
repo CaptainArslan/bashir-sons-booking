@@ -399,10 +399,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleOperatingDays() {
         if (frequencySelect.value === 'custom') {
             operatingDaysSection.style.display = 'block';
-            // Add required attribute to checkboxes when custom is selected
+            // Remove required attribute from individual checkboxes
             const checkboxes = operatingDaysSection.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
-                checkbox.setAttribute('required', 'required');
+                checkbox.removeAttribute('required');
             });
         } else {
             operatingDaysSection.style.display = 'none';
@@ -416,6 +416,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     frequencySelect.addEventListener('change', toggleOperatingDays);
     toggleOperatingDays(); // Initial call
+    
+    // Add form validation for operating days
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        if (frequencySelect.value === 'custom') {
+            const checkboxes = operatingDaysSection.querySelectorAll('input[type="checkbox"]');
+            const checkedBoxes = operatingDaysSection.querySelectorAll('input[type="checkbox"]:checked');
+            
+            if (checkedBoxes.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one operating day when using custom frequency.');
+                return false;
+            }
+        }
+    });
 });
 </script>
 @endsection
