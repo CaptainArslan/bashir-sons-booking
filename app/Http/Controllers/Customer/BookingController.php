@@ -23,7 +23,7 @@ class BookingController extends Controller
     public function index()
     {
         $routes = Route::where('status', 'active')
-            ->with(['firstTerminal', 'lastTerminal'])
+            // ->with(['firstStop', 'lastStop'])
             ->get();
 
         return view('customer.booking.index', compact('routes'));

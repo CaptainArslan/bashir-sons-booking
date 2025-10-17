@@ -7,7 +7,7 @@
                 <div class="col-md-4">
                     <h5 class="footer-title text-white">Support</h5>
                     <div class="footer-links">
-                        <a href="{{ route('booking') }}">Book Your Ticket</a>
+                        <a href="{{ route('bookings') }}">Book Your Ticket</a>
                         <a href="#">Privacy Policy</a>
                         <a href="{{ route('contact') }}">Contact us</a>
                         <a href="#">FAQs</a>

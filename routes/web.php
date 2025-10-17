@@ -40,10 +40,10 @@ Route::get('/contact', [DashboardController::class, 'contact'])->name('contact')
 Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
 
 // Customer Routes
-Route::get('/booking', [BookingController::class, 'index'])->name('booking');
-Route::get('/booking/search', [BookingController::class, 'search'])->name('booking.search');
-Route::get('/booking/{route}', [BookingController::class, 'show'])->name('booking.show');
-Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::get('/booking', [BookingController::class, 'index'])->name('customer.booking.index');
+Route::get('/booking/search', [BookingController::class, 'search'])->name('customer.booking.search');
+Route::get('/booking/{route}', [BookingController::class, 'show'])->name('customer.booking.show');
+Route::post('/booking', [BookingController::class, 'store'])->name('customer.booking.store');
 
 // Frontend Routes
 

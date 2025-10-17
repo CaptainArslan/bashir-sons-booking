@@ -77,6 +77,16 @@ class Route extends Model
             ->orderBy('pivot_sequence');
     }
 
+    public function firstStop()
+    {
+        return $this->routeStops()->orderBy('sequence')->first();
+    }
+
+    public function lastStop()
+    {
+        return $this->routeStops()->orderByDesc('sequence')->first();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors & Mutators
