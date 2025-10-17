@@ -51,6 +51,16 @@ class Route extends Model
         return $this->hasMany(RouteFare::class);
     }
 
+    public function timetables()
+    {
+        return $this->hasMany(RouteTimetable::class);
+    }
+
+    public function activeTimetables()
+    {
+        return $this->hasMany(RouteTimetable::class)->where('is_active', true);
+    }
+
     public function terminals()
     {
         return $this->belongsToMany(Terminal::class, 'route_stops')

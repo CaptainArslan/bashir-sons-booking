@@ -77,7 +77,7 @@
               </li>
           @endcan
           @canany(['view terminals', 'view buses', 'view bus types', 'view bus layouts', 'view facilities', 'view
-              routes', 'view route stops'])
+              routes', 'view route stops', 'view route timetables'])
               <li class="menu-label">Transport Management</li>
           @endcanany
 
@@ -120,6 +120,14 @@
                       @can('view route fares')
                           <li> <a href="{{ route('admin.route-fares.index') }}"><i class='bx bx-radio-circle'></i>All Route
                                   Fares</a></li>
+                      @endcan
+                      @can('view route timetables')
+                          <li> <a href="{{ route('admin.route-timetables.index') }}"><i class='bx bx-radio-circle'></i>Route
+                                  Timetables</a></li>
+                      @endcan
+                      @can('create route timetables')
+                          <li> <a href="{{ route('admin.route-timetables.create') }}"><i class='bx bx-radio-circle'></i>Add New
+                                  Timetable</a></li>
                       @endcan
                   </ul>
               </li>

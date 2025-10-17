@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Enquiry;
 use App\Models\RouteFare;
 use App\Models\RouteStop;
+use App\Models\RouteTimetable;
 use App\Enums\EnquiryStatusEnum;
 use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\Auth;
@@ -50,6 +51,8 @@ class DashboardController extends Controller
             'pending_enquiries' => Enquiry::where('status', EnquiryStatusEnum::PENDING->value)->count(),
             'total_fares' => RouteFare::count(),
             'total_stops' => RouteStop::count(),
+            'total_timetables' => RouteTimetable::count(),
+            'active_timetables' => RouteTimetable::where('is_active', true)->count(),
         ];
     }
 
