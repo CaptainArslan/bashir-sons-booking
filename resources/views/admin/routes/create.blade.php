@@ -3,89 +3,145 @@
 @section('title', 'Create Route')
 
 @section('styles')
-    <style>
-        .stop-item {
-            transition: all 0.2s ease;
-            border-left: 3px solid #007bff !important;
-            background: #f8f9fa;
-        }
-        
-        .stop-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-        }
-        
-        .form-check-label {
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: color 0.2s ease;
-        }
-        
-        .form-check-input:checked + .form-check-label {
-            color: #198754;
-            font-weight: 500;
-        }
-        
-        .time-input-group {
-            position: relative;
-        }
-        
-        .time-input-group::before {
-            content: "🕐";
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            pointer-events: none;
-            font-size: 0.8rem;
-        }
-        
-        .stops-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        
-        .add-stop-btn {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-        
-        .add-stop-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.25);
-            color: white;
-        }
-        
-        .form-control, .form-select {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-        }
-        
-        .form-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-        
-        .badge {
-            font-size: 0.75rem;
-            width: 24px;
-            height: 24px;
-        }
-        
-        .stop-header {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-    </style>
+<style>
+    .route-card {
+        border-left: 4px solid #0d6efd;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .card-header-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .card-header-info h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 6px;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .row {
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn {
+        border-radius: 6px;
+        font-weight: 500;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+    
+    .info-box p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #1976d2;
+    }
+    
+    .section-divider {
+        border-top: 1px solid #e9ecef;
+        margin: 1rem 0;
+        padding-top: 1rem;
+    }
+    
+    .section-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .form-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .stops-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-left: 4px solid #0dcaf0;
+    }
+    
+    .stop-item {
+        transition: all 0.2s ease;
+        border-left: 3px solid #0d6efd !important;
+        background: #ffffff;
+        border-radius: 6px;
+    }
+    
+    .stop-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+        transform: translateX(2px);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: color 0.2s ease;
+    }
+    
+    .form-check-input:checked + .form-check-label {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .add-stop-btn {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: white;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .add-stop-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(40, 167, 69, 0.25);
+        color: white;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .stop-header {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+</style>
 @endsection
 
 @section('content')
@@ -107,61 +163,92 @@
 
     <div class="row">
         <div class="col-xl-10 mx-auto">
-            <form action="{{ route('admin.routes.store') }}" method="POST" class="row g-3">
-                @csrf
-                <div class="card">
-                    <div class="card-body p-4">
-                        <h5 class="mb-4">Create Route</h5>
-                        <div class="row g-3">
-
+            <div class="card route-card">
+                <div class="card-header-info">
+                    <h5><i class="bx bx-plus-circle me-2"></i>Create New Route</h5>
+                </div>
+                
+                <form action="{{ route('admin.routes.store') }}" method="POST" class="row g-3">
+                    @csrf
+                    
+                    <div class="card-body">
+                        <!-- Info Box -->
+                        <div class="info-box">
+                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Enter route details and add stops in sequence. The route code will be auto-generated based on the route name and direction.</p>
+                        </div>
+                        
+                        <!-- Basic Information -->
+                        <div class="section-title">
+                            <i class="bx bx-route me-1"></i>Basic Information
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-md-6">
-                                <label for="name" class="form-label">Route Name <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                    id="name" name="name" placeholder="Enter Route Name" value="{{ old('name') }}"
-                                    required>
+                                <label for="name" class="form-label">
+                                    Route Name 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('name') is-invalid @enderror"
+                                       id="name" 
+                                       name="name" 
+                                       placeholder="Enter Route Name" 
+                                       value="{{ old('name') }}"
+                                       required
+                                       autofocus>
                                 @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-6">
-                                <label for="direction" class="form-label">Direction <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select @error('direction') is-invalid @enderror" id="direction"
-                                    name="direction" required>
+                                <label for="direction" class="form-label">
+                                    Direction 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select @error('direction') is-invalid @enderror" 
+                                        id="direction"
+                                        name="direction" 
+                                        required>
                                     <option value="">Select Direction</option>
-                                    <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward
-                                    </option>
-                                    <option value="return" {{ old('direction') == 'return' ? 'selected' : '' }}>Return
-                                    </option>
+                                    <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward</option>
+                                    <option value="return" {{ old('direction') == 'return' ? 'selected' : '' }}>Return</option>
                                 </select>
                                 @error('direction')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
 
-
+                        <div class="row">
                             <div class="col-md-6">
-                                <label for="code" class="form-label">Route Code <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('code') is-invalid @enderror"
-                                    id="code" name="code" placeholder="Route code will be auto-generated"
-                                    value="{{ old('code') }}" style="text-transform: uppercase;" required readonly>
+                                <label for="code" class="form-label">
+                                    Route Code 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('code') is-invalid @enderror"
+                                       id="code" 
+                                       name="code" 
+                                       placeholder="Route code will be auto-generated"
+                                       value="{{ old('code') }}" 
+                                       style="text-transform: uppercase;" 
+                                       required 
+                                       readonly>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
                                     Code will be auto-generated based on route name and direction
                                 </div>
                                 @error('code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
 
-
                             <div class="col-md-6">
                                 <label for="is_return_of" class="form-label">Return Route Of</label>
-                                <select class="form-select @error('is_return_of') is-invalid @enderror" id="is_return_of"
-                                    name="is_return_of">
+                                <select class="form-select @error('is_return_of') is-invalid @enderror" 
+                                        id="is_return_of"
+                                        name="is_return_of">
                                     <option value="">Select Return Route (Optional)</option>
                                     @foreach ($routes as $route)
                                         <option value="{{ $route->id }}"
@@ -172,15 +259,21 @@
                                 </select>
                                 <div class="form-text">Select if this route is a return route of another route</div>
                                 @error('is_return_of')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
 
+                        <div class="row">
                             <div class="col-md-6">
-                                <label for="base_currency" class="form-label">Base Currency <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select @error('base_currency') is-invalid @enderror" id="base_currency"
-                                    name="base_currency" required>
+                                <label for="base_currency" class="form-label">
+                                    Base Currency 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select @error('base_currency') is-invalid @enderror" 
+                                        id="base_currency"
+                                        name="base_currency" 
+                                        required>
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
                                         <option value="{{ $currency }}"
@@ -190,29 +283,39 @@
                                     @endforeach
                                 </select>
                                 @error('base_currency')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-6">
-                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                                <select class="form-select @error('status') is-invalid @enderror" id="status"
-                                    name="status" required>
+                                <label for="status" class="form-label">
+                                    Status 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select @error('status') is-invalid @enderror" 
+                                        id="status"
+                                        name="status" 
+                                        required>
                                     <option value="">Select Status</option>
-                                    @foreach ($statuses as $value => $label)
+                                    @foreach (\App\Enums\RouteStatusEnum::getStatusOptions() as $value => $label)
                                         <option value="{{ $value }}" {{ old('status') == $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
                         <!-- Route Stops Section -->
-                        <div class="row mt-3">
+                        <div class="section-divider"></div>
+                        <div class="section-title">
+                            <i class="bx bx-map me-1"></i>Route Stops
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-12">
                                 <div class="stops-section">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -230,22 +333,28 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <a href="{{ route('admin.routes.index') }}" class="btn btn-light px-4">
-                                        <i class="bx bx-arrow-back me-1"></i>Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary px-4">
-                                        <i class="bx bx-save me-1"></i>Create Route
-                                    </button>
-                                </div>
+                    <!-- Action Buttons -->
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ route('admin.routes.index') }}" class="btn btn-light px-4">
+                                    <i class="bx bx-arrow-back me-1"></i>Back to List
+                                </a>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('admin.routes.index') }}" class="btn btn-secondary px-4">
+                                    <i class="bx bx-x me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bx bx-save me-1"></i>Create Route
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 @endsection
