@@ -14,30 +14,37 @@
       <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
           <li>
               <a href="{{ route('admin.dashboard') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i class='bx bx-cookie'></i>
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                          class='bx bx-cookie'></i>
                   </div>
                   <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Dashboard</div>
               </a>
           </li>
 
           @canany(['view roles', 'view permissions', 'view users'])
-              <li class="menu-label" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">User Management</li>
+              <li class="menu-label"
+                  style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
+                  User Management</li>
           @endcanany
 
           @canany(['view roles', 'view permissions'])
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i class='bx bx-shield-quarter'></i>
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-shield-quarter'></i>
                       </div>
                       <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Access Control</div>
                   </a>
                   <ul style="padding-left: 0;">
                       @can('view roles')
-                          <li> <a href="{{ route('admin.roles.index') }}" style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle' style="font-size: 0.7rem;"></i>Roles</a></li>
+                          <li> <a href="{{ route('admin.roles.index') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Roles</a></li>
                       @endcan
                       @can('view permissions')
-                          <li> <a href="{{ route('admin.permissions.index') }}" style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i
-                                      class='bx bx-radio-circle' style="font-size: 0.7rem;"></i>Permissions</a></li>
+                          <li> <a href="{{ route('admin.permissions.index') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Permissions</a></li>
                       @endcan
                   </ul>
               </li>
@@ -76,8 +83,17 @@
                   </ul>
               </li>
           @endcan
-          @canany(['view terminals', 'view buses', 'view bus types', 'view bus layouts', 'view facilities', 'view
-              routes', 'view route stops', 'view route timetables'])
+          @canany([
+              'view terminals',
+              'view buses',
+              'view bus types',
+              'view bus layouts',
+              'view facilities',
+              'view
+              routes',
+              'view route stops',
+              'view route timetables',
+              ])
               <li class="menu-label">Transport Management</li>
           @endcanany
 
@@ -94,6 +110,48 @@
                       @can('create terminals')
                           <li> <a href="{{ route('admin.counter-terminals.create') }}"><i class='bx bx-radio-circle'></i>Create
                                   Counter</a></li>
+                      @endcan
+                  </ul>
+              </li>
+          @endcan
+
+          @canany(['view bus types', 'view bus layouts', 'view facilities'])
+              <li>
+                  <a href="javascript:;" class="has-arrow">
+                      <div class="parent-icon"><i class='bx bx-category'></i>
+                      </div>
+                      <div class="menu-title">Bus Configuration</div>
+                  </a>
+                  <ul>
+                      @can('view bus types')
+                          <li> <a href="{{ route('admin.bus-types.index') }}"><i class='bx bx-radio-circle'></i>Bus Types</a>
+                          </li>
+                      @endcan
+                      @can('view bus layouts')
+                          <li> <a href="{{ route('admin.bus-layouts.index') }}"><i class='bx bx-radio-circle'></i>Bus
+                                  Layouts</a></li>
+                      @endcan
+                      @can('view facilities')
+                          <li> <a href="{{ route('admin.facilities.index') }}"><i class='bx bx-radio-circle'></i>Facilities</a>
+                          </li>
+                      @endcan
+                  </ul>
+              </li>
+          @endcanany
+
+          @can('view buses')
+              <li>
+                  <a href="javascript:;" class="has-arrow">
+                      <div class="parent-icon"><i class='bx bx-bus'></i>
+                      </div>
+                      <div class="menu-title">Bus Management</div>
+                  </a>
+                  <ul>
+                      <li> <a href="{{ route('admin.buses.index') }}"><i class='bx bx-radio-circle'></i>All Buses</a>
+                      </li>
+                      @can('create buses')
+                          <li> <a href="{{ route('admin.buses.create') }}"><i class='bx bx-radio-circle'></i>Add New Bus</a>
+                          </li>
                       @endcan
                   </ul>
               </li>
@@ -126,53 +184,14 @@
                                   Timetables</a></li>
                       @endcan
                       @can('create route timetables')
-                          <li> <a href="{{ route('admin.route-timetables.create') }}"><i class='bx bx-radio-circle'></i>Add New
+                          <li> <a href="{{ route('admin.route-timetables.create') }}"><i class='bx bx-radio-circle'></i>Add
+                                  New
                                   Timetable</a></li>
                       @endcan
                   </ul>
               </li>
           @endcan
 
-          @can('view buses')
-              <li>
-                  <a href="javascript:;" class="has-arrow">
-                      <div class="parent-icon"><i class='bx bx-bus'></i>
-                      </div>
-                      <div class="menu-title">Bus Management</div>
-                  </a>
-                  <ul>
-                      <li> <a href="{{ route('admin.buses.index') }}"><i class='bx bx-radio-circle'></i>All Buses</a></li>
-                      @can('create buses')
-                          <li> <a href="{{ route('admin.buses.create') }}"><i class='bx bx-radio-circle'></i>Add New Bus</a>
-                          </li>
-                      @endcan
-                  </ul>
-              </li>
-          @endcan
-
-          @canany(['view bus types', 'view bus layouts', 'view facilities'])
-              <li>
-                  <a href="javascript:;" class="has-arrow">
-                      <div class="parent-icon"><i class='bx bx-category'></i>
-                      </div>
-                      <div class="menu-title">Bus Configuration</div>
-                  </a>
-                  <ul>
-                      @can('view bus types')
-                          <li> <a href="{{ route('admin.bus-types.index') }}"><i class='bx bx-radio-circle'></i>Bus Types</a>
-                          </li>
-                      @endcan
-                      @can('view bus layouts')
-                          <li> <a href="{{ route('admin.bus-layouts.index') }}"><i class='bx bx-radio-circle'></i>Bus
-                                  Layouts</a></li>
-                      @endcan
-                      @can('view facilities')
-                          <li> <a href="{{ route('admin.facilities.index') }}"><i class='bx bx-radio-circle'></i>Facilities</a>
-                          </li>
-                      @endcan
-                  </ul>
-              </li>
-          @endcanany
           @canany(['view banners', 'view general settings'])
               <li class="menu-label">Content Management</li>
           @endcanany
