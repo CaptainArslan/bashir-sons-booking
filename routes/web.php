@@ -27,7 +27,8 @@ use App\Http\Controllers\Customer\BookingController;
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
 Route::get('/', function () {
-    return redirect()->intended(route('dashboard', absolute: false));
+    return redirect()->route('home');
+    // return redirect()->intended(route('dashboard', absolute: false));
     // return view('welcome');
 });
 
