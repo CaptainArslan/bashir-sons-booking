@@ -267,7 +267,7 @@ class RouteController extends Controller
 
     public function edit($id)
     {
-        $route = Route::with('routeStops.terminal.city')->findOrFail($id);
+        $route = Route::with(['routeStops.terminal.city', 'routeFares'])->findOrFail($id);
         $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->where('id', '!=', $id)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
@@ -729,6 +729,7 @@ class RouteController extends Controller
                 'numeric',
                 'min:0',
                 'regex:/^\d+(\.\d{1,2})?$/',
+                'required_if:fares.*.discount_type,flat,percent',
             ],
             'fares.*.status' => [
                 'required',
@@ -779,6 +780,11 @@ class RouteController extends Controller
                         continue;
                     }
 
+                    // Ensure discount_value is set to null if not provided
+                    if (!isset($fareData['discount_value']) || $fareData['discount_value'] === '') {
+                        $fareData['discount_value'] = null;
+                    }
+
                     // Additional business logic validation
                     $validationErrors = $this->validateFareBusinessLogic($fareData, $fromStop, $toStop, $index);
                     if (!empty($validationErrors)) {
@@ -789,7 +795,7 @@ class RouteController extends Controller
                     // Calculate final fare
                     $finalFare = $this->calculateFinalFare(
                         $fareData['base_fare'],
-                        $fareData['discount_type'],
+                        $fareData['discount_type'] ?? null,
                         $fareData['discount_value']
                     );
 
@@ -834,6 +840,18 @@ class RouteController extends Controller
 
             DB::commit();
 
+            // If there are errors, return error response
+            if (!empty($errors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to save some fares. Please check the errors below.',
+                    'errors' => $errors,
+                    'saved_count' => $savedCount,
+                    'updated_count' => $updatedCount
+                ], 400);
+            }
+
+            // Success response when no errors
             $message = "Successfully processed fares for route '{$route->name}'. ";
             if ($savedCount > 0) {
                 $message .= "Created {$savedCount} new fares. ";
@@ -841,16 +859,12 @@ class RouteController extends Controller
             if ($updatedCount > 0) {
                 $message .= "Updated {$updatedCount} existing fares. ";
             }
-            if (!empty($errors)) {
-                $message .= "Errors: " . implode('; ', $errors);
-            }
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'saved_count' => $savedCount,
-                'updated_count' => $updatedCount,
-                'errors' => $errors
+                'updated_count' => $updatedCount
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

@@ -262,7 +262,7 @@
                                                 <input type="number" class="form-control discount-value"
                                                     name="fares[{{ $fareIndex }}][discount_value]"
                                                     value="{{ $existingFare ? $existingFare->discount_value : '' }}"
-                                                    min="0" step="0.01" placeholder="0.00">
+                                                    min="0" step="0.01" placeholder="0.00" disabled>
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label fw-semibold">
@@ -301,34 +301,6 @@
                     </div>
                 </form>
 
-                <!-- Fare Summary -->
-                <div class="card mt-4 border-success">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="m-0 font-weight-bold">
-                            <i class="bx bx-stats me-2"></i>Fare Summary
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <div class="border-end">
-                                    <h4 class="text-primary mb-1" id="totalBaseFare">PKR 0</h4>
-                                    <small class="text-muted">Total Base Fare</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="border-end">
-                                    <h4 class="text-warning mb-1" id="totalDiscount">PKR 0</h4>
-                                    <small class="text-muted">Total Discount</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <h4 class="text-success mb-1" id="totalFinalFare">PKR 0</h4>
-                                <small class="text-muted">Total Final Fare</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -354,9 +326,34 @@
         $(document).ready(function() {
             // Initialize fare calculation event listeners
             $('.base-fare, .discount-type, .discount-value').on('input change', calculateFare);
-
-            // Update summary statistics on page load
-            updateFareSummary();
+            
+            // Handle discount type change to enable/disable discount value field
+            $(document).on('change', '.discount-type', function() {
+                const card = $(this).closest('.fare-item');
+                const discountValueInput = card.find('.discount-value');
+                const discountType = $(this).val();
+                
+                if (discountType) {
+                    discountValueInput.prop('disabled', false);
+                    discountValueInput.prop('required', true);
+                    
+                    if (discountType === 'percent') {
+                        discountValueInput.attr('max', '100');
+                        discountValueInput.attr('placeholder', '0-100%');
+                    } else if (discountType === 'flat') {
+                        discountValueInput.removeAttr('max');
+                        discountValueInput.attr('placeholder', '0.00');
+                    }
+                } else {
+                    discountValueInput.prop('disabled', true);
+                    discountValueInput.prop('required', false);
+                    discountValueInput.val('');
+                    discountValueInput.removeClass('is-invalid');
+                }
+                
+                // Trigger calculation
+                calculateFare.call(this);
+            });
         });
 
         function calculateFare() {
@@ -374,7 +371,6 @@
             clearValidationStates(card);
 
             let finalFare = baseFare;
-            let discountAmount = 0;
             let validationErrors = [];
 
             // Validate base fare
@@ -389,39 +385,56 @@
             // Enable/disable discount value input based on discount type
             if (discountType) {
                 discountValueInput.prop('disabled', false);
+                discountValueInput.prop('required', true);
 
                 if (discountType === 'percent') {
                     discountValueInput.attr('max', '100');
                     discountValueInput.attr('placeholder', '0-100%');
 
+                    // Validate percentage discount value
+                    if (discountValue <= 0) {
+                        validationErrors.push('Discount percentage must be greater than 0');
+                        discountValueInput.addClass('is-invalid');
+                    } else if (discountValue > 100) {
+                        validationErrors.push('Discount percentage cannot exceed 100%');
+                        discountValueInput.addClass('is-invalid');
+                    }
+
                     // Calculate percentage discount
                     if (discountValue > 0 && baseFare > 0) {
-                        discountAmount = (baseFare * discountValue / 100);
+                        const discountAmount = (baseFare * discountValue / 100);
                         finalFare = Math.max(0, baseFare - discountAmount);
                     }
                 } else if (discountType === 'flat') {
-                    // Remove max attribute for flat discount - validation handled by backend
                     discountValueInput.removeAttr('max');
                     discountValueInput.attr('placeholder', '0.00');
 
+                    // Validate flat discount value
+                    if (discountValue <= 0) {
+                        validationErrors.push('Discount amount must be greater than 0');
+                        discountValueInput.addClass('is-invalid');
+                    } else if (discountValue > baseFare) {
+                        validationErrors.push('Discount amount cannot exceed base fare');
+                        discountValueInput.addClass('is-invalid');
+                    }
+
                     // Calculate flat discount
                     if (discountValue > 0 && baseFare > 0) {
-                        discountAmount = Math.min(discountValue, baseFare);
+                        const discountAmount = Math.min(discountValue, baseFare);
                         finalFare = Math.max(0, baseFare - discountAmount);
                     }
                 }
             } else {
                 discountValueInput.prop('disabled', true);
+                discountValueInput.prop('required', false);
                 discountValueInput.val('');
                 discountValueInput.removeClass('is-invalid');
             }
 
-            // Final fare is calculated and validated by backend
-
-            // Update final fare with visual feedback
+            // Update final fare
             finalFareInput.val(finalFare.toFixed(2));
 
-            // Add visual feedback for discount and validation
+            // Add visual feedback
             if (validationErrors.length > 0) {
                 finalFareInput.css({
                     'background-color': '#f8d7da',
@@ -429,24 +442,14 @@
                     'border-color': '#f5c6cb'
                 });
                 showValidationErrors(card, validationErrors);
-            } else if (discountAmount > 0) {
+            } else {
                 finalFareInput.css({
                     'background-color': '#d4edda',
                     'color': '#155724',
                     'border-color': '#c3e6cb'
                 });
                 hideValidationErrors(card);
-            } else {
-                finalFareInput.css({
-                    'background-color': '#f8f9fa',
-                    'color': '#6c757d',
-                    'border-color': '#dee2e6'
-                });
-                hideValidationErrors(card);
             }
-
-            // Update summary statistics
-            updateFareSummary();
         }
 
 
@@ -480,29 +483,8 @@
             card.removeClass('has-errors');
         }
 
-        function updateFareSummary() {
-            let totalBaseFare = 0;
-            let totalFinalFare = 0;
-            let totalDiscount = 0;
-
-            $('.fare-item').each(function() {
-                const baseFare = parseFloat($(this).find('.base-fare').val()) || 0;
-                const finalFare = parseFloat($(this).find('.final-fare').val()) || 0;
-
-                if (baseFare > 0) {
-                    totalBaseFare += baseFare;
-                    totalFinalFare += finalFare;
-                    totalDiscount += (baseFare - finalFare);
-                }
-            });
-
-            $('#totalBaseFare').text('PKR ' + totalBaseFare.toFixed(2));
-            $('#totalFinalFare').text('PKR ' + totalFinalFare.toFixed(2));
-            $('#totalDiscount').text('PKR ' + totalDiscount.toFixed(2));
-        }
 
         function saveAllFares() {
-            // Basic validation before submission
             let validationErrors = [];
             let emptyFares = 0;
             let totalFares = 0;
@@ -511,17 +493,36 @@
                 totalFares++;
                 const card = $(this);
                 const baseFare = parseFloat(card.find('.base-fare').val()) || 0;
+                const discountType = card.find('.discount-type').val();
+                const discountValue = parseFloat(card.find('.discount-value').val()) || 0;
 
                 let fareErrors = [];
 
-                // Basic validation - detailed validation handled by backend
+                // Validate base fare
                 if (!baseFare || baseFare <= 0) {
                     fareErrors.push('Base fare is required');
                     card.find('.base-fare').addClass('is-invalid');
                     emptyFares++;
                 }
 
-                // Show errors for this fare
+                // Validate discount value if discount type is selected
+                if (discountType) {
+                    if (!discountValue || discountValue <= 0) {
+                        fareErrors.push('Discount value is required when discount type is selected');
+                        card.find('.discount-value').addClass('is-invalid');
+                    } else {
+                        // Additional validation based on discount type
+                        if (discountType === 'percent' && discountValue > 100) {
+                            fareErrors.push('Discount percentage cannot exceed 100%');
+                            card.find('.discount-value').addClass('is-invalid');
+                        } else if (discountType === 'flat' && discountValue > baseFare) {
+                            fareErrors.push('Discount amount cannot exceed base fare');
+                            card.find('.discount-value').addClass('is-invalid');
+                        }
+                    }
+                }
+
+                // Show or hide errors for this fare
                 if (fareErrors.length > 0) {
                     showValidationErrors(card, fareErrors);
                     validationErrors = validationErrors.concat(fareErrors);
@@ -531,7 +532,6 @@
                 }
             });
 
-            // Check if we have any fares to save
             if (totalFares === 0) {
                 Swal.fire({
                     title: 'No Fares!',
@@ -543,7 +543,6 @@
                 return;
             }
 
-            // Check for validation errors
             if (validationErrors.length > 0) {
                 let errorMessage = 'Please fix the following errors before saving:<br>';
                 errorMessage += validationErrors.slice(0, 5).map(error => `• ${error}`).join('<br>');
@@ -560,7 +559,6 @@
                 return;
             }
 
-            // Check for empty fares
             if (emptyFares > 0) {
                 Swal.fire({
                     title: 'Missing Fares!',
@@ -572,7 +570,6 @@
                 return;
             }
 
-            // Final confirmation with SweetAlert
             Swal.fire({
                 title: 'Save Fares?',
                 text: `Are you sure you want to save ${totalFares} fare(s)?`,
@@ -587,16 +584,26 @@
                     proceedWithSave();
                 }
             });
-            
-            return;
         }
         
         function proceedWithSave() {
-
             const form = $('#faresForm');
             const formData = new FormData(form[0]);
 
-            // Show loading modal
+            // Remove empty discount_value fields when no discount type is selected
+            $('.fare-item').each(function() {
+                const discountType = $(this).find('.discount-type').val();
+                const discountValueInput = $(this).find('.discount-value');
+                
+                if (!discountType || discountType === '') {
+                    // Remove the discount_value input from form data if no discount type
+                    const inputName = discountValueInput.attr('name');
+                    if (inputName) {
+                        formData.delete(inputName);
+                    }
+                }
+            });
+
             $('#loadingModal').modal('show');
 
             $.ajax({
@@ -619,9 +626,21 @@
                             location.reload();
                         });
                     } else {
+                        // Handle error response with detailed error messages
+                        let errorMessage = response.message || 'Failed to save fares';
+                        
+                        if (response.errors && response.errors.length > 0) {
+                            errorMessage += '<br><br><strong>Errors:</strong><br>';
+                            errorMessage += response.errors.slice(0, 10).map(error => `• ${error}`).join('<br>');
+                            
+                            if (response.errors.length > 10) {
+                                errorMessage += `<br>... and ${response.errors.length - 10} more errors`;
+                            }
+                        }
+
                         Swal.fire({
                             title: 'Error!',
-                            text: response.message || 'Failed to save fares',
+                            html: errorMessage,
                             icon: 'error',
                             confirmButtonColor: '#dc3545',
                             confirmButtonText: 'OK'

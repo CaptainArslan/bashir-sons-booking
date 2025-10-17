@@ -453,6 +453,64 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Route Fares Section -->
+                        <div class="section-divider"></div>
+                        <div class="section-title">
+                            <i class="bx bx-money me-1"></i>Route Fares
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="stops-section">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bx bx-money text-success me-2" style="font-size: 1.2rem;"></i>
+                                            <h6 class="mb-0 fw-bold text-success">Route Fares</h6>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            @if($route->routeFares->count() > 0)
+                                                <a href="{{ route('admin.routes.fares', $route->id) }}" class="btn btn-success btn-sm">
+                                                    <i class="bx bx-edit me-1"></i>Manage Fares
+                                                </a>
+                                            @else
+                                                <a href="{{ route('admin.routes.fares', $route->id) }}" class="btn btn-outline-success btn-sm">
+                                                    <i class="bx bx-plus me-1"></i>Add Fares
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @if($route->routeFares->count() > 0)
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="alert alert-success">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bx bx-check-circle me-2"></i>
+                                                        <div>
+                                                            <strong>Fares Configured!</strong>
+                                                            <p class="mb-0" style="font-size: 0.85rem;">
+                                                                This route has {{ $route->routeFares->count() }} fare(s) configured. 
+                                                                Click "Manage Fares" to view or modify existing fares.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="bx bx-info-circle me-2"></i>
+                                                <strong>No fares configured yet</strong>
+                                            </div>
+                                            <p class="text-muted mb-0 mt-2" style="font-size: 0.85rem;">
+                                                Click "Add Fares" to configure pricing for different stop combinations.
+                                            </p>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Action Buttons -->
