@@ -39,16 +39,6 @@ enum CityEnum: string
 
     public function getName(): string
     {
-        return $this->getName();
-    }
-
-    public static function getStatusValue(string $status): string
-    {
-        return match ($status) {
-            self::ACTIVE->value => 'success',
-            self::INACTIVE->value => 'warning',
-
-            default => 'unknown',
-        };
+        return self::getStatusName($this->value);
     }
 }
