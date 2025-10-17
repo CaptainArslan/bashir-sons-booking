@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\BusLayout;
+use Illuminate\Support\Str;
 use App\Enums\BusLayoutEnum;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -19,14 +20,14 @@ class BusLayoutController extends Controller
     {
         if ($request->ajax()) {
             $busLayouts = BusLayout::query()
-                ->select('id', 'name', 'description', 'total_seats', 'status', 'created_at');
+                ->select('id', 'name', 'description', 'total_rows', 'total_columns', 'total_seats', 'status', 'created_at');
 
             return DataTables::eloquent($busLayouts)
                 ->addColumn('formatted_name', function ($busLayout) {
                     return '<span class="fw-bold text-primary">' . e($busLayout->name) . '</span>';
                 })
                 ->addColumn('description_preview', function ($busLayout) {
-                    return '<span class="text-muted">' . e(\Str::limit($busLayout->description, 100)) . '</span>';
+                    return '<span class="text-muted">' . e(Str::limit($busLayout->description, 100)) . '</span>';
                 })
                 ->addColumn('seats_info', function ($busLayout) {
                     $seatsInfo = '<div class="d-flex flex-column">';
@@ -193,7 +194,7 @@ class BusLayoutController extends Controller
     {
         try {
             $busLayout = BusLayout::findOrFail($id);
-            
+
             // Check if bus layout has buses assigned
             if ($busLayout->buses()->count() > 0) {
                 return response()->json([
