@@ -207,7 +207,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/route-timetables/{routeTimetable}/toggle-status', [RouteTimetableController::class, 'toggleStatus'])->can('edit route timetables')->name('route-timetables.toggle-status');
 
         // Route Stop Times Management
-        Route::get('/route-timetables/{routeTimetable}/stop-times/create', [RouteStopTimeController::class, 'create'])->can('create route stop times')->name('route-stop-times.create');
+        // Route::get('/route-timetables/{routeTimetable}/stop-times/create', [RouteStopTimeController::class, 'create'])->can('create route stop times')->name('route-stop-times.create');
         Route::post('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'store'])->can('create route stop times')->name('route-stop-times.store');
         Route::get('/route-timetables/{routeTimetable}/stop-times/edit', [RouteStopTimeController::class, 'edit'])->can('edit route stop times')->name('route-stop-times.edit');
         Route::put('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'update'])->can('edit route stop times')->name('route-stop-times.update');
