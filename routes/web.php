@@ -128,6 +128,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/bus-layouts/{id}/edit', [BusLayoutController::class, 'edit'])->can('edit bus layouts')->name('bus-layouts.edit');
         Route::put('/bus-layouts/{id}', [BusLayoutController::class, 'update'])->can('edit bus layouts')->name('bus-layouts.update');
         Route::delete('/bus-layouts/{id}', [BusLayoutController::class, 'destroy'])->can('delete bus layouts')->name('bus-layouts.destroy');
+        
+        // Seat map specific routes
+        Route::post('/bus-layouts/generate-seat-map', [BusLayoutController::class, 'generateSeatMap'])->can('create bus layouts')->name('bus-layouts.generate-seat-map');
+        Route::post('/bus-layouts/{id}/update-seat', [BusLayoutController::class, 'updateSeat'])->can('edit bus layouts')->name('bus-layouts.update-seat');
 
         // Facilities Routes
         Route::get('/facilities', [FacilityController::class, 'index'])->can('view facilities')->name('facilities.index');

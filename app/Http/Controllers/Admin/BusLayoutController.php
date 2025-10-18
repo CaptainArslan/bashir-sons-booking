@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Models\BusLayout;
 use Illuminate\Support\Str;
 use App\Enums\BusLayoutEnum;
+use App\Enums\SeatTypeEnum;
+use App\Enums\GenderEnum;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
@@ -86,7 +88,9 @@ class BusLayoutController extends Controller
     public function create()
     {
         $statuses = BusLayoutEnum::getStatuses();
-        return view('admin.bus-layouts.create', compact('statuses'));
+        $seatTypes = SeatTypeEnum::getSeatTypes();
+        $genders = GenderEnum::getGenders();
+        return view('admin.bus-layouts.create', compact('statuses', 'seatTypes', 'genders'));
     }
 
     public function store(Request $request)
@@ -122,15 +126,29 @@ class BusLayoutController extends Controller
         // Calculate total seats
         $totalSeats = $validated['total_rows'] * $validated['total_columns'];
 
-        BusLayout::create([
+        // Create bus layout instance to generate seat map
+        $busLayout = new BusLayout([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'total_rows' => $validated['total_rows'],
             'total_columns' => $validated['total_columns'],
             'total_seats' => $totalSeats,
-            'seat_map' => $validated['seat_map'] ?? null,
             'status' => $validated['status'],
         ]);
+
+        // Generate default seat map if not provided
+        $seatMap = $validated['seat_map'] ?? $busLayout->generateDefaultSeatMap();
+
+        // Validate seat map if provided
+        if ($seatMap) {
+            $busLayout->seat_map = $seatMap;
+            $errors = $busLayout->validateSeatMap();
+            if (!empty($errors)) {
+                return back()->withErrors(['seat_map' => implode(', ', $errors)])->withInput();
+            }
+        }
+
+        $busLayout->save();
 
         return redirect()->route('admin.bus-layouts.index')->with('success', 'Bus layout created successfully');
     }
@@ -139,7 +157,9 @@ class BusLayoutController extends Controller
     {
         $busLayout = BusLayout::findOrFail($id);
         $statuses = BusLayoutEnum::getStatuses();
-        return view('admin.bus-layouts.edit', compact('busLayout', 'statuses'));
+        $seatTypes = SeatTypeEnum::getSeatTypes();
+        $genders = GenderEnum::getGenders();
+        return view('admin.bus-layouts.edit', compact('busLayout', 'statuses', 'seatTypes', 'genders'));
     }
 
     public function update(Request $request, $id)
@@ -177,15 +197,31 @@ class BusLayoutController extends Controller
         // Calculate total seats
         $totalSeats = $validated['total_rows'] * $validated['total_columns'];
 
-        $busLayout->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'total_rows' => $validated['total_rows'],
-            'total_columns' => $validated['total_columns'],
-            'total_seats' => $totalSeats,
-            'seat_map' => $validated['seat_map'] ?? null,
-            'status' => $validated['status'],
-        ]);
+        // Update bus layout properties
+        $busLayout->name = $validated['name'];
+        $busLayout->description = $validated['description'];
+        $busLayout->total_rows = $validated['total_rows'];
+        $busLayout->total_columns = $validated['total_columns'];
+        $busLayout->total_seats = $totalSeats;
+        $busLayout->status = $validated['status'];
+
+        // Handle seat map
+        if (isset($validated['seat_map'])) {
+            $busLayout->seat_map = $validated['seat_map'];
+            
+            // Validate seat map
+            $errors = $busLayout->validateSeatMap();
+            if (!empty($errors)) {
+                return back()->withErrors(['seat_map' => implode(', ', $errors)])->withInput();
+            }
+        } else {
+            // Generate new seat map if dimensions changed
+            if ($busLayout->isDirty(['total_rows', 'total_columns'])) {
+                $busLayout->seat_map = $busLayout->generateDefaultSeatMap();
+            }
+        }
+
+        $busLayout->save();
 
         return redirect()->route('admin.bus-layouts.index')->with('success', 'Bus layout updated successfully');
     }
@@ -214,5 +250,65 @@ class BusLayoutController extends Controller
                 'message' => 'Error deleting bus layout: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generate seat map based on rows and columns
+     */
+    public function generateSeatMap(Request $request)
+    {
+        $request->validate([
+            'rows' => 'required|integer|min:1|max:50',
+            'columns' => 'required|integer|min:1|max:10',
+        ]);
+
+        $busLayout = new BusLayout([
+            'total_rows' => $request->rows,
+            'total_columns' => $request->columns,
+        ]);
+
+        $seatMap = $busLayout->generateDefaultSeatMap();
+
+        return response()->json([
+            'success' => true,
+            'seat_map' => $seatMap,
+            'total_seats' => $request->rows * $request->columns,
+        ]);
+    }
+
+    /**
+     * Update individual seat properties
+     */
+    public function updateSeat(Request $request, $id)
+    {
+        $busLayout = BusLayout::findOrFail($id);
+        
+        $validated = $request->validate([
+            'seat_number' => 'required|integer|min:1',
+            'seat_type' => 'required|string|in:' . implode(',', SeatTypeEnum::getSeatTypes()),
+            'gender' => 'nullable|string|in:' . implode(',', GenderEnum::getGenders()),
+            'is_reserved_for_female' => 'boolean',
+            'is_available' => 'boolean',
+        ]);
+
+        $success = $busLayout->updateSeat($validated['seat_number'], [
+            'type' => $validated['seat_type'],
+            'gender' => $validated['gender'],
+            'is_reserved_for_female' => $validated['is_reserved_for_female'],
+            'is_available' => $validated['is_available'],
+        ]);
+
+        if ($success) {
+            $busLayout->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Seat updated successfully'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Seat not found'
+        ], 404);
     }
 }
