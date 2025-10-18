@@ -38,3 +38,6 @@ Route::get('/routes/{route}/stops', function ($routeId) {
         ];
     });
 });
+
+// Get available routes between terminals
+Route::get('/booking/available-routes', [BookingController::class, 'getAvailableRoutes']);

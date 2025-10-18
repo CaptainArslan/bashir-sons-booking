@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Route;
+use App\Models\Terminal;
 use App\Services\RouteTimetableService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,11 +23,66 @@ class BookingController extends Controller
      */
     public function index()
     {
-        $routes = Route::where('status', 'active')
-            // ->with(['firstStop', 'lastStop'])
+        $terminals = Terminal::where('status', 'active')
+            ->with('city')
+            ->orderBy('name')
             ->get();
 
-        return view('customer.booking.index', compact('routes'));
+        return view('customer.booking.index', compact('terminals'));
+    }
+
+    /**
+     * Get available routes between two terminals.
+     */
+    public function getAvailableRoutes(Request $request)
+    {
+        $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
+            'travel_date' => 'required|date|after_or_equal:today',
+        ]);
+
+        $fromTerminalId = $request->from_terminal_id;
+        $toTerminalId = $request->to_terminal_id;
+        $travelDate = Carbon::parse($request->travel_date);
+
+        // Find routes that have both terminals
+        $routes = Route::where('status', 'active')
+            ->whereHas('routeStops', function ($query) use ($fromTerminalId) {
+                $query->where('terminal_id', $fromTerminalId);
+            })
+            ->whereHas('routeStops', function ($query) use ($toTerminalId) {
+                $query->where('terminal_id', $toTerminalId);
+            })
+            ->with(['routeStops.terminal.city', 'activeTimetables'])
+            ->get();
+
+        $availableRoutes = [];
+
+        foreach ($routes as $route) {
+            // Get the route stops for from and to terminals
+            $fromStop = $route->routeStops->where('terminal_id', $fromTerminalId)->first();
+            $toStop = $route->routeStops->where('terminal_id', $toTerminalId)->first();
+
+            // Check if from stop comes before to stop in the route
+            if ($fromStop && $toStop && $fromStop->sequence < $toStop->sequence) {
+                // Check if there are available timetables for this route
+                if ($route->activeTimetables->count() > 0) {
+                    $availableRoutes[] = [
+                        'route' => $route,
+                        'from_stop' => $fromStop,
+                        'to_stop' => $toStop,
+                        'timetables_count' => $route->activeTimetables->count(),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'routes' => $availableRoutes,
+            'travel_date' => $travelDate->format('Y-m-d'),
+        ]);
     }
 
     /**
