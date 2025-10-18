@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\profile;
+use App\Models\Terminal;
 use App\Enums\GenderEnum;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
@@ -25,8 +26,8 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
             $users = User::query()
-                ->with(['roles:id,name', 'profile'])
-                ->select('id', 'name', 'email', 'created_at');
+                ->with(['roles:id,name', 'profile', 'terminal.city'])
+                ->select('id', 'name', 'email', 'terminal_id', 'created_at');
 
             return DataTables::eloquent($users)
                 ->addColumn('user_info', function ($user) {
@@ -115,6 +116,15 @@ class UserController extends Controller
                     }
                     return $badges;
                 })
+                ->addColumn('terminal_info', function ($user) {
+                    if ($user->terminal) {
+                        return '<div>
+                            <div class="fw-bold text-primary">' . e($user->terminal->name) . '</div>
+                            <small class="text-muted">' . e($user->terminal->city->name) . '</small>
+                        </div>';
+                    }
+                    return '<span class="text-muted">No Terminal</span>';
+                })
                 ->addColumn('actions', function ($user) {
                     $actions = '
                         <div class="dropdown">
@@ -146,7 +156,7 @@ class UserController extends Controller
                 })
                 ->editColumn('created_at', fn($user) => $user->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['user_info', 'contact_info', 'personal_info', 'address_info', 'roles_info', 'actions'])
+                ->rawColumns(['user_info', 'contact_info', 'personal_info', 'address_info', 'roles_info', 'terminal_info', 'actions'])
                 ->make(true);
         }
     }
@@ -155,6 +165,7 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
+        $terminals = Terminal::with('city')->get();
         return view('admin.users.create', get_defined_vars());
     }
 
@@ -166,6 +177,7 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],
+            'terminal_id' => ['nullable', 'exists:terminals,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
             'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic'],
@@ -182,6 +194,7 @@ class UserController extends Controller
             'roles.required' => 'Please select at least one role',
             'roles.min' => 'Please select at least one role',
             'roles.*.exists' => 'One or more selected roles are invalid',
+            'terminal_id.exists' => 'Selected terminal is invalid',
             'phone.required' => 'Phone number is required',
             'cnic.required' => 'CNIC is required',
             'cnic.unique' => 'CNIC already exists',
@@ -191,6 +204,16 @@ class UserController extends Controller
             'address.required' => 'Address is required',
         ]);
 
+        // Additional validation: If Employee role is selected, terminal_id is required
+        $employeeRole = Role::where('name', 'Employee')->first();
+        if ($employeeRole && in_array($employeeRole->id, $validated['roles'])) {
+            if (empty($validated['terminal_id'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Terminal assignment is required when assigning Employee role.');
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -198,6 +221,7 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
+                'terminal_id' => $validated['terminal_id'],
             ]);
 
             // Create user profile
@@ -229,9 +253,10 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::with('profile')->findOrFail($id);
+        $user = User::with(['profile', 'terminal'])->findOrFail($id);
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
+        $terminals = Terminal::with('city')->get();
         return view('admin.users.edit', get_defined_vars());
     }
 
@@ -245,6 +270,7 @@ class UserController extends Controller
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],
+            'terminal_id' => ['nullable', 'exists:terminals,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
             'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic,' . ($user->profile->id ?? 0)],
@@ -260,6 +286,7 @@ class UserController extends Controller
             'roles.required' => 'Please select at least one role',
             'roles.min' => 'Please select at least one role',
             'roles.*.exists' => 'One or more selected roles are invalid',
+            'terminal_id.exists' => 'Selected terminal is invalid',
             'phone.required' => 'Phone number is required',
             'cnic.required' => 'CNIC is required',
             'cnic.unique' => 'CNIC already exists',
@@ -269,12 +296,23 @@ class UserController extends Controller
             'address.required' => 'Address is required',
         ]);
 
+        // Additional validation: If Employee role is selected, terminal_id is required
+        $employeeRole = Role::where('name', 'Employee')->first();
+        if ($employeeRole && in_array($employeeRole->id, $validated['roles'])) {
+            if (empty($validated['terminal_id'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Terminal assignment is required when assigning Employee role.');
+            }
+        }
+
         try {
             DB::beginTransaction();
 
             $updateData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
+                'terminal_id' => $validated['terminal_id'],
             ];
 
             // Only update password if provided

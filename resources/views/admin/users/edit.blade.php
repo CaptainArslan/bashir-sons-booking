@@ -222,6 +222,39 @@
                         </div>
                     </div>
 
+                    <!-- Terminal Assignment Section -->
+                    <div class="card-body section-divider" id="terminalSection" style="display: none;">
+                        <h5 class="mb-3" style="font-size: 1rem;">
+                            <i class="bx bx-map me-2"></i>Terminal Assignment
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label for="terminal_id" class="form-label">
+                                    Terminal Assignment 
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select @error('terminal_id') is-invalid @enderror" 
+                                        id="terminal_id" 
+                                        name="terminal_id">
+                                    <option value="">Select Terminal</option>
+                                    @foreach ($terminals as $terminal)
+                                        <option value="{{ $terminal->id }}" {{ old('terminal_id', $user->terminal_id) == $terminal->id ? 'selected' : '' }}>
+                                            {{ $terminal->name }} - {{ $terminal->city->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('terminal_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Required when assigning Employee role
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Profile Information Section -->
                     <div class="card-body section-divider">
                         <h5 class="mb-3" style="font-size: 1rem;">
@@ -480,9 +513,45 @@
                     }
                 });
             });
+
+            // ✅ Handle terminal section visibility based on Employee role
+            function toggleTerminalSection() {
+                const terminalSection = document.getElementById('terminalSection');
+                const terminalSelect = document.getElementById('terminal_id');
+                const employeeRoleCheckbox = document.querySelector('input[name="roles[]"][value="' + getEmployeeRoleId() + '"]');
+                
+                if (employeeRoleCheckbox && employeeRoleCheckbox.checked) {
+                    terminalSection.style.display = 'block';
+                    terminalSelect.required = true;
+                } else {
+                    terminalSection.style.display = 'none';
+                    terminalSelect.required = false;
+                    if (!employeeRoleCheckbox || !employeeRoleCheckbox.checked) {
+                        terminalSelect.value = '';
+                    }
+                }
+            }
+
+            // ✅ Get Employee role ID dynamically
+            function getEmployeeRoleId() {
+                const allRoleCheckboxes = document.querySelectorAll('input[name="roles[]"]');
+                for (let checkbox of allRoleCheckboxes) {
+                    const roleLabel = checkbox.closest('.role-group').querySelector('.role-label');
+                    if (roleLabel && roleLabel.textContent.toLowerCase().includes('employee')) {
+                        return checkbox.value;
+                    }
+                }
+                return null;
+            }
+
+            // ✅ Add event listeners for role changes
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', toggleTerminalSection);
+            });
             
             // ✅ Initialize state on page load
             updateButtonStates();
+            toggleTerminalSection();
             
             // ✅ Initialize visual state
             checkboxes.forEach(checkbox => {

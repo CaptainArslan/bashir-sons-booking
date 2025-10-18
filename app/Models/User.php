@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'terminal_id',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
@@ -111,5 +113,28 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(profile::class);
+    }
+
+    public function terminal(): BelongsTo
+    {
+        return $this->belongsTo(Terminal::class);
+    }
+
+    // =============================
+    // Helper Methods
+    // =============================
+    public function isEmployee(): bool
+    {
+        return $this->hasRole('Employee');
+    }
+
+    public function getTerminalNameAttribute(): string
+    {
+        return $this->terminal?->name ?? 'No Terminal';
+    }
+
+    public function getTerminalCodeAttribute(): string
+    {
+        return $this->terminal?->code ?? 'N/A';
     }
 }

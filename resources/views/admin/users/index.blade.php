@@ -80,6 +80,7 @@
                             <th>Personal Info</th>
                             <th>Address Info</th>
                             <th>Roles</th>
+                            <th>Terminal</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -126,6 +127,11 @@
                 {
                     data: 'roles_info',
                     name: 'roles.name',
+                    orderable: false,
+                },
+                {
+                    data: 'terminal_info',
+                    name: 'terminal.name',
                     orderable: false,
                 },
                 {
