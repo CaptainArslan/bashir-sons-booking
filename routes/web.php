@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\RouteFareController;
 use App\Http\Controllers\Admin\RouteTimetableController;
 use App\Http\Controllers\Admin\RouteStopTimeController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Customer\BookingController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -110,6 +111,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->can('edit users')->name('users.edit');
         Route::put('/users/{id}', [UserController::class, 'update'])->can('edit users')->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->can('delete users')->name('users.destroy');
+
+        // Employees Routes
+        Route::get('/employees', [EmployeeController::class, 'index'])->can('manage users')->name('employees.index');
+        Route::get('/employees/data', [EmployeeController::class, 'getData'])->can('manage users')->name('employees.data');
+        Route::get('/employees/stats', [EmployeeController::class, 'stats'])->can('manage users')->name('employees.stats');
+        Route::get('/employees/create', [EmployeeController::class, 'create'])->can('manage users')->name('employees.create');
+        Route::post('/employees', [EmployeeController::class, 'store'])->can('manage users')->name('employees.store');
+        Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->can('manage users')->name('employees.destroy');
 
         // Bus Types Routes
         Route::get('/bus-types', [BusTypeController::class, 'index'])->can('view bus types')->name('bus-types.index');

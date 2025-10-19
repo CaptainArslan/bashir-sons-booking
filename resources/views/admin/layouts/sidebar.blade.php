@@ -59,8 +59,13 @@
                   </a>
                   <ul>
                       <li> <a href="{{ route('admin.users.index') }}"><i class='bx bx-radio-circle'></i>All Users</a></li>
+                      <li> <a href="{{ route('admin.employees.index') }}"><i class='bx bx-radio-circle'></i>Employees</a></li>
                       @can('create users')
                           <li> <a href="{{ route('admin.users.create') }}"><i class='bx bx-radio-circle'></i>Create User</a>
+                          </li>
+                      @endcan
+                      @can('manage users')
+                          <li> <a href="{{ route('admin.employees.create') }}"><i class='bx bx-radio-circle'></i>Create Employee</a>
                           </li>
                       @endcan
                   </ul>
