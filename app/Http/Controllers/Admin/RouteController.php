@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Fare;
 use App\Models\Route;
 use App\Models\Terminal;
-use App\Models\RouteStop;
 use Illuminate\Http\Request;
 use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Enums\DiscountTypeEnum;
 use Yajra\DataTables\Facades\DataTables;
 
 class RouteController extends Controller
@@ -727,8 +727,8 @@ class RouteController extends Controller
                     ],
                     [
                         'base_fare' => $baseFare,
-                        'discount_type' => $fareData['discount_type'] ?? null,
-                        'discount_value' => $fareData['discount_value'] ?? null,
+                        'discount_type' => $fareData['discount_type'] ?? DiscountTypeEnum::FLAT->value,
+                        'discount_value' => $fareData['discount_value'] ?? 0,
                         'final_fare' => $finalFare,
                         'currency' => $fareData['currency'],
                         'status' => $fareData['status'],

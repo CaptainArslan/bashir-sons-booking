@@ -204,7 +204,7 @@
                                     Direction
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select select2 @error('direction') is-invalid @enderror" id="direction"
+                                <select class="form-select @error('direction') is-invalid @enderror" id="direction"
                                     name="direction" required>
                                     <option value="">Select Direction</option>
                                     <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward
@@ -507,12 +507,21 @@
 
                 stopsContainer.appendChild(stopDiv);
 
+                // Initialize Select2 for the new terminal select
+                const terminalSelect = stopDiv.querySelector('.terminal-select');
+                $(terminalSelect).select2({
+                    width: 'resolve',
+                    placeholder: 'Select Terminal'
+                });
+
                 // Add event listeners for this stop
                 const removeBtn = stopDiv.querySelector('.remove-stop-btn');
                 const distanceInput = stopDiv.querySelector('.distance-input');
                 const travelTimeInput = stopDiv.querySelector('.travel-time-input');
 
                 removeBtn.addEventListener('click', function() {
+                    // Destroy Select2 before removing the element
+                    $(terminalSelect).select2('destroy');
                     stopDiv.remove();
                     updateSequences();
                 });

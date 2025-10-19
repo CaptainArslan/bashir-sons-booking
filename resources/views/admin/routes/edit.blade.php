@@ -571,7 +571,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners to existing stops
         document.querySelectorAll('.remove-stop-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                this.closest('.stop-item').remove();
+                const stopItem = this.closest('.stop-item');
+                const terminalSelect = stopItem.querySelector('.terminal-select');
+                
+                // Destroy Select2 before removing the element
+                if (terminalSelect && $(terminalSelect).hasClass('select2-hidden-accessible')) {
+                    $(terminalSelect).select2('destroy');
+                }
+                
+                stopItem.remove();
                 updateSequences();
             });
         });
@@ -655,12 +663,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             stopsContainer.appendChild(stopDiv);
 
+            // Initialize Select2 for the new terminal select
+            const terminalSelect = stopDiv.querySelector('.terminal-select');
+            $(terminalSelect).select2({
+                width: 'resolve',
+                placeholder: 'Select Terminal'
+            });
+
             // Add event listeners for this stop
             const removeBtn = stopDiv.querySelector('.remove-stop-btn');
             const distanceInput = stopDiv.querySelector('.distance-input');
             const travelTimeInput = stopDiv.querySelector('.travel-time-input');
 
             removeBtn.addEventListener('click', function() {
+                // Destroy Select2 before removing the element
+                $(terminalSelect).select2('destroy');
                 stopDiv.remove();
                 updateSequences();
             });
@@ -684,6 +701,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopNumber.innerHTML = `<i class="bx bx-map-pin me-2 text-primary"></i>Stop ${index + 1}`;
             });
         }
+
+        // Initialize Select2 for existing terminal selects
+        $('.terminal-select').select2({
+            width: 'resolve',
+            placeholder: 'Select Terminal'
+        });
     });
 </script>
 @endsection
