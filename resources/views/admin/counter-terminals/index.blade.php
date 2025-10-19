@@ -3,7 +3,6 @@
 @section('title', 'Counter Terminals')
 
 @section('styles')
-    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <style>
         /* Compact Counter Terminals Index Styling */
         .terminals-header {
@@ -238,9 +237,10 @@
 @section('scripts')
     {{-- @include('admin.layouts.datatables') --}}
     <script>
+        var table;
+        
         $(document).ready(function() {
-            // Initialize DataTable
-            var table = $('#terminals-table').DataTable({
+            table = $('#terminals-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -322,38 +322,57 @@
                 }
             });
 
-            // Refresh table function
             window.refreshTable = function() {
                 table.ajax.reload();
             };
+
         });
 
-        // Delete terminal function
         function deleteTerminal(terminalId) {
-            $('#deleteModal').modal('show');
-
-            $('#confirmDelete').off('click').on('click', function() {
-                $.ajax({
-                    url: "{{ route('admin.counter-terminals.destroy', ':id') }}".replace(':id', terminalId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#deleteModal').modal('hide');
-                            toastr.success(response.message);
-                            $('#terminals-table').DataTable().ajax.reload();
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('admin.counter-terminals.destroy', ':id') }}".replace(':id',
+                            terminalId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    'Terminal has been deleted.',
+                                    'success'
+                                );
+                                table.ajax.reload();
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message,
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            Swal.fire(
+                                'Error!',
+                                response.message ||
+                                'An error occurred while deleting the terminal.',
+                                'error'
+                            );
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message ||
-                            'An error occurred while deleting the terminal.');
-                    }
-                });
+                    });
+                }
             });
         }
     </script>

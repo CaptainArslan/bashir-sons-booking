@@ -17,52 +17,52 @@ class FacilitySeeder extends Seeder
             [
                 'name' => 'Air Conditioning',
                 'description' => 'Climate controlled environment for comfortable travel.',
-                'icon' => 'fa-solid fa-snowflake',
+                'icon' => 'bx bx-wind',
             ],
             [
                 'name' => 'WiFi',
                 'description' => 'Free wireless internet connection available on board.',
-                'icon' => 'fa-solid fa-wifi',
+                'icon' => 'bx bx-wifi',
             ],
             [
                 'name' => 'USB Charging',
                 'description' => 'USB ports available at each seat for device charging.',
-                'icon' => 'fa-solid fa-plug',
+                'icon' => 'bx bx-plug',
             ],
             [
                 'name' => 'Reclining Seats',
                 'description' => 'Comfortable reclining seats for long journeys.',
-                'icon' => 'fa-solid fa-chair',
+                'icon' => 'bx bx-chair',
             ],
             [
                 'name' => 'Entertainment System',
                 'description' => 'Individual screens with movies and entertainment options.',
-                'icon' => 'fa-solid fa-tv',
+                'icon' => 'bx bx-tv',
             ],
             [
                 'name' => 'Restroom',
                 'description' => 'Clean restroom facilities available on board.',
-                'icon' => 'fa-solid fa-toilet',
+                'icon' => 'bx bx-building-house',
             ],
             [
                 'name' => 'Luggage Storage',
                 'description' => 'Adequate overhead and under-seat storage for luggage.',
-                'icon' => 'fa-solid fa-suitcase',
+                'icon' => 'bx bx-briefcase',
             ],
             [
                 'name' => 'Snack Service',
                 'description' => 'Complimentary snacks and beverages available.',
-                'icon' => 'fa-solid fa-utensils',
+                'icon' => 'bx bx-restaurant',
             ],
             [
                 'name' => 'Reading Light',
                 'description' => 'Individual reading lights for each passenger.',
-                'icon' => 'fa-solid fa-lightbulb',
+                'icon' => 'bx bx-bulb',
             ],
             [
                 'name' => 'Wheelchair Accessible',
                 'description' => 'Fully accessible for passengers with mobility needs.',
-                'icon' => 'fa-solid fa-wheelchair',
+                'icon' => 'bx bx-chair',
             ],
         ];
 
