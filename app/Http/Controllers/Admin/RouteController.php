@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Route;
 use App\Models\Terminal;
-use App\Models\RouteFare;
 use App\Models\RouteStop;
 use App\Enums\RouteStatusEnum;
 use Illuminate\Http\Request;
@@ -24,7 +23,6 @@ class RouteController extends Controller
         if ($request->ajax()) {
             $routes = Route::query()
                 ->with(['returnRoute:id,name', 'routeStops.terminal:id,name,code'])
-                ->withSum('routeFares', 'final_fare')
                 ->select('id', 'code', 'name', 'direction', 'is_return_of', 'base_currency', 'status', 'created_at');
 
             return DataTables::eloquent($routes)
@@ -49,13 +47,6 @@ class RouteController extends Controller
                     $count = $route->routeStops()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
                     return '<span class="badge ' . $badgeClass . '">' . $count . ' stop' . ($count !== 1 ? 's' : '') . '</span>';
-                })
-                ->addColumn('total_fare', function ($route) {
-                    $totalFare = $route->total_fares_amount;
-                    return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-success">PKR ' . number_format($totalFare, 2) . '</span>
-                                <small class="text-muted">Total Route Fare</small>
-                            </div>';
                 })
                 ->addColumn('status_badge', function ($route) {
                     $statusValue = $route->status instanceof RouteStatusEnum ? $route->status->value : $route->status;
@@ -91,16 +82,6 @@ class RouteController extends Controller
                         </li>';
                     }
 
-                    // Manage fares button
-                    if (auth()->user()->can('view route fares')) {
-                        $actions .= '<li>
-                            <a class="dropdown-item" 
-                               href="' . route('admin.routes.fares', $route->id) . '">
-                                <i class="bx bx-money me-2"></i>Manage Fares
-                            </a>
-                        </li>';
-                    }
-
                     // Delete button
                     if (auth()->user()->can('delete routes')) {
                         $actions .= '<li><hr class="dropdown-divider"></li>
@@ -119,7 +100,7 @@ class RouteController extends Controller
                 })
                 ->editColumn('created_at', fn($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'stops_count', 'total_fare', 'status_badge', 'actions'])
+                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'stops_count', 'status_badge', 'actions'])
                 ->make(true);
         }
     }
@@ -267,7 +248,7 @@ class RouteController extends Controller
 
     public function edit($id)
     {
-        $route = Route::with(['routeStops.terminal.city', 'routeFares'])->findOrFail($id);
+        $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
         $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->where('id', '!=', $id)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
@@ -675,255 +656,5 @@ class RouteController extends Controller
                 'message' => 'Error fetching stop data: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    public function fares($id)
-    {
-        $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
-        $routeStops = $route->routeStops()->with('terminal.city')->orderBy('sequence')->get();
-        
-        // Get existing fares for this route
-        $existingFares = RouteFare::where('route_id', $id)
-            ->with(['fromStop.terminal.city', 'toStop.terminal.city'])
-            ->get()
-            ->keyBy(function($fare) {
-                return $fare->from_stop_id . '_' . $fare->to_stop_id;
-            });
-
-        return view('admin.routes.fares', compact('route', 'routeStops', 'existingFares'));
-    }
-
-    public function storeFares(Request $request, $id)
-    {
-        $route = Route::findOrFail($id);
-
-        $validated = $request->validate([
-            'fares' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-            'fares.*.from_stop_id' => [
-                'required',
-                'exists:route_stops,id',
-            ],
-            'fares.*.to_stop_id' => [
-                'required',
-                'exists:route_stops,id',
-                'different:fares.*.from_stop_id',
-            ],
-            'fares.*.base_fare' => [
-                'required',
-                'numeric',
-                'min:1',
-                'max:100000',
-                'regex:/^\d+(\.\d{1,2})?$/',
-            ],
-            'fares.*.discount_type' => [
-                'nullable',
-                'string',
-                'in:flat,percent',
-            ],
-            'fares.*.discount_value' => [
-                'nullable',
-                'numeric',
-                'min:0',
-                'regex:/^\d+(\.\d{1,2})?$/',
-                'required_if:fares.*.discount_type,flat,percent',
-            ],
-            'fares.*.status' => [
-                'required',
-                'string',
-                'in:active',
-            ],
-        ], [
-            'fares.required' => 'Fare data is required',
-            'fares.array' => 'Fare data must be an array',
-            'fares.min' => 'At least one fare must be provided',
-            'fares.*.from_stop_id.required' => 'From stop is required for each fare',
-            'fares.*.from_stop_id.exists' => 'Selected from stop does not exist',
-            'fares.*.to_stop_id.required' => 'To stop is required for each fare',
-            'fares.*.to_stop_id.exists' => 'Selected to stop does not exist',
-            'fares.*.to_stop_id.different' => 'To stop must be different from from stop',
-            'fares.*.base_fare.required' => 'Base fare is required for each fare',
-            'fares.*.base_fare.numeric' => 'Base fare must be a valid number',
-            'fares.*.base_fare.min' => 'Base fare must be at least PKR 1',
-            'fares.*.base_fare.max' => 'Base fare cannot exceed PKR 100,000',
-            'fares.*.base_fare.regex' => 'Base fare must be a valid currency amount (max 2 decimal places)',
-            'fares.*.discount_type.in' => 'Discount type must be either flat or percent',
-            'fares.*.discount_value.numeric' => 'Discount value must be a valid number',
-            'fares.*.discount_value.min' => 'Discount value cannot be negative',
-            'fares.*.discount_value.regex' => 'Discount value must be a valid amount (max 2 decimal places)',
-            'fares.*.status.required' => 'Status is required for each fare',
-            'fares.*.status.in' => 'Status must be active',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $savedCount = 0;
-            $updatedCount = 0;
-            $errors = [];
-
-            foreach ($validated['fares'] as $index => $fareData) {
-                try {
-                    // Verify stops belong to this route
-                    $fromStop = RouteStop::where('id', $fareData['from_stop_id'])
-                        ->where('route_id', $id)
-                        ->first();
-                    $toStop = RouteStop::where('id', $fareData['to_stop_id'])
-                        ->where('route_id', $id)
-                        ->first();
-
-                    if (!$fromStop || !$toStop) {
-                        $errors[] = "Fare #{$index}: Selected stops must belong to this route";
-                        continue;
-                    }
-
-                    // Ensure discount_value is set to null if not provided
-                    if (!isset($fareData['discount_value']) || $fareData['discount_value'] === '') {
-                        $fareData['discount_value'] = null;
-                    }
-
-                    // Additional business logic validation
-                    $validationErrors = $this->validateFareBusinessLogic($fareData, $fromStop, $toStop, $index);
-                    if (!empty($validationErrors)) {
-                        $errors = array_merge($errors, $validationErrors);
-                        continue;
-                    }
-
-                    // Calculate final fare
-                    $finalFare = $this->calculateFinalFare(
-                        $fareData['base_fare'],
-                        $fareData['discount_type'] ?? null,
-                        $fareData['discount_value']
-                    );
-
-                    // Validate calculated final fare
-                    if ($finalFare < 0) {
-                        $errors[] = "Fare #{$index}: Calculated final fare cannot be negative";
-                        continue;
-                    }
-
-                    if ($finalFare > $fareData['base_fare']) {
-                        $errors[] = "Fare #{$index}: Final fare cannot exceed base fare";
-                        continue;
-                    }
-
-                    $fareData['final_fare'] = $finalFare;
-                    $fareData['route_id'] = $id;
-                    
-                    // Ensure status defaults to 'active' if not provided
-                    if (!isset($fareData['status']) || empty($fareData['status'])) {
-                        $fareData['status'] = 'active';
-                    }
-
-                    // Check if fare already exists
-                    $existingFare = RouteFare::where('route_id', $id)
-                        ->where('from_stop_id', $fareData['from_stop_id'])
-                        ->where('to_stop_id', $fareData['to_stop_id'])
-                        ->first();
-
-                    if ($existingFare) {
-                        // Update existing fare
-                        $existingFare->update($fareData);
-                        $updatedCount++;
-                    } else {
-                        // Create new fare
-                        RouteFare::create($fareData);
-                        $savedCount++;
-                    }
-                } catch (\Exception $e) {
-                    $errors[] = "Error processing fare from stop {$fareData['from_stop_id']} to stop {$fareData['to_stop_id']}: " . $e->getMessage();
-                }
-            }
-
-            DB::commit();
-
-            // If there are errors, return error response
-            if (!empty($errors)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to save some fares. Please check the errors below.',
-                    'errors' => $errors,
-                    'saved_count' => $savedCount,
-                    'updated_count' => $updatedCount
-                ], 400);
-            }
-
-            // Success response when no errors
-            $message = "Successfully processed fares for route '{$route->name}'. ";
-            if ($savedCount > 0) {
-                $message .= "Created {$savedCount} new fares. ";
-            }
-            if ($updatedCount > 0) {
-                $message .= "Updated {$updatedCount} existing fares. ";
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'saved_count' => $savedCount,
-                'updated_count' => $updatedCount
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to save fares: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function calculateFinalFare(float $baseFare, ?string $discountType, ?float $discountValue): float
-    {
-        if (!$discountType || !$discountValue) {
-            return $baseFare;
-        }
-
-        return match ($discountType) {
-            'flat' => max(0, $baseFare - $discountValue),
-            'percent' => max(0, $baseFare - ($baseFare * $discountValue / 100)),
-            default => $baseFare,
-        };
-    }
-
-    private function validateFareBusinessLogic(array $fareData, RouteStop $fromStop, RouteStop $toStop, int $index): array
-    {
-        $errors = [];
-
-        // Validate stop sequence logic
-        if ($fromStop->sequence >= $toStop->sequence) {
-            $errors[] = "Fare #{$index}: From stop sequence must be less than to stop sequence";
-        }
-
-        // Validate discount logic based on type
-        if (!empty($fareData['discount_type']) && !empty($fareData['discount_value'])) {
-            if ($fareData['discount_type'] === 'percent') {
-                // Percentage discount cannot exceed 100%
-                if ($fareData['discount_value'] > 100) {
-                    $errors[] = "Fare #{$index}: Discount percentage cannot exceed 100%";
-                }
-            } elseif ($fareData['discount_type'] === 'flat') {
-                // Flat discount cannot exceed base fare
-                if ($fareData['discount_value'] > $fareData['base_fare']) {
-                    $errors[] = "Fare #{$index}: Flat discount amount (PKR " . number_format($fareData['discount_value'], 2) . ") cannot exceed base fare (PKR " . number_format($fareData['base_fare'], 2) . ")";
-                }
-            }
-        }
-
-        // Validate fare amount reasonableness
-        // $distance = $toStop->sequence - $fromStop->sequence;
-        // $farePerStop = $fareData['base_fare'] / $distance;
-        
-        // if ($farePerStop < 10) {
-        //     $errors[] = "Fare #{$index}: Base fare seems too low for the distance (PKR " . number_format($farePerStop, 2) . " per stop)";
-        // }
-
-        // if ($farePerStop > 5000) {
-        //     $errors[] = "Fare #{$index}: Base fare seems too high for the distance (PKR " . number_format($farePerStop, 2) . " per stop)";
-        // }
-
-        return $errors;
     }
 }

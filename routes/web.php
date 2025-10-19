@@ -19,7 +19,6 @@ use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\RouteFareController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Customer\BookingController;
@@ -195,8 +194,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/routes/{id}/stops/{stopId}/data', [RouteController::class, 'getStopData'])->can('view routes')->name('routes.stops.data');
         Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update');
         Route::delete('/routes/{id}/stops/{stopId}', [RouteController::class, 'destroyStop'])->can('delete routes')->name('routes.stops.destroy');
-        Route::get('/routes/{id}/fares', [RouteController::class, 'fares'])->can('view route fares')->name('routes.fares');
-        Route::post('/routes/{id}/fares', [RouteController::class, 'storeFares'])->can('create route fares')->name('routes.fares.store');
 
         // Route Stops Management
         Route::get('/route-stops', [RouteStopController::class, 'index'])->can('view route stops')->name('route-stops.index');
@@ -205,9 +202,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
         Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
 
-        // Route Fares Management
-        Route::get('/route-fares', [RouteFareController::class, 'index'])->can('view route fares')->name('route-fares.index');
-        Route::get('/route-fares/data', [RouteFareController::class, 'getData'])->can('view route fares')->name('route-fares.data');
 
 
         // Schedules Management

@@ -334,39 +334,6 @@
                             </div>
                         </div>
 
-                        <!-- Route Fares Section -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-money me-1"></i>Route Fares
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="stops-section">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bx bx-money text-success me-2" style="font-size: 1.2rem;"></i>
-                                            <h6 class="mb-0 fw-bold text-success">Route Fares</h6>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-outline-success btn-sm" id="manage-fares-btn" disabled>
-                                                <i class="bx bx-money me-1"></i>Manage Fares
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="text-center py-4">
-                                        <div class="text-muted">
-                                            <i class="bx bx-info-circle me-2"></i>
-                                            <strong>Fares will be available after creating the route</strong>
-                                        </div>
-                                        <p class="text-muted mb-0 mt-2" style="font-size: 0.85rem;">
-                                            Once you create this route, you can manage fares for different stop combinations.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Action Buttons -->
                     <div class="card-footer bg-light">

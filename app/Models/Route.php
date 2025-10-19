@@ -46,11 +46,6 @@ class Route extends Model
         return $this->hasMany(RouteStop::class)->orderBy('sequence');
     }
 
-    public function routeFares()
-    {
-        return $this->hasMany(RouteFare::class);
-    }
-
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
@@ -156,10 +151,4 @@ class Route extends Model
         );
     }
 
-    protected function totalFaresAmount(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $this->routeFares()->sum('final_fare') ?? 0,
-        );
-    }
 }

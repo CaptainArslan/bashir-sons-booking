@@ -7,7 +7,7 @@ use App\Models\Route;
 use App\Models\Schedule;
 use App\Enums\FrequencyTypeEnum;
 
-class CreateTestSchedule extends Command
+class CreateTestTimetable extends Command
 {
     protected $signature = 'test:create-schedule';
     protected $description = 'Create a test route schedule';
