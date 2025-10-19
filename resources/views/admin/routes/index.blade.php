@@ -2,7 +2,6 @@
 
 @section('title', 'Routes')
 @section('styles')
-    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <style>
         /* Compact Routes Index Styling */
         .routes-header {

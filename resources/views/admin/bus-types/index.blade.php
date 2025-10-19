@@ -1,9 +1,6 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Bus Types')
-@section('styles')
-    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
-@endsection
 
 @section('content')
     <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">

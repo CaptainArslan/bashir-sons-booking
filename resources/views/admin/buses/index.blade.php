@@ -2,7 +2,6 @@
 
 @section('title', 'Buses')
 @section('styles')
-    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <style>
         /* Compact Buses Index Styling */
         .buses-header {

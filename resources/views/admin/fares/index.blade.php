@@ -3,7 +3,6 @@
 @section('title', 'Fare Management')
 
 @section('styles')
-    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <style>
         /* Compact Fare Index Styling */
         .fares-header {

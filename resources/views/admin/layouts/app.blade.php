@@ -26,7 +26,9 @@
     <link rel="stylesheet" href="{{ asset('admin/assets/css/dark-theme.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/css/semi-dark.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/assets/css/header-colors.css') }}">
+    <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>@yield('title' ?? config('app.name'))</title>
 
     <!-- Compact Admin UI Styles -->

@@ -207,7 +207,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/fares/{id}', [FareController::class, 'update'])->can('edit fares')->name('fares.update');
         Route::delete('/fares/{id}', [FareController::class, 'destroy'])->can('delete fares')->name('fares.destroy');
 
-
         // Schedules Management
         Route::get('/schedules', [ScheduleController::class, 'index'])->can('view schedules')->name('schedules.index');
         Route::get('/schedules/data', [ScheduleController::class, 'getData'])->can('view schedules')->name('schedules.getData');
