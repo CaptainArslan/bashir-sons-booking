@@ -17,6 +17,7 @@ class FareSeeder extends Seeder
     {
         $this->faker = Faker::create();
     }
+    
     /**
      * Run the database seeds.
      */
@@ -30,9 +31,39 @@ class FareSeeder extends Seeder
         }
 
         $this->command->info('Creating fares between terminals...');
+        $this->command->newLine();
+
+        // Calculate total possible pairs
+        $totalPairs = 0;
+        $terminalPairs = [];
+        
+        foreach ($terminals as $fromTerminal) {
+            foreach ($terminals as $toTerminal) {
+                if ($fromTerminal->id === $toTerminal->id) {
+                    continue; // Skip same terminal
+                }
+
+                $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
+
+                if (!in_array($pairKey, $terminalPairs)) {
+                    $terminalPairs[] = $pairKey;
+                    $totalPairs++;
+                }
+            }
+        }
+
+        $this->command->info("Total fare pairs to create: {$totalPairs}");
+        $this->command->newLine();
+
+        // Initialize progress bar
+        $progressBar = $this->command->getOutput()->createProgressBar($totalPairs);
+        $progressBar->setFormat('verbose');
+        $progressBar->setMessage('Starting fare creation...', 'status');
+        $progressBar->start();
 
         $faresCreated = 0;
-        $terminalPairs = [];
+        $faresSkipped = 0;
+        $processedPairs = [];
 
         // Create fares between different terminals
         foreach ($terminals as $fromTerminal) {
@@ -43,11 +74,17 @@ class FareSeeder extends Seeder
 
                 $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
 
-                if (in_array($pairKey, $terminalPairs)) {
+                if (in_array($pairKey, $processedPairs)) {
                     continue; // Skip duplicate pairs
                 }
 
-                $terminalPairs[] = $pairKey;
+                $processedPairs[] = $pairKey;
+
+                // Update progress bar status
+                $progressBar->setMessage(
+                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}", 
+                    'status'
+                );
 
                 $baseFare = $this->calculateBaseFare($fromTerminal, $toTerminal);
                 $discountType = $this->faker->randomElement(['flat', 'percent', null]);
@@ -62,26 +99,61 @@ class FareSeeder extends Seeder
                     $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
                 }
 
-                Fare::firstOrCreate(
-                    [
-                        'from_terminal_id' => $fromTerminal->id,
-                        'to_terminal_id' => $toTerminal->id,
-                    ],
-                    [
-                        'base_fare' => $baseFare,
-                        'discount_type' => $discountType ?? 'flat',
-                        'discount_value' => $discountValue ?? 0,
-                        'final_fare' => $finalFare,
-                        'currency' => 'PKR',
-                        'status' => $this->faker->randomElement(FareStatusEnum::getStatuses()),
-                    ]
-                );
+                try {
+                    $fare = Fare::firstOrCreate(
+                        [
+                            'from_terminal_id' => $fromTerminal->id,
+                            'to_terminal_id' => $toTerminal->id,
+                        ],
+                        [
+                            'base_fare' => $baseFare,
+                            'discount_type' => $discountType ?? 'flat',
+                            'discount_value' => $discountValue ?? 0,
+                            'final_fare' => $finalFare,
+                            'currency' => 'PKR',
+                            'status' => $this->faker->randomElement(FareStatusEnum::getStatuses()),
+                        ]
+                    );
 
-                $faresCreated++;
+                    if ($fare->wasRecentlyCreated) {
+                        $faresCreated++;
+                    } else {
+                        $faresSkipped++;
+                    }
+
+                } catch (\Exception $e) {
+                    $this->command->error("Error creating fare for {$fromTerminal->city->name} → {$toTerminal->city->name}: " . $e->getMessage());
+                }
+
+                // Advance progress bar
+                $progressBar->advance();
             }
         }
 
-        $this->command->info("Created {$faresCreated} fares successfully!");
+        // Complete progress bar
+        $progressBar->setMessage('Fare creation completed!', 'status');
+        $progressBar->finish();
+        $this->command->newLine(2);
+
+        // Display summary
+        $this->command->info("✅ Fare Seeding Summary:");
+        $this->command->table(
+            ['Metric', 'Count'],
+            [
+                ['Total Pairs Processed', $totalPairs],
+                ['New Fares Created', $faresCreated],
+                ['Existing Fares Skipped', $faresSkipped],
+                ['Total Active Terminals', $terminals->count()],
+            ]
+        );
+
+        if ($faresCreated > 0) {
+            $this->command->info("🎉 Successfully created {$faresCreated} new fares!");
+        } else {
+            $this->command->warn("⚠️  No new fares were created. All fare pairs already exist.");
+        }
+
+        $this->command->newLine();
     }
 
     /**

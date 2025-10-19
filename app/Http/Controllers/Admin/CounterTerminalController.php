@@ -71,7 +71,7 @@ class CounterTerminalController extends Controller
                                 </li>
                             </ul>
                         </div>';
-                    
+
                     return $actions;
                 })
                 ->editColumn('created_at', fn($terminal) => $terminal->created_at->format('d M Y'))
@@ -87,13 +87,13 @@ class CounterTerminalController extends Controller
         $statuses = TerminalEnum::getStatuses();
         return view('admin.counter-terminals.create', get_defined_vars());
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
-            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\.]+$/',
-            'code' => 'required|string|max:10|unique:terminals,code|regex:/^[A-Z0-9]+$/',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:terminals,code',
             'address' => 'required|string|max:500',
             'phone' => 'required|string|max:20|regex:/^[\d\-\+\(\)\s]+$/',
             'email' => 'nullable|email|max:255',
@@ -119,14 +119,13 @@ class CounterTerminalController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             Terminal::create($validated);
-            
+
             DB::commit();
-            
+
             return redirect()->route('admin.counter-terminals.index')
                 ->with('success', 'Terminal created successfully!');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -134,7 +133,7 @@ class CounterTerminalController extends Controller
                 ->with('error', 'Failed to create terminal: ' . $e->getMessage());
         }
     }
-    
+
     public function edit($id)
     {
         $terminal = Terminal::findOrFail($id);
@@ -142,15 +141,15 @@ class CounterTerminalController extends Controller
         $statuses = TerminalEnum::getStatuses();
         return view('admin.counter-terminals.edit', get_defined_vars());
     }
-    
+
     public function update(Request $request, $id)
     {
         $terminal = Terminal::findOrFail($id);
-        
+
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
-            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\.]+$/',
-            'code' => 'required|string|max:10|unique:terminals,code,' . $terminal->id . '|regex:/^[A-Z0-9]+$/',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:terminals,code,' . $terminal->id,
             'address' => 'required|string|max:500',
             'phone' => 'required|string|max:20|regex:/^[\d\-\+\(\)\s]+$/',
             'email' => 'nullable|email|max:255',
@@ -176,15 +175,14 @@ class CounterTerminalController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $terminal = Terminal::findOrFail($id);
             $terminal->update($validated);
-            
+
             DB::commit();
-            
+
             return redirect()->route('admin.counter-terminals.index')
                 ->with('success', 'Terminal updated successfully!');
-                
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -198,7 +196,7 @@ class CounterTerminalController extends Controller
         try {
             $terminal = Terminal::findOrFail($id);
             $terminal->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Terminal deleted successfully.'

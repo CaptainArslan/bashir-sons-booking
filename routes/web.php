@@ -78,11 +78,6 @@ Route::middleware('auth')->group(function () {
         // Permissions Routes
         Route::get('/permissions', [PermissionController::class, 'index'])->can('view permissions')->name('permissions.index');
         Route::get('/permissions/data', [PermissionController::class, 'getData'])->can('view permissions')->name('permissions.data');
-        // Route::get('/permissions/create', [PermissionController::class, 'create'])->can('create permissions')->name('permissions.create');
-        // Route::post('/permissions', [PermissionController::class, 'store'])->can('create permissions')->name('permissions.store');
-        // Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit'])->can('edit permissions')->name('permissions.edit');
-        // Route::put('/permissions/{id}', [PermissionController::class, 'update'])->can('edit permissions')->name('permissions.update');
-        // Route::delete('/permissions/{id}', [PermissionController::class, 'destroy'])->can('delete permissions')->name('permissions.destroy');
 
         // Cities Routes
         Route::get('/cities', [CityController::class, 'index'])->can('view cities')->name('cities.index');
