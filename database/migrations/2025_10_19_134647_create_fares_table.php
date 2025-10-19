@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('base_fare', 10, 2);
             $table->string('discount_type')->default(DiscountTypeEnum::FLAT->value);
             $table->decimal('discount_value', 10, 2)->default(0);
-            $table->decimal('final_fare', 10, 2);
+            $table->decimal('final_fare', 10, 2)->default(0);
             $table->string('currency')->default('PKR');
             $table->string('status')->default(FareStatusEnum::ACTIVE->value);
             $table->timestamps();
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->index(['from_terminal_id', 'to_terminal_id']);
             $table->index('status');
             $table->index('final_fare');
-            
+
             // Ensure no duplicate fares for same terminal pair
             $table->unique(['from_terminal_id', 'to_terminal_id'], 'unique_terminal_pair');
         });
