@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->unsignedInteger('sequence'); // order of stop in route (1, 2, 3...)
             $table->decimal('distance_from_previous', 8, 2)->nullable(); // in km
-            $table->time('approx_travel_time')->nullable(); // optional duration
+            $table->integer('approx_travel_time')->default(0); // optional duration in minutes
             $table->boolean('is_pickup_allowed')->default(true);
             $table->boolean('is_dropoff_allowed')->default(true);
 
