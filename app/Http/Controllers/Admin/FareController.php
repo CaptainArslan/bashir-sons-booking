@@ -317,8 +317,15 @@ class FareController extends Controller
             );
 
             $validated['final_fare'] = $finalFare;
-
-            $fare->update($validated);
+            
+            $data = $validated;
+            $data['final_fare'] = $finalFare;
+            $data['discount_type'] = $validated['discount_type'] ?? DiscountTypeEnum::FLAT->value;
+            $data['discount_value'] = $validated['discount_value'] ?? 0;
+            $data['currency'] = $validated['currency'] ?? 'PKR';
+            $data['status'] = $validated['status'] ?? FareStatusEnum::ACTIVE->value;
+            
+            $fare->update($data);
 
             DB::commit();
 
