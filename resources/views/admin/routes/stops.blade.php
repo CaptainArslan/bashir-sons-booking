@@ -5,7 +5,7 @@
 @section('styles')
     <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
     <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+
     <style>
         /* Compact Stops Management Styling */
         .stops-header {
@@ -411,7 +411,7 @@
 
 @section('scripts')
     <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    
     <script>
         let currentStopId = null;
 
