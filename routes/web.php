@@ -211,24 +211,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/route-fares', [RouteFareController::class, 'index'])->can('view route fares')->name('route-fares.index');
         Route::get('/route-fares/data', [RouteFareController::class, 'getData'])->can('view route fares')->name('route-fares.data');
 
-        // Route Timetables Management
-        Route::get('/route-timetables', [RouteTimetableController::class, 'index'])->can('view route timetables')->name('route-timetables.index');
-        Route::get('/route-timetables/data', [RouteTimetableController::class, 'getData'])->can('view route timetables')->name('route-timetables.getData');
-        Route::get('/route-timetables/create', [RouteTimetableController::class, 'create'])->can('create route timetables')->name('route-timetables.create');
-        Route::post('/route-timetables', [RouteTimetableController::class, 'store'])->can('create route timetables')->name('route-timetables.store');
-        Route::get('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'show'])->can('view route timetables')->name('route-timetables.show');
-        Route::get('/route-timetables/{routeTimetable}/edit', [RouteTimetableController::class, 'edit'])->can('edit route timetables')->name('route-timetables.edit');
-        Route::put('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'update'])->can('edit route timetables')->name('route-timetables.update');
-        Route::delete('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'destroy'])->can('delete route timetables')->name('route-timetables.destroy');
-        Route::patch('/route-timetables/{routeTimetable}/toggle-status', [RouteTimetableController::class, 'toggleStatus'])->can('edit route timetables')->name('route-timetables.toggle-status');
+        // // Route Timetables Management
+        // Route::get('/route-timetables', [RouteTimetableController::class, 'index'])->can('view route timetables')->name('route-timetables.index');
+        // Route::get('/route-timetables/data', [RouteTimetableController::class, 'getData'])->can('view route timetables')->name('route-timetables.getData');
+        // Route::get('/route-timetables/create', [RouteTimetableController::class, 'create'])->can('create route timetables')->name('route-timetables.create');
+        // Route::post('/route-timetables', [RouteTimetableController::class, 'store'])->can('create route timetables')->name('route-timetables.store');
+        // Route::get('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'show'])->can('view route timetables')->name('route-timetables.show');
+        // Route::get('/route-timetables/{routeTimetable}/edit', [RouteTimetableController::class, 'edit'])->can('edit route timetables')->name('route-timetables.edit');
+        // Route::put('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'update'])->can('edit route timetables')->name('route-timetables.update');
+        // Route::delete('/route-timetables/{routeTimetable}', [RouteTimetableController::class, 'destroy'])->can('delete route timetables')->name('route-timetables.destroy');
+        // Route::patch('/route-timetables/{routeTimetable}/toggle-status', [RouteTimetableController::class, 'toggleStatus'])->can('edit route timetables')->name('route-timetables.toggle-status');
 
-        // Route Stop Times Management
-        // Route::get('/route-timetables/{routeTimetable}/stop-times/create', [RouteStopTimeController::class, 'create'])->can('create route stop times')->name('route-stop-times.create');
-        Route::post('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'store'])->can('create route stop times')->name('route-stop-times.store');
-        Route::get('/route-timetables/{routeTimetable}/stop-times/edit', [RouteStopTimeController::class, 'edit'])->can('edit route stop times')->name('route-stop-times.edit');
-        Route::put('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'update'])->can('edit route stop times')->name('route-stop-times.update');
-        Route::delete('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'destroy'])->can('delete route stop times')->name('route-stop-times.destroy');
-        Route::get('/route-timetables/{routeTimetable}/stop-times/generate', [RouteStopTimeController::class, 'generate'])->can('create route stop times')->name('route-stop-times.generate');
+        // // Route Stop Times Management
+        // // Route::get('/route-timetables/{routeTimetable}/stop-times/create', [RouteStopTimeController::class, 'create'])->can('create route stop times')->name('route-stop-times.create');
+        // Route::post('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'store'])->can('create route stop times')->name('route-stop-times.store');
+        // Route::get('/route-timetables/{routeTimetable}/stop-times/edit', [RouteStopTimeController::class, 'edit'])->can('edit route stop times')->name('route-stop-times.edit');
+        // Route::put('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'update'])->can('edit route stop times')->name('route-stop-times.update');
+        // Route::delete('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'destroy'])->can('delete route stop times')->name('route-stop-times.destroy');
+        // Route::get('/route-timetables/{routeTimetable}/stop-times/generate', [RouteStopTimeController::class, 'generate'])->can('create route stop times')->name('route-stop-times.generate');
 
         // Schedules Management
         Route::get('/schedules', [ScheduleController::class, 'index'])->can('view schedules')->name('schedules.index');

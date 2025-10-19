@@ -92,7 +92,7 @@
 
     <!-- Additional Statistics Row -->
     @can('view route timetables')
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-4">
+    {{-- <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-4">
         <div class="col">
             <div class="card radius-10 border-start border-0 border-4 border-primary">
                 <div class="card-body">
@@ -108,8 +108,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col">
+        </div> --}}
+        {{-- <div class="col">
             <div class="card radius-10 border-start border-0 border-4 border-info">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -134,7 +134,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
     @endcan
 
