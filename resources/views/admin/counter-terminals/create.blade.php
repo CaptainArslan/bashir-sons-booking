@@ -298,6 +298,7 @@
 @endsection
 
 @section('scripts')
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const resetBtn = document.getElementById('resetFormBtn');
