@@ -19,21 +19,15 @@ class ScheduleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Schedule::with(['route', 'stops.routeStop.terminal']);
+        $query = Schedule::with(['route']);
 
         if ($request->filled('route_id')) {
             $query->where('route_id', $request->route_id);
         }
 
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
-
-        $schedules = $query->orderBy('departure_time')->paginate(15);
-
         $routes = Route::where('status', 'active')->get();
 
-        return view('admin.schedules.index', compact('schedules', 'routes'));
+        return view('admin.schedules.index', compact('routes'));
     }
 
     /**
@@ -63,7 +57,7 @@ class ScheduleController extends Controller
         try {
             $schedule = Schedule::create([
                 'route_id' => $request->route_id,
-                'trip_code' => $request->trip_code,
+                'code' => $request->code,
                 'departure_time' => $request->departure_time,
                 'arrival_time' => $request->arrival_time,
                 'frequency' => $request->frequency,
@@ -116,7 +110,7 @@ class ScheduleController extends Controller
         try {
             $schedule->update([
                 'route_id' => $request->route_id,
-                'trip_code' => $request->trip_code,
+                'code' => $request->code,
                 'departure_time' => $request->departure_time,
                 'arrival_time' => $request->arrival_time,
                 'frequency' => $request->frequency,
@@ -173,11 +167,11 @@ class ScheduleController extends Controller
     {
         if ($request->ajax()) {
             $schedules = Schedule::with(['route'])
-                ->select('id', 'trip_code', 'route_id', 'departure_time', 'arrival_time', 'frequency', 'operating_days', 'is_active', 'created_at');
+                ->select('id', 'code', 'route_id', 'frequency', 'operating_days', 'is_active', 'created_at');
 
             return DataTables::eloquent($schedules)
-                ->addColumn('formatted_trip_code', function ($schedule) {
-                    return '<strong class="text-primary">' . e($schedule->trip_code) . '</strong>';
+                ->addColumn('formatted_code', function ($schedule) {
+                    return '<strong class="text-primary">' . e($schedule->code) . '</strong>';
                 })
                 ->addColumn('route_info', function ($schedule) {
                     $route = $schedule->route;
@@ -185,15 +179,6 @@ class ScheduleController extends Controller
                         return '<span class="text-muted">No route</span>';
                     }
                     return '<div><strong>' . e($route->name) . '</strong><br><small class="text-muted">' . e($route->code) . '</small></div>';
-                })
-                ->addColumn('formatted_departure_time', function ($schedule) {
-                    return '<span class="badge bg-info">' . e($schedule->departure_time) . '</span>';
-                })
-                ->addColumn('formatted_arrival_time', function ($schedule) {
-                    if ($schedule->arrival_time) {
-                        return '<span class="badge bg-success">' . e($schedule->arrival_time) . '</span>';
-                    }
-                    return '<span class="text-muted">Not set</span>';
                 })
                 ->addColumn('formatted_frequency', function ($schedule) {
                     $frequency = $schedule->frequency;
@@ -298,7 +283,7 @@ class ScheduleController extends Controller
                     </div>';
                     return $actions;
                 })
-                ->rawColumns(['formatted_trip_code', 'route_info', 'formatted_departure_time', 'formatted_arrival_time', 'formatted_frequency', 'operating_days_list', 'status_badge', 'actions'])
+                ->rawColumns(['formatted_code', 'route_info', 'formatted_frequency', 'operating_days_list', 'status_badge', 'actions'])
                 ->make(true);
         }
     }

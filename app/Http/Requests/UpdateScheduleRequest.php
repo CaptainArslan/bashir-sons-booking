@@ -27,11 +27,9 @@ class UpdateScheduleRequest extends FormRequest
 
         return [
             'route_id' => 'required|exists:routes,id',
-            'trip_code' => 'required|string|max:255|unique:schedules,trip_code,' . $scheduleId,
-            'departure_time' => 'required|date_format:H:i',
-            'arrival_time' => 'nullable|date_format:H:i|after:departure_time',
+            'code' => 'required|string|max:255|unique:schedules,code,' . $scheduleId,
             'frequency' => ['required', Rule::enum(FrequencyTypeEnum::class)],
-            'operating_days' => 'nullable|array',
+            'operating_days' => 'required_if:frequency,' . FrequencyTypeEnum::CUSTOM->value . '|array',
             'operating_days.*' => 'string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'is_active' => 'boolean',
         ];
@@ -47,13 +45,10 @@ class UpdateScheduleRequest extends FormRequest
         return [
             'route_id.required' => 'Please select a route.',
             'route_id.exists' => 'The selected route does not exist.',
-            'trip_code.required' => 'Trip code is required.',
-            'trip_code.unique' => 'This trip code is already in use.',
-            'departure_time.required' => 'Departure time is required.',
-            'departure_time.date_format' => 'Departure time must be in HH:MM format.',
-            'arrival_time.date_format' => 'Arrival time must be in HH:MM format.',
-            'arrival_time.after' => 'Arrival time must be after departure time.',
+            'code.required' => 'Code is required.',
+            'code.unique' => 'This code is already in use.',
             'frequency.required' => 'Frequency is required.',
+            'operating_days.required_if' => 'Operating days are required when frequency is custom.',
             'operating_days.array' => 'Operating days must be an array.',
             'operating_days.*.in' => 'Invalid operating day selected.',
         ];

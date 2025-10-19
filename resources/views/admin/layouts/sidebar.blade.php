@@ -184,15 +184,6 @@
                           <li> <a href="{{ route('admin.route-fares.index') }}"><i class='bx bx-radio-circle'></i>All Route
                                   Fares</a></li>
                       @endcan
-                      {{-- @can('view route timetables')
-                          <li> <a href="{{ route('admin.route-timetables.index') }}"><i class='bx bx-radio-circle'></i>Route
-                                  Timetables</a></li>
-                      @endcan
-                      @can('create route timetables')
-                          <li> <a href="{{ route('admin.route-timetables.create') }}"><i class='bx bx-radio-circle'></i>Add
-                                  New
-                                  Timetable</a></li>
-                      @endcan --}}
                   </ul>
               </li>
           @endcan

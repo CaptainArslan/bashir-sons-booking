@@ -145,8 +145,8 @@
                         width: '8%'
                     },
                     {
-                        data: 'formatted_trip_code',
-                        name: 'trip_code',
+                        data: 'formatted_code',
+                        name: 'code',
                         width: '15%'
                     },
                     {
@@ -155,20 +155,6 @@
                         searchable: false,
                         orderable: false,
                         width: '20%'
-                    },
-                    {
-                        data: 'formatted_departure_time',
-                        name: 'departure_time',
-                        searchable: false,
-                        orderable: true,
-                        width: '12%'
-                    },
-                    {
-                        data: 'formatted_arrival_time',
-                        name: 'arrival_time',
-                        searchable: false,
-                        orderable: true,
-                        width: '12%'
                     },
                     {
                         data: 'formatted_frequency',
