@@ -18,11 +18,11 @@ return new class extends Migration
             $table->foreignId('from_terminal_id')->constrained('terminals')->onDelete('cascade');
             $table->foreignId('to_terminal_id')->constrained('terminals')->onDelete('cascade');
             $table->decimal('base_fare', 10, 2);
-            $table->enum('discount_type', ['flat', 'percent'])->default(DiscountTypeEnum::FLAT->value);
+            $table->string('discount_type')->default(DiscountTypeEnum::FLAT->value);
             $table->decimal('discount_value', 10, 2)->default(0);
             $table->decimal('final_fare', 10, 2);
             $table->string('currency')->default('PKR');
-            $table->enum('status', ['active', 'inactive'])->default(FareStatusEnum::ACTIVE->value);
+            $table->string('status')->default(FareStatusEnum::ACTIVE->value);
             $table->timestamps();
             $table->softDeletes();
 

@@ -3,96 +3,98 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <!-- Welcome Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <div class="card-body text-white">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h4 class="mb-1">Welcome to Transport Management System</h4>
-                            <p class="mb-0 opacity-75">Manage your bus routes, terminals, and operations efficiently</p>
-                        </div>
-                        <div class="text-end">
-                            <i class="bx bx-bus fs-1 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="container-fluid">
 
-    <!-- Statistics Cards -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4">
-        <div class="col">
-            <div class="card radius-10 border-start border-0 border-4 border-info">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <p class="mb-0 text-secondary">Total Routes</p>
-                            <h4 class="my-1 text-info">{{ $stats['total_routes'] }}</h4>
-                            <p class="mb-0 font-13">{{ $stats['active_routes'] }} active routes</p>
-                        </div>
-                        <div class="widgets-icons-2 rounded-circle bg-gradient-blues text-white ms-auto">
-                            <i class='bx bx-map'></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card radius-10 border-start border-0 border-4 border-success">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <p class="mb-0 text-secondary">Total Buses</p>
-                            <h4 class="my-1 text-success">{{ $stats['total_buses'] }}</h4>
-                            <p class="mb-0 font-13">{{ $stats['active_buses'] }} active buses</p>
-                        </div>
-                        <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto">
-                            <i class='bx bx-bus'></i>
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h4 class="mb-1">Welcome to Transport Management System</h4>
+                                <p class="mb-0 opacity-75">Manage your bus routes, terminals, and operations efficiently</p>
+                            </div>
+                            <div class="text-end">
+                                <i class="bx bx-bus fs-1 opacity-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col">
-            <div class="card radius-10 border-start border-0 border-4 border-warning">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <p class="mb-0 text-secondary">Total Terminals</p>
-                            <h4 class="my-1 text-warning">{{ $stats['total_terminals'] }}</h4>
-                            <p class="mb-0 font-13">{{ $stats['active_terminals'] }} active terminals</p>
-                        </div>
-                        <div class="widgets-icons-2 rounded-circle bg-gradient-orange text-white ms-auto">
-                            <i class='bx bx-building'></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card radius-10 border-start border-0 border-4 border-danger">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div>
-                            <p class="mb-0 text-secondary">Total Enquiries</p>
-                            <h4 class="my-1 text-danger">{{ $stats['total_enquiries'] }}</h4>
-                            <p class="mb-0 font-13">{{ $stats['pending_enquiries'] }} pending</p>
-                        </div>
-                        <div class="widgets-icons-2 rounded-circle bg-gradient-burning text-white ms-auto">
-                            <i class='bx bx-message-dots'></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div><!--end row-->
 
-    <!-- Additional Statistics Row -->
-    @can('view schedules')
-    {{-- <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-4">
+        <!-- Statistics Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4">
+            <div class="col">
+                <div class="card radius-10 border-start border-0 border-4 border-info">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <p class="mb-0 text-secondary">Total Routes</p>
+                                <h4 class="my-1 text-info">{{ $stats['total_routes'] }}</h4>
+                                <p class="mb-0 font-13">{{ $stats['active_routes'] }} active routes</p>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-gradient-blues text-white ms-auto">
+                                <i class='bx bx-map'></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card radius-10 border-start border-0 border-4 border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <p class="mb-0 text-secondary">Total Buses</p>
+                                <h4 class="my-1 text-success">{{ $stats['total_buses'] }}</h4>
+                                <p class="mb-0 font-13">{{ $stats['active_buses'] }} active buses</p>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto">
+                                <i class='bx bx-bus'></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card radius-10 border-start border-0 border-4 border-warning">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <p class="mb-0 text-secondary">Total Terminals</p>
+                                <h4 class="my-1 text-warning">{{ $stats['total_terminals'] }}</h4>
+                                <p class="mb-0 font-13">{{ $stats['active_terminals'] }} active terminals</p>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-gradient-orange text-white ms-auto">
+                                <i class='bx bx-building'></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card radius-10 border-start border-0 border-4 border-danger">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <p class="mb-0 text-secondary">Total Enquiries</p>
+                                <h4 class="my-1 text-danger">{{ $stats['total_enquiries'] }}</h4>
+                                <p class="mb-0 font-13">{{ $stats['pending_enquiries'] }} pending</p>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-gradient-burning text-white ms-auto">
+                                <i class='bx bx-message-dots'></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--end row-->
+
+        <!-- Additional Statistics Row -->
+        @can('view schedules')
+            {{-- <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-4">
         <div class="col">
             <div class="card radius-10 border-start border-0 border-4 border-primary">
                 <div class="card-body">
@@ -109,7 +111,7 @@
                 </div>
             </div>
         </div> --}}
-        {{-- <div class="col">
+            {{-- <div class="col">
             <div class="card radius-10 border-start border-0 border-4 border-info">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -135,7 +137,7 @@
                 </div>
             </div>
         </div> --}}
-    </div>
+        </div>
     @endcan
 
     <div class="row">
@@ -209,7 +211,8 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="{{ route('admin.buses.index') }}">View Buses</a>
                                 </li>
-                                <li><a class="dropdown-item" href="{{ route('admin.counter-terminals.index') }}">View Terminals</a>
+                                <li><a class="dropdown-item" href="{{ route('admin.counter-terminals.index') }}">View
+                                        Terminals</a>
                                 </li>
                             </ul>
                         </div>
@@ -226,13 +229,15 @@
                         Active Buses <span class="badge bg-success rounded-pill">{{ $stats['active_buses'] }}</span>
                     </li>
                     <li class="list-group-item d-flex bg-transparent justify-content-between align-items-center">
-                        Active Terminals <span class="badge bg-primary rounded-pill">{{ $stats['active_terminals'] }}</span>
+                        Active Terminals <span
+                            class="badge bg-primary rounded-pill">{{ $stats['active_terminals'] }}</span>
                     </li>
                     <li class="list-group-item d-flex bg-transparent justify-content-between align-items-center">
                         Total Users <span class="badge bg-info rounded-pill">{{ $stats['total_users'] }}</span>
                     </li>
                     <li class="list-group-item d-flex bg-transparent justify-content-between align-items-center">
-                        Pending Enquiries <span class="badge bg-warning text-dark rounded-pill">{{ $stats['pending_enquiries'] }}</span>
+                        Pending Enquiries <span
+                            class="badge bg-warning text-dark rounded-pill">{{ $stats['pending_enquiries'] }}</span>
                     </li>
                 </ul>
             </div>
@@ -294,7 +299,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    @if($route->status instanceof \App\Enums\RouteStatusEnum)
+                                    @if ($route->status instanceof \App\Enums\RouteStatusEnum)
                                         {!! \App\Enums\RouteStatusEnum::getStatusBadge($route->status->value) !!}
                                     @else
                                         <span class="badge bg-secondary">{{ ucfirst($route->status) }}</span>
@@ -306,10 +311,12 @@
                                 <td>{{ $route->created_at->format('d M Y') }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <a href="{{ route('admin.routes.edit', $route->id) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ route('admin.routes.edit', $route->id) }}"
+                                            class="btn btn-sm btn-outline-primary">
                                             <i class="bx bx-edit"></i>
                                         </a>
-                                        <a href="{{ route('admin.routes.stops', $route->id) }}" class="btn btn-sm btn-outline-info">
+                                        <a href="{{ route('admin.routes.stops', $route->id) }}"
+                                            class="btn btn-sm btn-outline-info">
                                             <i class="bx bx-map"></i>
                                         </a>
                                     </div>
@@ -343,7 +350,8 @@
                                     class='bx bx-dots-horizontal-rounded font-22 text-option'></i>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('admin.enquiries.index') }}">View All Enquiries</a>
+                                <li><a class="dropdown-item" href="{{ route('admin.enquiries.index') }}">View All
+                                        Enquiries</a>
                                 </li>
                             </ul>
                         </div>
@@ -366,7 +374,8 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="widgets-icons-2 rounded-circle bg-gradient-ibiza text-white me-2">
+                                                <div
+                                                    class="widgets-icons-2 rounded-circle bg-gradient-ibiza text-white me-2">
                                                     <i class='bx bx-user'></i>
                                                 </div>
                                                 <div>
@@ -380,10 +389,10 @@
                                             @php
                                                 $statusColors = [
                                                     'pending' => 'warning',
-                                                    'in_progress' => 'info', 
+                                                    'in_progress' => 'info',
                                                     'resolved' => 'success',
                                                     'closed' => 'secondary',
-                                                    'rejected' => 'danger'
+                                                    'rejected' => 'danger',
                                                 ];
                                                 $color = $statusColors[$enquiry->status] ?? 'secondary';
                                             @endphp
@@ -464,7 +473,8 @@
                     <p class="font-weight-bold mb-1 text-secondary">System Overview</p>
                     <div class="d-flex align-items-center mb-4">
                         <div>
-                            <h4 class="mb-0">{{ $stats['total_routes'] + $stats['total_buses'] + $stats['total_terminals'] }}</h4>
+                            <h4 class="mb-0">
+                                {{ $stats['total_routes'] + $stats['total_buses'] + $stats['total_terminals'] }}</h4>
                             <p class="mb-0 text-muted">Total Entities</p>
                         </div>
                         <div class="">
@@ -519,13 +529,15 @@
                 <ul class="list-group list-group-flush">
                     <li
                         class="list-group-item d-flex bg-transparent justify-content-between align-items-center border-top">
-                        Active Routes <span class="badge bg-gradient-quepal rounded-pill">{{ $stats['active_routes'] }}</span>
+                        Active Routes <span
+                            class="badge bg-gradient-quepal rounded-pill">{{ $stats['active_routes'] }}</span>
                     </li>
                     <li class="list-group-item d-flex bg-transparent justify-content-between align-items-center">
                         Total Stops <span class="badge bg-gradient-ibiza rounded-pill">{{ $stats['total_stops'] }}</span>
                     </li>
                     <li class="list-group-item d-flex bg-transparent justify-content-between align-items-center">
-                        Total Fares <span class="badge bg-gradient-deepblue rounded-pill">{{ $stats['total_fares'] }}</span>
+                        Total Fares <span
+                            class="badge bg-gradient-deepblue rounded-pill">{{ $stats['total_fares'] }}</span>
                     </li>
                 </ul>
             </div>
@@ -543,7 +555,8 @@
                                     class='bx bx-dots-horizontal-rounded font-22 text-option'></i>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('admin.enquiries.index') }}">View All Enquiries</a>
+                                <li><a class="dropdown-item" href="{{ route('admin.enquiries.index') }}">View All
+                                        Enquiries</a>
                                 </li>
                             </ul>
                         </div>
@@ -563,7 +576,9 @@
                     </div>
                     <div class="col">
                         <div class="p-3 text-center">
-                            <h4 class="mb-0 text-success">{{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}</h4>
+                            <h4 class="mb-0 text-success">
+                                {{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}
+                            </h4>
                             <p class="mb-0">Resolved</p>
                         </div>
                     </div>
@@ -571,117 +586,124 @@
             </div>
         </div>
     </div><!--end row-->
-
+    </div>
+    </div>
 @endsection
 
 @section('scripts')
-<script src="{{ asset('admin/assets/plugins/chartjs/js/Chart.min.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Routes Chart
-    const routesCtx = document.getElementById('routesChart').getContext('2d');
-    new Chart(routesCtx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Active Routes',
-                data: [{{ $chartData['monthly_routes']->pluck('count')->join(',') }}],
-                borderColor: '#14abef',
-                backgroundColor: 'rgba(20, 171, 239, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+    <script src="{{ asset('admin/assets/plugins/chartjs/js/Chart.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Routes Chart
+            const routesCtx = document.getElementById('routesChart').getContext('2d');
+            new Chart(routesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Active Routes',
+                        data: [{{ $chartData['monthly_routes']->pluck('count')->join(',') }}],
+                        borderColor: '#14abef',
+                        backgroundColor: 'rgba(20, 171, 239, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+            });
 
-    // Status Chart
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
-    new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Active Buses', 'Inactive Buses'],
-            datasets: [{
-                data: [{{ isset($chartData['buses_by_status']['active']) ? $chartData['buses_by_status']['active'] : 0 }}, {{ isset($chartData['buses_by_status']['inactive']) ? $chartData['buses_by_status']['inactive'] : 0 }}],
-                backgroundColor: ['#28a745', '#6c757d'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active Buses', 'Inactive Buses'],
+                    datasets: [{
+                        data: [{{ isset($chartData['buses_by_status']['active']) ? $chartData['buses_by_status']['active'] : 0 }},
+                            {{ isset($chartData['buses_by_status']['inactive']) ? $chartData['buses_by_status']['inactive'] : 0 }}
+                        ],
+                        backgroundColor: ['#28a745', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
-            }
-        }
-    });
+            });
 
-    // Routes Summary Chart
-    const routesSummaryCtx = document.getElementById('routesSummaryChart').getContext('2d');
-    new Chart(routesSummaryCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Active', 'Inactive'],
-            datasets: [{
-                label: 'Routes',
-                data: [{{ isset($chartData['routes_by_status']['active']) ? $chartData['routes_by_status']['active'] : 0 }}, {{ isset($chartData['routes_by_status']['inactive']) ? $chartData['routes_by_status']['inactive'] : 0 }}],
-                backgroundColor: ['#28a745', '#6c757d'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+            // Routes Summary Chart
+            const routesSummaryCtx = document.getElementById('routesSummaryChart').getContext('2d');
+            new Chart(routesSummaryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Active', 'Inactive'],
+                    datasets: [{
+                        label: 'Routes',
+                        data: [{{ isset($chartData['routes_by_status']['active']) ? $chartData['routes_by_status']['active'] : 0 }},
+                            {{ isset($chartData['routes_by_status']['inactive']) ? $chartData['routes_by_status']['inactive'] : 0 }}
+                        ],
+                        backgroundColor: ['#28a745', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+            });
 
-    // Enquiries Chart
-    const enquiriesCtx = document.getElementById('enquiriesChart').getContext('2d');
-    new Chart(enquiriesCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Pending', 'Resolved'],
-            datasets: [{
-                data: [{{ isset($chartData['enquiries_by_status']['pending']) ? $chartData['enquiries_by_status']['pending'] : 0 }}, {{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}],
-                backgroundColor: ['#ffc107', '#28a745'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+            // Enquiries Chart
+            const enquiriesCtx = document.getElementById('enquiriesChart').getContext('2d');
+            new Chart(enquiriesCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Pending', 'Resolved'],
+                    datasets: [{
+                        data: [{{ isset($chartData['enquiries_by_status']['pending']) ? $chartData['enquiries_by_status']['pending'] : 0 }},
+                            {{ (isset($chartData['enquiries_by_status']['resolved']) ? $chartData['enquiries_by_status']['resolved'] : 0) + (isset($chartData['enquiries_by_status']['closed']) ? $chartData['enquiries_by_status']['closed'] : 0) }}
+                        ],
+                        backgroundColor: ['#ffc107', '#28a745'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
-            }
-        }
-    });
-});
-</script>
+            });
+        });
+    </script>
 @endsection

@@ -123,7 +123,7 @@
                             <th>Direction</th>
                             <th>Return Route</th>
                             <th>Stops</th>
-                            {{-- <th>Total Fare</th> --}}
+                            <th>Total Fare</th>
                             <th>Status</th>
                             <th>Created Date</th>
                             <th>Actions</th>
@@ -170,12 +170,12 @@
                         orderable: false,
                         searchable: false,
                     },
-                    // {
-                    //     data: 'total_fare',
-                    //     name: 'total_fare',
-                    //     orderable: false,
-                    //     searchable: false,
-                    // },
+                    {
+                        data: 'total_fare',
+                        name: 'total_fare',
+                        orderable: false,
+                        searchable: false,
+                    },
                     {
                         data: 'status_badge',
                         name: 'status',

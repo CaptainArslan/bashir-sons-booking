@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Route;
 use App\Models\Bus;
-use App\Models\Terminal;
-use App\Models\User;
-use App\Models\Enquiry;
-use App\Models\RouteStop;
 use App\Models\Fare;
-use App\Enums\EnquiryStatusEnum;
+use App\Models\User;
+use App\Models\Route;
+use App\Models\Enquiry;
+use App\Models\Schedule;
+use App\Models\Terminal;
+use App\Models\RouteStop;
 use App\Enums\RouteStatusEnum;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\EnquiryStatusEnum;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {

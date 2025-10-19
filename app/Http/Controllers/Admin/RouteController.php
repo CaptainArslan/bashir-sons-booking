@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use App\Models\Fare;
 use App\Models\Route;
 use App\Models\Terminal;
 use App\Models\RouteStop;
-use App\Enums\RouteStatusEnum;
 use Illuminate\Http\Request;
+use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
 
 class RouteController extends Controller
@@ -36,6 +37,9 @@ class RouteController extends Controller
                     $direction = ucfirst($route->direction);
                     $color = $route->direction === 'forward' ? 'bg-success' : 'bg-warning';
                     return '<span class="badge ' . $color . '">' . e($direction) . '</span>';
+                })
+                ->addColumn('total_fare', function ($route) {
+                    return '<span class="badge bg-primary">' . $route->total_fare . ' ' . $route->base_currency . '</span>';
                 })
                 ->addColumn('return_route', function ($route) {
                     if ($route->is_return_of) {
@@ -82,6 +86,16 @@ class RouteController extends Controller
                         </li>';
                     }
 
+                    // Manage fares button
+                    if (auth()->user()->can('edit routes')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="' . route('admin.routes.manage-fares', $route->id) . '">
+                                <i class="bx bx-money me-2"></i>Manage Fares
+                            </a>
+                        </li>';
+                    }
+
                     // Delete button
                     if (auth()->user()->can('delete routes')) {
                         $actions .= '<li><hr class="dropdown-divider"></li>
@@ -100,7 +114,7 @@ class RouteController extends Controller
                 })
                 ->editColumn('created_at', fn($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'stops_count', 'status_badge', 'actions'])
+                ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'total_fare', 'stops_count', 'status_badge', 'actions'])
                 ->make(true);
         }
     }
@@ -656,5 +670,115 @@ class RouteController extends Controller
                 'message' => 'Error fetching stop data: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function manageFares($id)
+    {
+        $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
+
+        // Get all possible combinations of stops for this route
+        $stops = $route->routeStops()->with('terminal.city')->orderBy('sequence')->get();
+        $stopCombinations = $this->generateStopCombinations($stops);
+
+        // Get existing fares for this route
+        $existingFares = Fare::forRoute($id)->get()->keyBy(function ($fare) {
+            return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
+        });
+
+        return view('admin.routes.manage-fares', compact('route', 'stops', 'stopCombinations', 'existingFares'));
+    }
+
+    public function storeFares(Request $request, $id)
+    {
+        $route = Route::findOrFail($id);
+
+        $request->validate([
+            'fares' => 'required|array',
+            'fares.*.from_terminal_id' => 'required|exists:terminals,id',
+            'fares.*.to_terminal_id' => 'required|exists:terminals,id',
+            'fares.*.base_fare' => 'required|numeric|min:0',
+            'fares.*.discount_type' => 'nullable|in:flat,percent',
+            'fares.*.discount_value' => 'nullable|numeric|min:0',
+            'fares.*.currency' => 'required|string|max:3',
+            'fares.*.status' => 'required|in:active,inactive',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($request->fares as $fareData) {
+                // Calculate final fare
+                $baseFare = $fareData['base_fare'];
+                $finalFare = $baseFare;
+
+                if (!empty($fareData['discount_type']) && !empty($fareData['discount_value'])) {
+                    if ($fareData['discount_type'] === 'flat') {
+                        $finalFare = max(0, $baseFare - $fareData['discount_value']);
+                    } elseif ($fareData['discount_type'] === 'percent') {
+                        $finalFare = max(0, $baseFare - ($baseFare * $fareData['discount_value'] / 100));
+                    }
+                }
+
+                // Update or create fare
+                Fare::updateOrCreate(
+                    [
+                        'from_terminal_id' => $fareData['from_terminal_id'],
+                        'to_terminal_id' => $fareData['to_terminal_id'],
+                    ],
+                    [
+                        'base_fare' => $baseFare,
+                        'discount_type' => $fareData['discount_type'] ?? null,
+                        'discount_value' => $fareData['discount_value'] ?? null,
+                        'final_fare' => $finalFare,
+                        'currency' => $fareData['currency'],
+                        'status' => $fareData['status'],
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.routes.manage-fares', $id)
+                ->with('success', 'Fares updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error updating fares: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    private function generateStopCombinations($stops)
+    {
+        $combinations = [];
+        $stopCount = $stops->count();
+
+        for ($i = 0; $i < $stopCount; $i++) {
+            for ($j = $i + 1; $j < $stopCount; $j++) {
+                $fromStop = $stops[$i];
+                $toStop = $stops[$j];
+
+                $combinations[] = [
+                    'from_terminal_id' => $fromStop->terminal_id,
+                    'to_terminal_id' => $toStop->terminal_id,
+                    'from_terminal' => $fromStop->terminal,
+                    'to_terminal' => $toStop->terminal,
+                    'from_sequence' => $fromStop->sequence,
+                    'to_sequence' => $toStop->sequence,
+                    'distance' => $this->calculateDistanceBetweenStops($stops, $i, $j),
+                ];
+            }
+        }
+
+        return collect($combinations);
+    }
+
+    private function calculateDistanceBetweenStops($stops, $fromIndex, $toIndex)
+    {
+        $distance = 0;
+        for ($i = $fromIndex; $i < $toIndex; $i++) {
+            $distance += $stops[$i]->distance_from_previous ?? 0;
+        }
+        return $distance;
     }
 }

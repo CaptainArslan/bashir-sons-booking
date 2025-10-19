@@ -151,4 +151,47 @@ class Route extends Model
         );
     }
 
+    protected function totalFare(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->getTotalFare(),
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper
+    |--------------------------------------------------------------------------
+    */
+
+    public function getTotalFare()
+    {
+        // Get all stop terminal IDs for this route in correct order
+        $terminalIds = $this->routeStops()
+            ->orderBy('sequence') // assuming you have an 'order' column
+            ->pluck('terminal_id')
+            ->toArray();
+
+        // If fewer than 2 stops, no fare calculation needed
+        if (count($terminalIds) < 2) {
+            return 0;
+        }
+
+        $totalFare = 0;
+
+        // Loop through consecutive stops and sum up fares
+        for ($i = 0; $i < count($terminalIds) - 1; $i++) {
+            $fromId = $terminalIds[$i];
+            $toId = $terminalIds[$i + 1];
+
+            $fare = Fare::where('from_terminal_id', $fromId)
+                ->where('to_terminal_id', $toId)
+                ->value('final_fare'); // fetch only the fare value
+
+            $totalFare += $fare ?? 0;
+        }
+
+        return $totalFare;
+    }
 }
