@@ -30,13 +30,19 @@ class FareController extends Controller
 
             return DataTables::eloquent($fares)
                 ->addColumn('route_path', function ($fare) {
-                    $fromCity = $fare->fromTerminal?->city?->name ?? 'Unknown';
-                    $toCity = $fare->toTerminal?->city?->name ?? 'Unknown';
-                    return '<div class="d-flex flex-column">
-                                <span class="fw-bold">' . e($fromCity) . ' → ' . e($toCity) . '</span>
-                                <small class="text-muted">' . e($fare->fromTerminal?->name ?? 'N/A') . ' → ' . e($fare->toTerminal?->name ?? 'N/A') . '</small>
-                            </div>';
+                    $fromTerminal = $fare->fromTerminal?->name ?? 'Unknown Terminal';
+                    $toTerminal = $fare->toTerminal?->name ?? 'Unknown Terminal';
+                    $fromCity = $fare->fromTerminal?->city?->name ?? 'Unknown City';
+                    $toCity = $fare->toTerminal?->city?->name ?? 'Unknown City';
+
+                    return '
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold">' . e($fromTerminal) . ' → ' . e($toTerminal) . '</span>
+                        <small class="text-muted">' . e($fromCity) . ' → ' . e($toCity) . '</small>
+                    </div>
+                ';
                 })
+
                 ->addColumn('fare_info', function ($fare) {
                     $baseFare = $fare->currency . ' ' . number_format($fare->base_fare, 2);
                     $finalFare = $fare->currency . ' ' . number_format($fare->final_fare, 2);
