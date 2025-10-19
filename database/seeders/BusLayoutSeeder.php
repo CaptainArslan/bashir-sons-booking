@@ -22,21 +22,21 @@ class BusLayoutSeeder extends Seeder
                 'total_columns' => 4,
                 'total_seats' => 48,
                 'seat_map' => [
-                    'layout' => [
-                        [1, 2, null, 3, 4],
-                        [5, 6, null, 7, 8],
-                        [9, 10, null, 11, 12],
-                        [13, 14, null, 15, 16],
-                        [17, 18, null, 19, 20],
-                        [21, 22, null, 23, 24],
-                        [25, 26, null, 27, 28],
-                        [29, 30, null, 31, 32],
-                        [33, 34, null, 35, 36],
-                        [37, 38, null, 39, 40],
-                        [41, 42, null, 43, 44],
-                        [45, 46, null, 47, 48]
-                    ],
-                    'aisle_position' => 2
+                    // 'layout' => [
+                    //     [1, 2, null, 3, 4],
+                    //     [5, 6, null, 7, 8],
+                    //     [9, 10, null, 11, 12],
+                    //     [13, 14, null, 15, 16],
+                    //     [17, 18, null, 19, 20],
+                    //     [21, 22, null, 23, 24],
+                    //     [25, 26, null, 27, 28],
+                    //     [29, 30, null, 31, 32],
+                    //     [33, 34, null, 35, 36],
+                    //     [37, 38, null, 39, 40],
+                    //     [41, 42, null, 43, 44],
+                    //     [45, 46, null, 47, 48]
+                    // ],
+                    // 'aisle_position' => 2
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],

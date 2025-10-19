@@ -14,6 +14,7 @@ use Database\Seeders\BusSeeder;
 use Database\Seeders\CitySeeder;
 use Database\Seeders\TerminalSeeder;
 use Database\Seeders\RouteSeeder;
+use Database\Seeders\ScheduleSeeder;
 use Database\Seeders\BannerSeeder;
 use Database\Seeders\GeneralSettingSeeder;
 
@@ -34,6 +35,7 @@ class DatabaseSeeder extends Seeder
             TerminalSeeder::class,
             RouteSeeder::class,
             RouteFareSeeder::class,
+            ScheduleSeeder::class,
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
             FacilitySeeder::class,

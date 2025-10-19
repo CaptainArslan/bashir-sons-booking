@@ -94,10 +94,10 @@
               'view bus types',
               'view bus layouts',
               'view facilities',
-              'view
-              routes',
+              'view routes',
               'view route stops',
               'view route timetables',
+              'view schedules',
               ])
               <li class="menu-label">Transport Management</li>
           @endcanany
@@ -192,6 +192,25 @@
                           <li> <a href="{{ route('admin.route-timetables.create') }}"><i class='bx bx-radio-circle'></i>Add
                                   New
                                   Timetable</a></li>
+                      @endcan
+                  </ul>
+              </li>
+          @endcan
+
+          @can('view schedules')
+              <li>
+                  <a href="javascript:;" class="has-arrow">
+                      <div class="parent-icon"><i class='bx bx-time'></i>
+                      </div>
+                      <div class="menu-title">Schedule Management</div>
+                  </a>
+                  <ul>
+                      <li> <a href="{{ route('admin.schedules.index') }}"><i class='bx bx-radio-circle'></i>All Schedules</a>
+                      </li>
+                      @can('create schedules')
+                          <li> <a href="{{ route('admin.schedules.create') }}"><i class='bx bx-radio-circle'></i>Add
+                                  New
+                                  Schedule</a></li>
                       @endcan
                   </ul>
               </li>

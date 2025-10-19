@@ -19,10 +19,15 @@ class BusLayout extends Model
         'total_rows',
         'total_columns',
         'total_seats',
+        'seat_map',
         'status',
     ];
 
     protected $casts = [
+        'total_rows' => 'integer',
+        'total_columns' => 'integer',
+        'total_seats' => 'integer',
+        'seat_map' => 'array',
         'status' => BusLayoutEnum::class,
     ];
 
@@ -50,5 +55,4 @@ class BusLayout extends Model
             get: fn($value) => $this->total_rows * $this->total_columns ?? 0,
         );
     }
-
 }

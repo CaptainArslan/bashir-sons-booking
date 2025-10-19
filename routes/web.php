@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\RouteFareController;
 use App\Http\Controllers\Admin\RouteTimetableController;
 use App\Http\Controllers\Admin\RouteStopTimeController;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Customer\BookingController;
 
@@ -228,6 +229,17 @@ Route::middleware('auth')->group(function () {
         Route::put('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'update'])->can('edit route stop times')->name('route-stop-times.update');
         Route::delete('/route-timetables/{routeTimetable}/stop-times', [RouteStopTimeController::class, 'destroy'])->can('delete route stop times')->name('route-stop-times.destroy');
         Route::get('/route-timetables/{routeTimetable}/stop-times/generate', [RouteStopTimeController::class, 'generate'])->can('create route stop times')->name('route-stop-times.generate');
+
+        // Schedules Management
+        Route::get('/schedules', [ScheduleController::class, 'index'])->can('view schedules')->name('schedules.index');
+        Route::get('/schedules/data', [ScheduleController::class, 'getData'])->can('view schedules')->name('schedules.getData');
+        Route::get('/schedules/create', [ScheduleController::class, 'create'])->can('create schedules')->name('schedules.create');
+        Route::post('/schedules', [ScheduleController::class, 'store'])->can('create schedules')->name('schedules.store');
+        Route::get('/schedules/{schedule}', [ScheduleController::class, 'show'])->can('view schedules')->name('schedules.show');
+        Route::get('/schedules/{schedule}/edit', [ScheduleController::class, 'edit'])->can('edit schedules')->name('schedules.edit');
+        Route::put('/schedules/{schedule}', [ScheduleController::class, 'update'])->can('edit schedules')->name('schedules.update');
+        Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->can('delete schedules')->name('schedules.destroy');
+        Route::patch('/schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus'])->can('edit schedules')->name('schedules.toggle-status');
     });
 });
 
