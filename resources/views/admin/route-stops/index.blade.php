@@ -49,7 +49,7 @@
 @endsection
 
 @section('scripts')
-    @include('admin.layouts.datatables')
+    {{-- @include('admin.layouts.datatables') --}}
     <script>
         $(document).ready(function() {
             $('#route-stops-table').DataTable({

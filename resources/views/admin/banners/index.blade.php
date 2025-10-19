@@ -15,7 +15,7 @@
             </nav>
         </div>
         <div class="ms-auto">
-                <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
                 <i class="bx bx-plus"></i> Add New Banner
             </a>
         </div>
@@ -43,7 +43,7 @@
 @endsection
 
 @section('scripts')
-    @include('admin.layouts.datatables')
+    {{-- @include('admin.layouts.datatables') --}}
     <script>
         $(document).ready(function() {
             $('#banners-table').DataTable({

@@ -28,8 +28,6 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 Route::get('/', function () {
     return redirect()->route('home');
-    // return redirect()->intended(route('dashboard', absolute: false));
-    // return view('welcome');
 });
 
 Route::get('/home', [DashboardController::class, 'home'])->name('home');

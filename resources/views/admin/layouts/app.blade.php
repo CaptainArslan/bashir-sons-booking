@@ -313,6 +313,8 @@
     <script src="{{ asset('admin/assets/plugins/chartjs/js/chart.js') }}"></script> --}}
     <script src="{{ asset('admin/assets/js/index.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    @include('admin.layouts.select2')
+    @include('admin.layouts.datatables')
     @yield('scripts')
     <!--app JS-->
     <script src="{{ asset('admin/assets/js/app.js') }}"></script>
