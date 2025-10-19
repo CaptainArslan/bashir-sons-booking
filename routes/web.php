@@ -2,26 +2,27 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\FareController;
 use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\ScheduleController;
+use App\Http\Controllers\Admin\BusLayoutController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Customer\BookingController;
+use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\BannerController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\EnquiryController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\RouteController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\ScheduleController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Customer\BookingController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -135,7 +136,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/bus-layouts/{id}/edit', [BusLayoutController::class, 'edit'])->can('edit bus layouts')->name('bus-layouts.edit');
         Route::put('/bus-layouts/{id}', [BusLayoutController::class, 'update'])->can('edit bus layouts')->name('bus-layouts.update');
         Route::delete('/bus-layouts/{id}', [BusLayoutController::class, 'destroy'])->can('delete bus layouts')->name('bus-layouts.destroy');
-        
+
         // Seat map specific routes
         Route::post('/bus-layouts/generate-seat-map', [BusLayoutController::class, 'generateSeatMap'])->can('create bus layouts')->name('bus-layouts.generate-seat-map');
         Route::post('/bus-layouts/{id}/update-seat', [BusLayoutController::class, 'updateSeat'])->can('edit bus layouts')->name('bus-layouts.update-seat');
@@ -202,6 +203,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
         Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
 
+        // Fares Management
+        Route::get('/fares', [FareController::class, 'index'])->can('view fares')->name('fares.index');
+        Route::get('/fares/data', [FareController::class, 'getData'])->can('view fares')->name('fares.data');
+        Route::get('/fares/create', [FareController::class, 'create'])->can('create fares')->name('fares.create');
+        Route::post('/fares', [FareController::class, 'store'])->can('create fares')->name('fares.store');
+        Route::get('/fares/{id}/edit', [FareController::class, 'edit'])->can('edit fares')->name('fares.edit');
+        Route::put('/fares/{id}', [FareController::class, 'update'])->can('edit fares')->name('fares.update');
+        Route::delete('/fares/{id}', [FareController::class, 'destroy'])->can('delete fares')->name('fares.destroy');
 
 
         // Schedules Management

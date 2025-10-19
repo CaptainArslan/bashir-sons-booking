@@ -9,7 +9,7 @@ use App\Models\Terminal;
 use App\Models\User;
 use App\Models\Enquiry;
 use App\Models\RouteStop;
-use App\Models\Schedule;
+use App\Models\Fare;
 use App\Enums\EnquiryStatusEnum;
 use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +45,8 @@ class DashboardController extends Controller
             'total_users' => User::count(),
             'total_enquiries' => Enquiry::count(),
             'pending_enquiries' => Enquiry::where('status', EnquiryStatusEnum::PENDING->value)->count(),
-            'total_fares' => 0,
+            'total_fares' => Fare::count(),
+            'active_fares' => Fare::where('status', 'active')->count(),
             'total_stops' => RouteStop::count(),
             'total_schedules' => Schedule::count(),
             'active_schedules' => Schedule::where('is_active', true)->count(),
