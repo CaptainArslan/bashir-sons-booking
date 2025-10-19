@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Fares Management')
+@section('title', 'Fare Management')
 
 @section('content')
 <div class="container-fluid">
@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 text-gray-800">
-                <i class="bx bx-money me-2"></i>Fares Management
+                <i class="bx bx-money me-2"></i>Fare Management
             </h1>
             <p class="text-muted mb-0">Manage transportation fares between terminals</p>
         </div>

@@ -224,13 +224,19 @@
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Route Stops</a></li>
                       @endcan
+                  </ul>
+              </li>
+          @endcan
+
           @can('view fares')
               <li>
-                  <a href="#" class="has-arrow">
-                      <i class="bx bx-money"></i>
-                      <span>Fare Management</span>
+                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-money'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Fare Management</div>
                   </a>
-                  <ul>
+                  <ul style="padding-left: 0;">
                       @can('view fares')
                           <li> <a href="{{ route('admin.fares.index') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
@@ -241,9 +247,6 @@
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Add New Fare</a></li>
                       @endcan
-                  </ul>
-              </li>
-          @endcan
                   </ul>
               </li>
           @endcan
