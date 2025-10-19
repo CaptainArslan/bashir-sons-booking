@@ -23,7 +23,7 @@ class FareSeeder extends Seeder
     public function run(): void
     {
         $terminals = Terminal::where('status', 'active')->get();
-        
+
         if ($terminals->count() < 2) {
             $this->command->warn('Not enough terminals to create fares. Please seed terminals first.');
             return;
@@ -42,7 +42,7 @@ class FareSeeder extends Seeder
                 }
 
                 $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
-                
+
                 if (in_array($pairKey, $terminalPairs)) {
                     continue; // Skip duplicate pairs
                 }
@@ -55,23 +55,27 @@ class FareSeeder extends Seeder
                 $finalFare = $baseFare;
 
                 if ($discountType) {
-                    $discountValue = $discountType === 'percent' 
+                    $discountValue = $discountType === 'percent'
                         ? $this->faker->randomFloat(2, 5, 20)
                         : $this->faker->randomFloat(2, 50, min(200, $baseFare * 0.2));
-                    
+
                     $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
                 }
 
-                Fare::create([
-                    'from_terminal_id' => $fromTerminal->id,
-                    'to_terminal_id' => $toTerminal->id,
-                    'base_fare' => $baseFare,
-                    'discount_type' => $discountType ?? 'flat',
-                    'discount_value' => $discountValue ?? 0,
-                    'final_fare' => $finalFare,
-                    'currency' => 'PKR',
-                    'status' => $this->faker->randomElement(FareStatusEnum::getStatuses()),
-                ]);
+                Fare::firstOrCreate(
+                    [
+                        'from_terminal_id' => $fromTerminal->id,
+                        'to_terminal_id' => $toTerminal->id,
+                    ],
+                    [
+                        'base_fare' => $baseFare,
+                        'discount_type' => $discountType ?? 'flat',
+                        'discount_value' => $discountValue ?? 0,
+                        'final_fare' => $finalFare,
+                        'currency' => 'PKR',
+                        'status' => $this->faker->randomElement(FareStatusEnum::getStatuses()),
+                    ]
+                );
 
                 $faresCreated++;
             }
@@ -88,7 +92,7 @@ class FareSeeder extends Seeder
         // Simple calculation based on city names (you can enhance this with actual distance)
         $fromCity = $fromTerminal->city->name;
         $toCity = $toTerminal->city->name;
-        
+
         // Base fare ranges
         $baseFares = [
             'Karachi' => ['Lahore' => 2500, 'Islamabad' => 2000, 'Peshawar' => 1800],
