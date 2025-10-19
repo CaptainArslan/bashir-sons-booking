@@ -3,145 +3,146 @@
 @section('title', 'Create Route')
 
 @section('styles')
-<style>
-    .route-card {
-        border-left: 4px solid #0d6efd;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-    
-    .card-header-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.75rem 1rem;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .card-header-info h5 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
-    }
-    
-    .form-control, .form-select {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-        border-radius: 6px;
-    }
-    
-    .card-body {
-        padding: 1rem !important;
-    }
-    
-    .row {
-        margin-bottom: 0.5rem;
-    }
-    
-    .btn {
-        border-radius: 6px;
-        font-weight: 500;
-    }
-    
-    .info-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-        border-left: 4px solid #2196f3;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin-bottom: 1rem;
-    }
-    
-    .info-box p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #1976d2;
-    }
-    
-    .section-divider {
-        border-top: 1px solid #e9ecef;
-        margin: 1rem 0;
-        padding-top: 1rem;
-    }
-    
-    .section-title {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
-    }
-    
-    .form-text {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-    }
-    
-    .stops-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1rem;
-        border-left: 4px solid #0dcaf0;
-    }
-    
-    .stop-item {
-        transition: all 0.2s ease;
-        border-left: 3px solid #0d6efd !important;
-        background: #ffffff;
-        border-radius: 6px;
-    }
-    
-    .stop-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-        transform: translateX(2px);
-    }
-    
-    .form-check-label {
-        cursor: pointer;
-        font-size: 0.875rem;
-        transition: color 0.2s ease;
-    }
-    
-    .form-check-input:checked + .form-check-label {
-        color: #0d6efd;
-        font-weight: 600;
-    }
-    
-    .add-stop-btn {
-        background: linear-gradient(45deg, #28a745, #20c997);
-        border: none;
-        border-radius: 20px;
-        padding: 8px 16px;
-        color: white;
-        font-weight: 500;
-        font-size: 0.875rem;
-        transition: all 0.2s ease;
-    }
-    
-    .add-stop-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(40, 167, 69, 0.25);
-        color: white;
-    }
-    
-    .badge {
-        font-size: 0.75rem;
-        width: 24px;
-        height: 24px;
-    }
-    
-    .stop-header {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-</style>
+    <style>
+        .route-card {
+            border-left: 4px solid #0d6efd;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .card-header-info h5 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+        }
+
+        .card-body {
+            padding: 1rem !important;
+        }
+
+        .row {
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #2196f3;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #1976d2;
+        }
+
+        .section-divider {
+            border-top: 1px solid #e9ecef;
+            margin: 1rem 0;
+            padding-top: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .form-text {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .stops-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .stop-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid #0d6efd !important;
+            background: #ffffff;
+            border-radius: 6px;
+        }
+
+        .stop-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+            transform: translateX(2px);
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: color 0.2s ease;
+        }
+
+        .form-check-input:checked+.form-check-label {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .add-stop-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .add-stop-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.25);
+            color: white;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            width: 24px;
+            height: 24px;
+        }
+
+        .stop-header {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -167,35 +168,32 @@
                 <div class="card-header-info">
                     <h5><i class="bx bx-plus-circle me-2"></i>Create New Route</h5>
                 </div>
-                
+
                 <form action="{{ route('admin.routes.store') }}" method="POST" class="row g-3">
                     @csrf
-                    
+
                     <div class="card-body">
                         <!-- Info Box -->
                         <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Enter route details and add stops in sequence. The route code will be auto-generated based on the route name and direction.</p>
+                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Enter route details and add stops
+                                in sequence. The route code will be auto-generated based on the route name and direction.
+                            </p>
                         </div>
-                        
+
                         <!-- Basic Information -->
                         <div class="section-title">
                             <i class="bx bx-route me-1"></i>Basic Information
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="name" class="form-label">
-                                    Route Name 
+                                    Route Name
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror"
-                                       id="name" 
-                                       name="name" 
-                                       placeholder="Enter Route Name" 
-                                       value="{{ old('name') }}"
-                                       required
-                                       autofocus>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" placeholder="Enter Route Name" value="{{ old('name') }}"
+                                    required autofocus>
                                 @error('name')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -203,16 +201,16 @@
 
                             <div class="col-md-6">
                                 <label for="direction" class="form-label">
-                                    Direction 
+                                    Direction
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('direction') is-invalid @enderror" 
-                                        id="direction"
-                                        name="direction" 
-                                        required>
+                                <select class="form-select select2 @error('direction') is-invalid @enderror" id="direction"
+                                    name="direction" required>
                                     <option value="">Select Direction</option>
-                                    <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward</option>
-                                    <option value="return" {{ old('direction') == 'return' ? 'selected' : '' }}>Return</option>
+                                    <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward
+                                    </option>
+                                    <option value="return" {{ old('direction') == 'return' ? 'selected' : '' }}>Return
+                                    </option>
                                 </select>
                                 @error('direction')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -223,18 +221,12 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="code" class="form-label">
-                                    Route Code 
+                                    Route Code
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('code') is-invalid @enderror"
-                                       id="code" 
-                                       name="code" 
-                                       placeholder="Route code will be auto-generated"
-                                       value="{{ old('code') }}" 
-                                       style="text-transform: uppercase;" 
-                                       required 
-                                       readonly>
+                                <input type="text" class="form-control @error('code') is-invalid @enderror"
+                                    id="code" name="code" placeholder="Route code will be auto-generated"
+                                    value="{{ old('code') }}" style="text-transform: uppercase;" required readonly>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
                                     Code will be auto-generated based on route name and direction
@@ -246,9 +238,8 @@
 
                             <div class="col-md-6">
                                 <label for="is_return_of" class="form-label">Return Route Of</label>
-                                <select class="form-select @error('is_return_of') is-invalid @enderror" 
-                                        id="is_return_of"
-                                        name="is_return_of">
+                                <select class="form-select select2 @error('is_return_of') is-invalid @enderror" id="is_return_of"
+                                    name="is_return_of">
                                     <option value="">Select Return Route (Optional)</option>
                                     @foreach ($routes as $route)
                                         <option value="{{ $route->id }}"
@@ -267,13 +258,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="base_currency" class="form-label">
-                                    Base Currency 
+                                    Base Currency
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('base_currency') is-invalid @enderror" 
-                                        id="base_currency"
-                                        name="base_currency" 
-                                        required>
+                                <select class="form-select select2 @error('base_currency') is-invalid @enderror" id="base_currency"
+                                    name="base_currency" required>
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
                                         <option value="{{ $currency }}"
@@ -289,16 +278,15 @@
 
                             <div class="col-md-6">
                                 <label for="status" class="form-label">
-                                    Status 
+                                    Status
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status"
-                                        name="status" 
-                                        required>
+                                <select class="form-select select2 @error('status') is-invalid @enderror" id="status"
+                                    name="status" required>
                                     <option value="">Select Status</option>
-                                    @foreach (\App\Enums\RouteStatusEnum::getStatusOptions() as $value => $label)
-                                        <option value="{{ $value }}" {{ old('status') == $value ? 'selected' : '' }}>
+                                    @foreach ($statuses as $value => $label)
+                                        <option value="{{ $value }}"
+                                            {{ old('status') == $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach
@@ -314,7 +302,7 @@
                         <div class="section-title">
                             <i class="bx bx-map me-1"></i>Route Stops
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-12">
                                 <div class="stops-section">
@@ -335,24 +323,24 @@
                         </div>
 
 
-                    <!-- Action Buttons -->
-                    <div class="card-footer bg-light">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <a href="{{ route('admin.routes.index') }}" class="btn btn-light px-4">
-                                    <i class="bx bx-arrow-back me-1"></i>Back to List
-                                </a>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('admin.routes.index') }}" class="btn btn-secondary px-4">
-                                    <i class="bx bx-x me-1"></i>Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="bx bx-save me-1"></i>Create Route
-                                </button>
+                        <!-- Action Buttons -->
+                        <div class="card-footer bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{{ route('admin.routes.index') }}" class="btn btn-light px-4">
+                                        <i class="bx bx-arrow-back me-1"></i>Back to List
+                                    </a>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('admin.routes.index') }}" class="btn btn-secondary px-4">
+                                        <i class="bx bx-x me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bx bx-save me-1"></i>Create Route
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
                 </form>
             </div>
         </div>
@@ -435,27 +423,27 @@
             directionSelect.addEventListener('change', generateRouteCode);
 
             // Initialize code generation if there are existing values
-        if (nameInput.value || directionSelect.value) {
-            generateRouteCode();
-        }
+            if (nameInput.value || directionSelect.value) {
+                generateRouteCode();
+            }
 
-        // Route Stops Management
-        let stopCounter = 0;
-        const stopsContainer = document.getElementById('stops-container');
-        const addStopBtn = document.getElementById('add-stop-btn');
+            // Route Stops Management
+            let stopCounter = 0;
+            const stopsContainer = document.getElementById('stops-container');
+            const addStopBtn = document.getElementById('add-stop-btn');
 
-        // Add initial stop
-        addStop();
-
-        addStopBtn.addEventListener('click', function() {
+            // Add initial stop
             addStop();
-        });
 
-        function addStop() {
-            stopCounter++;
-            const stopDiv = document.createElement('div');
-            stopDiv.className = 'stop-item border rounded p-3 mb-3';
-            stopDiv.innerHTML = `
+            addStopBtn.addEventListener('click', function() {
+                addStop();
+            });
+
+            function addStop() {
+                stopCounter++;
+                const stopDiv = document.createElement('div');
+                stopDiv.className = 'stop-item border rounded p-3 mb-3';
+                stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
                         <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
@@ -470,7 +458,7 @@
                 <div class="row g-2">
                     <div class="col-md-4">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
-                        <select class="form-select terminal-select" name="stops[${stopCounter}][terminal_id]" required>
+                        <select class="form-select select2 terminal-select" name="stops[${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
                             @foreach ($terminals as $terminal)
                                 <option value="{{ $terminal->id }}">
@@ -516,38 +504,44 @@
                     </div>
                 </div>
             `;
-            
-            stopsContainer.appendChild(stopDiv);
 
-            // Add event listeners for this stop
-            const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-            const distanceInput = stopDiv.querySelector('.distance-input');
-            const travelTimeInput = stopDiv.querySelector('.travel-time-input');
+                stopsContainer.appendChild(stopDiv);
 
-            removeBtn.addEventListener('click', function() {
-                stopDiv.remove();
-                updateSequences();
+                // Add event listeners for this stop
+                const removeBtn = stopDiv.querySelector('.remove-stop-btn');
+                const distanceInput = stopDiv.querySelector('.distance-input');
+                const travelTimeInput = stopDiv.querySelector('.travel-time-input');
+
+                removeBtn.addEventListener('click', function() {
+                    stopDiv.remove();
+                    updateSequences();
+                });
+
+                // Auto-calculate travel time based on distance
+                distanceInput.addEventListener('input', function() {
+                    const distance = parseFloat(this.value);
+                    if (distance && !travelTimeInput.value) {
+                        const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
+                        travelTimeInput.value = travelTime;
+                    }
+                });
+            }
+
+            function updateSequences() {
+                const stopItems = stopsContainer.querySelectorAll('.stop-item');
+                stopItems.forEach((item, index) => {
+                    const sequenceInput = item.querySelector('.sequence-input');
+                    const stopNumber = item.querySelector('h6');
+                    sequenceInput.value = index + 1;
+                    stopNumber.innerHTML =
+                        `<i class="bx bx-map-pin me-2 text-primary"></i>Stop ${index + 1}`;
+                });
+            }
+
+            $('.select2').select2({
+                width: 'resolve', // need to override the changed default
+                // theme: "classic"
             });
-
-            // Auto-calculate travel time based on distance
-            distanceInput.addEventListener('input', function() {
-                const distance = parseFloat(this.value);
-                if (distance && !travelTimeInput.value) {
-                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                    travelTimeInput.value = travelTime;
-                }
-            });
-        }
-
-        function updateSequences() {
-            const stopItems = stopsContainer.querySelectorAll('.stop-item');
-            stopItems.forEach((item, index) => {
-                const sequenceInput = item.querySelector('.sequence-input');
-                const stopNumber = item.querySelector('h6');
-                sequenceInput.value = index + 1;
-                stopNumber.innerHTML = `<i class="bx bx-map-pin me-2 text-primary"></i>Stop ${index + 1}`;
-            });
-        }
-    });
+        });
     </script>
 @endsection

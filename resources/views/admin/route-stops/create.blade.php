@@ -31,7 +31,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="route_id" class="form-label">Route <span class="text-danger">*</span></label>
-                                <select class="form-select @error('route_id') is-invalid @enderror" id="route_id" name="route_id" required>
+                                <select class="form-select select2 @error('route_id') is-invalid @enderror" id="route_id" name="route_id" required>
                                     <option value="">Select Route</option>
                                     @foreach ($routes as $route)
                                         <option value="{{ $route->id }}" {{ old('route_id') == $route->id ? 'selected' : '' }}>
@@ -46,7 +46,7 @@
                             
                             <div class="col-md-6">
                                 <label for="terminal_id" class="form-label">Terminal <span class="text-danger">*</span></label>
-                                <select class="form-select @error('terminal_id') is-invalid @enderror" id="terminal_id" name="terminal_id" required>
+                                <select class="form-select select2 @error('terminal_id') is-invalid @enderror" id="terminal_id" name="terminal_id" required>
                                     <option value="">Select Terminal</option>
                                     @foreach ($terminals as $terminal)
                                         <option value="{{ $terminal->id }}" {{ old('terminal_id') == $terminal->id ? 'selected' : '' }}>
