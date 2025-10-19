@@ -5,17 +5,17 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Route;
 use App\Models\Terminal;
-use App\Services\RouteTimetableService;
+use App\Services\ScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    protected RouteTimetableService $timetableService;
+    protected ScheduleService $scheduleService;
 
-    public function __construct(RouteTimetableService $timetableService)
+    public function __construct(ScheduleService $scheduleService)
     {
-        $this->timetableService = $timetableService;
+        $this->scheduleService = $scheduleService;
     }
 
     /**
@@ -66,13 +66,13 @@ class BookingController extends Controller
 
             // Check if from stop comes before to stop in the route
             if ($fromStop && $toStop && $fromStop->sequence < $toStop->sequence) {
-                // Check if there are available timetables for this route
-                if ($route->activeTimetables->count() > 0) {
+                // Check if there are available schedules for this route
+                if ($route->activeSchedules->count() > 0) {
                     $availableRoutes[] = [
                         'route' => $route,
                         'from_stop' => $fromStop,
                         'to_stop' => $toStop,
-                        'timetables_count' => $route->activeTimetables->count(),
+                        'schedules_count' => $route->activeSchedules->count(),
                     ];
                 }
             }
@@ -100,10 +100,8 @@ class BookingController extends Controller
         $route = Route::findOrFail($request->route_id);
         $travelDate = Carbon::parse($request->travel_date);
 
-        $availableTrips = $this->timetableService->getAvailableTrips(
+        $availableSchedules = $this->scheduleService->getAvailableSchedulesForDate(
             $route,
-            $request->from_stop_id,
-            $request->to_stop_id,
             $travelDate
         );
 
@@ -112,7 +110,7 @@ class BookingController extends Controller
             'fromStopId' => $request->from_stop_id,
             'toStopId' => $request->to_stop_id,
             'travelDate' => $travelDate,
-            'availableTrips' => $availableTrips,
+            'availableSchedules' => $availableSchedules,
         ]);
     }
 
@@ -122,41 +120,24 @@ class BookingController extends Controller
     public function show(Request $request, Route $route)
     {
         $request->validate([
-            'timetable_id' => 'required|exists:route_timetables,id',
+            'schedule_id' => 'required|exists:schedules,id',
             'from_stop_id' => 'required|exists:route_stops,id',
             'to_stop_id' => 'required|exists:route_stops,id',
             'travel_date' => 'required|date|after_or_equal:today',
         ]);
 
-        $timetable = $route->timetables()->findOrFail($request->timetable_id);
+        $schedule = $route->schedules()->findOrFail($request->schedule_id);
         $travelDate = Carbon::parse($request->travel_date);
 
-        // Verify the trip is still available
-        if (!$this->timetableService->isTripAvailableForBooking(
-            $timetable,
-            $request->from_stop_id,
-            $request->to_stop_id,
-            $travelDate
-        )) {
+        // Verify the schedule is still active and operates on the travel date
+        if (!$schedule->is_active || !$schedule->operatesOn($travelDate->format('l'))) {
             return redirect()->route('customer.booking.index')
-                ->with('error', 'This trip is no longer available for booking.');
+                ->with('error', 'This schedule is no longer available for booking.');
         }
-
-        $fromStop = $timetable->stopsOrdered()
-            ->where('route_stop_id', $request->from_stop_id)
-            ->with('routeStop.terminal')
-            ->first();
-
-        $toStop = $timetable->stopsOrdered()
-            ->where('route_stop_id', $request->to_stop_id)
-            ->with('routeStop.terminal')
-            ->first();
 
         return view('customer.booking.details', [
             'route' => $route,
-            'timetable' => $timetable,
-            'fromStop' => $fromStop,
-            'toStop' => $toStop,
+            'schedule' => $schedule,
             'travelDate' => $travelDate,
         ]);
     }
@@ -167,7 +148,7 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'timetable_id' => 'required|exists:route_timetables,id',
+            'schedule_id' => 'required|exists:schedules,id',
             'from_stop_id' => 'required|exists:route_stops,id',
             'to_stop_id' => 'required|exists:route_stops,id',
             'travel_date' => 'required|date|after_or_equal:today',

@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Models\Enquiry;
 use App\Models\RouteFare;
 use App\Models\RouteStop;
-use App\Models\RouteTimetable;
+use App\Models\Schedule;
 use App\Enums\EnquiryStatusEnum;
 use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +21,6 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        if (! $user->can('access admin panel')) {
-            abort(403, 'You do not have access to the admin panel.');
-        }
 
         // Get dashboard statistics
         $stats = $this->getDashboardStats();
@@ -51,8 +48,8 @@ class DashboardController extends Controller
             'pending_enquiries' => Enquiry::where('status', EnquiryStatusEnum::PENDING->value)->count(),
             'total_fares' => RouteFare::count(),
             'total_stops' => RouteStop::count(),
-            'total_timetables' => RouteTimetable::count(),
-            'active_timetables' => RouteTimetable::where('is_active', true)->count(),
+            'total_schedules' => Schedule::count(),
+            'active_schedules' => Schedule::where('is_active', true)->count(),
         ];
     }
 

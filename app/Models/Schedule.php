@@ -14,15 +14,18 @@ class Schedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
         'route_id',
-        'code',
+        'trip_code',
+        'departure_time',
+        'arrival_time',
         'frequency',
         'operating_days',
         'is_active',
     ];
 
     protected $casts = [
+        'departure_time' => 'datetime:H:i',
+        'arrival_time' => 'datetime:H:i',
         'frequency' => FrequencyTypeEnum::class,
         'operating_days' => 'array',
         'is_active' => 'boolean',
@@ -81,5 +84,25 @@ class Schedule extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Get the next departure time for a given date.
+     */
+    public function getNextDepartureTime(\Carbon\Carbon $date): ?\Carbon\Carbon
+    {
+        if (!$this->is_active || !$this->operatesOn($date->format('l'))) {
+            return null;
+        }
+
+        $departureTime = \Carbon\Carbon::createFromFormat('H:i', $this->departure_time)
+            ->setDate($date->year, $date->month, $date->day);
+
+        // If the departure time has already passed today, return null
+        if ($departureTime->isPast()) {
+            return null;
+        }
+
+        return $departureTime;
     }
 }

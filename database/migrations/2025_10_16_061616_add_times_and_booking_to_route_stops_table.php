@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('route_stops', function (Blueprint $table) {
-            $table->time('arrival_time')->nullable()->after('approx_travel_time');
-            $table->time('departure_time')->nullable()->after('arrival_time');
+            // $table->time('arrival_time')->nullable()->after('approx_travel_time');
+            // $table->time('departure_time')->nullable()->after('arrival_time');
             $table->boolean('is_online_booking_allowed')->default(true)->after('departure_time');
         });
     }
@@ -24,8 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('route_stops', function (Blueprint $table) {
-            $table->dropColumn('arrival_time');
-            $table->dropColumn('departure_time');
+            // $table->dropColumn('arrival_time');
+            // $table->dropColumn('departure_time');
             $table->dropColumn('is_online_booking_allowed');
         });
     }

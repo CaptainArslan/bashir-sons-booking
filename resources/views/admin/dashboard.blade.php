@@ -91,16 +91,16 @@
     </div><!--end row-->
 
     <!-- Additional Statistics Row -->
-    @can('view route timetables')
+    @can('view schedules')
     {{-- <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-4">
         <div class="col">
             <div class="card radius-10 border-start border-0 border-4 border-primary">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div>
-                            <p class="mb-0 text-secondary">Total Timetables</p>
-                            <h4 class="my-1 text-primary">{{ $stats['total_timetables'] }}</h4>
-                            <p class="mb-0 font-13">{{ $stats['active_timetables'] }} active timetables</p>
+                            <p class="mb-0 text-secondary">Total Schedules</p>
+                            <h4 class="my-1 text-primary">{{ $stats['total_schedules'] }}</h4>
+                            <p class="mb-0 font-13">{{ $stats['active_schedules'] }} active schedules</p>
                         </div>
                         <div class="widgets-icons-2 rounded-circle bg-gradient-scooter text-white ms-auto">
                             <i class='bx bx-time'></i>
@@ -116,13 +116,13 @@
                         <div>
                             <p class="mb-0 text-secondary">Quick Actions</p>
                             <div class="mt-2">
-                                @can('create route timetables')
-                                    <a href="{{ route('admin.route-timetables.create') }}" class="btn btn-sm btn-primary me-2">
-                                        <i class='bx bx-plus'></i> New Timetable
+                                @can('create schedules')
+                                    <a href="{{ route('admin.schedules.create') }}" class="btn btn-sm btn-primary me-2">
+                                        <i class='bx bx-plus'></i> New Schedule
                                     </a>
                                 @endcan
-                                @can('view route timetables')
-                                    <a href="{{ route('admin.route-timetables.index') }}" class="btn btn-sm btn-outline-primary">
+                                @can('view schedules')
+                                    <a href="{{ route('admin.schedules.index') }}" class="btn btn-sm btn-outline-primary">
                                         <i class='bx bx-list-ul'></i> View All
                                     </a>
                                 @endcan
