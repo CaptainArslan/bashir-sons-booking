@@ -251,27 +251,6 @@
               </li>
           @endcan
 
-          @can('view schedules')
-              <li>
-                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-time'></i>
-                      </div>
-                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Schedule Management</div>
-                  </a>
-                  <ul style="padding-left: 0;">
-                      <li> <a href="{{ route('admin.schedules.index') }}"
-                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i>All Schedules</a>
-                      </li>
-                      @can('create schedules')
-                          <li> <a href="{{ route('admin.schedules.create') }}"
-                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                      style="font-size: 0.7rem;"></i>Add New Schedule</a></li>
-                      @endcan
-                  </ul>
-              </li>
-          @endcan
 
           @canany(['view banners', 'view general settings'])
               <li class="menu-label"

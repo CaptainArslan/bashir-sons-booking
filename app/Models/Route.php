@@ -46,15 +46,6 @@ class Route extends Model
         return $this->hasMany(RouteStop::class)->orderBy('sequence');
     }
 
-    public function schedules()
-    {
-        return $this->hasMany(Schedule::class);
-    }
-
-    public function activeSchedules()
-    {
-        return $this->hasMany(Schedule::class)->where('is_active', true);
-    }
 
     public function terminals()
     {

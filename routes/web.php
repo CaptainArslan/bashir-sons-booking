@@ -15,11 +15,9 @@ use App\Http\Controllers\Admin\BusTypeController;
 use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -37,11 +35,6 @@ Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
 Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
 
-// Customer Routes
-Route::get('/booking', [BookingController::class, 'index'])->name('customer.booking.index');
-Route::get('/booking/search', [BookingController::class, 'search'])->name('customer.booking.search');
-Route::get('/booking/{route}', [BookingController::class, 'show'])->name('customer.booking.show');
-Route::post('/booking', [BookingController::class, 'store'])->name('customer.booking.store');
 
 // Frontend Routes
 
@@ -207,16 +200,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/fares/{id}', [FareController::class, 'update'])->can('edit fares')->name('fares.update');
         Route::delete('/fares/{id}', [FareController::class, 'destroy'])->can('delete fares')->name('fares.destroy');
 
-        // Schedules Management
-        Route::get('/schedules', [ScheduleController::class, 'index'])->can('view schedules')->name('schedules.index');
-        Route::get('/schedules/data', [ScheduleController::class, 'getData'])->can('view schedules')->name('schedules.getData');
-        Route::get('/schedules/create', [ScheduleController::class, 'create'])->can('create schedules')->name('schedules.create');
-        Route::post('/schedules', [ScheduleController::class, 'store'])->can('create schedules')->name('schedules.store');
-        Route::get('/schedules/{schedule}', [ScheduleController::class, 'show'])->can('view schedules')->name('schedules.show');
-        Route::get('/schedules/{schedule}/edit', [ScheduleController::class, 'edit'])->can('edit schedules')->name('schedules.edit');
-        Route::put('/schedules/{schedule}', [ScheduleController::class, 'update'])->can('edit schedules')->name('schedules.update');
-        Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->can('delete schedules')->name('schedules.destroy');
-        Route::patch('/schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus'])->can('edit schedules')->name('schedules.toggle-status');
     });
 });
 

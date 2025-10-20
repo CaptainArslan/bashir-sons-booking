@@ -7,7 +7,6 @@ use App\Models\Fare;
 use App\Models\User;
 use App\Models\Route;
 use App\Models\Enquiry;
-use App\Models\Schedule;
 use App\Models\Terminal;
 use App\Models\RouteStop;
 use App\Enums\RouteStatusEnum;
@@ -49,8 +48,6 @@ class DashboardController extends Controller
             'total_fares' => Fare::count(),
             'active_fares' => Fare::where('status', 'active')->count(),
             'total_stops' => RouteStop::count(),
-            'total_schedules' => Schedule::count(),
-            'active_schedules' => Schedule::where('is_active', true)->count(),
         ];
     }
 
