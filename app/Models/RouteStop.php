@@ -17,9 +17,6 @@ class RouteStop extends Model
         'approx_travel_time',
         'is_pickup_allowed',
         'is_dropoff_allowed',
-        // 'arrival_time',
-        // 'departure_time',
-        // 'is_online_booking_allowed',
     ];
 
     protected $casts = [
@@ -28,9 +25,6 @@ class RouteStop extends Model
         'sequence' => 'integer',
         'is_pickup_allowed' => 'boolean',
         'is_dropoff_allowed' => 'boolean',
-        // 'arrival_time' => 'datetime:H:i',
-        // 'departure_time' => 'datetime:H:i',
-        // 'is_online_booking_allowed' => 'boolean',
     ];
 
     /*

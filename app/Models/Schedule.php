@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use App\Enums\FrequencyTypeEnum;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Schedule extends Model
 {
@@ -15,7 +16,7 @@ class Schedule extends Model
 
     protected $fillable = [
         'route_id',
-        'trip_code',
+        'code',
         'departure_time',
         'arrival_time',
         'frequency',
@@ -89,13 +90,13 @@ class Schedule extends Model
     /**
      * Get the next departure time for a given date.
      */
-    public function getNextDepartureTime(\Carbon\Carbon $date): ?\Carbon\Carbon
+    public function getNextDepartureTime(Carbon $date): ?Carbon
     {
         if (!$this->is_active || !$this->operatesOn($date->format('l'))) {
             return null;
         }
 
-        $departureTime = \Carbon\Carbon::createFromFormat('H:i', $this->departure_time)
+        $departureTime = Carbon::createFromFormat('H:i', $this->departure_time)
             ->setDate($date->year, $date->month, $date->day);
 
         // If the departure time has already passed today, return null
