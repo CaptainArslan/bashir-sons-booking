@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -199,6 +200,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/fares/{id}/edit', [FareController::class, 'edit'])->can('edit fares')->name('fares.edit');
         Route::put('/fares/{id}', [FareController::class, 'update'])->can('edit fares')->name('fares.update');
         Route::delete('/fares/{id}', [FareController::class, 'destroy'])->can('delete fares')->name('fares.destroy');
+
+        // Timetables Management
+        Route::get('/timetables', [TimetableController::class, 'index'])->can('view timetables')->name('timetables.index');
+        Route::get('/timetables/data', [TimetableController::class, 'getData'])->can('view timetables')->name('timetables.data');
+        Route::get('/timetables/create', [TimetableController::class, 'create'])->can('create timetables')->name('timetables.create');
+        Route::post('/timetables', [TimetableController::class, 'store'])->can('create timetables')->name('timetables.store');
+        Route::get('/timetables/{timetable}', [TimetableController::class, 'show'])->can('view timetables')->name('timetables.show');
+        Route::get('/timetables/{timetable}/edit', [TimetableController::class, 'edit'])->can('edit timetables')->name('timetables.edit');
+        Route::put('/timetables/{timetable}', [TimetableController::class, 'update'])->can('edit timetables')->name('timetables.update');
+        Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy'])->can('delete timetables')->name('timetables.destroy');
+        Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
 
     });
 });

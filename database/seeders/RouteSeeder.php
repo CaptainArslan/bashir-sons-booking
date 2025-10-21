@@ -116,8 +116,8 @@ class RouteSeeder extends Seeder
                 'route_id' => $route->id,
                 'terminal_id' => $terminal->id,
                 'sequence' => $sequence,
-                'distance_from_previous' => $sequence > 1 ? $distance : null,
-                'approx_travel_time' => $sequence > 1 ? $travelTime : null,
+                'distance_from_previous' => $sequence > 1 ? $distance : 0,
+                'approx_travel_time' => $sequence > 1 ? $travelTime : 0,
                 'is_pickup_allowed' => true,
                 'is_dropoff_allowed' => true,
             ]);

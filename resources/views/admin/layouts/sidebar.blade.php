@@ -114,10 +114,9 @@
               'view bus types',
               'view bus layouts',
               'view facilities',
-              'view
-              routes',
+              'view routes',
               'view route stops',
-              'view route timetables',
+              'view timetables',
               'view schedules',
               ])
               <li class="menu-label"
@@ -223,6 +222,29 @@
                           <li> <a href="{{ route('admin.route-stops.index') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Route Stops</a></li>
+                      @endcan
+                  </ul>
+              </li>
+          @endcan
+
+          @can('view timetables')
+              <li>
+                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-time'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Timetable Management</div>
+                  </a>
+                  <ul style="padding-left: 0;">
+                      <li> <a href="{{ route('admin.timetables.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i>All Timetables</a>
+                      </li>
+                      @can('create timetables')
+                          <li> <a href="{{ route('admin.timetables.create') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Generate Timetables</a>
+                          </li>
                       @endcan
                   </ul>
               </li>

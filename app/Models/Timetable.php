@@ -15,7 +15,7 @@ class Timetable extends Model
 
     protected $fillable = [
         'route_id',
-        'code',
+        'name',
         'start_departure_time',
         'end_arrival_time',
         'is_active',
@@ -61,8 +61,51 @@ class Timetable extends Model
     protected function endArrivalTime(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => Carbon::parse($value)->format('H:i'),
-            set: fn($value) => Carbon::parse($value)->format('H:i'),
+            get: fn($value) => $value ? Carbon::parse($value)->format('H:i') : null,
+            set: fn($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper Methods
+    |--------------------------------------------------------------------------
+    */
+    
+    public function getFirstStop()
+    {
+        return $this->timetableStops()->orderBy('sequence')->first();
+    }
+    
+    public function getLastStop()
+    {
+        return $this->timetableStops()->orderByDesc('sequence')->first();
+    }
+    
+    public function getTotalStops()
+    {
+        return $this->timetableStops()->count();
+    }
+    
+    public function getTotalDuration()
+    {
+        $startTime = Carbon::parse($this->start_departure_time);
+        $endTime = $this->end_arrival_time ? Carbon::parse($this->end_arrival_time) : null;
+        
+        if ($endTime) {
+            return $startTime->diffInMinutes($endTime);
+        }
+        
+        return null;
+    }
+    
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+    
+    public function scopeForRoute($query, $routeId)
+    {
+        return $query->where('route_id', $routeId);
     }
 }

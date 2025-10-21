@@ -56,8 +56,51 @@ class TimetableStop extends Model
     protected function departureTime(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => Carbon::parse($value)->format('H:i:s'),
-            set: fn($value) => Carbon::parse($value)->format('H:i:s'),
+            get: fn($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
+            set: fn($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helper Methods
+    |--------------------------------------------------------------------------
+    */
+    
+    public function isFirstStop()
+    {
+        return $this->sequence === 1;
+    }
+    
+    public function isLastStop()
+    {
+        $maxSequence = $this->timetable->timetableStops()->max('sequence');
+        return $this->sequence === $maxSequence;
+    }
+    
+    public function getNextStop()
+    {
+        return $this->timetable->timetableStops()
+            ->where('sequence', '>', $this->sequence)
+            ->orderBy('sequence')
+            ->first();
+    }
+    
+    public function getPreviousStop()
+    {
+        return $this->timetable->timetableStops()
+            ->where('sequence', '<', $this->sequence)
+            ->orderByDesc('sequence')
+            ->first();
+    }
+    
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+    
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sequence');
     }
 }
