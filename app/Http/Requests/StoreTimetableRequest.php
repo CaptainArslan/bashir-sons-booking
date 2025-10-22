@@ -23,9 +23,13 @@ class StoreTimetableRequest extends FormRequest
     {
         return [
             'route_id' => 'required|exists:routes,id',
-            'departure_count' => 'required|integer|min:1|max:50',
-            'start_time' => 'required|date_format:H:i',
-            'time_interval' => 'required|integer|min:15|max:480', // 15 minutes to 8 hours
+            'departure_count' => 'required|integer|min:1|max:10',
+            'timetables' => 'required|array|min:1',
+            'timetables.*.stops' => 'required|array|min:1',
+            'timetables.*.stops.*.stop_id' => 'required|exists:terminals,id',
+            'timetables.*.stops.*.sequence' => 'required|integer|min:1',
+            'timetables.*.stops.*.arrival_time' => 'nullable|date_format:H:i',
+            'timetables.*.stops.*.departure_time' => 'nullable|date_format:H:i',
         ];
     }
 

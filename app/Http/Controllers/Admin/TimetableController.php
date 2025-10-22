@@ -27,46 +27,45 @@ class TimetableController extends Controller
     }
 
     /**
-     * Get timetable data for DataTables
+     * Get timetable data for AJAX request
      */
     public function getData(): JsonResponse
     {
         $timetables = Timetable::with(['route', 'timetableStops.terminal'])
-            ->select('timetables.*');
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($timetable) {
+                $stops = $timetable->timetableStops()
+                    ->orderBy('sequence')
+                    ->get()
+                    ->map(function ($stop) {
+                        return [
+                            'id' => $stop->terminal_id,
+                            'name' => $stop->terminal->name,
+                            'arrival_time' => $stop->arrival_time,
+                            'departure_time' => $stop->departure_time,
+                            'sequence' => $stop->sequence,
+                        ];
+                    });
 
-        return DataTables::of($timetables)
-            ->addColumn('route_name', function ($timetable) {
-                return $timetable->route->name ?? 'N/A';
-            })
-            ->addColumn('route_code', function ($timetable) {
-                return $timetable->route->code ?? 'N/A';
-            })
-            ->addColumn('start_terminal', function ($timetable) {
-                $firstStop = $timetable->timetableStops()->orderBy('sequence')->first();
-                return $firstStop ? $firstStop->terminal->name : 'N/A';
-            })
-            ->addColumn('end_terminal', function ($timetable) {
-                $lastStop = $timetable->timetableStops()->orderByDesc('sequence')->first();
-                return $lastStop ? $lastStop->terminal->name : 'N/A';
-            })
-            ->addColumn('total_stops', function ($timetable) {
-                return $timetable->timetableStops()->count();
-            })
-            ->addColumn('status', function ($timetable) {
-                return $timetable->is_active 
-                    ? '<span class="badge bg-success">Active</span>' 
-                    : '<span class="badge bg-danger">Inactive</span>';
-            })
-            ->addColumn('actions', function ($timetable) {
-                $actions = '<div class="btn-group" role="group">';
-                $actions .= '<a href="' . route('admin.timetables.show', $timetable->id) . '" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>';
-                $actions .= '<a href="' . route('admin.timetables.edit', $timetable->id) . '" class="btn btn-sm btn-primary" title="Edit"><i class="fas fa-edit"></i></a>';
-                $actions .= '<button type="button" class="btn btn-sm btn-danger" onclick="deleteTimetable(' . $timetable->id . ')" title="Delete"><i class="fas fa-trash"></i></button>';
-                $actions .= '</div>';
-                return $actions;
-            })
-            ->rawColumns(['status', 'actions'])
-            ->make(true);
+                $firstStop = $stops->first();
+                $lastStop = $stops->last();
+
+                return [
+                    'id' => $timetable->id,
+                    'route_name' => $timetable->route->name ?? 'N/A',
+                    'route_code' => $timetable->route->code ?? 'N/A',
+                    'start_terminal' => $firstStop ? $firstStop['name'] : 'N/A',
+                    'end_terminal' => $lastStop ? $lastStop['name'] : 'N/A',
+                    'start_departure_time' => $timetable->start_departure_time,
+                    'total_stops' => $stops->count(),
+                    'status' => $timetable->is_active ? 'active' : 'inactive',
+                    'created_at' => $timetable->created_at->format('Y-m-d H:i:s'),
+                    'stops' => $stops,
+                ];
+            });
+
+        return response()->json(['data' => $timetables]);
     }
 
     /**
@@ -100,7 +99,6 @@ class TimetableController extends Controller
      */
     public function store(StoreTimetableRequest $request): RedirectResponse
     {
-
         $route = Route::with(['routeStops.terminal'])->findOrFail($request->route_id);
         $routeStops = $route->routeStops()->orderBy('sequence')->get();
 
@@ -108,54 +106,54 @@ class TimetableController extends Controller
             return redirect()->back()->withErrors(['error' => 'Selected route has no stops configured.']);
         }
 
-        $startTime = Carbon::parse($request->start_time);
-        $timeInterval = $request->time_interval; // in minutes
-
-        // Create timetables
-        for ($i = 0; $i < $request->departure_count; $i++) {
-            $departureTime = $startTime->copy()->addMinutes($i * $timeInterval);
+        // Process each timetable from the form
+        foreach ($request->timetables as $timetableIndex => $timetableData) {
+            // Get the first stop's departure time to set as start_departure_time
+            $firstStopData = $timetableData['stops'][0];
+            $startDepartureTime = $firstStopData['departure_time'] ?? null;
             
+            if (!$startDepartureTime) {
+                return redirect()->back()->withErrors(['error' => 'First stop must have a departure time.']);
+            }
+
             $timetable = Timetable::create([
                 'route_id' => $route->id,
-                'name' => $route->name . ' - Trip ' . ($i + 1),
-                'start_departure_time' => $departureTime->format('H:i:s'),
+                'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
+                'start_departure_time' => $startDepartureTime,
                 'is_active' => true,
             ]);
 
-            // Create timetable stops
-            foreach ($routeStops as $index => $routeStop) {
-                $isFirstStop = $index === 0;
-                $isLastStop = $index === $routeStops->count() - 1;
+            // Create timetable stops with user-provided times
+            foreach ($timetableData['stops'] as $stopIndex => $stopData) {
+                $isFirstStop = $stopIndex === 0;
+                $isLastStop = $stopIndex === count($timetableData['stops']) - 1;
                 
                 $arrivalTime = null;
-                $departureTimeStr = null;
-                $currentTime = $departureTime->copy();
+                $departureTime = null;
 
-                if ($isFirstStop) {
-                    // First stop: only departure time
-                    $departureTimeStr = $currentTime->format('H:i:s');
-                } elseif ($isLastStop) {
-                    // Last stop: only arrival time
-                    $arrivalTime = $currentTime->addMinutes(30)->format('H:i:s'); // Add 30 minutes for last stop
-                } else {
-                    // Middle stops: both arrival and departure
-                    $arrivalTime = $currentTime->addMinutes(15)->format('H:i:s'); // Add 15 minutes for arrival
-                    $departureTimeStr = $currentTime->addMinutes(5)->format('H:i:s'); // Add 5 minutes for departure
+                // Set arrival time (not for first stop)
+                if (!$isFirstStop && isset($stopData['arrival_time'])) {
+                    $arrivalTime = $stopData['arrival_time'];
+                }
+
+                // Set departure time (not for last stop)
+                if (!$isLastStop && isset($stopData['departure_time'])) {
+                    $departureTime = $stopData['departure_time'];
                 }
 
                 TimetableStop::create([
                     'timetable_id' => $timetable->id,
-                    'terminal_id' => $routeStop->terminal_id,
-                    'sequence' => $routeStop->sequence,
+                    'terminal_id' => $stopData['stop_id'],
+                    'sequence' => $stopData['sequence'],
                     'arrival_time' => $arrivalTime,
-                    'departure_time' => $departureTimeStr,
+                    'departure_time' => $departureTime,
                     'is_active' => true,
                 ]);
             }
         }
 
         return redirect()->route('admin.timetables.index')
-            ->with('success', 'Timetables generated successfully!');
+            ->with('success', 'Timetables created successfully!');
     }
 
     /**
@@ -206,6 +204,32 @@ class TimetableController extends Controller
 
         return redirect()->route('admin.timetables.index')
             ->with('success', 'Timetable updated successfully!');
+    }
+
+    /**
+     * Toggle timetable status (active/inactive)
+     */
+    public function toggleStatus(Request $request, Timetable $timetable): JsonResponse
+    {
+        try {
+            $newStatus = $request->input('status');
+            
+            if (!in_array($newStatus, ['active', 'inactive'])) {
+                return response()->json(['success' => false, 'message' => 'Invalid status provided.'], 400);
+            }
+            
+            $timetable->update([
+                'is_active' => $newStatus === 'active'
+            ]);
+            
+            $action = $newStatus === 'active' ? 'activated' : 'deactivated';
+            return response()->json([
+                'success' => true, 
+                'message' => "Timetable {$action} successfully!"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error updating timetable status: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
