@@ -32,9 +32,10 @@ class GeneralSetting extends Model
         'support_email',
         'support_phone',
         'business_hours',
+        'advance_booking_enable',
     ];
 
     protected $casts = [
-        // 
+        'advance_booking_enable' => 'boolean',
     ];
 }

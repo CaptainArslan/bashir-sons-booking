@@ -336,6 +336,18 @@
               </li>
           @endcan
 
+          @can('edit general settings')
+              <li>
+                  <a href="{{ route('admin.advance-booking.index') }}"
+                      style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-calendar-check'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Advance Booking</div>
+                  </a>
+              </li>
+          @endcan
+
           @can('view enquiries')
               <li class="menu-label"
                   style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">

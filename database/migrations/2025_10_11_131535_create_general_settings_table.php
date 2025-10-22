@@ -41,6 +41,9 @@ return new class extends Migration
             $table->string('support_phone')->nullable();
             $table->string('business_hours')->nullable();
 
+            // advance booking settings
+            $table->boolean('advance_booking_enable')->default(false);
+
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

@@ -46,7 +46,6 @@ class Route extends Model
         return $this->hasMany(RouteStop::class)->orderBy('sequence');
     }
 
-
     public function terminals()
     {
         return $this->belongsToMany(Terminal::class, 'route_stops')
@@ -71,6 +70,18 @@ class Route extends Model
     public function lastStop()
     {
         return $this->routeStops()->orderByDesc('sequence')->first();
+    }
+
+    public function discounts()
+    {
+        return $this->hasMany(Discount::class);
+    }
+
+    public function activeDiscounts()
+    {
+        return $this->discounts()->active()
+            ->orderBy('starts_at', 'asc')
+            ->orderBy('start_time', 'asc');
     }
 
     /*

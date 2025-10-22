@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -226,6 +227,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('/announcements/{announcement}/toggle-pinned', [AnnouncementController::class, 'togglePinned'])->can('edit announcements')->name('announcements.toggle-pinned');
         Route::patch('/announcements/{announcement}/toggle-featured', [AnnouncementController::class, 'toggleFeatured'])->can('edit announcements')->name('announcements.toggle-featured');
         Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->can('delete announcements')->name('announcements.destroy');
+
+        // Advance Booking Routes
+        Route::get('/advance-booking', [AdvanceBookingController::class, 'index'])->can('edit general settings')->name('advance-booking.index');
+        Route::put('/advance-booking', [AdvanceBookingController::class, 'update'])->can('edit general settings')->name('advance-booking.update');
+        Route::patch('/advance-booking/toggle-status', [AdvanceBookingController::class, 'toggleStatus'])->can('edit general settings')->name('advance-booking.toggle-status');
+        Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
 
     });
 });
