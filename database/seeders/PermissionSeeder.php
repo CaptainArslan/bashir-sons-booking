@@ -78,6 +78,12 @@ class PermissionSeeder extends Seeder
             'edit banners',
             'delete banners',
 
+            // Announcement Management
+            'view announcements',
+            'create announcements',
+            'edit announcements',
+            'delete announcements',
+
             // General Settings
             'view general settings',
             'create general settings',

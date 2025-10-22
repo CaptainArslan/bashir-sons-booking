@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -212,6 +213,19 @@ Route::middleware('auth')->group(function () {
         Route::patch('/timetables/{timetable}/toggle-status', [TimetableController::class, 'toggleStatus'])->can('edit timetables')->name('timetables.toggle-status');
         Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy'])->can('delete timetables')->name('timetables.destroy');
         Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
+
+        // Announcements Routes
+        Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
+        Route::get('/announcements/data', [AnnouncementController::class, 'getData'])->can('view announcements')->name('announcements.data');
+        Route::get('/announcements/create', [AnnouncementController::class, 'create'])->can('create announcements')->name('announcements.create');
+        Route::post('/announcements', [AnnouncementController::class, 'store'])->can('create announcements')->name('announcements.store');
+        Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->can('view announcements')->name('announcements.show');
+        Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->can('edit announcements')->name('announcements.edit');
+        Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->can('edit announcements')->name('announcements.update');
+        Route::patch('/announcements/{announcement}/toggle-status', [AnnouncementController::class, 'toggleStatus'])->can('edit announcements')->name('announcements.toggle-status');
+        Route::patch('/announcements/{announcement}/toggle-pinned', [AnnouncementController::class, 'togglePinned'])->can('edit announcements')->name('announcements.toggle-pinned');
+        Route::patch('/announcements/{announcement}/toggle-featured', [AnnouncementController::class, 'toggleFeatured'])->can('edit announcements')->name('announcements.toggle-featured');
+        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->can('delete announcements')->name('announcements.destroy');
 
     });
 });

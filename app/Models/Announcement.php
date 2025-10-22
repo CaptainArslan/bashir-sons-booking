@@ -35,10 +35,16 @@ class Announcement extends Model
     ];
 
     protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'audience_payload' => 'array',
         'status' => AnnouncementStatusEnum::class,
         'display_type' => AnnouncementDisplayTypeEnum::class,
         'priority' => AnnouncementPriorityEnum::class,
         'audience_type' => AnnouncementAudienceTypeEnum::class,
+        'is_pinned' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
 

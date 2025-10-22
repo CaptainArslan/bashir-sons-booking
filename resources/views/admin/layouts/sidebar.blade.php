@@ -274,7 +274,7 @@
           @endcan
 
 
-          @canany(['view banners', 'view general settings'])
+          @canany(['view banners', 'view announcements', 'view general settings'])
               <li class="menu-label"
                   style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
                   Content Management</li>
@@ -297,6 +297,28 @@
                           <li> <a href="{{ route('admin.banners.create') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Add New Banner</a></li>
+                      @endcan
+                  </ul>
+              </li>
+          @endcan
+
+          @can('view announcements')
+              <li>
+                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-megaphone'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Announcement Management</div>
+                  </a>
+                  <ul style="padding-left: 0;">
+                      <li> <a href="{{ route('admin.announcements.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i>All Announcements</a>
+                      </li>
+                      @can('create announcements')
+                          <li> <a href="{{ route('admin.announcements.create') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Create Announcement</a></li>
                       @endcan
                   </ul>
               </li>
