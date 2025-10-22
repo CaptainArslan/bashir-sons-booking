@@ -4,8 +4,8 @@ namespace App\Enums;
 
 enum DiscountTypeEnum: string
 {
-    case FLAT = 'flat';
-    case PERCENT = 'percent';
+    case FLAT = 'fixed';
+    case PERCENT = 'percentage';
 
     public static function getStatuses(): array
     {

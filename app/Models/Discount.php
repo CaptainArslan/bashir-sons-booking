@@ -3,11 +3,9 @@
 namespace App\Models;
 
 use App\Enums\DiscountTypeEnum;
-use App\Enums\PlatformEnum;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Discount extends Model
 {
@@ -28,85 +26,133 @@ class Discount extends Model
         'start_time',
         'end_time',
         'is_active',
-        'created_by'
+        'created_by',
     ];
 
     protected $casts = [
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
+        'value' => 'decimal:2',
         'is_android' => 'boolean',
         'is_ios' => 'boolean',
         'is_web' => 'boolean',
         'is_counter' => 'boolean',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
         'is_active' => 'boolean',
     ];
 
-    // =============================
-    // Relationships
-    // =============================
+    /**
+     * Get the route this discount applies to.
+     */
     public function route(): BelongsTo
     {
         return $this->belongsTo(Route::class);
     }
 
-    // =============================
-    // Scopes
-    // =============================
+    /**
+     * Get the user who created this discount.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Scope for active discounts.
+     */
     public function scopeActive($query)
     {
-        $now = now();
-
         return $query->where('is_active', true)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
-            });
+                    ->where('starts_at', '<=', now())
+                    ->where('ends_at', '>=', now());
     }
 
-    // =============================
-    // Methods
-    // =============================
-
-    public function isValidForPlatform(string $platform): bool
+    /**
+     * Scope for discounts by platform.
+     */
+    public function scopeForPlatform($query, string $platform)
     {
-        $key = match ($platform) {
-            PlatformEnum::ANDROID->value => 'is_android',
-            PlatformEnum::IOS->value => 'is_ios',
-            PlatformEnum::WEB->value => 'is_web',
-            PlatformEnum::COUNTER->value => 'is_counter',
-            default => null,
+        return match ($platform) {
+            'android' => $query->where('is_android', true),
+            'ios' => $query->where('is_ios', true),
+            'web' => $query->where('is_web', true),
+            'counter' => $query->where('is_counter', true),
+            default => $query,
         };
-
-        return $key ? $this->{$key} : false;
     }
 
-    public function isCurrentlyActive(): bool
+    /**
+     * Check if discount is currently valid.
+     */
+    public function isValid(): bool
     {
         $now = now();
-
-        if (!$this->is_active) return false;
-        if ($this->starts_at && $now->lt($this->starts_at)) return false;
-        if ($this->ends_at && $now->gt($this->ends_at)) return false;
-
-        // Optional time window check
-        if ($this->start_time && $this->end_time) {
-            $nowTime = $now->format('H:i:s');
-            if ($nowTime < $this->start_time || $nowTime > $this->end_time) {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->is_active 
+            && $this->starts_at <= $now 
+            && $this->ends_at >= $now;
     }
 
-    public function applyToFare(float $baseFare): float
+    /**
+     * Check if discount is expired.
+     */
+    public function isExpired(): bool
     {
-        if ($this->discount_type === DiscountTypeEnum::PERCENT->value) {
-            return max(0, $baseFare - ($baseFare * ($this->value / 100)));
-        } else {
-            return max(0, $baseFare - $this->value);
+        return $this->ends_at < now();
+    }
+
+    /**
+     * Check if discount is active for specific platform.
+     */
+    public function isActiveForPlatform(string $platform): bool
+    {
+        return match ($platform) {
+            'android' => $this->is_android,
+            'ios' => $this->is_ios,
+            'web' => $this->is_web,
+            'counter' => $this->is_counter,
+            default => false,
+        };
+    }
+
+    /**
+     * Calculate discount amount for given order amount.
+     */
+    public function calculateDiscount(float $orderAmount): float
+    {
+        if (!$this->isValid()) {
+            return 0;
         }
+
+        return match ($this->discount_type) {
+            'fixed' => min($this->value, $orderAmount),
+            'percentage' => min(($orderAmount * $this->value) / 100, $orderAmount),
+            default => 0,
+        };
+    }
+
+    /**
+     * Get formatted discount value.
+     */
+    public function getFormattedValueAttribute(): string
+    {
+        return match ($this->discount_type) {
+            'fixed' => '₹' . number_format($this->value, 2),
+            'percentage' => $this->value . '%',
+            default => '₹' . number_format($this->value, 2),
+        };
+    }
+
+    /**
+     * Get platforms where discount is active.
+     */
+    public function getActivePlatformsAttribute(): array
+    {
+        $platforms = [];
+        if ($this->is_android) $platforms[] = 'Android';
+        if ($this->is_ios) $platforms[] = 'iOS';
+        if ($this->is_web) $platforms[] = 'Web';
+        if ($this->is_counter) $platforms[] = 'Counter';
+        return $platforms;
     }
 }

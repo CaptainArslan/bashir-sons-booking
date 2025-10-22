@@ -84,6 +84,12 @@ class PermissionSeeder extends Seeder
             'edit announcements',
             'delete announcements',
 
+            // Discount Management
+            'view discounts',
+            'create discounts',
+            'edit discounts',
+            'delete discounts',
+
             // General Settings
             'view general settings',
             'create general settings',

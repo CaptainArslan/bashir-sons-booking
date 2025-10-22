@@ -19,6 +19,7 @@ use Database\Seeders\TimetableStopSeeder;
 use Database\Seeders\BannerSeeder;
 use Database\Seeders\GeneralSettingSeeder;
 use Database\Seeders\AnnouncementSeeder;
+use Database\Seeders\DiscountSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -38,8 +39,10 @@ class DatabaseSeeder extends Seeder
             BusTypeSeeder::class,
             FacilitySeeder::class,
             AnnouncementSeeder::class,
-            // TerminalSeeder::class,
-            // RouteSeeder::class,
+            DiscountSeeder::class,
+            TerminalSeeder::class,
+            RouteSeeder::class,
+            DiscountSeeder::class,
             // TimetableSeeder::class,
             // TimetableStopSeeder::class,
             // FareSeeder::class,

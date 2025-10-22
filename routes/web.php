@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -233,6 +234,17 @@ Route::middleware('auth')->group(function () {
         Route::put('/advance-booking', [AdvanceBookingController::class, 'update'])->can('edit general settings')->name('advance-booking.update');
         Route::patch('/advance-booking/toggle-status', [AdvanceBookingController::class, 'toggleStatus'])->can('edit general settings')->name('advance-booking.toggle-status');
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
+
+        // Discount Routes
+        Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');
+        Route::get('/discounts/data', [DiscountController::class, 'getData'])->can('view discounts')->name('discounts.data');
+        Route::get('/discounts/create', [DiscountController::class, 'create'])->can('create discounts')->name('discounts.create');
+        Route::post('/discounts', [DiscountController::class, 'store'])->can('create discounts')->name('discounts.store');
+        Route::get('/discounts/{discount}', [DiscountController::class, 'show'])->can('view discounts')->name('discounts.show');
+        Route::get('/discounts/{discount}/edit', [DiscountController::class, 'edit'])->can('edit discounts')->name('discounts.edit');
+        Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->can('edit discounts')->name('discounts.update');
+        Route::patch('/discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])->can('edit discounts')->name('discounts.toggle-status');
+        Route::delete('/discounts/{discount}', [DiscountController::class, 'destroy'])->can('delete discounts')->name('discounts.destroy');
 
     });
 });

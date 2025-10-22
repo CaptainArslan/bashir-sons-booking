@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Enums\DiscountTypeEnum;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -17,7 +18,7 @@ return new class extends Migration
             $table->string('title'); // short label like "Weekend Offer"
             $table->foreignId('route_id')->constrained('routes')->cascadeOnDelete();
 
-            $table->enum('discount_type', ['percentage', 'fixed'])->default('percentage');
+            $table->string('discount_type')->default(DiscountTypeEnum::PERCENT->value);
             $table->decimal('value', 10, 2); // discount value
 
             // Platform flags
