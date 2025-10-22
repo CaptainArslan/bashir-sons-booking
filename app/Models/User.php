@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -118,6 +119,49 @@ class User extends Authenticatable
     public function terminal(): BelongsTo
     {
         return $this->belongsTo(Terminal::class);
+    }
+
+    public function announcements(): BelongsToMany
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_user')
+            ->withPivot(['read_at', 'dismissed'])
+            ->withTimestamps();
+    }
+
+    public function unreadAnnouncements(): BelongsToMany
+    {
+        return $this->announcements()
+            ->wherePivotNull('read_at')
+            ->wherePivot('dismissed', false)
+            ->orderByPivot('created_at', 'desc');
+    }
+
+    public function readAnnouncements(): BelongsToMany
+    {
+        return $this->announcements()
+            ->wherePivotNotNull('read_at')
+            ->orderByPivot('read_at', 'desc');
+    }
+
+    public function dismissedAnnouncements(): BelongsToMany
+    {
+        return $this->announcements()
+            ->wherePivot('dismissed', true)
+            ->orderByPivot('created_at', 'desc');
+    }
+
+    public function pinnedAnnouncements(): BelongsToMany
+    {
+        return $this->announcements()
+            ->wherePivot('is_pinned', true)
+            ->orderByPivot('created_at', 'desc');
+    }
+
+    public function featuredAnnouncements(): BelongsToMany
+    {
+        return $this->announcements()
+            ->wherePivot('is_featured', true)
+            ->orderByPivot('created_at', 'desc');
     }
 
     // =============================

@@ -87,10 +87,15 @@
         }
         
         .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 3px;
-            font-weight: 500;
-            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
         }
         
         .status-badge.active {
@@ -311,7 +316,6 @@ function loadTimetables() {
 }
 
 function displayTimetables(timetables) {
-    console.log(timetables);
     let html = '';
     
     timetables.forEach(function(timetable, index) {
@@ -387,11 +391,12 @@ function displayTimetables(timetables) {
                         <thead>
                             <tr>
                                 <th width="5%">#</th>
-                                <th width="30%">Stop Name</th>
-                                <th width="15%">Type</th>
-                                <th width="15%">Arrival Time</th>
-                                <th width="15%">Departure Time</th>
-                                <th width="20%">Actions</th>
+                                <th width="25%">Stop Name</th>
+                                <th width="12%">Type</th>
+                                <th width="12%">Status</th>
+                                <th width="12%">Arrival Time</th>
+                                <th width="12%">Departure Time</th>
+                                <th width="22%">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -408,7 +413,7 @@ function displayTimetables(timetables) {
 
 function generateStopsTableRows(stops) {
     if (!stops || stops.length === 0) {
-        return '<tr><td colspan="6" class="text-center text-muted py-3">No stops data available</td></tr>';
+        return '<tr><td colspan="7" class="text-center text-muted py-3">No stops data available</td></tr>';
     }
     
     let html = '';
@@ -416,6 +421,8 @@ function generateStopsTableRows(stops) {
         const isStartStop = index === 0;
         const isEndStop = index === stops.length - 1;
         const stopType = isStartStop ? 'Starting Point' : (isEndStop ? 'Final Destination' : 'Intermediate Stop');
+        const stopStatus = stop.status || 'active';
+        const statusClass = stopStatus === 'active' ? 'active' : 'inactive';
         
         html += `
             <tr>
@@ -427,6 +434,11 @@ function generateStopsTableRows(stops) {
                 <td>
                     <span class="badge ${isStartStop ? 'bg-success' : (isEndStop ? 'bg-danger' : 'bg-primary')}">
                         ${stopType}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge ${statusClass}">
+                        ${stopStatus}
                     </span>
                 </td>
                 <td class="time-value">
@@ -442,6 +454,11 @@ function generateStopsTableRows(stops) {
                         </button>
                         <button class="btn btn-sm btn-warning" onclick="editStop(${stop.id})" title="Edit Stop">
                             <i class="bx bx-edit"></i>
+                        </button>
+                        <button class="btn btn-sm ${stopStatus === 'active' ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                                onclick="toggleStopStatus(${stop.id}, '${stopStatus}')" 
+                                title="${stopStatus === 'active' ? 'Deactivate Stop' : 'Activate Stop'}">
+                            <i class="bx ${stopStatus === 'active' ? 'bx-pause' : 'bx-play'}"></i>
                         </button>
                     </div>
                 </td>
@@ -532,6 +549,20 @@ function viewStop(stopId) {
 function editStop(stopId) {
     console.log('Edit stop:', stopId);
     // Add your edit stop logic here
+}
+
+function toggleStopStatus(stopId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const action = newStatus === 'active' ? 'activate' : 'deactivate';
+    
+    if (confirm(`Are you sure you want to ${action} this stop?`)) {
+        // Add your stop status toggle logic here
+        console.log(`Toggle stop ${stopId} from ${currentStatus} to ${newStatus}`);
+        
+        // You can add AJAX call here to update stop status
+        // For now, just reload the timetables to show updated status
+        loadTimetables();
+    }
 }
 
 // Add smooth scrolling for better UX
