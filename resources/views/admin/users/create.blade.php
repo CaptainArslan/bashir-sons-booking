@@ -298,7 +298,7 @@
                                     CNIC 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
+                                <input type="number" 
                                        class="form-control @error('cnic') is-invalid @enderror" 
                                        id="cnic"
                                        name="cnic" 
@@ -365,12 +365,8 @@
                             
                             <div class="col-md-12">
                                 <label for="notes" class="form-label">Notes</label>
-                                <input type="text" 
-                                       class="form-control @error('notes') is-invalid @enderror" 
-                                       id="notes"
-                                       name="notes" 
-                                       placeholder="Enter Notes (Optional)" 
-                                       value="{{ old('notes') }}">
+                                <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="3"
+                                    placeholder="Enter Notes (Optional)">{{ old('notes') }}</textarea>
                                 @error('notes')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror

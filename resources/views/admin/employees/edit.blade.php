@@ -212,7 +212,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="phone" class="form-label required-field">Phone Number</label>
-                                <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
+                                <input type="number" class="form-control @error('phone') is-invalid @enderror" id="phone"
                                     name="phone" value="{{ old('phone', $user->profile?->phone) }}" required maxlength="11">
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -220,7 +220,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="cnic" class="form-label required-field">CNIC</label>
-                                <input type="text" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
+                                <input type="number" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
                                     name="cnic" value="{{ old('cnic', $user->profile?->cnic) }}" required maxlength="13">
                                 @error('cnic')
                                     <div class="invalid-feedback">{{ $message }}</div>

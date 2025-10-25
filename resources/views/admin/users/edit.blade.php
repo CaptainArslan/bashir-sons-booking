@@ -256,7 +256,7 @@
                                     Phone Number
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control @error('phone') is-invalid @enderror"
+                                <input type="number" class="form-control @error('phone') is-invalid @enderror"
                                     id="phone" name="phone" placeholder="Enter Phone Number"
                                     value="{{ old('phone', $user->profile->phone ?? '') }}" required>
                                 @error('phone')
@@ -269,7 +269,7 @@
                                     CNIC
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control @error('cnic') is-invalid @enderror"
+                                <input type="number" class="form-control @error('cnic') is-invalid @enderror"
                                     id="cnic" name="cnic" placeholder="Enter CNIC"
                                     value="{{ old('cnic', $user->profile->cnic ?? '') }}" required>
                                 @error('cnic')
@@ -325,9 +325,8 @@
 
                             <div class="col-md-12">
                                 <label for="notes" class="form-label">Notes</label>
-                                <input type="text" class="form-control @error('notes') is-invalid @enderror"
-                                    id="notes" name="notes" placeholder="Enter Reference ID (Optional)"
-                                    value="{{ old('notes', $user->profile->notes ?? '') }}">
+                                <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="3"
+                                    placeholder="Enter Notes (Optional)">{{ old('notes', $user->profile->notes ?? '') }}</textarea>
                                 @error('notes')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
