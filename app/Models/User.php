@@ -3,19 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Support\Facades\Crypt;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Crypt;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
     use HasRoles;
 
     const DEFAULT_ROLES = [
@@ -74,18 +75,13 @@ class User extends Authenticatable
         ];
     }
 
-
-
-
-    // ============================= 
-    // Two Factor Authentication 
+    // =============================
+    // Two Factor Authentication
     // =============================
     public function hasTwoFactorEnabled(): bool
     {
         return ! is_null($this->two_factor_secret);
     }
-
-
 
     // =============================
     // Two Factor Authentication Helper Methods
@@ -119,6 +115,12 @@ class User extends Authenticatable
     public function terminal(): BelongsTo
     {
         return $this->belongsTo(Terminal::class);
+    }
+
+    public function routes(): BelongsToMany
+    {
+        return $this->belongsToMany(Route::class, 'route_user')
+            ->withTimestamps();
     }
 
     public function announcements(): BelongsToMany

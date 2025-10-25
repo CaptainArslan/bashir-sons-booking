@@ -1,0 +1,292 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Edit Employee')
+
+@section('styles')
+    <style>
+        .form-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .form-header p {
+            margin: 0.25rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h6 {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .employee-info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .password-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .password-section h6 {
+            color: #856404;
+            margin-bottom: 0.5rem;
+        }
+
+        .password-section p {
+            color: #856404;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+    </style>
+@endsection
+
+@section('content')
+    <div class="form-container">
+        <!-- Header -->
+        <div class="form-header">
+            <h4><i class="bx bx-user-edit me-2"></i>Edit Employee</h4>
+            <p>Update employee information and terminal assignment</p>
+        </div>
+
+        <form action="{{ route('admin.employees.update', $user->id) }}" method="POST">
+            @csrf
+            @method('PUT')
+
+            <!-- User Information -->
+            <div class="form-section">
+                <h6><i class="bx bx-user me-2"></i>Employee Information</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label required-field">Full Name</label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
+                            name="name" value="{{ old('name', $user->name) }}" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label required-field">Email Address</label>
+                        <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
+                            name="email" value="{{ old('email', $user->email) }}" required>
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Section -->
+            <div class="password-section">
+                <h6><i class="bx bx-lock me-2"></i>Password Update</h6>
+                <p>Leave password fields empty to keep current password</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">New Password</label>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="password"
+                            name="password">
+                        @error('password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">Minimum 8 characters</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="password_confirmation" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror"
+                            id="password_confirmation" name="password_confirmation">
+                        @error('password_confirmation')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Assignment -->
+            <div class="form-section">
+                <h6><i class="bx bx-map me-2"></i>Terminal Assignment</h6>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="terminal_id" class="form-label required-field">Terminal Assignment</label>
+                        <select class="form-select @error('terminal_id') is-invalid @enderror" id="terminal_id"
+                            name="terminal_id" required>
+                            <option value="">Select Terminal</option>
+                            @foreach ($terminals as $terminal)
+                                <option value="{{ $terminal->id }}"
+                                    {{ old('terminal_id', $user->terminal_id) == $terminal->id ? 'selected' : '' }}>
+                                    {{ $terminal->name }} - {{ $terminal->city->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('terminal_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text text-muted">
+                            <i class="bx bx-info-circle me-1"></i>
+                            Every employee must be assigned to a terminal
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Information -->
+            <div class="form-section">
+                <h6><i class="bx bx-user me-2"></i>Profile Information</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label required-field">Phone Number</label>
+                        <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
+                            name="phone" value="{{ old('phone', $user->profile?->phone) }}" required maxlength="11">
+                        @error('phone')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cnic" class="form-label required-field">CNIC</label>
+                        <input type="text" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
+                            name="cnic" value="{{ old('cnic', $user->profile?->cnic) }}" required maxlength="13">
+                        @error('cnic')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="gender" class="form-label required-field">Gender</label>
+                        <select class="form-select @error('gender') is-invalid @enderror" id="gender" name="gender"
+                            required>
+                            <option value="">Select Gender</option>
+                            @foreach ($genders as $gender)
+                                <option value="{{ $gender }}" {{ old('gender', $user->profile?->gender?->value) == $gender ? 'selected' : '' }}>
+                                    {{ ucfirst($gender) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('gender')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="date_of_birth" class="form-label required-field">Date of Birth</label>
+                        <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror"
+                            id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $user->profile?->date_of_birth?->format('Y-m-d')) }}" required>
+                        @error('date_of_birth')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label for="address" class="form-label required-field">Address</label>
+                        <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3"
+                            required>{{ old('address', $user->profile?->address) }}</textarea>
+                        @error('address')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label for="notes" class="form-label">Notes</label>
+                        <input type="text" class="form-control @error('notes') is-invalid @enderror" id="notes"
+                            name="notes" value="{{ old('notes', $user->profile?->notes) }}">
+                        @error('notes')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ route('admin.employees.index') }}" class="btn btn-outline-secondary">
+                    <i class="bx bx-x me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bx bx-save me-1"></i>Update Employee
+                </button>
+            </div>
+        </form>
+    </div>
+@endsection
+
+@section('scripts')
+    <script>
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+
+            // Check password confirmation if password is provided
+            const password = document.getElementById('password');
+            const passwordConfirmation = document.getElementById('password_confirmation');
+            
+            if (password.value && password.value !== passwordConfirmation.value) {
+                passwordConfirmation.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                passwordConfirmation.classList.remove('is-invalid');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                toastr.error('Please fill in all required fields correctly');
+            }
+        });
+
+        // Real-time password confirmation validation
+        document.getElementById('password_confirmation').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const passwordConfirmation = this.value;
+            
+            if (password && password !== passwordConfirmation) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    </script>
+@endsection

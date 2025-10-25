@@ -1,30 +1,30 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RouteController;
-use App\Http\Controllers\Admin\BannerController;
-use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\EnquiryController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\CounterTerminalController;
-use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BusController;
+use App\Http\Controllers\Admin\BusLayoutController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TwoFactorController;
+use Illuminate\Support\Facades\Route;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -38,7 +38,6 @@ Route::get('/bookings', [DashboardController::class, 'bookings'])->name('booking
 Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us');
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
 Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
-
 
 // Frontend Routes
 
@@ -107,6 +106,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/employees/stats', [EmployeeController::class, 'stats'])->can('manage users')->name('employees.stats');
         Route::get('/employees/create', [EmployeeController::class, 'create'])->can('manage users')->name('employees.create');
         Route::post('/employees', [EmployeeController::class, 'store'])->can('manage users')->name('employees.store');
+        Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->can('manage users')->name('employees.edit');
+        Route::put('/employees/{id}', [EmployeeController::class, 'update'])->can('manage users')->name('employees.update');
         Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->can('manage users')->name('employees.destroy');
 
         // Bus Types Routes
@@ -249,4 +250,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

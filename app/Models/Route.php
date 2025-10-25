@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use App\Enums\RouteStatusEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Route extends Model
 {
@@ -30,6 +31,11 @@ class Route extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'route_user')
+            ->withTimestamps();
+    }
 
     public function operator()
     {
@@ -92,74 +98,73 @@ class Route extends Model
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => ucfirst($value),
+            get: fn ($value) => ucfirst($value),
         );
     }
 
     protected function code(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => strtoupper($value),
-            set: fn($value) => strtoupper($value),
+            get: fn ($value) => strtoupper($value),
+            set: fn ($value) => strtoupper($value),
         );
     }
 
     protected function totalTravelTime(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
+            get: fn ($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
         );
     }
 
     protected function totalDistance(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
+            get: fn ($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
         );
     }
 
     protected function totalStops(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->count(),
+            get: fn ($value) => $this->routeStops()->count(),
         );
     }
 
     protected function totalDropoffAllowed(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
+            get: fn ($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
         );
     }
 
     protected function totalPickupAllowed(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
+            get: fn ($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
         );
     }
 
     protected function firstTerminal(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->orderBy('sequence')->first()?->terminal,
+            get: fn ($value) => $this->routeStops()->orderBy('sequence')->first()?->terminal,
         );
     }
 
     protected function lastTerminal(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->routeStops()->orderByDesc('sequence')->first()?->terminal,
+            get: fn ($value) => $this->routeStops()->orderByDesc('sequence')->first()?->terminal,
         );
     }
 
     protected function totalFare(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->getTotalFare(),
+            get: fn ($value) => $this->getTotalFare(),
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
