@@ -10,30 +10,30 @@
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
             border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
         }
         
         .employees-header h4 {
             margin: 0;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
         }
         
         .employees-header p {
-            margin: 0.25rem 0 0 0;
+            margin: 0.15rem 0 0 0;
             opacity: 0.9;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
         }
         
         .add-employee-btn {
             background: linear-gradient(45deg, #007bff, #0056b3);
             border: none;
             border-radius: 20px;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.85rem;
             color: white;
             font-weight: 500;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             transition: all 0.2s ease;
         }
         
@@ -54,20 +54,41 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
         }
 
         .stats-card h6 {
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.9;
         }
 
         .stats-card h4 {
-            margin: 0.25rem 0 0 0;
-            font-size: 1.5rem;
+            margin: 0.2rem 0 0 0;
+            font-size: 1.3rem;
             font-weight: 700;
+        }
+
+        .row.mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+
+        .table-container .p-3 {
+            padding: 0.75rem !important;
+        }
+
+        #employees-table {
+            font-size: 0.85rem;
+        }
+
+        #employees-table th {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        #employees-table td {
+            padding: 0.5rem;
         }
     </style>
 @endsection
@@ -128,6 +149,7 @@
                             <th>Contact Info</th>
                             <th>Personal Info</th>
                             <th>Terminal Assignment</th>
+                            <th>Routes</th>
                             <th>Address Info</th>
                             <th>Status</th>
                             <th>Created Date</th>
@@ -171,6 +193,11 @@
                 {
                     data: 'terminal_info',
                     name: 'terminal.name',
+                    orderable: false,
+                },
+                {
+                    data: 'routes_info',
+                    name: 'routes',
                     orderable: false,
                 },
                 {

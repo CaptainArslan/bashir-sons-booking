@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\GenderEnum;
 use App\Http\Controllers\Controller;
 use App\Models\profile;
+use App\Models\Route;
 use App\Models\Terminal;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class EmployeeController extends Controller
                 ->whereHas('roles', function ($query) use ($employeeRole) {
                     $query->where('role_id', $employeeRole->id);
                 })
-                ->with(['roles:id,name', 'profile', 'terminal.city'])
+                ->with(['roles:id,name', 'profile', 'terminal.city', 'routes'])
                 ->select('id', 'name', 'email', 'terminal_id', 'created_at');
 
             return DataTables::eloquent($employees)
@@ -93,6 +94,22 @@ class EmployeeController extends Controller
 
                     return '<span class="text-danger">No Terminal Assigned</span>';
                 })
+                ->addColumn('routes_info', function ($user) {
+                    if ($user->routes && $user->routes->count() > 0) {
+                        $routesHtml = '<div class="d-flex flex-wrap gap-1">';
+                        foreach ($user->routes->take(3) as $route) {
+                            $routesHtml .= '<span class="badge bg-primary">'.e($route->code).'</span>';
+                        }
+                        if ($user->routes->count() > 3) {
+                            $routesHtml .= '<span class="badge bg-secondary">+'.($user->routes->count() - 3).'</span>';
+                        }
+                        $routesHtml .= '</div>';
+
+                        return $routesHtml;
+                    }
+
+                    return '<span class="text-muted">No routes</span>';
+                })
                 ->addColumn('address_info', function ($user) {
                     $profile = $user->profile;
                     if (! $profile) {
@@ -151,7 +168,7 @@ class EmployeeController extends Controller
                 })
                 ->editColumn('created_at', fn ($user) => $user->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['employee_info', 'contact_info', 'personal_info', 'terminal_info', 'address_info', 'status_info', 'actions'])
+                ->rawColumns(['employee_info', 'contact_info', 'personal_info', 'terminal_info', 'routes_info', 'address_info', 'status_info', 'actions'])
                 ->make(true);
         }
     }
@@ -161,6 +178,7 @@ class EmployeeController extends Controller
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
         $terminals = Terminal::with('city')->get();
+        $routes = Route::with(['routeStops.terminal'])->get();
 
         return view('admin.employees.create', get_defined_vars());
     }
@@ -172,6 +190,8 @@ class EmployeeController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terminal_id' => ['required', 'exists:terminals,id'],
+            'routes' => ['nullable', 'array'],
+            'routes.*' => ['exists:routes,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
             'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic'],
@@ -221,6 +241,11 @@ class EmployeeController extends Controller
             $employeeRole = Role::where('name', 'Employee')->first();
             $user->assignRole($employeeRole);
 
+            // Assign routes if provided
+            if (! empty($validated['routes'])) {
+                $user->routes()->sync($validated['routes']);
+            }
+
             DB::commit();
 
             return redirect()->route('admin.employees.index')
@@ -236,7 +261,7 @@ class EmployeeController extends Controller
 
     public function edit($id)
     {
-        $user = User::with(['profile', 'terminal.city'])->findOrFail($id);
+        $user = User::with(['profile', 'terminal.city', 'routes'])->findOrFail($id);
 
         // Ensure this is an employee
         $employeeRole = Role::where('name', 'Employee')->first();
@@ -246,8 +271,9 @@ class EmployeeController extends Controller
 
         $genders = GenderEnum::getGenders();
         $terminals = Terminal::with('city')->get();
+        $routes = Route::with(['routeStops.terminal'])->get();
 
-        return view('admin.employees.edit', compact('user', 'genders', 'terminals'));
+        return view('admin.employees.edit', compact('user', 'genders', 'terminals', 'routes'));
     }
 
     public function update(Request $request, $id)
@@ -265,6 +291,8 @@ class EmployeeController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'terminal_id' => ['required', 'exists:terminals,id'],
+            'routes' => ['nullable', 'array'],
+            'routes.*' => ['exists:routes,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
             'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic,'.$user->profile?->id],
@@ -326,6 +354,9 @@ class EmployeeController extends Controller
                     'notes' => $validated['notes'],
                 ]);
             }
+
+            // Update routes
+            $user->routes()->sync($validated['routes'] ?? []);
 
             DB::commit();
 
