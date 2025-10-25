@@ -3,87 +3,88 @@
 @section('title', 'Edit User')
 
 @section('styles')
-<style>
-    .user-card {
-        border-left: 4px solid #0d6efd;
-    }
-    
-    .card-header-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.75rem 1rem;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .card-header-info h5 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    
-    .role-group {
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .role-group:hover {
-        background: #e9ecef;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .role-checkbox {
-        cursor: pointer;
-    }
-    
-    .role-label {
-        cursor: pointer;
-        user-select: none;
-        font-weight: 500;
-        font-size: 0.9rem;
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
-    }
-    
-    .user-info-card {
-        border-left: 3px solid #0dcaf0;
-    }
-    
-    .stats-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-    }
-    
-    .section-divider {
-        border-top: 1px solid #dee2e6;
-        margin: 1rem 0;
-    }
-    
-    .form-control, .form-select {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-    }
-    
-    .card-body {
-        padding: 1rem !important;
-    }
-    
-    .row {
-        margin-bottom: 0.5rem;
-    }
-    
-    .mb-4 {
-        margin-bottom: 1rem !important;
-    }
-</style>
+    <style>
+        .user-card {
+            border-left: 4px solid #0d6efd;
+        }
+
+        .card-header-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .card-header-info h5 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .role-group {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .role-group:hover {
+            background: #e9ecef;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .role-checkbox {
+            cursor: pointer;
+        }
+
+        .role-label {
+            cursor: pointer;
+            user-select: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .user-info-card {
+            border-left: 3px solid #0dcaf0;
+        }
+
+        .stats-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+        }
+
+        .section-divider {
+            border-top: 1px solid #dee2e6;
+            margin: 1rem 0;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .card-body {
+            padding: 1rem !important;
+        }
+
+        .row {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem !important;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -93,7 +94,8 @@
         <div class="ps-3">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 p-0">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a>
+                    </li>
                     <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Users</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Edit User</li>
                 </ol>
@@ -108,59 +110,47 @@
                 <div class="card-header-info">
                     <h5><i class="bx bx-edit me-2"></i>Edit User: {{ $user->name }}</h5>
                 </div>
-                
+
                 <form action="{{ route('admin.users.update', $user->id) }}" method="POST" class="row g-3">
                     @csrf
                     @method('PUT')
-                    
+
                     <div class="card-body">
                         <!-- User Information -->
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="name" class="form-label">
-                                    Full Name 
+                                    Full Name
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror" 
-                                       id="name"
-                                       name="name" 
-                                       placeholder="Enter Full Name" 
-                                       value="{{ old('name', $user->name) }}" 
-                                       required
-                                       autofocus>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" placeholder="Enter Full Name"
+                                    value="{{ old('name', $user->name) }}" required autofocus>
                                 @error('name')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="email" class="form-label">
-                                    Email Address 
+                                    Email Address
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="email" 
-                                       class="form-control @error('email') is-invalid @enderror" 
-                                       id="email"
-                                       name="email" 
-                                       placeholder="Enter Email Address" 
-                                       value="{{ old('email', $user->email) }}" 
-                                       required>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                    id="email" name="email" placeholder="Enter Email Address"
+                                    value="{{ old('email', $user->email) }}" required>
                                 @error('email')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <!-- Password Section -->
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="password" class="form-label">New Password</label>
-                                <input type="password" 
-                                       class="form-control @error('password') is-invalid @enderror" 
-                                       id="password"
-                                       name="password" 
-                                       placeholder="Leave blank to keep current password">
+                                <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                    id="password" name="password" placeholder="Leave blank to keep current password">
                                 @error('password')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -169,20 +159,19 @@
                                     Leave blank to keep current password
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                                <input type="password" 
-                                       class="form-control @error('password_confirmation') is-invalid @enderror" 
-                                       id="password_confirmation" 
-                                       name="password_confirmation" 
-                                       placeholder="Confirm new password">
+                                <input type="password"
+                                    class="form-control @error('password_confirmation') is-invalid @enderror"
+                                    id="password_confirmation" name="password_confirmation"
+                                    placeholder="Confirm new password">
                                 @error('password_confirmation')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <!-- User Information Card -->
                         <div class="row">
                             <div class="col-12">
@@ -191,13 +180,13 @@
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>User ID:</strong> 
+                                                    <strong>User ID:</strong>
                                                     <span class="badge bg-secondary">{{ $user->id }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Roles:</strong> 
+                                                    <strong>Current Roles:</strong>
                                                     <span class="badge bg-info stats-badge" id="roleCount">
                                                         {{ $user->roles->count() }}
                                                     </span>
@@ -205,13 +194,13 @@
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Created:</strong> 
+                                                    <strong>Created:</strong>
                                                     {{ $user->created_at->format('M d, Y') }}
                                                 </p>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Last Updated:</strong> 
+                                                    <strong>Last Updated:</strong>
                                                     {{ $user->updated_at->format('M d, Y') }}
                                                 </p>
                                             </div>
@@ -227,19 +216,19 @@
                         <h5 class="mb-3" style="font-size: 1rem;">
                             <i class="bx bx-map me-2"></i>Terminal Assignment
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-12">
                                 <label for="terminal_id" class="form-label">
-                                    Terminal Assignment 
+                                    Terminal Assignment
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('terminal_id') is-invalid @enderror" 
-                                        id="terminal_id" 
-                                        name="terminal_id">
+                                <select class="form-select @error('terminal_id') is-invalid @enderror" id="terminal_id"
+                                    name="terminal_id">
                                     <option value="">Select Terminal</option>
                                     @foreach ($terminals as $terminal)
-                                        <option value="{{ $terminal->id }}" {{ old('terminal_id', $user->terminal_id) == $terminal->id ? 'selected' : '' }}>
+                                        <option value="{{ $terminal->id }}"
+                                            {{ old('terminal_id', $user->terminal_id) == $terminal->id ? 'selected' : '' }}>
                                             {{ $terminal->name }} - {{ $terminal->city->name }}
                                         </option>
                                     @endforeach
@@ -260,54 +249,44 @@
                         <h5 class="mb-3" style="font-size: 1rem;">
                             <i class="bx bx-user me-2"></i>Profile Information
                         </h5>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">
-                                    Phone Number 
+                                    Phone Number
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('phone') is-invalid @enderror" 
-                                       id="phone"
-                                       name="phone" 
-                                       placeholder="Enter Phone Number" 
-                                       value="{{ old('phone', $user->profile->phone ?? '') }}" 
-                                       required>
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror"
+                                    id="phone" name="phone" placeholder="Enter Phone Number"
+                                    value="{{ old('phone', $user->profile->phone ?? '') }}" required>
                                 @error('phone')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="cnic" class="form-label">
-                                    CNIC 
+                                    CNIC
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('cnic') is-invalid @enderror" 
-                                       id="cnic"
-                                       name="cnic" 
-                                       placeholder="Enter CNIC" 
-                                       value="{{ old('cnic', $user->profile->cnic ?? '') }}" 
-                                       required>
+                                <input type="text" class="form-control @error('cnic') is-invalid @enderror"
+                                    id="cnic" name="cnic" placeholder="Enter CNIC"
+                                    value="{{ old('cnic', $user->profile->cnic ?? '') }}" required>
                                 @error('cnic')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="gender" class="form-label">
-                                    Gender 
+                                    Gender
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('gender') is-invalid @enderror" 
-                                        id="gender" 
-                                        name="gender" 
-                                        required>
+                                <select class="form-select @error('gender') is-invalid @enderror" id="gender"
+                                    name="gender" required>
                                     <option value="">Select Gender</option>
                                     @foreach ($genders as $gender)
-                                        <option value="{{ $gender }}" 
+                                        <option value="{{ $gender }}"
                                             {{ old('gender', $user->profile && $user->profile->gender ? $user->profile->gender->value : '') == $gender ? 'selected' : '' }}>
                                             {{ ucfirst($gender) }}
                                         </option>
@@ -317,48 +296,39 @@
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="date_of_birth" class="form-label">
-                                    Date of Birth 
+                                    Date of Birth
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="date" 
-                                       class="form-control @error('date_of_birth') is-invalid @enderror" 
-                                       id="date_of_birth"
-                                       name="date_of_birth" 
-                                       value="{{ old('date_of_birth', $user->profile && $user->profile->date_of_birth ? $user->profile->date_of_birth->format('Y-m-d') : '') }}" 
-                                       required>
+                                <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror"
+                                    id="date_of_birth" name="date_of_birth"
+                                    value="{{ old('date_of_birth', $user->profile && $user->profile->date_of_birth ? $user->profile->date_of_birth->format('Y-m-d') : '') }}"
+                                    required>
                                 @error('date_of_birth')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-12">
                                 <label for="address" class="form-label">
-                                    Address 
+                                    Address
                                     <span class="text-danger">*</span>
                                 </label>
-                                <textarea class="form-control @error('address') is-invalid @enderror" 
-                                          id="address"
-                                          name="address" 
-                                          rows="3" 
-                                          placeholder="Enter Address" 
-                                          required>{{ old('address', $user->profile->address ?? '') }}</textarea>
+                                <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3"
+                                    placeholder="Enter Address" required>{{ old('address', $user->profile->address ?? '') }}</textarea>
                                 @error('address')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="col-md-12">
-                                <label for="reference_id" class="form-label">Reference ID</label>
-                                <input type="text" 
-                                       class="form-control @error('reference_id') is-invalid @enderror" 
-                                       id="reference_id"
-                                       name="reference_id" 
-                                       placeholder="Enter Reference ID (Optional)" 
-                                       value="{{ old('reference_id', $user->profile->reference_id ?? '') }}">
-                                @error('reference_id')
+                                <label for="notes" class="form-label">Notes</label>
+                                <input type="text" class="form-control @error('notes') is-invalid @enderror"
+                                    id="notes" name="notes" placeholder="Enter Reference ID (Optional)"
+                                    value="{{ old('notes', $user->profile->notes ?? '') }}">
+                                @error('notes')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -371,33 +341,33 @@
                             <h5 class="mb-0" style="font-size: 1rem;">
                                 <i class="bx bx-shield-quarter me-2"></i>Manage Roles
                             </h5>
-                            @if($roles->count() > 0)
+                            @if ($roles->count() > 0)
                                 <div class="btn-group">
                                     <button type="button" id="selectAllRolesBtn" class="btn btn-outline-primary btn-sm">
                                         <i class="bx bx-check-double me-1"></i>Select All
                                     </button>
-                                    <button type="button" id="deselectAllRolesBtn" class="btn btn-outline-secondary btn-sm">
+                                    <button type="button" id="deselectAllRolesBtn"
+                                        class="btn btn-outline-secondary btn-sm">
                                         <i class="bx bx-x me-1"></i>Deselect All
                                     </button>
                                 </div>
                             @endif
                         </div>
-                        
-                        @if($roles->count() > 0)
+
+                        @if ($roles->count() > 0)
                             <div class="row">
                                 @foreach ($roles as $role)
                                     <div class="col-md-6 col-lg-4 mb-3">
                                         <div class="role-group">
                                             <div class="form-check">
-                                                <input class="form-check-input role-checkbox" 
-                                                       type="checkbox"
-                                                       name="roles[]" 
-                                                       value="{{ $role->id }}"
-                                                       id="role_{{ $role->id }}"
-                                                       {{ in_array($role->id, old('roles', $user->roles->pluck('id')->toArray())) ? 'checked' : '' }}>
-                                                <label class="form-check-label role-label" 
-                                                       for="role_{{ $role->id }}">
-                                                    <span class="badge bg-{{ $role->name === 'super_admin' ? 'danger' : ($role->name === 'admin' ? 'warning' : ($role->name === 'employee' ? 'info' : 'success')) }} me-2">
+                                                <input class="form-check-input role-checkbox" type="checkbox"
+                                                    name="roles[]" value="{{ $role->id }}"
+                                                    id="role_{{ $role->id }}"
+                                                    {{ in_array($role->id, old('roles', $user->roles->pluck('id')->toArray())) ? 'checked' : '' }}>
+                                                <label class="form-check-label role-label"
+                                                    for="role_{{ $role->id }}">
+                                                    <span
+                                                        class="badge bg-{{ $role->name === 'super_admin' ? 'danger' : ($role->name === 'admin' ? 'warning' : ($role->name === 'employee' ? 'info' : 'success')) }} me-2">
                                                         {{ ucfirst($role->name) }}
                                                     </span>
                                                     {{ ucwords(str_replace('_', ' ', $role->name)) }}
@@ -424,7 +394,7 @@
                                 </a>
                             </div>
                             <div class="d-flex gap-2">
-                                @if($roles->count() > 0)
+                                @if ($roles->count() > 0)
                                     <a href="{{ route('admin.users.index') }}" class="btn btn-secondary px-4">
                                         <i class="bx bx-x me-1"></i>Cancel
                                     </a>
@@ -477,7 +447,7 @@
                     deselectAllBtn.classList.toggle('btn-outline-secondary', deselectAllBtn.disabled);
                     deselectAllBtn.classList.toggle('btn-outline-primary', !deselectAllBtn.disabled);
                 }
-                
+
                 updateRoleCounter();
             }
 
@@ -499,7 +469,7 @@
 
             // ✅ Update button states whenever a checkbox changes
             checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateButtonStates));
-            
+
             // ✅ Add visual feedback on checkbox change
             checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
@@ -518,8 +488,9 @@
             function toggleTerminalSection() {
                 const terminalSection = document.getElementById('terminalSection');
                 const terminalSelect = document.getElementById('terminal_id');
-                const employeeRoleCheckbox = document.querySelector('input[name="roles[]"][value="' + getEmployeeRoleId() + '"]');
-                
+                const employeeRoleCheckbox = document.querySelector('input[name="roles[]"][value="' +
+                    getEmployeeRoleId() + '"]');
+
                 if (employeeRoleCheckbox && employeeRoleCheckbox.checked) {
                     terminalSection.style.display = 'block';
                     terminalSelect.required = true;
@@ -548,11 +519,11 @@
             checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', toggleTerminalSection);
             });
-            
+
             // ✅ Initialize state on page load
             updateButtonStates();
             toggleTerminalSection();
-            
+
             // ✅ Initialize visual state
             checkboxes.forEach(checkbox => {
                 const label = checkbox.closest('.role-group');

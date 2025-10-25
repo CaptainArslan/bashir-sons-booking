@@ -17,7 +17,7 @@ class profile extends Model
         'phone',
         'cnic',
         'gender',
-        'reference_id',
+        'notes',
         'date_of_birth',
         'address',
     ];

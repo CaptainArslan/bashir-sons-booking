@@ -364,14 +364,14 @@
                             </div>
                             
                             <div class="col-md-12">
-                                <label for="reference_id" class="form-label">Reference ID</label>
+                                <label for="notes" class="form-label">Notes</label>
                                 <input type="text" 
-                                       class="form-control @error('reference_id') is-invalid @enderror" 
-                                       id="reference_id"
-                                       name="reference_id" 
-                                       placeholder="Enter Reference ID (Optional)" 
-                                       value="{{ old('reference_id') }}">
-                                @error('reference_id')
+                                       class="form-control @error('notes') is-invalid @enderror" 
+                                       id="notes"
+                                       name="notes" 
+                                       placeholder="Enter Notes (Optional)" 
+                                       value="{{ old('notes') }}">
+                                @error('notes')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>

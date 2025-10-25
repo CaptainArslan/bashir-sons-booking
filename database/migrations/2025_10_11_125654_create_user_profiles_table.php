@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('cnic')->nullable();       // or 'b_form'
             $table->enum('gender', GenderEnum::getGenders())->default(GenderEnum::MALE->value);
-            $table->string('reference_id')->nullable(); // e.g. referral or employee code
+            $table->text('notes')->nullable();
             $table->date('date_of_birth')->nullable();
             // $table->foreignId('terminal_id')->nullable()->constrained('terminals')->nullOnDelete(); // optional
             $table->text('address')->nullable();

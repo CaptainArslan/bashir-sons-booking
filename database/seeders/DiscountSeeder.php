@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Discount;
 use App\Models\Route;
 use App\Models\User;
-use App\Enums\DiscountTypeEnum;
+use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Seeder;
 
 class DiscountSeeder extends Seeder
@@ -33,9 +33,9 @@ class DiscountSeeder extends Seeder
                 'name' => 'Sample Route',
                 'code' => 'SR001',
                 'operator_id' => $adminUser->id,
-                'direction' => 'one_way',
-                'base_currency' => 'INR',
-                'status' => 'active'
+                'direction' => 'forward',
+                'base_currency' => 'PKR',
+                'status' => RouteStatusEnum::ACTIVE->value,
             ]);
             $routes = collect([$sampleRoute]);
         }

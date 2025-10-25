@@ -90,12 +90,12 @@ class UserController extends Controller
                         $addressInfo .= '<div><i class="bx bx-map me-1"></i>' . e(Str::limit($profile->address, 60)) . '</div>';
                     }
                     
-                    // Reference ID
-                    if ($profile->reference_id) {
-                        $addressInfo .= '<div class="mt-1"><i class="bx bx-link me-1"></i>Ref: ' . e($profile->reference_id) . '</div>';
+                    // Notes
+                    if ($profile->notes) {
+                        $addressInfo .= '<div class="mt-1"><i class="bx bx-notepad me-1"></i>' . e($profile->notes) . '</div>';
                     }
                     
-                    return $addressInfo ?: '<span class="text-muted">No address info</span>';
+                    return $addressInfo ?: '<span class="text-muted">No notes</span>';
                 })
                 ->addColumn('roles_info', function ($user) {
                     $roles = $user->roles->pluck('name')->toArray();
@@ -184,7 +184,7 @@ class UserController extends Controller
             'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
-            'reference_id' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ], [
             'name.required' => 'Name is required',
             'email.required' => 'Email is required',
@@ -232,7 +232,7 @@ class UserController extends Controller
                 'gender' => $validated['gender'],
                 'date_of_birth' => $validated['date_of_birth'],
                 'address' => $validated['address'],
-                'reference_id' => $validated['reference_id'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             // Assign roles
@@ -277,7 +277,7 @@ class UserController extends Controller
             'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
-            'reference_id' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ], [
             'name.required' => 'Name is required',
             'email.required' => 'Email is required',
@@ -329,7 +329,7 @@ class UserController extends Controller
                 'gender' => $validated['gender'],
                 'date_of_birth' => $validated['date_of_birth'],
                 'address' => $validated['address'],
-                'reference_id' => $validated['reference_id'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ];
 
             if ($user->profile) {

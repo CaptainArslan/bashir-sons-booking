@@ -42,7 +42,6 @@ class DatabaseSeeder extends Seeder
             DiscountSeeder::class,
             TerminalSeeder::class,
             RouteSeeder::class,
-            DiscountSeeder::class,
             // TimetableSeeder::class,
             // TimetableStopSeeder::class,
             // FareSeeder::class,
