@@ -145,6 +145,11 @@ class User extends Authenticatable
         return $this->hasMany(Expense::class, 'incurred_by');
     }
 
+    public function incurredExpenses()
+    {
+        return $this->hasMany(Expense::class, 'incurred_by');
+    }
+
     public function announcements(): BelongsToMany
     {
         return $this->belongsToMany(Announcement::class, 'announcement_user')
