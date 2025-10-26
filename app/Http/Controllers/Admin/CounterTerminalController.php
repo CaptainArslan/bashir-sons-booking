@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Terminal;
-use App\Models\City;
 use App\Enums\TerminalEnum;
+use App\Http\Controllers\Controller;
+use App\Models\City;
+use App\Models\Terminal;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class CounterTerminalController extends Controller
 {
@@ -27,23 +27,25 @@ class CounterTerminalController extends Controller
             return DataTables::eloquent($terminals)
                 ->addColumn('formatted_name', function ($terminal) {
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-primary">' . e($terminal->name) . '</span>
-                                <small class="text-muted">Code: ' . e($terminal->code) . '</small>
+                                <span class="fw-bold text-primary">'.e($terminal->name).'</span>
+                                <small class="text-muted">Code: '.e($terminal->code).'</small>
                             </div>';
                 })
                 ->addColumn('city_name', function ($terminal) {
-                    return $terminal->city ? '<span class="badge bg-info">' . e($terminal->city->name) . '</span>' : '<span class="text-muted">No City</span>';
+                    return $terminal->city ? '<span class="badge bg-info">'.e($terminal->city->name).'</span>' : '<span class="text-muted">No City</span>';
                 })
                 ->addColumn('contact_info', function ($terminal) {
-                    $phone = $terminal->phone ? '<div><i class="bx bx-phone me-1"></i>' . e($terminal->phone) . '</div>' : '';
-                    $email = $terminal->email ? '<div><i class="bx bx-envelope me-1"></i>' . e($terminal->email) . '</div>' : '';
-                    return $phone . $email;
+                    $phone = $terminal->phone ? '<div><i class="bx bx-phone me-1"></i>'.e($terminal->phone).'</div>' : '';
+                    $email = $terminal->email ? '<div><i class="bx bx-envelope me-1"></i>'.e($terminal->email).'</div>' : '';
+
+                    return $phone.$email;
                 })
                 ->addColumn('status_badge', function ($terminal) {
                     $statusValue = $terminal->status instanceof TerminalEnum ? $terminal->status->value : $terminal->status;
                     $statusName = TerminalEnum::getStatusName($statusValue);
                     $statusColor = TerminalEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('actions', function ($terminal) {
                     $actions = '
@@ -57,7 +59,7 @@ class CounterTerminalController extends Controller
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" 
-                                       href="' . route('admin.counter-terminals.edit', $terminal->id) . '">
+                                       href="'.route('admin.counter-terminals.edit', $terminal->id).'">
                                         <i class="bx bx-edit me-2"></i>Edit Terminal
                                     </a>
                                 </li>
@@ -65,7 +67,7 @@ class CounterTerminalController extends Controller
                                 <li>
                                     <a class="dropdown-item text-danger" 
                                        href="javascript:void(0)" 
-                                       onclick="deleteTerminal(' . $terminal->id . ')">
+                                       onclick="deleteTerminal('.$terminal->id.')">
                                         <i class="bx bx-trash me-2"></i>Delete Terminal
                                     </a>
                                 </li>
@@ -74,7 +76,7 @@ class CounterTerminalController extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($terminal) => $terminal->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($terminal) => $terminal->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
                 ->rawColumns(['formatted_name', 'city_name', 'contact_info', 'status_badge', 'actions'])
                 ->make(true);
@@ -85,6 +87,7 @@ class CounterTerminalController extends Controller
     {
         $cities = City::where('status', 'active')->get();
         $statuses = TerminalEnum::getStatuses();
+
         return view('admin.counter-terminals.create', get_defined_vars());
     }
 
@@ -100,7 +103,7 @@ class CounterTerminalController extends Controller
             'landmark' => 'nullable|string|max:255',
             'latitude' => 'nullable|string|max:50',
             'longitude' => 'nullable|string|max:50',
-            'status' => 'required|string|in:' . implode(',', TerminalEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', TerminalEnum::getStatuses()),
         ], [
             'city_id.required' => 'City is required',
             'city_id.exists' => 'Selected city is invalid',
@@ -128,9 +131,10 @@ class CounterTerminalController extends Controller
                 ->with('success', 'Terminal created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create terminal: ' . $e->getMessage());
+                ->with('error', 'Failed to create terminal: '.$e->getMessage());
         }
     }
 
@@ -139,6 +143,7 @@ class CounterTerminalController extends Controller
         $terminal = Terminal::findOrFail($id);
         $cities = City::where('status', 'active')->get();
         $statuses = TerminalEnum::getStatuses();
+
         return view('admin.counter-terminals.edit', get_defined_vars());
     }
 
@@ -149,14 +154,14 @@ class CounterTerminalController extends Controller
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:terminals,code,' . $terminal->id,
+            'code' => 'required|string|unique:terminals,code,'.$terminal->id,
             'address' => 'required|string|max:500',
             'phone' => 'required|string|max:20|regex:/^[\d\-\+\(\)\s]+$/',
             'email' => 'nullable|email|max:255',
             'landmark' => 'nullable|string|max:255',
             'latitude' => 'nullable|string|max:50',
             'longitude' => 'nullable|string|max:50',
-            'status' => 'required|string|in:' . implode(',', TerminalEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', TerminalEnum::getStatuses()),
         ], [
             'city_id.required' => 'City is required',
             'city_id.exists' => 'Selected city is invalid',
@@ -185,9 +190,10 @@ class CounterTerminalController extends Controller
                 ->with('success', 'Terminal updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update terminal: ' . $e->getMessage());
+                ->with('error', 'Failed to update terminal: '.$e->getMessage());
         }
     }
 
@@ -199,12 +205,12 @@ class CounterTerminalController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Terminal deleted successfully.'
+                'message' => 'Terminal deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting terminal: ' . $e->getMessage()
+                'message' => 'Error deleting terminal: '.$e->getMessage(),
             ], 500);
         }
     }

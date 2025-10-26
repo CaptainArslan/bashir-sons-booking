@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RouteStatusEnum;
 use App\Models\Discount;
 use App\Models\Route;
 use App\Models\User;
-use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Seeder;
 
 class DiscountSeeder extends Seeder
@@ -20,7 +20,7 @@ class DiscountSeeder extends Seeder
             $query->where('name', 'Admin');
         })->first();
 
-        if (!$adminUser) {
+        if (! $adminUser) {
             $adminUser = User::first();
         }
 

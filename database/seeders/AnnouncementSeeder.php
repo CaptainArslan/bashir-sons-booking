@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Announcement;
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementPriorityEnum;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
+use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
+use App\Models\Announcement;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class AnnouncementSeeder extends Seeder
 {
@@ -20,8 +19,8 @@ class AnnouncementSeeder extends Seeder
     {
         // Get admin user for created_by and updated_by
         $adminUser = User::where('email', 'admin@example.com')->first();
-        
-        if (!$adminUser) {
+
+        if (! $adminUser) {
             $adminUser = User::factory()->create([
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',

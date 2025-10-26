@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Banner;
-use App\Enums\BannerTypeEnum;
 use App\Enums\BannerStatusEnum;
-use Illuminate\Http\Request;
+use App\Enums\BannerTypeEnum;
 use App\Http\Controllers\Controller;
-use Yajra\DataTables\Facades\DataTables;
+use App\Models\Banner;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class BannerController extends Controller
 {
@@ -25,25 +25,28 @@ class BannerController extends Controller
 
             return DataTables::eloquent($banners)
                 ->addColumn('formatted_title', function ($banner) {
-                    return '<span class="fw-bold text-primary">' . e($banner->title) . '</span>';
+                    return '<span class="fw-bold text-primary">'.e($banner->title).'</span>';
                 })
                 ->addColumn('type_badge', function ($banner) {
                     $typeValue = $banner->type instanceof BannerTypeEnum ? $banner->type->value : $banner->type;
                     $typeName = BannerTypeEnum::getTypeName($typeValue);
                     $typeColor = BannerTypeEnum::getTypeColor($typeValue);
-                    return '<span class="badge bg-' . $typeColor . '">' . e($typeName) . '</span>';
+
+                    return '<span class="badge bg-'.$typeColor.'">'.e($typeName).'</span>';
                 })
                 ->addColumn('image_preview', function ($banner) {
                     if ($banner->path) {
-                        return '<img src="' . asset('storage/' . $banner->path) . '" alt="' . e($banner->title) . '" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">';
+                        return '<img src="'.asset('storage/'.$banner->path).'" alt="'.e($banner->title).'" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">';
                     }
+
                     return '<span class="text-muted">No image</span>';
                 })
                 ->addColumn('status_badge', function ($banner) {
                     $statusValue = $banner->status instanceof BannerStatusEnum ? $banner->status->value : $banner->status;
                     $statusName = BannerStatusEnum::getStatusName($statusValue);
                     $statusColor = BannerStatusEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('actions', function ($banner) {
                     $actions = '
@@ -57,7 +60,7 @@ class BannerController extends Controller
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" 
-                                       href="' . route('admin.banners.edit', $banner->id) . '">
+                                       href="'.route('admin.banners.edit', $banner->id).'">
                                         <i class="bx bx-edit me-2"></i>Edit Banner
                                     </a>
                                 </li>
@@ -65,7 +68,7 @@ class BannerController extends Controller
                                 <li>
                                     <a class="dropdown-item text-danger" 
                                        href="javascript:void(0)" 
-                                       onclick="deleteBanner(' . $banner->id . ')">
+                                       onclick="deleteBanner('.$banner->id.')">
                                         <i class="bx bx-trash me-2"></i>Delete Banner
                                     </a>
                                 </li>
@@ -74,7 +77,7 @@ class BannerController extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($banner) => $banner->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($banner) => $banner->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['formatted_title', 'type_badge', 'image_preview', 'status_badge', 'actions'])
                 ->make(true);
@@ -85,6 +88,7 @@ class BannerController extends Controller
     {
         $types = BannerTypeEnum::getTypes();
         $statuses = BannerStatusEnum::getStatuses();
+
         return view('admin.banners.create', compact('types', 'statuses'));
     }
 
@@ -92,9 +96,9 @@ class BannerController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'type' => 'required|string|in:' . implode(',', BannerTypeEnum::getTypes()),
+            'type' => 'required|string|in:'.implode(',', BannerTypeEnum::getTypes()),
             'path' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'status' => 'required|string|in:' . implode(',', BannerStatusEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', BannerStatusEnum::getStatuses()),
         ], [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
@@ -130,7 +134,7 @@ class BannerController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create banner: ' . $e->getMessage());
+                ->with('error', 'Failed to create banner: '.$e->getMessage());
         }
     }
 
@@ -139,6 +143,7 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
         $types = BannerTypeEnum::getTypes();
         $statuses = BannerStatusEnum::getStatuses();
+
         return view('admin.banners.edit', compact('banner', 'types', 'statuses'));
     }
 
@@ -146,9 +151,9 @@ class BannerController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'type' => 'required|string|in:' . implode(',', BannerTypeEnum::getTypes()),
+            'type' => 'required|string|in:'.implode(',', BannerTypeEnum::getTypes()),
             'path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'status' => 'required|string|in:' . implode(',', BannerStatusEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', BannerStatusEnum::getStatuses()),
         ], [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
@@ -186,7 +191,7 @@ class BannerController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update banner: ' . $e->getMessage());
+                ->with('error', 'Failed to update banner: '.$e->getMessage());
         }
     }
 
@@ -194,21 +199,22 @@ class BannerController extends Controller
     {
         try {
             $banner = Banner::findOrFail($id);
-            
+
             // Delete associated image file
             if ($banner->path && Storage::disk('public')->exists($banner->path)) {
                 Storage::disk('public')->delete($banner->path);
             }
 
             $banner->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Banner deleted successfully.'
+                'message' => 'Banner deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting banner: ' . $e->getMessage()
+                'message' => 'Error deleting banner: '.$e->getMessage(),
             ], 500);
         }
     }

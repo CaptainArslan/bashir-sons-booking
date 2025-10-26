@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\Discount;
 use App\Models\Route;
 use App\Models\User;
-use App\Enums\DiscountTypeEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -29,7 +28,7 @@ class DiscountFactory extends Factory
         };
 
         return [
-            'title' => $this->faker->words(3, true) . ' Discount',
+            'title' => $this->faker->words(3, true).' Discount',
             'route_id' => Route::factory(),
             'discount_type' => $discountType,
             'value' => $value,

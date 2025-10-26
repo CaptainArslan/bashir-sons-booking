@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Console\Command;
 
 class SetupPermissions extends Command
 {
@@ -39,7 +39,7 @@ class SetupPermissions extends Command
             $this->call('db:seed', ['--class' => RoleSeeder::class]);
 
             $this->info('Permissions and roles setup completed successfully!');
-            
+
             $this->table(
                 ['Role', 'Permissions Count'],
                 [
@@ -52,7 +52,8 @@ class SetupPermissions extends Command
             );
 
         } catch (\Exception $e) {
-            $this->error('Error setting up permissions: ' . $e->getMessage());
+            $this->error('Error setting up permissions: '.$e->getMessage());
+
             return 1;
         }
 

@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enquiry;
-use Illuminate\Http\Request;
-use Illuminate\Contracts\View\View;
-use App\Http\Controllers\Controller;
 use App\Mail\EnquiryFormSubmitted;
-use Illuminate\Support\Facades\Mail;
+use App\Models\Enquiry;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 // use Illuminate\Http\Request;
 
@@ -64,7 +63,7 @@ class DashboardController extends Controller
                 ->send(new EnquiryFormSubmitted($enquiry));
         } catch (\Exception $e) {
             // You can log error if email fails
-            Log::error('Enquiry form email failed: ' . $e->getMessage());
+            Log::error('Enquiry form email failed: '.$e->getMessage());
         }
 
         // Step 4: Redirect with success

@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\BusLayout;
-use Illuminate\Support\Str;
 use App\Enums\BusLayoutEnum;
-use App\Enums\SeatTypeEnum;
-use App\Enums\GenderEnum;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\BusLayout;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
 class BusLayoutController extends Controller
@@ -26,28 +24,31 @@ class BusLayoutController extends Controller
 
             return DataTables::eloquent($busLayouts)
                 ->addColumn('formatted_name', function ($busLayout) {
-                    return '<span class="fw-bold text-primary">' . e($busLayout->name) . '</span>';
+                    return '<span class="fw-bold text-primary">'.e($busLayout->name).'</span>';
                 })
                 ->addColumn('description_preview', function ($busLayout) {
-                    return '<span class="text-muted">' . e(Str::limit($busLayout->description, 100)) . '</span>';
+                    return '<span class="text-muted">'.e(Str::limit($busLayout->description, 100)).'</span>';
                 })
                 ->addColumn('seats_info', function ($busLayout) {
                     $seatsInfo = '<div class="d-flex flex-column">';
-                    $seatsInfo .= '<span class="fw-bold">' . $busLayout->total_seats . ' seats</span>';
-                    $seatsInfo .= '<small class="text-muted">' . $busLayout->total_rows . ' rows × ' . $busLayout->total_columns . ' columns</small>';
+                    $seatsInfo .= '<span class="fw-bold">'.$busLayout->total_seats.' seats</span>';
+                    $seatsInfo .= '<small class="text-muted">'.$busLayout->total_rows.' rows × '.$busLayout->total_columns.' columns</small>';
                     $seatsInfo .= '</div>';
+
                     return $seatsInfo;
                 })
                 ->addColumn('status_badge', function ($busLayout) {
                     $statusValue = $busLayout->status instanceof BusLayoutEnum ? $busLayout->status->value : $busLayout->status;
                     $statusName = BusLayoutEnum::getStatusName($statusValue);
                     $statusColor = BusLayoutEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('buses_count', function ($busLayout) {
                     $count = $busLayout->buses()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
-                    return '<span class="badge ' . $badgeClass . '">' . $count . ' bus' . ($count !== 1 ? 'es' : '') . '</span>';
+
+                    return '<span class="badge '.$badgeClass.'">'.$count.' bus'.($count !== 1 ? 'es' : '').'</span>';
                 })
                 ->addColumn('actions', function ($busLayout) {
                     $actions = '
@@ -61,7 +62,7 @@ class BusLayoutController extends Controller
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" 
-                                       href="' . route('admin.bus-layouts.edit', $busLayout->id) . '">
+                                       href="'.route('admin.bus-layouts.edit', $busLayout->id).'">
                                         <i class="bx bx-edit me-2"></i>Edit Bus Layout
                                     </a>
                                 </li>
@@ -69,7 +70,7 @@ class BusLayoutController extends Controller
                                 <li>
                                     <a class="dropdown-item text-danger" 
                                        href="javascript:void(0)" 
-                                       onclick="deleteBusLayout(' . $busLayout->id . ')">
+                                       onclick="deleteBusLayout('.$busLayout->id.')">
                                         <i class="bx bx-trash me-2"></i>Delete Bus Layout
                                     </a>
                                 </li>
@@ -78,7 +79,7 @@ class BusLayoutController extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($busLayout) => $busLayout->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($busLayout) => $busLayout->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['formatted_name', 'description_preview', 'seats_info', 'status_badge', 'buses_count', 'actions'])
                 ->make(true);
@@ -88,6 +89,7 @@ class BusLayoutController extends Controller
     public function create()
     {
         $statuses = BusLayoutEnum::getStatuses();
+
         return view('admin.bus-layouts.create', compact('statuses'));
     }
 
@@ -98,7 +100,7 @@ class BusLayoutController extends Controller
             'description' => 'nullable|string|max:1000',
             'total_rows' => 'required|integer|min:1|max:50',
             'total_columns' => 'required|integer|min:1|max:10',
-            'status' => 'required|string|in:' . implode(',', BusLayoutEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
         ], [
             'name.required' => 'Bus layout name is required',
             'name.string' => 'Bus layout name must be a string',
@@ -133,7 +135,6 @@ class BusLayoutController extends Controller
             'status' => $validated['status'],
         ]);
 
-
         $busLayout->save();
 
         return redirect()->route('admin.bus-layouts.index')->with('success', 'Bus layout created successfully');
@@ -143,6 +144,7 @@ class BusLayoutController extends Controller
     {
         $busLayout = BusLayout::findOrFail($id);
         $statuses = BusLayoutEnum::getStatuses();
+
         return view('admin.bus-layouts.edit', compact('busLayout', 'statuses'));
     }
 
@@ -151,11 +153,11 @@ class BusLayoutController extends Controller
         $busLayout = BusLayout::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:bus_layouts,name,' . $busLayout->id . '|regex:/^[a-zA-Z0-9\s\-_]+$/',
+            'name' => 'required|string|max:255|unique:bus_layouts,name,'.$busLayout->id.'|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
             'total_rows' => 'required|integer|min:1|max:50',
             'total_columns' => 'required|integer|min:1|max:10',
-            'status' => 'required|string|in:' . implode(',', BusLayoutEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
         ], [
             'name.required' => 'Bus layout name is required',
             'name.string' => 'Bus layout name must be a string',
@@ -188,7 +190,6 @@ class BusLayoutController extends Controller
         $busLayout->total_seats = $totalSeats;
         $busLayout->status = $validated['status'];
 
-
         $busLayout->save();
 
         return redirect()->route('admin.bus-layouts.index')->with('success', 'Bus layout updated successfully');
@@ -203,21 +204,21 @@ class BusLayoutController extends Controller
             if ($busLayout->buses()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete bus layout. It has buses assigned to it.'
+                    'message' => 'Cannot delete bus layout. It has buses assigned to it.',
                 ], 400);
             }
 
             $busLayout->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Bus layout deleted successfully.'
+                'message' => 'Bus layout deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting bus layout: ' . $e->getMessage()
+                'message' => 'Error deleting bus layout: '.$e->getMessage(),
             ], 500);
         }
     }
-
 }

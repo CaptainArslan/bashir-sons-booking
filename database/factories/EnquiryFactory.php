@@ -17,7 +17,7 @@ class EnquiryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->firstName() . ' ' . $this->faker->lastName(),
+            'name' => $this->faker->firstName().' '.$this->faker->lastName(),
             'email' => $this->faker->email(),
             'phone' => $this->faker->phoneNumber(),
             'message' => $this->faker->sentence(),

@@ -90,6 +90,16 @@ class Route extends Model
             ->orderBy('start_time', 'asc');
     }
 
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
+    }
+
+    public function timetables()
+    {
+        return $this->hasMany(Timetable::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors & Mutators

@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\FareStatusEnum;
 use App\Models\Fare;
 use App\Models\Terminal;
-use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
-use Illuminate\Database\Seeder;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class FareSeeder extends Seeder
 {
@@ -17,7 +16,7 @@ class FareSeeder extends Seeder
     {
         $this->faker = Faker::create();
     }
-    
+
     /**
      * Run the database seeds.
      */
@@ -27,6 +26,7 @@ class FareSeeder extends Seeder
 
         if ($terminals->count() < 2) {
             $this->command->warn('Not enough terminals to create fares. Please seed terminals first.');
+
             return;
         }
 
@@ -36,16 +36,16 @@ class FareSeeder extends Seeder
         // Calculate total possible pairs
         $totalPairs = 0;
         $terminalPairs = [];
-        
+
         foreach ($terminals as $fromTerminal) {
             foreach ($terminals as $toTerminal) {
                 if ($fromTerminal->id === $toTerminal->id) {
                     continue; // Skip same terminal
                 }
 
-                $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
+                $pairKey = min($fromTerminal->id, $toTerminal->id).'_'.max($fromTerminal->id, $toTerminal->id);
 
-                if (!in_array($pairKey, $terminalPairs)) {
+                if (! in_array($pairKey, $terminalPairs)) {
                     $terminalPairs[] = $pairKey;
                     $totalPairs++;
                 }
@@ -72,7 +72,7 @@ class FareSeeder extends Seeder
                     continue; // Skip same terminal
                 }
 
-                $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
+                $pairKey = min($fromTerminal->id, $toTerminal->id).'_'.max($fromTerminal->id, $toTerminal->id);
 
                 if (in_array($pairKey, $processedPairs)) {
                     continue; // Skip duplicate pairs
@@ -82,7 +82,7 @@ class FareSeeder extends Seeder
 
                 // Update progress bar status
                 $progressBar->setMessage(
-                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}", 
+                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}",
                     'status'
                 );
 
@@ -122,7 +122,7 @@ class FareSeeder extends Seeder
                     }
 
                 } catch (\Exception $e) {
-                    $this->command->error("Error creating fare for {$fromTerminal->city->name} → {$toTerminal->city->name}: " . $e->getMessage());
+                    $this->command->error("Error creating fare for {$fromTerminal->city->name} → {$toTerminal->city->name}: ".$e->getMessage());
                 }
 
                 // Advance progress bar
@@ -136,7 +136,7 @@ class FareSeeder extends Seeder
         $this->command->newLine(2);
 
         // Display summary
-        $this->command->info("✅ Fare Seeding Summary:");
+        $this->command->info('✅ Fare Seeding Summary:');
         $this->command->table(
             ['Metric', 'Count'],
             [
@@ -150,7 +150,7 @@ class FareSeeder extends Seeder
         if ($faresCreated > 0) {
             $this->command->info("🎉 Successfully created {$faresCreated} new fares!");
         } else {
-            $this->command->warn("⚠️  No new fares were created. All fare pairs already exist.");
+            $this->command->warn('⚠️  No new fares were created. All fare pairs already exist.');
         }
 
         $this->command->newLine();
@@ -187,7 +187,7 @@ class FareSeeder extends Seeder
      */
     private function calculateFinalFare(float $baseFare, string $discountType, float $discountValue): float
     {
-        if (!$discountType || !$discountValue) {
+        if (! $discountType || ! $discountValue) {
             return $baseFare;
         }
 

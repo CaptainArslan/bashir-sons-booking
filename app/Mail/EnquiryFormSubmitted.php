@@ -40,9 +40,9 @@ class EnquiryFormSubmitted extends Mailable
         return new Content(
             markdown: 'emails.enquiry.submitted',
             with: [
-                'name'    => $this->enquiry->name,
-                'email'   => $this->enquiry->email,
-                'phone'   => $this->enquiry->phone,
+                'name' => $this->enquiry->name,
+                'email' => $this->enquiry->email,
+                'phone' => $this->enquiry->phone,
                 'message' => $this->enquiry->message,
                 'service' => $this->enquiry->service,
             ],

@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Facility;
-use App\Models\Bus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 

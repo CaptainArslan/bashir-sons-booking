@@ -15,15 +15,15 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
-        if (!auth()->user()->can($permission)) {
+        if (! auth()->user()->can($permission)) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You do not have permission to perform this action.'
+                    'message' => 'You do not have permission to perform this action.',
                 ], 403);
             }
 

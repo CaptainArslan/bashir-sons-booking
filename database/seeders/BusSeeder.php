@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Bus;
-use App\Models\BusType;
-use App\Models\BusLayout;
-use App\Models\Facility;
 use App\Enums\BusEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Bus;
+use App\Models\BusLayout;
+use App\Models\BusType;
+use App\Models\Facility;
 use Illuminate\Database\Seeder;
 
 class BusSeeder extends Seeder
@@ -127,7 +126,7 @@ class BusSeeder extends Seeder
 
         foreach ($buses as $busData) {
             $bus = Bus::firstOrCreate($busData);
-            
+
             // Attach common facilities to each bus
             if ($facilities->isNotEmpty()) {
                 $randomFacilities = $facilities->random(rand(3, 6));

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Terminal;
-use App\Models\City;
 use App\Enums\TerminalEnum;
+use App\Models\City;
+use App\Models\Terminal;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -28,7 +28,7 @@ class TerminalFactory extends Factory
     {
         // Get random city or create one if none exists
         $city = City::inRandomOrder()->first();
-        if (!$city) {
+        if (! $city) {
             $city = City::factory()->create();
         }
 
@@ -39,7 +39,7 @@ class TerminalFactory extends Factory
             'Downtown Terminal', 'Airport Terminal', 'Railway Terminal', 'Metro Terminal',
             'Intercity Terminal', 'Regional Terminal', 'Commercial Terminal', 'Public Terminal',
             'Union Terminal', 'Liberty Terminal', 'Grand Terminal', 'Plaza Terminal',
-            'Gateway Terminal', 'Crossroads Terminal', 'Junction Terminal', 'Hub Terminal'
+            'Gateway Terminal', 'Crossroads Terminal', 'Junction Terminal', 'Hub Terminal',
         ];
 
         // Generate realistic addresses
@@ -47,7 +47,7 @@ class TerminalFactory extends Factory
             'Main Road, City Center', 'Highway 1, Near Mall', 'Station Road, Downtown',
             'Commercial Area, Block A', 'Business District, Sector 5', 'Transport Hub, Zone 2',
             'Central Plaza, Ground Floor', 'City Square, Terminal Building', 'Main Street, Terminal Complex',
-            'Highway Junction, Terminal Point', 'Industrial Area, Terminal Block', 'Residential Area, Terminal Station'
+            'Highway Junction, Terminal Point', 'Industrial Area, Terminal Block', 'Residential Area, Terminal Station',
         ];
 
         // Generate realistic landmarks
@@ -55,12 +55,12 @@ class TerminalFactory extends Factory
             'Near Shopping Mall', 'Opposite Railway Station', 'Next to Hospital',
             'Behind City Hall', 'Near Airport', 'Close to University', 'Next to Park',
             'Opposite Bank', 'Near Mosque', 'Close to Market', 'Next to School',
-            'Behind Police Station', 'Near Hotel', 'Opposite Restaurant'
+            'Behind Police Station', 'Near Hotel', 'Opposite Restaurant',
         ];
 
         return [
             'city_id' => $city->id,
-            'name' => $this->faker->randomElement($terminalNames) . ' ' . $city->name . ' ' . $this->faker->unique()->numberBetween(1, 999),
+            'name' => $this->faker->randomElement($terminalNames).' '.$city->name.' '.$this->faker->unique()->numberBetween(1, 999),
             'code' => $this->generateTerminalCode($city->name),
             'address' => $this->faker->randomElement($addresses),
             'phone' => $this->faker->phoneNumber(),
@@ -112,7 +112,7 @@ class TerminalFactory extends Factory
             'email' => $this->faker->safeEmail(),
             'landmark' => $this->faker->randomElement([
                 'Near Shopping Mall', 'Opposite Railway Station', 'Next to Hospital',
-                'Behind City Hall', 'Near Airport', 'Close to University'
+                'Behind City Hall', 'Near Airport', 'Close to University',
             ]),
         ]);
     }
@@ -124,10 +124,10 @@ class TerminalFactory extends Factory
     {
         // Get first 3 letters of city name
         $cityCode = strtoupper(substr($cityName, 0, 3));
-        
+
         // Add a random number to make it unique
         $number = $this->faker->unique()->numberBetween(1, 999);
-        
-        return $cityCode . $number;
+
+        return $cityCode.$number;
     }
 }

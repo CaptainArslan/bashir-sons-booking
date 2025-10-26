@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Bus;
-use App\Models\Fare;
-use App\Models\User;
-use App\Models\Route;
-use App\Models\Enquiry;
-use App\Models\Terminal;
-use App\Models\RouteStop;
-use App\Enums\RouteStatusEnum;
 use App\Enums\EnquiryStatusEnum;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Bus;
+use App\Models\Enquiry;
+use App\Models\Fare;
+use App\Models\Route;
+use App\Models\RouteStop;
+use App\Models\Terminal;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -23,10 +22,10 @@ class DashboardController extends Controller
 
         // Get dashboard statistics
         $stats = $this->getDashboardStats();
-        
+
         // Get recent data
         $recentData = $this->getRecentData();
-        
+
         // Get chart data
         $chartData = $this->getChartData();
 
@@ -92,10 +91,10 @@ class DashboardController extends Controller
 
         // Monthly route creation
         $monthlyRoutes = Route::select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('count(*) as count')
-            )
+            DB::raw('YEAR(created_at) as year'),
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('count(*) as count')
+        )
             ->where('created_at', '>=', now()->subMonths(6))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')

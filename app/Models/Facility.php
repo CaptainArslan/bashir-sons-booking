@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\Bus;
 use App\Enums\FacilityEnum;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Facility extends Model
 {
@@ -39,7 +38,7 @@ class Facility extends Model
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => ucfirst($value),
+            get: fn ($value) => ucfirst($value),
         );
     }
 }

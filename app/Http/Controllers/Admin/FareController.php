@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DiscountTypeEnum;
+use App\Enums\FareStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Fare;
 use App\Models\Terminal;
-use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -24,7 +24,7 @@ class FareController extends Controller
             $fares = Fare::query()
                 ->with([
                     'fromTerminal.city',
-                    'toTerminal.city'
+                    'toTerminal.city',
                 ])
                 ->select('id', 'from_terminal_id', 'to_terminal_id', 'base_fare', 'discount_type', 'discount_value', 'final_fare', 'currency', 'status', 'created_at');
 
@@ -37,32 +37,33 @@ class FareController extends Controller
 
                     return '
                     <div class="d-flex flex-column">
-                        <span class="fw-bold">' . e($fromTerminal) . ' → ' . e($toTerminal) . '</span>
-                        <small class="text-muted">' . e($fromCity) . ' → ' . e($toCity) . '</small>
+                        <span class="fw-bold">'.e($fromTerminal).' → '.e($toTerminal).'</span>
+                        <small class="text-muted">'.e($fromCity).' → '.e($toCity).'</small>
                     </div>
                 ';
                 })
 
                 ->addColumn('fare_info', function ($fare) {
-                    $baseFare = $fare->currency . ' ' . number_format($fare->base_fare, 2);
-                    $finalFare = $fare->currency . ' ' . number_format($fare->final_fare, 2);
+                    $baseFare = $fare->currency.' '.number_format($fare->base_fare, 2);
+                    $finalFare = $fare->currency.' '.number_format($fare->final_fare, 2);
 
                     $discountHtml = '';
                     if ($fare->discount_type && $fare->discount_value > 0) {
                         $discount = $fare->discount_type === DiscountTypeEnum::PERCENT->value
-                            ? $fare->discount_value . '%'
-                            : $fare->currency . ' ' . number_format($fare->discount_value, 2);
-                        $discountHtml = '<small class="text-success">Discount: ' . $discount . '</small>';
+                            ? $fare->discount_value.'%'
+                            : $fare->currency.' '.number_format($fare->discount_value, 2);
+                        $discountHtml = '<small class="text-success">Discount: '.$discount.'</small>';
                     }
 
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-success">' . $finalFare . '</span>
-                                <small class="text-muted">Base: ' . $baseFare . '</small>
-                                ' . $discountHtml . '
+                                <span class="fw-bold text-success">'.$finalFare.'</span>
+                                <small class="text-muted">Base: '.$baseFare.'</small>
+                                '.$discountHtml.'
                             </div>';
                 })
                 ->addColumn('status_badge', function ($fare) {
                     $statusValue = $fare->status instanceof FareStatusEnum ? $fare->status->value : $fare->status;
+
                     return FareStatusEnum::getStatusBadge($statusValue);
                 })
                 ->addColumn('actions', function ($fare) {
@@ -79,7 +80,7 @@ class FareController extends Controller
                     if (auth()->user()->can('edit fares')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="' . route('admin.fares.edit', $fare->id) . '">
+                               href="'.route('admin.fares.edit', $fare->id).'">
                                 <i class="bx bx-edit me-2"></i>Edit Fare
                             </a>
                         </li>';
@@ -91,7 +92,7 @@ class FareController extends Controller
                         <li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteFare(' . $fare->id . ')">
+                               onclick="deleteFare('.$fare->id.')">
                                 <i class="bx bx-trash me-2"></i>Delete Fare
                             </a>
                         </li>';
@@ -101,7 +102,7 @@ class FareController extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($fare) => $fare->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($fare) => $fare->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['route_path', 'fare_info', 'status_badge', 'actions'])
                 ->make(true);
@@ -140,7 +141,7 @@ class FareController extends Controller
             'discount_type' => [
                 'nullable',
                 'string',
-                'in:' . implode(',', ['flat', 'percent']),
+                'in:'.implode(',', ['flat', 'percent']),
             ],
             'discount_value' => [
                 'nullable',
@@ -157,7 +158,7 @@ class FareController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', FareStatusEnum::getStatuses()),
+                'in:'.implode(',', FareStatusEnum::getStatuses()),
             ],
         ], [
             'from_terminal_id.required' => 'From terminal is required',
@@ -178,7 +179,7 @@ class FareController extends Controller
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: ' . implode(', ', FareStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: '.implode(', ', FareStatusEnum::getStatuses()),
         ]);
 
         try {
@@ -212,9 +213,10 @@ class FareController extends Controller
                 ->with('success', 'Fare created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create fare: ' . $e->getMessage());
+                ->with('error', 'Failed to create fare: '.$e->getMessage());
         }
     }
 
@@ -253,7 +255,7 @@ class FareController extends Controller
             'discount_type' => [
                 'nullable',
                 'string',
-                'in:' . implode(',', ['flat', 'percent']),
+                'in:'.implode(',', ['flat', 'percent']),
             ],
             'discount_value' => [
                 'nullable',
@@ -270,7 +272,7 @@ class FareController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', FareStatusEnum::getStatuses()),
+                'in:'.implode(',', FareStatusEnum::getStatuses()),
             ],
         ], [
             'from_terminal_id.required' => 'From terminal is required',
@@ -291,7 +293,7 @@ class FareController extends Controller
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: ' . implode(', ', FareStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: '.implode(', ', FareStatusEnum::getStatuses()),
         ]);
 
         try {
@@ -317,14 +319,14 @@ class FareController extends Controller
             );
 
             $validated['final_fare'] = $finalFare;
-            
+
             $data = $validated;
             $data['final_fare'] = $finalFare;
             $data['discount_type'] = $validated['discount_type'] ?? DiscountTypeEnum::FLAT->value;
             $data['discount_value'] = $validated['discount_value'] ?? 0;
             $data['currency'] = $validated['currency'] ?? 'PKR';
             $data['status'] = $validated['status'] ?? FareStatusEnum::ACTIVE->value;
-            
+
             $fare->update($data);
 
             DB::commit();
@@ -333,9 +335,10 @@ class FareController extends Controller
                 ->with('success', 'Fare updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update fare: ' . $e->getMessage());
+                ->with('error', 'Failed to update fare: '.$e->getMessage());
         }
     }
 
@@ -347,19 +350,19 @@ class FareController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Fare deleted successfully.'
+                'message' => 'Fare deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting fare: ' . $e->getMessage()
+                'message' => 'Error deleting fare: '.$e->getMessage(),
             ], 500);
         }
     }
 
     private function calculateFinalFare(float $baseFare, ?string $discountType, ?float $discountValue): float
     {
-        if (!$discountType || !$discountValue || $discountValue <= 0) {
+        if (! $discountType || ! $discountValue || $discountValue <= 0) {
             return $baseFare;
         }
 

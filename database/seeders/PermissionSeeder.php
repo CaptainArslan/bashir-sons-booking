@@ -126,7 +126,6 @@ class PermissionSeeder extends Seeder
             'edit route stop times',
             'delete route stop times',
 
-
             // Enquiry Management
             'view enquiries',
             'delete enquiries',

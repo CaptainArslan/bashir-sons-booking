@@ -42,6 +42,7 @@ enum FareStatusEnum: string
         foreach (self::cases() as $status) {
             $options[$status->value] = $status->getLabel();
         }
+
         return $options;
     }
 
@@ -50,8 +51,8 @@ enum FareStatusEnum: string
         $enum = self::from($status);
         $badgeClass = $enum->getBadgeClass();
         $label = $enum->getLabel();
-        
-        return '<span class="badge ' . $badgeClass . '">' . $label . '</span>';
+
+        return '<span class="badge '.$badgeClass.'">'.$label.'</span>';
     }
 
     public static function getStatusName(string $status): string

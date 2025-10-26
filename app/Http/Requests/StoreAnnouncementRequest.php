@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAnnouncementRequest extends FormRequest
 {

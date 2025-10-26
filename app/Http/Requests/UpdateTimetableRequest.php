@@ -84,25 +84,25 @@ class UpdateTimetableRequest extends FormRequest
         $validator->after(function ($validator) {
             // Custom validation logic
             $stops = $this->input('stops', []);
-            
+
             if (count($stops) > 0) {
                 // Check if first stop has departure time
                 $firstStop = $stops[0];
                 if (empty($firstStop['departure_time'])) {
                     $validator->errors()->add('stops.0.departure_time', 'First stop must have a departure time.');
                 }
-                
+
                 // Check if last stop has arrival time
                 $lastStop = end($stops);
                 if (empty($lastStop['arrival_time'])) {
-                    $validator->errors()->add('stops.' . (count($stops) - 1) . '.arrival_time', 'Last stop must have an arrival time.');
+                    $validator->errors()->add('stops.'.(count($stops) - 1).'.arrival_time', 'Last stop must have an arrival time.');
                 }
-                
+
                 // Check if middle stops have at least one time
                 for ($i = 1; $i < count($stops) - 1; $i++) {
                     $stop = $stops[$i];
                     if (empty($stop['arrival_time']) && empty($stop['departure_time'])) {
-                        $validator->errors()->add('stops.' . $i . '.arrival_time', 'Middle stops must have either arrival or departure time.');
+                        $validator->errors()->add('stops.'.$i.'.arrival_time', 'Middle stops must have either arrival or departure time.');
                     }
                 }
             }

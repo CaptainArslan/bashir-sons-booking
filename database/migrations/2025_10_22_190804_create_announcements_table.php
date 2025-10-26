@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\AnnouncementStatusEnum;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use App\Enums\AnnouncementAudienceTypeEnum;
 use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementPriorityEnum;
-use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementStatusEnum;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {

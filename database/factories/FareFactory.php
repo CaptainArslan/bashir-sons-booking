@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\DiscountTypeEnum;
+use App\Enums\FareStatusEnum;
 use App\Models\Fare;
 use App\Models\Terminal;
-use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -24,10 +24,10 @@ class FareFactory extends Factory
     {
         $baseFare = $this->faker->randomFloat(2, 100, 5000);
         $discountType = $this->faker->randomElement(['flat', 'percent']);
-        $discountValue = $discountType === 'percent' 
-            ? $this->faker->randomFloat(2, 5, 25) 
+        $discountValue = $discountType === 'percent'
+            ? $this->faker->randomFloat(2, 5, 25)
             : $this->faker->randomFloat(2, 50, 500);
-        
+
         $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
 
         return [
@@ -127,7 +127,7 @@ class FareFactory extends Factory
      */
     private function calculateFinalFare(float $baseFare, string $discountType, float $discountValue): float
     {
-        if (!$discountType || !$discountValue) {
+        if (! $discountType || ! $discountValue) {
             return $baseFare;
         }
 

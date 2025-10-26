@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DiscountTypeEnum;
+use App\Enums\RouteStatusEnum;
+use App\Http\Controllers\Controller;
 use App\Models\Fare;
 use App\Models\Route;
 use App\Models\Terminal;
 use Illuminate\Http\Request;
-use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
-use App\Enums\DiscountTypeEnum;
 use Yajra\DataTables\Facades\DataTables;
 
 class RouteController extends Controller
@@ -29,31 +29,35 @@ class RouteController extends Controller
             return DataTables::eloquent($routes)
                 ->addColumn('formatted_name', function ($route) {
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-primary">' . e($route->name) . '</span>
-                                <small class="text-muted">Code: ' . e($route->code) . '</small>
+                                <span class="fw-bold text-primary">'.e($route->name).'</span>
+                                <small class="text-muted">Code: '.e($route->code).'</small>
                             </div>';
                 })
                 ->addColumn('direction_badge', function ($route) {
                     $direction = ucfirst($route->direction);
                     $color = $route->direction === 'forward' ? 'bg-success' : 'bg-warning';
-                    return '<span class="badge ' . $color . '">' . e($direction) . '</span>';
+
+                    return '<span class="badge '.$color.'">'.e($direction).'</span>';
                 })
                 ->addColumn('total_fare', function ($route) {
-                    return '<span class="badge bg-primary">' . $route->total_fare . ' ' . $route->base_currency . '</span>';
+                    return '<span class="badge bg-primary">'.$route->total_fare.' '.$route->base_currency.'</span>';
                 })
                 ->addColumn('return_route', function ($route) {
                     if ($route->is_return_of) {
-                        return $route->returnRoute ? '<span class="badge bg-secondary">' . e($route->returnRoute->name) . '</span>' : '<span class="text-muted">Unknown</span>';
+                        return $route->returnRoute ? '<span class="badge bg-secondary">'.e($route->returnRoute->name).'</span>' : '<span class="text-muted">Unknown</span>';
                     }
+
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('stops_count', function ($route) {
                     $count = $route->routeStops()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
-                    return '<span class="badge ' . $badgeClass . '">' . $count . ' stop' . ($count !== 1 ? 's' : '') . '</span>';
+
+                    return '<span class="badge '.$badgeClass.'">'.$count.' stop'.($count !== 1 ? 's' : '').'</span>';
                 })
                 ->addColumn('status_badge', function ($route) {
                     $statusValue = $route->status instanceof RouteStatusEnum ? $route->status->value : $route->status;
+
                     return RouteStatusEnum::getStatusBadge($statusValue);
                 })
                 ->addColumn('actions', function ($route) {
@@ -70,7 +74,7 @@ class RouteController extends Controller
                     if (auth()->user()->can('edit routes')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="' . route('admin.routes.edit', $route->id) . '">
+                               href="'.route('admin.routes.edit', $route->id).'">
                                 <i class="bx bx-edit me-2"></i>Edit Route
                             </a>
                         </li>';
@@ -80,7 +84,7 @@ class RouteController extends Controller
                     if (auth()->user()->can('view routes')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="' . route('admin.routes.stops', $route->id) . '">
+                               href="'.route('admin.routes.stops', $route->id).'">
                                 <i class="bx bx-map me-2"></i>Manage Stops
                             </a>
                         </li>';
@@ -90,7 +94,7 @@ class RouteController extends Controller
                     if (auth()->user()->can('edit routes')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="' . route('admin.routes.manage-fares', $route->id) . '">
+                               href="'.route('admin.routes.manage-fares', $route->id).'">
                                 <i class="bx bx-money me-2"></i>Manage Fares
                             </a>
                         </li>';
@@ -102,7 +106,7 @@ class RouteController extends Controller
                         <li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteRoute(' . $route->id . ')">
+                               onclick="deleteRoute('.$route->id.')">
                                 <i class="bx bx-trash me-2"></i>Delete Route
                             </a>
                         </li>';
@@ -112,7 +116,7 @@ class RouteController extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($route) => $route->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['formatted_name', 'direction_badge', 'return_route', 'total_fare', 'stops_count', 'status_badge', 'actions'])
                 ->make(true);
@@ -162,7 +166,7 @@ class RouteController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', RouteStatusEnum::getStatuses()),
+                'in:'.implode(',', RouteStatusEnum::getStatuses()),
             ],
             'stops' => [
                 'required',
@@ -217,7 +221,7 @@ class RouteController extends Controller
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: '.implode(', ', RouteStatusEnum::getStatuses()),
             'stops.required' => 'At least 2 stops are required for a route',
             'stops.min' => 'A route must have at least 2 stops',
             'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
@@ -251,12 +255,13 @@ class RouteController extends Controller
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route created successfully with ' . count($stops) . ' stops!');
+                ->with('success', 'Route created successfully with '.count($stops).' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create route: ' . $e->getMessage());
+                ->with('error', 'Failed to create route: '.$e->getMessage());
         }
     }
 
@@ -281,7 +286,7 @@ class RouteController extends Controller
                 'string',
                 'max:20',
                 'min:3',
-                'unique:routes,code,' . $route->id,
+                'unique:routes,code,'.$route->id,
                 'regex:/^[A-Z0-9\-]+$/',
             ],
             'name' => [
@@ -308,7 +313,7 @@ class RouteController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', RouteStatusEnum::getStatuses()),
+                'in:'.implode(',', RouteStatusEnum::getStatuses()),
             ],
             'stops' => [
                 'required',
@@ -363,7 +368,7 @@ class RouteController extends Controller
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: '.implode(', ', RouteStatusEnum::getStatuses()),
             'stops.required' => 'At least 2 stops are required for a route',
             'stops.min' => 'A route must have at least 2 stops',
             'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
@@ -417,12 +422,13 @@ class RouteController extends Controller
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route updated successfully with ' . count($stops) . ' stops!');
+                ->with('success', 'Route updated successfully with '.count($stops).' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update route: ' . $e->getMessage());
+                ->with('error', 'Failed to update route: '.$e->getMessage());
         }
     }
 
@@ -435,19 +441,20 @@ class RouteController extends Controller
             if ($route->routeStops()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete route. It has stops assigned to it.'
+                    'message' => 'Cannot delete route. It has stops assigned to it.',
                 ], 400);
             }
 
             $route->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Route deleted successfully.'
+                'message' => 'Route deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting route: ' . $e->getMessage()
+                'message' => 'Error deleting route: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -515,7 +522,7 @@ class RouteController extends Controller
             if ($route->routeStops()->where('terminal_id', $validated['terminal_id'])->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terminal already exists in this route.'
+                    'message' => 'Terminal already exists in this route.',
                 ], 400);
             }
 
@@ -529,13 +536,14 @@ class RouteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Stop added successfully.'
+                'message' => 'Stop added successfully.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add stop: ' . $e->getMessage()
+                'message' => 'Failed to add stop: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -596,7 +604,7 @@ class RouteController extends Controller
             if ($route->routeStops()->where('terminal_id', $validated['terminal_id'])->where('id', '!=', $stopId)->exists()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terminal already exists in this route.'
+                    'message' => 'Terminal already exists in this route.',
                 ], 400);
             }
 
@@ -610,13 +618,14 @@ class RouteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Stop updated successfully.'
+                'message' => 'Stop updated successfully.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update stop: ' . $e->getMessage()
+                'message' => 'Failed to update stop: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -631,12 +640,12 @@ class RouteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Stop deleted successfully.'
+                'message' => 'Stop deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting stop: ' . $e->getMessage()
+                'message' => 'Error deleting stop: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -661,13 +670,13 @@ class RouteController extends Controller
                         'name' => $stop->terminal->name,
                         'code' => $stop->terminal->code,
                         'city' => $stop->terminal->city->name,
-                    ]
-                ]
+                    ],
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching stop data: ' . $e->getMessage()
+                'message' => 'Error fetching stop data: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -682,7 +691,7 @@ class RouteController extends Controller
 
         // Get existing fares for this route
         $existingFares = Fare::forRoute($id)->get()->keyBy(function ($fare) {
-            return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
+            return $fare->from_terminal_id.'-'.$fare->to_terminal_id;
         });
 
         return view('admin.routes.manage-fares', compact('route', 'stops', 'stopCombinations', 'existingFares'));
@@ -711,7 +720,7 @@ class RouteController extends Controller
                 $baseFare = $fareData['base_fare'];
                 $finalFare = $baseFare;
 
-                if (!empty($fareData['discount_type']) && !empty($fareData['discount_value'])) {
+                if (! empty($fareData['discount_type']) && ! empty($fareData['discount_value'])) {
                     if ($fareData['discount_type'] === 'flat') {
                         $finalFare = max(0, $baseFare - $fareData['discount_value']);
                     } elseif ($fareData['discount_type'] === 'percent') {
@@ -742,8 +751,9 @@ class RouteController extends Controller
                 ->with('success', 'Fares updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
-                ->with('error', 'Error updating fares: ' . $e->getMessage())
+                ->with('error', 'Error updating fares: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -779,6 +789,7 @@ class RouteController extends Controller
         for ($i = $fromIndex; $i < $toIndex; $i++) {
             $distance += $stops[$i]->distance_from_previous ?? 0;
         }
+
         return $distance;
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\DiscountTypeEnum;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Discount extends Model
@@ -64,8 +63,8 @@ class Discount extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
-                    ->where('starts_at', '<=', now())
-                    ->where('ends_at', '>=', now());
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now());
     }
 
     /**
@@ -88,8 +87,9 @@ class Discount extends Model
     public function isValid(): bool
     {
         $now = now();
-        return $this->is_active 
-            && $this->starts_at <= $now 
+
+        return $this->is_active
+            && $this->starts_at <= $now
             && $this->ends_at >= $now;
     }
 
@@ -120,7 +120,7 @@ class Discount extends Model
      */
     public function calculateDiscount(float $orderAmount): float
     {
-        if (!$this->isValid()) {
+        if (! $this->isValid()) {
             return 0;
         }
 
@@ -137,9 +137,9 @@ class Discount extends Model
     public function getFormattedValueAttribute(): string
     {
         return match ($this->discount_type) {
-            'fixed' => '₹' . number_format($this->value, 2),
-            'percentage' => $this->value . '%',
-            default => '₹' . number_format($this->value, 2),
+            'fixed' => '₹'.number_format($this->value, 2),
+            'percentage' => $this->value.'%',
+            default => '₹'.number_format($this->value, 2),
         };
     }
 
@@ -149,10 +149,19 @@ class Discount extends Model
     public function getActivePlatformsAttribute(): array
     {
         $platforms = [];
-        if ($this->is_android) $platforms[] = 'Android';
-        if ($this->is_ios) $platforms[] = 'iOS';
-        if ($this->is_web) $platforms[] = 'Web';
-        if ($this->is_counter) $platforms[] = 'Counter';
+        if ($this->is_android) {
+            $platforms[] = 'Android';
+        }
+        if ($this->is_ios) {
+            $platforms[] = 'iOS';
+        }
+        if ($this->is_web) {
+            $platforms[] = 'Web';
+        }
+        if ($this->is_counter) {
+            $platforms[] = 'Counter';
+        }
+
         return $platforms;
     }
 }

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementPriorityEnum;
-use Illuminate\Database\Eloquent\Model;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
+use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Announcement extends Model
@@ -47,7 +47,6 @@ class Announcement extends Model
         'is_active' => 'boolean',
     ];
 
-
     // =============================
     // Relationships
     // =============================
@@ -57,7 +56,6 @@ class Announcement extends Model
             ->withPivot('read_at', 'dismissed')
             ->withTimestamps();
     }
-
 
     // =============================
     // Scopes
@@ -73,13 +71,14 @@ class Announcement extends Model
             });
     }
 
-
     // =============================
     // Helper Methods
     // =============================
     public function targetsUser(User $user): bool
     {
-        if ($this->audience_type === AnnouncementAudienceTypeEnum::ALL->value) return true;
+        if ($this->audience_type === AnnouncementAudienceTypeEnum::ALL->value) {
+            return true;
+        }
 
         return match ($this->audience_type) {
             AnnouncementAudienceTypeEnum::USERS->value => $this->readers()->where('user_id', $user->id)->exists(),

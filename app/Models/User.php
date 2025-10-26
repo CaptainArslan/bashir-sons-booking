@@ -123,6 +123,28 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function employeeRoutes(): BelongsToMany
+    {
+        return $this->belongsToMany(Route::class, 'employee_routes')
+            ->withPivot(['can_book'])
+            ->withTimestamps();
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function counterBookings()
+    {
+        return $this->hasMany(Booking::class, 'booked_by_user_id');
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'incurred_by');
+    }
+
     public function announcements(): BelongsToMany
     {
         return $this->belongsToMany(Announcement::class, 'announcement_user')

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\BusLayout;
 use App\Enums\BusLayoutEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\BusLayout;
 use Illuminate\Database\Seeder;
 
 class BusLayoutSeeder extends Seeder
@@ -57,9 +56,9 @@ class BusLayoutSeeder extends Seeder
                         [19, 20, null, 21],
                         [22, 23, null, 24],
                         [25, 26, null, 27],
-                        [28, 29, null, 30]
+                        [28, 29, null, 30],
                     ],
-                    'aisle_position' => 2
+                    'aisle_position' => 2,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -78,9 +77,9 @@ class BusLayoutSeeder extends Seeder
                         [13, 14, null, 15],
                         [16, 17, null, 18],
                         [19, 20, null, 21],
-                        [22, 23, null, 24]
+                        [22, 23, null, 24],
                     ],
-                    'aisle_position' => 2
+                    'aisle_position' => 2,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -99,10 +98,10 @@ class BusLayoutSeeder extends Seeder
                         [9, null, 10],
                         [11, null, 12],
                         [13, null, 14],
-                        [15, null, 16]
+                        [15, null, 16],
                     ],
                     'aisle_position' => 1,
-                    'berth_type' => 'horizontal'
+                    'berth_type' => 'horizontal',
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -124,10 +123,10 @@ class BusLayoutSeeder extends Seeder
                         [22, 23, null, 24],
                         [25, 26, null, 27],
                         [28, 29, null, 30],
-                        [31, 32, null, 33]
+                        [31, 32, null, 33],
                     ],
                     'aisle_position' => 2,
-                    'reclining_seats' => true
+                    'reclining_seats' => true,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -148,10 +147,10 @@ class BusLayoutSeeder extends Seeder
                         [25, 26, null, 27, 28],
                         [29, 30, null, 31, 32],
                         [33, 34, null, 35, 36],
-                        [37, 38, null, 39, 40]
+                        [37, 38, null, 39, 40],
                     ],
                     'aisle_position' => 2,
-                    'deck' => 'upper'
+                    'deck' => 'upper',
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -170,10 +169,10 @@ class BusLayoutSeeder extends Seeder
                         [17, 18, null, 19, 20],
                         [21, 22, null, 23, 24],
                         [25, 26, null, 27, 28],
-                        [29, 30, null, 31, 32]
+                        [29, 30, null, 31, 32],
                     ],
                     'aisle_position' => 2,
-                    'deck' => 'lower'
+                    'deck' => 'lower',
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -197,10 +196,10 @@ class BusLayoutSeeder extends Seeder
                         [28, 29, null, 30],
                         [31, 32, null, 33],
                         [34, 35, null, 36],
-                        [37, 38, null, 39]
+                        [37, 38, null, 39],
                     ],
                     'aisle_position' => 2,
-                    'student_seating' => true
+                    'student_seating' => true,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -217,10 +216,10 @@ class BusLayoutSeeder extends Seeder
                         [5, null, 6],
                         [7, null, 8],
                         [9, null, 10],
-                        [11, null, 12]
+                        [11, null, 12],
                     ],
                     'aisle_position' => 1,
-                    'executive_seating' => true
+                    'executive_seating' => true,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],
@@ -243,10 +242,10 @@ class BusLayoutSeeder extends Seeder
                         [41, 42, 43, null, 44, 45],
                         [46, 47, 48, null, 49, 50],
                         [51, 52, 53, null, 54, 55],
-                        [56, 57, 58, null, 59, 60]
+                        [56, 57, 58, null, 59, 60],
                     ],
                     'aisle_position' => 3,
-                    'high_capacity' => true
+                    'high_capacity' => true,
                 ],
                 'status' => BusLayoutEnum::ACTIVE->value,
             ],

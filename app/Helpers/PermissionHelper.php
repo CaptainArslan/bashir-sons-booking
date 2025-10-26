@@ -21,9 +21,9 @@ class PermissionHelper
         // Edit button
         if (isset($permissions['edit']) && $permissions['edit']) {
             $buttons .= '<li>
-                <a class="dropdown-item" href="' . route("admin.{$resource}.edit", $id) . '">
-                    <i class="bx bx-edit me-2"></i>Edit ' . ucfirst(str_replace('-', ' ', $resource))
-                . '</a>
+                <a class="dropdown-item" href="'.route("admin.{$resource}.edit", $id).'">
+                    <i class="bx bx-edit me-2"></i>Edit '.ucfirst(str_replace('-', ' ', $resource))
+                .'</a>
             </li>';
         }
 
@@ -33,9 +33,9 @@ class PermissionHelper
             <li>
                 <a class="dropdown-item text-danger" 
                    href="javascript:void(0)" 
-                   onclick="delete' . ucfirst(str_replace('-', '', $resource)) . '(' . $id . ')">
-                    <i class="bx bx-trash me-2"></i>Delete ' . ucfirst(str_replace('-', ' ', $resource))
-                . '</a>
+                   onclick="delete'.ucfirst(str_replace('-', '', $resource)).'('.$id.')">
+                    <i class="bx bx-trash me-2"></i>Delete '.ucfirst(str_replace('-', ' ', $resource))
+                .'</a>
             </li>';
         }
 

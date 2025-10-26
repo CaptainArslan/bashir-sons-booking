@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\BusType;
 use App\Enums\BusTypeEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\BusType;
 use Illuminate\Database\Seeder;
 
 class BusTypeSeeder extends Seeder
@@ -84,7 +83,7 @@ class BusTypeSeeder extends Seeder
                 'name' => 'Luxury Bus',
                 'description' => 'Premium luxury bus for long-distance travel with entertainment system and reclining seats.',
                 'status' => BusTypeEnum::ACTIVE->value,
-            ]
+            ],
         ];
 
         foreach ($busTypes as $busType) {

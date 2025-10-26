@@ -2,12 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
-use App\Models\Announcement;
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementPriorityEnum;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
+use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
+use App\Models\Announcement;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

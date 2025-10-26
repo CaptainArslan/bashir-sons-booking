@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Terminal;
-use App\Models\City;
 use App\Enums\TerminalEnum;
+use App\Models\City;
+use App\Models\Terminal;
 use Illuminate\Console\Command;
 
 class CreateSampleTerminalsCommand extends Command
@@ -28,12 +28,12 @@ class CreateSampleTerminalsCommand extends Command
      */
     public function handle()
     {
-        $this->info("🚌 Creating 5 sample terminals...");
+        $this->info('🚌 Creating 5 sample terminals...');
         $this->newLine();
 
         // Get or create cities
         $cities = $this->getOrCreateCities();
-        
+
         // Sample terminals data
         $sampleTerminals = [
             [
@@ -84,12 +84,13 @@ class CreateSampleTerminalsCommand extends Command
         ];
 
         $terminals = [];
-        
+
         foreach ($sampleTerminals as $index => $terminalData) {
             $city = $cities->firstWhere('name', $terminalData['city']);
-            
-            if (!$city) {
+
+            if (! $city) {
                 $this->error("❌ City '{$terminalData['city']}' not found!");
+
                 continue;
             }
 
@@ -107,27 +108,29 @@ class CreateSampleTerminalsCommand extends Command
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
-            
-            $this->info("✅ Terminal #" . ($index + 1) . ": {$terminalData['name']} - {$terminalData['city']}");
+
+            $this->info('✅ Terminal #'.($index + 1).": {$terminalData['name']} - {$terminalData['city']}");
         }
 
         if (empty($terminals)) {
             $this->error('❌ No terminals to create!');
+
             return 1;
         }
 
         try {
             Terminal::insert($terminals);
-            
+
             $this->newLine();
-            $this->info("🎉 Successfully created " . count($terminals) . " sample terminals!");
+            $this->info('🎉 Successfully created '.count($terminals).' sample terminals!');
             $this->newLine();
-            
+
             // Show created terminals in a table
             $this->table(
                 ['#', 'Name', 'Code', 'City', 'Address', 'Phone'],
                 collect($terminals)->map(function ($terminal, $index) use ($cities) {
                     $city = $cities->firstWhere('id', $terminal['city_id']);
+
                     return [
                         $index + 1,
                         $terminal['name'],
@@ -138,10 +141,11 @@ class CreateSampleTerminalsCommand extends Command
                     ];
                 })
             );
-            
+
             return 0;
         } catch (\Exception $e) {
-            $this->error("❌ Error creating terminals: " . $e->getMessage());
+            $this->error('❌ Error creating terminals: '.$e->getMessage());
+
             return 1;
         }
     }
@@ -153,21 +157,21 @@ class CreateSampleTerminalsCommand extends Command
     {
         $requiredCities = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Multan'];
         $cities = collect();
-        
+
         foreach ($requiredCities as $cityName) {
             $city = City::where('name', $cityName)->first();
-            
-            if (!$city) {
+
+            if (! $city) {
                 $city = City::create([
                     'name' => $cityName,
                     'status' => 'active',
                 ]);
                 $this->info("📍 Created city: {$cityName}");
             }
-            
+
             $cities->push($city);
         }
-        
+
         return $cities;
     }
 }

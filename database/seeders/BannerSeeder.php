@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Banner;
-use App\Enums\BannerTypeEnum;
 use App\Enums\BannerStatusEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Enums\BannerTypeEnum;
+use App\Models\Banner;
 use Illuminate\Database\Seeder;
 
 class BannerSeeder extends Seeder

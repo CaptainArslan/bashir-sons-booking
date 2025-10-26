@@ -121,9 +121,9 @@ enum RouteStatusEnum: string
         $name = self::getStatusName($status);
         $color = self::getStatusColor($status);
         $icon = self::getStatusIcon($status);
-        
-        return '<span class="badge bg-' . $color . '">
-                    <i class="bx ' . $icon . ' me-1"></i>' . e($name) . '
+
+        return '<span class="badge bg-'.$color.'">
+                    <i class="bx '.$icon.' me-1"></i>'.e($name).'
                 </span>';
     }
 
@@ -136,6 +136,7 @@ enum RouteStatusEnum: string
         foreach (self::getStatuses() as $status) {
             $options[$status] = self::getStatusName($status);
         }
+
         return $options;
     }
 }

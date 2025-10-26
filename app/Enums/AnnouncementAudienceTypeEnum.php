@@ -44,4 +44,4 @@ enum AnnouncementAudienceTypeEnum: string
     {
         return self::getAudienceTypeName($this->value);
     }
-}   
+}

@@ -5,16 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTimetableRequest;
 use App\Http\Requests\UpdateTimetableRequest;
+use App\Models\Route;
 use App\Models\Timetable;
 use App\Models\TimetableStop;
-use App\Models\Route;
-use App\Models\Terminal;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Yajra\DataTables\Facades\DataTables;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class TimetableController extends Controller
 {
@@ -85,9 +82,9 @@ class TimetableController extends Controller
                         return [
                             'id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
-                            'sequence' => $stop->sequence
+                            'sequence' => $stop->sequence,
                         ];
-                    })
+                    }),
                 ];
             });
 
@@ -111,14 +108,14 @@ class TimetableController extends Controller
             // Get the first stop's departure time to set as start_departure_time
             $firstStopData = $timetableData['stops'][0];
             $startDepartureTime = $firstStopData['departure_time'] ?? null;
-            
-            if (!$startDepartureTime) {
+
+            if (! $startDepartureTime) {
                 return redirect()->back()->withErrors(['error' => 'First stop must have a departure time.']);
             }
 
             $timetable = Timetable::create([
                 'route_id' => $route->id,
-                'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
+                'name' => $route->name.' - Trip '.($timetableIndex + 1),
                 'start_departure_time' => $startDepartureTime,
                 'is_active' => true,
             ]);
@@ -127,17 +124,17 @@ class TimetableController extends Controller
             foreach ($timetableData['stops'] as $stopIndex => $stopData) {
                 $isFirstStop = $stopIndex === 0;
                 $isLastStop = $stopIndex === count($timetableData['stops']) - 1;
-                
+
                 $arrivalTime = null;
                 $departureTime = null;
 
                 // Set arrival time (not for first stop)
-                if (!$isFirstStop && isset($stopData['arrival_time'])) {
+                if (! $isFirstStop && isset($stopData['arrival_time'])) {
                     $arrivalTime = $stopData['arrival_time'];
                 }
 
                 // Set departure time (not for last stop)
-                if (!$isLastStop && isset($stopData['departure_time'])) {
+                if (! $isLastStop && isset($stopData['departure_time'])) {
                     $departureTime = $stopData['departure_time'];
                 }
 
@@ -163,7 +160,7 @@ class TimetableController extends Controller
     {
         $timetable->load(['route', 'timetableStops.terminal']);
         $timetableStops = $timetable->timetableStops()->orderBy('sequence')->get();
-        
+
         return view('admin.timetables.show', compact('timetable', 'timetableStops'));
     }
 
@@ -174,7 +171,7 @@ class TimetableController extends Controller
     {
         $timetable->load(['route', 'timetableStops.terminal']);
         $timetableStops = $timetable->timetableStops()->orderBy('sequence')->get();
-        
+
         return view('admin.timetables.edit', compact('timetable', 'timetableStops'));
     }
 
@@ -213,22 +210,23 @@ class TimetableController extends Controller
     {
         try {
             $newStatus = $request->input('status');
-            
-            if (!in_array($newStatus, ['active', 'inactive'])) {
+
+            if (! in_array($newStatus, ['active', 'inactive'])) {
                 return response()->json(['success' => false, 'message' => 'Invalid status provided.'], 400);
             }
-            
+
             $timetable->update([
-                'is_active' => $newStatus === 'active'
+                'is_active' => $newStatus === 'active',
             ]);
-            
+
             $action = $newStatus === 'active' ? 'activated' : 'deactivated';
+
             return response()->json([
-                'success' => true, 
-                'message' => "Timetable {$action} successfully!"
+                'success' => true,
+                'message' => "Timetable {$action} successfully!",
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error updating timetable status: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error updating timetable status: '.$e->getMessage()], 500);
         }
     }
 
@@ -239,9 +237,10 @@ class TimetableController extends Controller
     {
         try {
             $timetable->delete();
+
             return response()->json(['success' => true, 'message' => 'Timetable deleted successfully!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting timetable: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error deleting timetable: '.$e->getMessage()], 500);
         }
     }
 

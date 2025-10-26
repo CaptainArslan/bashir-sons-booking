@@ -17,7 +17,7 @@ enum BannerTypeEnum: string
             self::INNER->value,
             self::SLIDER->value,
             self::PROMOTION->value,
-            self::OTHER->value
+            self::OTHER->value,
         ];
     }
 

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\RouteStop;
 use App\Models\Route;
+use App\Models\RouteStop;
 use App\Models\Terminal;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class RouteStopController extends Controller
 {
@@ -27,38 +27,41 @@ class RouteStopController extends Controller
             return DataTables::eloquent($routeStops)
                 ->addColumn('route_info', function ($routeStop) {
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-primary">' . e($routeStop->route->name) . '</span>
-                                <small class="text-muted">Code: ' . e($routeStop->route->code) . '</small>
+                                <span class="fw-bold text-primary">'.e($routeStop->route->name).'</span>
+                                <small class="text-muted">Code: '.e($routeStop->route->code).'</small>
                             </div>';
                 })
                 ->addColumn('terminal_info', function ($routeStop) {
                     $cityName = $routeStop->terminal->city ? $routeStop->terminal->city->name : 'Unknown';
+
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold">' . e($routeStop->terminal->name) . '</span>
-                                <small class="text-muted">' . e($cityName) . ' (' . e($routeStop->terminal->code) . ')</small>
+                                <span class="fw-bold">'.e($routeStop->terminal->name).'</span>
+                                <small class="text-muted">'.e($cityName).' ('.e($routeStop->terminal->code).')</small>
                             </div>';
                 })
                 ->addColumn('sequence_badge', function ($routeStop) {
-                    return '<span class="badge bg-primary">' . $routeStop->sequence . '</span>';
+                    return '<span class="badge bg-primary">'.$routeStop->sequence.'</span>';
                 })
                 ->addColumn('distance_info', function ($routeStop) {
-                    $distance = $routeStop->distance_from_previous ? $routeStop->distance_from_previous . ' km' : '-';
-                    $time = $routeStop->approx_travel_time ? $routeStop->approx_travel_time . ' min' : '-';
+                    $distance = $routeStop->distance_from_previous ? $routeStop->distance_from_previous.' km' : '-';
+                    $time = $routeStop->approx_travel_time ? $routeStop->approx_travel_time.' min' : '-';
+
                     return '<div class="d-flex flex-column">
-                                <small>' . $distance . '</small>
-                                <small class="text-muted">' . $time . '</small>
+                                <small>'.$distance.'</small>
+                                <small class="text-muted">'.$time.'</small>
                             </div>';
                 })
                 ->addColumn('services', function ($routeStop) {
                     $pickup = $routeStop->is_pickup_allowed ? '<span class="badge bg-success me-1">Pickup</span>' : '';
                     $dropoff = $routeStop->is_dropoff_allowed ? '<span class="badge bg-info">Dropoff</span>' : '';
-                    return $pickup . $dropoff;
+
+                    return $pickup.$dropoff;
                 })
                 ->addColumn('actions', function ($routeStop) {
                     // $actions = '<div class="dropdown">
-                    //     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                    //             type="button" 
-                    //             data-bs-toggle="dropdown" 
+                    //     <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    //             type="button"
+                    //             data-bs-toggle="dropdown"
                     //             aria-expanded="false">
                     //         <i class="bx bx-dots-horizontal-rounded"></i>
                     //     </button>
@@ -67,7 +70,7 @@ class RouteStopController extends Controller
                     // // Edit button
                     // if (auth()->user()->can('edit route stops')) {
                     //     $actions .= '<li>
-                    //         <a class="dropdown-item" 
+                    //         <a class="dropdown-item"
                     //            href="' . route('admin.route-stops.edit', $routeStop->id) . '">
                     //             <i class="bx bx-edit me-2"></i>Edit Stop
                     //         </a>
@@ -78,8 +81,8 @@ class RouteStopController extends Controller
                     // if (auth()->user()->can('delete route stops')) {
                     //     $actions .= '<li><hr class="dropdown-divider"></li>
                     //     <li>
-                    //         <a class="dropdown-item text-danger" 
-                    //            href="javascript:void(0)" 
+                    //         <a class="dropdown-item text-danger"
+                    //            href="javascript:void(0)"
                     //            onclick="deleteRouteStop(' . $routeStop->id . ')">
                     //             <i class="bx bx-trash me-2"></i>Delete Stop
                     //         </a>
@@ -91,7 +94,7 @@ class RouteStopController extends Controller
                     // return $actions;
                     return '';
                 })
-                ->editColumn('created_at', fn($routeStop) => $routeStop->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($routeStop) => $routeStop->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['route_info', 'terminal_info', 'sequence_badge', 'distance_info', 'services', 'actions'])
                 ->make(true);
@@ -206,9 +209,10 @@ class RouteStopController extends Controller
                 ->with('success', 'Route stop updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update route stop: ' . $e->getMessage());
+                ->with('error', 'Failed to update route stop: '.$e->getMessage());
         }
     }
 
@@ -220,12 +224,12 @@ class RouteStopController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Route stop deleted successfully.'
+                'message' => 'Route stop deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting route stop: ' . $e->getMessage()
+                'message' => 'Error deleting route stop: '.$e->getMessage(),
             ], 500);
         }
     }

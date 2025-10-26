@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdvanceBookingController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\BusTypeController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\ExpenseManagementController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\FareController;
 use App\Http\Controllers\Admin\GeneralSettingController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\TripManagementController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -246,6 +249,37 @@ Route::middleware('auth')->group(function () {
         Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->can('edit discounts')->name('discounts.update');
         Route::patch('/discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])->can('edit discounts')->name('discounts.toggle-status');
         Route::delete('/discounts/{discount}', [DiscountController::class, 'destroy'])->can('delete discounts')->name('discounts.destroy');
+
+        // ==================== BOOKING SYSTEM ROUTES ====================
+
+        // Trip Management
+        Route::get('/trips', [TripManagementController::class, 'index'])->name('trips.index');
+        Route::get('/trips/dashboard', [TripManagementController::class, 'dashboard'])->name('trips.dashboard');
+        Route::get('/trips/requires-bus', [TripManagementController::class, 'requiresBusAssignment'])->name('trips.requires-bus');
+        Route::post('/trips/generate', [TripManagementController::class, 'generateTrips'])->name('trips.generate');
+        Route::get('/trips/{id}', [TripManagementController::class, 'show'])->name('trips.show');
+        Route::post('/trips/{id}/assign-bus', [TripManagementController::class, 'assignBus'])->name('trips.assign-bus');
+        Route::post('/trips/{id}/update-status', [TripManagementController::class, 'updateStatus'])->name('trips.update-status');
+        Route::post('/trips/{id}/start', [TripManagementController::class, 'start'])->name('trips.start');
+        Route::post('/trips/{id}/complete', [TripManagementController::class, 'complete'])->name('trips.complete');
+        Route::post('/trips/{id}/cancel', [TripManagementController::class, 'cancel'])->name('trips.cancel');
+
+        // Booking Management
+        Route::get('/bookings', [BookingManagementController::class, 'index'])->name('bookings.index');
+        Route::get('/bookings/reports', [BookingManagementController::class, 'reports'])->name('bookings.reports');
+        Route::get('/bookings/{id}', [BookingManagementController::class, 'show'])->name('bookings.show');
+        Route::post('/bookings/{id}/confirm', [BookingManagementController::class, 'confirm'])->name('bookings.confirm');
+        Route::post('/bookings/{id}/cancel', [BookingManagementController::class, 'cancel'])->name('bookings.cancel');
+
+        // Expense Management
+        Route::get('/expenses', [ExpenseManagementController::class, 'index'])->name('expenses.index');
+        Route::get('/expenses/create', [ExpenseManagementController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseManagementController::class, 'store'])->name('expenses.store');
+        Route::get('/expenses/{id}/edit', [ExpenseManagementController::class, 'edit'])->name('expenses.edit');
+        Route::put('/expenses/{id}', [ExpenseManagementController::class, 'update'])->name('expenses.update');
+        Route::delete('/expenses/{id}', [ExpenseManagementController::class, 'destroy'])->name('expenses.destroy');
+        Route::get('/expenses/reports', [ExpenseManagementController::class, 'reports'])->name('expenses.reports');
+        Route::get('/expenses/trip/{tripId}', [ExpenseManagementController::class, 'tripSummary'])->name('expenses.trip-summary');
 
     });
 });

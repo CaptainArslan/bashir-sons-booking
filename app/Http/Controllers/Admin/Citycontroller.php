@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\City;
 use App\Enums\CityEnum;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\City;
+use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class Citycontroller extends Controller
@@ -23,13 +23,14 @@ class Citycontroller extends Controller
 
             return DataTables::eloquent($cities)
                 ->addColumn('formatted_name', function ($city) {
-                    return '<span class="fw-bold text-primary">' . e($city->name) . '</span>';
+                    return '<span class="fw-bold text-primary">'.e($city->name).'</span>';
                 })
                 ->addColumn('status_badge', function ($city) {
                     $statusValue = $city->status instanceof CityEnum ? $city->status->value : $city->status;
                     $statusName = CityEnum::getStatusName($statusValue);
                     $statusColor = CityEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('actions', function ($city) {
                     $actions = '
@@ -43,7 +44,7 @@ class Citycontroller extends Controller
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" 
-                                       href="' . route('admin.cities.edit', $city->id) . '">
+                                       href="'.route('admin.cities.edit', $city->id).'">
                                         <i class="bx bx-edit me-2"></i>Edit City
                                     </a>
                                 </li>
@@ -51,7 +52,7 @@ class Citycontroller extends Controller
                                 <li>
                                     <a class="dropdown-item text-danger" 
                                        href="javascript:void(0)" 
-                                       onclick="deleteCity(' . $city->id . ')">
+                                       onclick="deleteCity('.$city->id.')">
                                         <i class="bx bx-trash me-2"></i>Delete City
                                     </a>
                                 </li>
@@ -60,7 +61,7 @@ class Citycontroller extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($city) => $city->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($city) => $city->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
                 ->rawColumns(['formatted_name', 'status_badge', 'actions'])
                 ->make(true);
@@ -70,6 +71,7 @@ class Citycontroller extends Controller
     public function create()
     {
         $statuses = CityEnum::getStatuses();
+
         return view('admin.cities.create', get_defined_vars());
     }
 
@@ -77,7 +79,7 @@ class Citycontroller extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
@@ -99,6 +101,7 @@ class Citycontroller extends Controller
     {
         $city = City::findOrFail($id);
         $statuses = CityEnum::getStatuses();
+
         return view('admin.cities.edit', get_defined_vars());
     }
 
@@ -106,7 +109,7 @@ class Citycontroller extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
@@ -129,6 +132,7 @@ class Citycontroller extends Controller
     {
         $city = City::findOrFail($id);
         $city->delete();
+
         return redirect()->route('admin.cities.index')->with('success', 'City deleted successfully');
     }
 }

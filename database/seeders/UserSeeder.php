@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -41,7 +40,6 @@ class UserSeeder extends Seeder
             'two_factor_confirmed_at' => $twoFactorConfirmedAt,
         ]);
         $user->assignRole(['Super Admin']);
-
 
         $user = User::create([
             'name' => 'Employee',

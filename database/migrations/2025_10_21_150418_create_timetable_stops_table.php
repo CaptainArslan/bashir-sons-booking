@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('timetable_id')->constrained('timetables')->cascadeOnDelete();
             $table->foreignId('terminal_id')->constrained('terminals')->cascadeOnDelete();
             $table->unsignedInteger('sequence')->comment('Stop order in the route');
-            
+
             $table->time('arrival_time')->nullable();
             $table->time('departure_time')->nullable();
             $table->boolean('is_active')->default(true)->comment('Enable/disable this stop within the timetable');

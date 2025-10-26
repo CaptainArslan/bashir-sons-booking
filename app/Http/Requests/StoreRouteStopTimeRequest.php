@@ -72,6 +72,7 @@ class StoreRouteStopTimeRequest extends FormRequest
 
             if ($selectedStopTimes->isEmpty()) {
                 $validator->errors()->add('stop_times', 'Please select at least one stop.');
+
                 return;
             }
 
@@ -81,7 +82,7 @@ class StoreRouteStopTimeRequest extends FormRequest
                 $validRouteStopIds = $routeTimetable->route->routeStops->pluck('id');
                 $providedRouteStopIds = $selectedStopTimes->pluck('route_stop_id');
 
-                if (!$providedRouteStopIds->every(fn($id) => $validRouteStopIds->contains($id))) {
+                if (! $providedRouteStopIds->every(fn ($id) => $validRouteStopIds->contains($id))) {
                     $validator->errors()->add('stop_times', 'Invalid route stops provided.');
                 }
             }
