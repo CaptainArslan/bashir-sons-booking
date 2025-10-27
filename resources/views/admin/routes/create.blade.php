@@ -441,22 +441,28 @@
 
             function addStop() {
                 stopCounter++;
+                const isFirstStop = stopCounter === 1;
                 const stopDiv = document.createElement('div');
                 stopDiv.className = 'stop-item border rounded p-3 mb-3';
+                
+                // For first stop, use full width for terminal and sequence
+                const terminalColClass = isFirstStop ? 'col-md-6' : 'col-md-4';
+                const sequenceColClass = isFirstStop ? 'col-md-6' : 'col-md-2';
+                
                 stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
                         <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
                             ${stopCounter}
                         </div>
-                        <span class="stop-header text-primary">Stop ${stopCounter}</span>
+                        <span class="stop-header text-primary">Stop ${stopCounter}${isFirstStop ? ' (Starting Point)' : ''}</span>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>
                 <div class="row g-2">
-                    <div class="col-md-4">
+                    <div class="${terminalColClass}">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                         <select class="form-select select2 terminal-select" name="stops[${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
@@ -467,11 +473,12 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="${sequenceColClass}">
                         <label class="form-label">Sequence</label>
                         <input type="number" class="form-control sequence-input" name="stops[${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
                     </div>
+                    ${!isFirstStop ? `
                     <div class="col-md-2">
                         <label class="form-label">Distance (km)</label>
                         <input type="number" class="form-control distance-input" name="stops[${stopCounter}][distance_from_previous]" 
@@ -482,6 +489,7 @@
                         <input type="number" class="form-control travel-time-input" name="stops[${stopCounter}][approx_travel_time]" 
                                placeholder="0" min="0">
                     </div>
+                    ` : ''}
                 </div>
                 <div class="row g-2 mt-2">
                     <div class="col-md-6">
@@ -526,14 +534,16 @@
                     updateSequences();
                 });
 
-                // Auto-calculate travel time based on distance
-                distanceInput.addEventListener('input', function() {
-                    const distance = parseFloat(this.value);
-                    if (distance && !travelTimeInput.value) {
-                        const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                        travelTimeInput.value = travelTime;
-                    }
-                });
+                // Auto-calculate travel time based on distance (only for non-first stops)
+                if (distanceInput && travelTimeInput) {
+                    distanceInput.addEventListener('input', function() {
+                        const distance = parseFloat(this.value);
+                        if (distance && !travelTimeInput.value) {
+                            const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
+                            travelTimeInput.value = travelTime;
+                        }
+                    });
+                }
             }
 
             function updateSequences() {
