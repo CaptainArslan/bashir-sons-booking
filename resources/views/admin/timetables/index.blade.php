@@ -316,6 +316,7 @@ function loadTimetables() {
 }
 
 function displayTimetables(timetables) {
+    console.log(timetables);
     let html = '';
     
     timetables.forEach(function(timetable, index) {

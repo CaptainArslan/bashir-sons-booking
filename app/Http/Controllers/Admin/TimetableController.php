@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Carbon\Carbon;
 
 class TimetableController extends Controller
 {
@@ -39,8 +40,8 @@ class TimetableController extends Controller
                         return [
                             'id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
-                            'arrival_time' => $stop->arrival_time,
-                            'departure_time' => $stop->departure_time,
+                            'arrival_time' => $stop->arrival_time ? Carbon::parse($stop->arrival_time)->format('h:i A') : null,
+                            'departure_time' => $stop->departure_time ? Carbon::parse($stop->departure_time)->format('h:i A') : null,
                             'sequence' => $stop->sequence,
                         ];
                     });
@@ -54,14 +55,13 @@ class TimetableController extends Controller
                     'route_code' => $timetable->route->code ?? 'N/A',
                     'start_terminal' => $firstStop ? $firstStop['name'] : 'N/A',
                     'end_terminal' => $lastStop ? $lastStop['name'] : 'N/A',
-                    'start_departure_time' => $timetable->start_departure_time,
+                    'start_departure_time' => $timetable->start_departure_time ? Carbon::parse($timetable->start_departure_time)->format('h:i A') : null,
                     'total_stops' => $stops->count(),
                     'status' => $timetable->is_active ? 'active' : 'inactive',
                     'created_at' => $timetable->created_at->format('Y-m-d H:i:s'),
                     'stops' => $stops,
                 ];
             });
-
         return response()->json(['data' => $timetables]);
     }
 
@@ -115,7 +115,7 @@ class TimetableController extends Controller
 
             $timetable = Timetable::create([
                 'route_id' => $route->id,
-                'name' => $route->name.' - Trip '.($timetableIndex + 1),
+                'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
                 'start_departure_time' => $startDepartureTime,
                 'is_active' => true,
             ]);
@@ -226,7 +226,7 @@ class TimetableController extends Controller
                 'message' => "Timetable {$action} successfully!",
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error updating timetable status: '.$e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error updating timetable status: ' . $e->getMessage()], 500);
         }
     }
 
@@ -240,7 +240,7 @@ class TimetableController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Timetable deleted successfully!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting timetable: '.$e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error deleting timetable: ' . $e->getMessage()], 500);
         }
     }
 
