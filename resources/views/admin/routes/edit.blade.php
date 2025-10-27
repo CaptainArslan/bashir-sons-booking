@@ -48,17 +48,6 @@
         font-weight: 500;
     }
     
-    .route-info-card {
-        border-left: 3px solid #0dcaf0;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-    
-    .stats-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-    }
-    
     .info-box {
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
         border-left: 4px solid #2196f3;
@@ -186,56 +175,6 @@
                         <!-- Info Box -->
                         <div class="info-box">
                             <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating route information will affect all timetables and bookings using this route. Please review carefully before saving changes.</p>
-                        </div>
-                        
-                        <!-- Route Information Card -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card route-info-card">
-                                    <div class="card-body" style="padding: 0.75rem;">
-                                        <div class="row">
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Route ID:</strong> 
-                                                    <span class="badge bg-secondary">{{ $route->id }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Code:</strong> 
-                                                    <span class="badge bg-info">{{ $route->code }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Status:</strong> 
-                                                    <span class="badge bg-{{ \App\Enums\RouteStatusEnum::getStatusColor($route->status->value) }} stats-badge">
-                                                        {{ \App\Enums\RouteStatusEnum::getStatusName($route->status->value) }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Direction:</strong> 
-                                                    <span class="badge bg-primary">{{ ucfirst($route->direction) }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Stops:</strong> 
-                                                    <span class="badge bg-success">{{ $route->routeStops->count() }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Created:</strong> 
-                                                    {{ $route->created_at->format('M d, Y') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- Basic Information -->
@@ -400,7 +339,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="row g-2">
-                                                    <div class="{{ $stop->sequence == 1 ? 'col-md-6' : 'col-md-4' }}">
+                                                    <div class="col-md-4">
                                                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                                                         <select class="form-select terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
                                                             <option value="">Select Terminal</option>
@@ -411,7 +350,7 @@
                                                             @endforeach
                                                         </select>
                                                     </div>
-                                                    <div class="{{ $stop->sequence == 1 ? 'col-md-6' : 'col-md-2' }}">
+                                                    <div class="col-md-2">
                                                         <label class="form-label">Sequence</label>
                                                         <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
                                                                value="{{ $stop->sequence }}" min="1" required readonly>
@@ -430,7 +369,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="row g-2 mt-2">
-                                                    <div class="col-md-6">
+                                                    <div class="col-auto">
                                                         <div class="form-check mt-4">
                                                             <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
                                                                    value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
@@ -439,7 +378,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-auto">
                                                         <div class="form-check mt-4">
                                                             <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
                                                                    value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
@@ -603,9 +542,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const stopDiv = document.createElement('div');
             stopDiv.className = 'stop-item border rounded p-3 mb-3';
             
-            // For first stop, use full width for terminal and sequence
-            const terminalColClass = isFirstStop ? 'col-md-6' : 'col-md-4';
-            const sequenceColClass = isFirstStop ? 'col-md-6' : 'col-md-2';
+            const terminalColClass = 'col-md-4';
+            const sequenceColClass = 'col-md-2';
             
             stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -650,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ` : ''}
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-6">
+                    <div class="col-auto">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
                                    value="1" id="pickup_new_${stopCounter}" checked>
@@ -659,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-auto">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
                                    value="1" id="dropoff_new_${stopCounter}" checked>

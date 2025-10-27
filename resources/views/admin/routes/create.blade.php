@@ -238,8 +238,8 @@
 
                             <div class="col-md-6">
                                 <label for="is_return_of" class="form-label">Return Route Of</label>
-                                <select class="form-select select2 @error('is_return_of') is-invalid @enderror" id="is_return_of"
-                                    name="is_return_of">
+                                <select class="form-select select2 @error('is_return_of') is-invalid @enderror"
+                                    id="is_return_of" name="is_return_of">
                                     <option value="">Select Return Route (Optional)</option>
                                     @foreach ($routes as $route)
                                         <option value="{{ $route->id }}"
@@ -261,8 +261,8 @@
                                     Base Currency
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select select2 @error('base_currency') is-invalid @enderror" id="base_currency"
-                                    name="base_currency" required>
+                                <select class="form-select select2 @error('base_currency') is-invalid @enderror"
+                                    id="base_currency" name="base_currency" required>
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
                                         <option value="{{ $currency }}"
@@ -444,11 +444,10 @@
                 const isFirstStop = stopCounter === 1;
                 const stopDiv = document.createElement('div');
                 stopDiv.className = 'stop-item border rounded p-3 mb-3';
-                
-                // For first stop, use full width for terminal and sequence
-                const terminalColClass = isFirstStop ? 'col-md-6' : 'col-md-4';
-                const sequenceColClass = isFirstStop ? 'col-md-6' : 'col-md-2';
-                
+
+                const terminalColClass = 'col-md-4';
+                const sequenceColClass = 'col-md-2';
+
                 stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
@@ -479,20 +478,20 @@
                                value="${stopCounter}" min="1" required readonly>
                     </div>
                     ${!isFirstStop ? `
-                    <div class="col-md-2">
-                        <label class="form-label">Distance (km)</label>
-                        <input type="number" class="form-control distance-input" name="stops[${stopCounter}][distance_from_previous]" 
-                               placeholder="0.0" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Travel Time (min)</label>
-                        <input type="number" class="form-control travel-time-input" name="stops[${stopCounter}][approx_travel_time]" 
-                               placeholder="0" min="0">
-                    </div>
-                    ` : ''}
+                        <div class="col-md-2">
+                            <label class="form-label">Distance (km)</label>
+                            <input type="number" class="form-control distance-input" name="stops[${stopCounter}][distance_from_previous]" 
+                                   placeholder="0.0" step="0.1" min="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Travel Time (min)</label>
+                            <input type="number" class="form-control travel-time-input" name="stops[${stopCounter}][approx_travel_time]" 
+                                   placeholder="0" min="0">
+                        </div>
+                        ` : ''}
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-6">
+                    <div class="col-auto">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_pickup_allowed]" 
                                    value="1" id="pickup_${stopCounter}" checked>
@@ -501,7 +500,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-auto">
                         <div class="form-check mt-4">
                             <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_dropoff_allowed]" 
                                    value="1" id="dropoff_${stopCounter}" checked>
