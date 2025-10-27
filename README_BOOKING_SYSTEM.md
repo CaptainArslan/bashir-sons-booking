@@ -39,9 +39,9 @@ The Booking System allows employees to create bookings for customers through a c
 - Prevents double-booking of seats
 
 ### Trip Management
-- Auto-creates trips with status "planned" when no trip exists
+- Auto-creates trips with status "pending" when no trip exists
 - Bus assignment happens later by admin
-- Trip status: `planned` → `active` → `completed`
+- Trip status: `pending` → `scheduled` → `boarding` → `ongoing` → `completed`
 
 ---
 
@@ -104,7 +104,7 @@ The Booking System allows employees to create bookings for customers through a c
 - departure_date (date)
 - departure_datetime (timestamp)
 - estimated_arrival_datetime (timestamp)
-- status (enum: planned, scheduled, in_progress, completed, cancelled)
+- status (enum: pending, scheduled, boarding, ongoing, completed, cancelled, delayed)
 - notes (text, nullable)
 - created_at, updated_at, deleted_at
 ```
@@ -333,7 +333,7 @@ $trip = Trip::firstOrCreate(
     [
         'departure_datetime' => $departureDateTime,
         'estimated_arrival_datetime' => date('Y-m-d H:i:s', strtotime($departureDateTime.' +4 hours')),
-        'status' => 'planned',
+        'status' => 'pending',
         'bus_id' => null, // Bus will be assigned later by admin
     ]
 );

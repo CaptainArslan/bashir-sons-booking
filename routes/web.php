@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdvanceBookingController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\Admin\BusLayoutController;
@@ -273,11 +274,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{id}/cancel', [BookingManagementController::class, 'cancel'])->name('bookings.cancel');
 
         // Booking Creation (New Flow)
-        Route::get('/bookings/create/search', [\App\Http\Controllers\Admin\BookingController::class, 'create'])->name('bookings.create');
-        Route::post('/bookings/search', [\App\Http\Controllers\Admin\BookingController::class, 'search'])->name('bookings.search');
-        Route::post('/bookings/select-seats', [\App\Http\Controllers\Admin\BookingController::class, 'selectSeats'])->name('bookings.select-seats');
-        Route::post('/bookings/store', [\App\Http\Controllers\Admin\BookingController::class, 'store'])->name('bookings.store');
-        Route::post('/bookings/{id}/cancel-booking', [\App\Http\Controllers\Admin\BookingController::class, 'cancel'])->name('bookings.cancel-booking');
+        Route::get('/bookings/create/search', [AdminBookingController::class, 'create'])->name('bookings.create');
+        Route::post('/bookings/get-available-times', [AdminBookingController::class, 'getAvailableTimes'])->name('bookings.get-available-times');
+        Route::post('/bookings/search', [AdminBookingController::class, 'search'])->name('bookings.search');
+        Route::post('/bookings/select-seats', [AdminBookingController::class, 'selectSeats'])->name('bookings.select-seats');
+        Route::post('/bookings/lock-seat', [AdminBookingController::class, 'lockSeat'])->name('bookings.lock-seat');
+        Route::post('/bookings/unlock-seat', [AdminBookingController::class, 'unlockSeat'])->name('bookings.unlock-seat');
+        Route::post('/bookings/check-seats', [AdminBookingController::class, 'checkSeats'])->name('bookings.check-seats');
+        Route::post('/bookings/store', [AdminBookingController::class, 'store'])->name('bookings.store');
+        Route::post('/bookings/{id}/cancel-booking', [AdminBookingController::class, 'cancel'])->name('bookings.cancel-booking');
 
         // Expense Management
         Route::get('/expenses', [ExpenseManagementController::class, 'index'])->name('expenses.index');
@@ -288,7 +293,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/expenses/{id}', [ExpenseManagementController::class, 'destroy'])->name('expenses.destroy');
         Route::get('/expenses/reports', [ExpenseManagementController::class, 'reports'])->name('expenses.reports');
         Route::get('/expenses/trip/{tripId}', [ExpenseManagementController::class, 'tripSummary'])->name('expenses.trip-summary');
-
     });
 });
 

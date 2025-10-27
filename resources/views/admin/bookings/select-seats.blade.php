@@ -68,9 +68,28 @@
             color: white;
         }
 
+        .seat.selected-male {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+
+        .seat.selected-female {
+            background: #ec4899;
+            border-color: #ec4899;
+            color: white;
+        }
+
         .seat.booked {
             background: #dc3545;
             border-color: #dc3545;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .seat.locked {
+            background: #ffc107;
+            border-color: #ffc107;
             color: white;
             cursor: not-allowed;
         }
@@ -274,7 +293,15 @@
                             </div>
                             <div class="legend-item">
                                 <div class="legend-box" style="background: #0d6efd; border-color: #0d6efd;"></div>
-                                <span>Selected</span>
+                                <span>Male</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-box" style="background: #ec4899; border-color: #ec4899;"></div>
+                                <span>Female</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-box" style="background: #ffc107; border-color: #ffc107;"></div>
+                                <span>Locked</span>
                             </div>
                             <div class="legend-item">
                                 <div class="legend-box" style="background: #dc3545; border-color: #dc3545;"></div>
@@ -340,23 +367,192 @@
         $(document).ready(function() {
             let selectedSeats = [];
             const farePerSeat = {{ $fare }};
+            const tripId = {{ $trip->id }};
+            const fromStopId = {{ $fromStop->id }};
+            const toStopId = {{ $toStop->id }};
+            let pollingInterval;
+
+            // Start polling for seat updates
+            startSeatPolling();
 
             // Seat click handler
-            $('.seat.available').on('click', function() {
+            $(document).on('click', '.seat.available', function() {
                 const seatNumber = $(this).data('seat');
+                const $seat = $(this);
 
-                if ($(this).hasClass('selected')) {
+                if ($(this).hasClass('selected-male') || $(this).hasClass('selected-female')) {
                     // Deselect seat
-                    $(this).removeClass('selected');
-                    selectedSeats = selectedSeats.filter(s => s !== seatNumber);
+                    deselectSeat(seatNumber, $seat);
                 } else {
-                    // Select seat
-                    $(this).addClass('selected');
-                    selectedSeats.push(seatNumber);
+                    // Ask for gender before selecting
+                    Swal.fire({
+                        title: 'Select Passenger Gender',
+                        text: `Seat ${seatNumber}`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="bx bx-male"></i> Male',
+                        cancelButtonText: '<i class="bx bx-female"></i> Female',
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#ec4899',
+                        showCloseButton: true,
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Male selected
+                            selectSeat(seatNumber, 'male', $seat);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            // Female selected
+                            selectSeat(seatNumber, 'female', $seat);
+                        }
+                    });
                 }
-
-                updateSelection();
             });
+
+            function selectSeat(seatNumber, gender, $seat) {
+                // Immediately lock the seat visually
+                $seat.removeClass('available').addClass('selected-' + gender);
+                
+                // Add to selection
+                selectedSeats.push({
+                    seat: seatNumber,
+                    gender: gender
+                });
+
+                // Lock seat on server
+                lockSeatOnServer(seatNumber, gender);
+                
+                updateSelection();
+            }
+
+            function deselectSeat(seatNumber, $seat) {
+                Swal.fire({
+                    title: 'Remove Seat?',
+                    text: `Do you want to remove seat ${seatNumber} from selection?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, remove it',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Remove gender class and make available
+                        $seat.removeClass('selected-male selected-female').addClass('available');
+                        
+                        // Remove from selection
+                        selectedSeats = selectedSeats.filter(s => s.seat !== seatNumber);
+                        
+                        // Unlock seat on server
+                        unlockSeatOnServer(seatNumber);
+                        
+                        updateSelection();
+                    }
+                });
+            }
+
+            function lockSeatOnServer(seatNumber, gender) {
+                $.ajax({
+                    url: "{{ route('admin.bookings.lock-seat') }}",
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        trip_id: tripId,
+                        from_stop_id: fromStopId,
+                        to_stop_id: toStopId,
+                        seat_number: seatNumber,
+                        gender: gender
+                    },
+                    success: function(response) {
+                        if (!response.success) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Seat Unavailable',
+                                text: response.message || 'This seat has been taken by another user.'
+                            });
+                            // Revert the selection
+                            const $seat = $(`.seat[data-seat="${seatNumber}"]`);
+                            $seat.removeClass('selected-male selected-female').addClass('booked');
+                            selectedSeats = selectedSeats.filter(s => s.seat !== seatNumber);
+                            updateSelection();
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Unable to lock seat. Please try again.'
+                        });
+                    }
+                });
+            }
+
+            function unlockSeatOnServer(seatNumber) {
+                $.ajax({
+                    url: "{{ route('admin.bookings.unlock-seat') }}",
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        trip_id: tripId,
+                        from_stop_id: fromStopId,
+                        to_stop_id: toStopId,
+                        seat_number: seatNumber
+                    }
+                });
+            }
+
+            function startSeatPolling() {
+                // Poll every 3 seconds for seat updates
+                pollingInterval = setInterval(function() {
+                    checkSeatAvailability();
+                }, 3000);
+            }
+
+            function checkSeatAvailability() {
+                $.ajax({
+                    url: "{{ route('admin.bookings.check-seats') }}",
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        trip_id: tripId,
+                        from_stop_id: fromStopId,
+                        to_stop_id: toStopId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            updateSeatStatus(response.data.locked_seats, response.data.booked_seats);
+                        }
+                    }
+                });
+            }
+
+            function updateSeatStatus(lockedSeats, bookedSeats) {
+                $('.seat.available, .seat.locked').each(function() {
+                    const seatNumber = $(this).data('seat');
+                    const isSelectedByMe = selectedSeats.some(s => s.seat === seatNumber);
+                    
+                    // Skip if this user selected it
+                    if (isSelectedByMe) {
+                        return;
+                    }
+
+                    // Check if locked by another user
+                    if (lockedSeats.includes(seatNumber)) {
+                        if (!$(this).hasClass('locked')) {
+                            $(this).removeClass('available').addClass('locked');
+                        }
+                    } else if (bookedSeats.includes(seatNumber)) {
+                        $(this).removeClass('available locked').addClass('booked');
+                    } else {
+                        if ($(this).hasClass('locked')) {
+                            $(this).removeClass('locked').addClass('available');
+                        }
+                    }
+                });
+            }
 
             function updateSelection() {
                 const seatsCount = selectedSeats.length;
@@ -367,9 +563,13 @@
                     $('#fare-summary').hide();
                     $('#continue-btn').prop('disabled', true);
                 } else {
-                    const seatsList = selectedSeats.sort((a, b) => a - b).map(seat =>
-                        `<span class="badge bg-primary me-1 mb-1">Seat ${seat}</span>`
-                    ).join('');
+                    const seatsList = selectedSeats.sort((a, b) => a.seat - b.seat).map(item => {
+                        const badgeColor = item.gender === 'male' ? 'bg-primary' : 'bg-pink';
+                        const icon = item.gender === 'male' ? 'bx-male' : 'bx-female';
+                        return `<span class="badge ${badgeColor} me-1 mb-1">
+                            <i class="bx ${icon}"></i> Seat ${item.seat}
+                        </span>`;
+                    }).join('');
                     $('#selected-seats-list').html(seatsList);
                     $('#fare-summary').show();
                     $('#continue-btn').prop('disabled', false);
@@ -381,11 +581,24 @@
                 $('#total-fare').text('PKR ' + totalFare.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
 
                 // Update form inputs
-                $('#selected-seats-inputs').html(selectedSeats.map(seat =>
-                    `<input type="hidden" name="selected_seats[]" value="${seat}">`
+                $('#selected-seats-inputs').html(selectedSeats.map(item =>
+                    `<input type="hidden" name="selected_seats[]" value="${item.seat}">
+                     <input type="hidden" name="seat_genders[${item.seat}]" value="${item.gender}">`
                 ).join(''));
             }
+
+            // Clear polling on page unload
+            $(window).on('beforeunload', function() {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+            });
         });
     </script>
+    <style>
+        .bg-pink {
+            background-color: #ec4899 !important;
+        }
+    </style>
 @endsection
 

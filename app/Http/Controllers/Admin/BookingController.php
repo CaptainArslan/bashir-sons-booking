@@ -14,6 +14,7 @@ use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class BookingController extends Controller
 {
@@ -34,10 +35,105 @@ class BookingController extends Controller
      */
     public function create()
     {
-        $routes = Route::where('status', 'active')->get();
         $terminals = Terminal::where('status', 'active')->get();
 
-        return view('admin.bookings.create', compact('routes', 'terminals'));
+        return view('admin.bookings.create', compact('terminals'));
+    }
+
+    /**
+     * Get available departure times based on terminals
+     */
+    public function getAvailableTimes(Request $request)
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id|different:from_terminal_id',
+            'departure_date' => 'required|date|after_or_equal:today',
+        ]);
+
+        // Find routes that connect these two terminals
+        $routes = Route::where('status', 'active')
+            ->whereHas('routeStops', function ($query) use ($validated) {
+                $query->where('terminal_id', $validated['from_terminal_id']);
+            })
+            ->whereHas('routeStops', function ($query) use ($validated) {
+                $query->where('terminal_id', $validated['to_terminal_id']);
+            })
+            ->with(['routeStops' => function ($query) {
+                $query->orderBy('sequence');
+            }])
+            ->get();
+
+        if ($routes->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No routes found connecting these terminals.',
+            ]);
+        }
+
+        // Get available times from timetables
+        $availableTimes = [];
+
+        foreach ($routes as $route) {
+            // Validate that to_terminal comes after from_terminal in sequence
+            $fromStop = $route->routeStops->where('terminal_id', $validated['from_terminal_id'])->first();
+            $toStop = $route->routeStops->where('terminal_id', $validated['to_terminal_id'])->first();
+
+            if (! $fromStop || ! $toStop || $toStop->sequence <= $fromStop->sequence) {
+                continue; // Skip invalid route configurations
+            }
+
+            // Get timetables for this route
+            $timetables = \App\Models\Timetable::where('route_id', $route->id)
+                ->where('is_active', true)
+                ->with(['timetableStops' => function ($query) use ($validated) {
+                    $query->where('terminal_id', $validated['from_terminal_id'])
+                        ->orderBy('sequence');
+                }])
+                ->get();
+
+            foreach ($timetables as $timetable) {
+                $timetableStop = $timetable->timetableStops->first();
+                if ($timetableStop && $timetableStop->departure_time) {
+                    $availableTimes[] = [
+                        'time' => date('H:i A', strtotime($timetableStop->departure_time)),
+                        'route_id' => $route->id,
+                        'route_name' => $route->name,
+                        'route_code' => $route->code,
+                    ];
+                }
+            }
+        }
+
+        // If no timetables found, return the first valid route for manual time entry
+        if (empty($availableTimes)) {
+            $firstRoute = $routes->first(function ($route) use ($validated) {
+                $fromStop = $route->routeStops->where('terminal_id', $validated['from_terminal_id'])->first();
+                $toStop = $route->routeStops->where('terminal_id', $validated['to_terminal_id'])->first();
+
+                return $fromStop && $toStop && $toStop->sequence > $fromStop->sequence;
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'times' => [],
+                    'route_id' => $firstRoute ? $firstRoute->id : null,
+                ],
+            ]);
+        }
+
+        // Sort times chronologically
+        usort($availableTimes, function ($a, $b) {
+            return strcmp($a['time'], $b['time']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'times' => $availableTimes,
+            ],
+        ]);
     }
 
     /**
@@ -85,7 +181,7 @@ class BookingController extends Controller
             [
                 'departure_datetime' => $departureDateTime,
                 'estimated_arrival_datetime' => date('Y-m-d H:i:s', strtotime($departureDateTime.' +4 hours')),
-                'status' => 'planned',
+                'status' => 'pending',
                 'bus_id' => null, // Bus will be assigned later by admin
             ]
         );
@@ -277,6 +373,136 @@ class BookingController extends Controller
         }
 
         return back()->with('error', 'Unable to cancel booking.');
+    }
+
+    /**
+     * Lock a seat temporarily using Redis
+     */
+    public function lockSeat(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_id' => 'required|exists:trips,id',
+            'from_stop_id' => 'required|exists:route_stops,id',
+            'to_stop_id' => 'required|exists:route_stops,id',
+            'seat_number' => 'required|string',
+            'gender' => 'required|in:male,female',
+        ]);
+
+        $lockKey = "seat_lock:{$validated['trip_id']}:{$validated['seat_number']}:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
+        $lockValue = json_encode([
+            'user_id' => auth()->id(),
+            'session_id' => session()->getId(),
+            'gender' => $validated['gender'],
+            'locked_at' => now()->toDateTimeString(),
+        ]);
+
+        // Check if seat is already locked by another user
+        $existingLock = Redis::get($lockKey);
+        if ($existingLock) {
+            $lockData = json_decode($existingLock, true);
+            if ($lockData['session_id'] !== session()->getId()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This seat has been selected by another user.',
+                ]);
+            }
+        }
+
+        // Check if seat is already booked
+        $isBooked = $this->isSeatBooked($validated['trip_id'], $validated['seat_number'], $validated['from_stop_id'], $validated['to_stop_id']);
+        if ($isBooked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This seat is already booked.',
+            ]);
+        }
+
+        // Lock seat for 10 minutes
+        Redis::setex($lockKey, 600, $lockValue);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seat locked successfully.',
+        ]);
+    }
+
+    /**
+     * Unlock a seat
+     */
+    public function unlockSeat(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_id' => 'required|exists:trips,id',
+            'from_stop_id' => 'required|exists:route_stops,id',
+            'to_stop_id' => 'required|exists:route_stops,id',
+            'seat_number' => 'required|string',
+        ]);
+
+        $lockKey = "seat_lock:{$validated['trip_id']}:{$validated['seat_number']}:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
+
+        // Only allow unlock if it's the same session
+        $existingLock = Redis::get($lockKey);
+        if ($existingLock) {
+            $lockData = json_decode($existingLock, true);
+            if ($lockData['session_id'] === session()->getId()) {
+                Redis::del($lockKey);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seat unlocked successfully.',
+        ]);
+    }
+
+    /**
+     * Check seat availability (for polling)
+     */
+    public function checkSeats(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_id' => 'required|exists:trips,id',
+            'from_stop_id' => 'required|exists:route_stops,id',
+            'to_stop_id' => 'required|exists:route_stops,id',
+        ]);
+
+        // Get locked seats from Redis
+        $pattern = "seat_lock:{$validated['trip_id']}:*:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
+        $keys = Redis::keys($pattern);
+
+        $lockedSeats = [];
+        foreach ($keys as $key) {
+            $lockData = json_decode(Redis::get($key), true);
+            // Only include seats locked by OTHER users
+            if ($lockData && $lockData['session_id'] !== session()->getId()) {
+                // Extract seat number from key
+                preg_match('/seat_lock:\d+:(\d+):\d+:\d+/', $key, $matches);
+                if (isset($matches[1])) {
+                    $lockedSeats[] = (int) $matches[1];
+                }
+            }
+        }
+
+        // Get booked seats from database
+        $bookedSeats = $this->getBookedSeatsForSegment($validated['trip_id'], $validated['from_stop_id'], $validated['to_stop_id']);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'locked_seats' => array_map('intval', $lockedSeats),
+                'booked_seats' => array_map('intval', $bookedSeats),
+            ],
+        ]);
+    }
+
+    /**
+     * Helper: Check if a specific seat is booked
+     */
+    protected function isSeatBooked(int $tripId, string $seatNumber, int $fromStopId, int $toStopId): bool
+    {
+        $bookedSeats = $this->getBookedSeatsForSegment($tripId, $fromStopId, $toStopId);
+
+        return in_array($seatNumber, $bookedSeats);
     }
 
     /**
