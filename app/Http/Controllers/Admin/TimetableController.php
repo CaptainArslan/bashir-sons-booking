@@ -8,11 +8,11 @@ use App\Http\Requests\UpdateTimetableRequest;
 use App\Models\Route;
 use App\Models\Timetable;
 use App\Models\TimetableStop;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Carbon\Carbon;
 
 class TimetableController extends Controller
 {
@@ -38,11 +38,13 @@ class TimetableController extends Controller
                     ->get()
                     ->map(function ($stop) {
                         return [
-                            'id' => $stop->terminal_id,
+                            'id' => $stop->id,
+                            'terminal_id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
                             'arrival_time' => $stop->arrival_time ? Carbon::parse($stop->arrival_time)->format('h:i A') : null,
                             'departure_time' => $stop->departure_time ? Carbon::parse($stop->departure_time)->format('h:i A') : null,
                             'sequence' => $stop->sequence,
+                            'status' => $stop->is_active ? 'active' : 'inactive',
                         ];
                     });
 
@@ -62,6 +64,7 @@ class TimetableController extends Controller
                     'stops' => $stops,
                 ];
             });
+
         return response()->json(['data' => $timetables]);
     }
 
@@ -115,7 +118,7 @@ class TimetableController extends Controller
 
             $timetable = Timetable::create([
                 'route_id' => $route->id,
-                'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
+                'name' => $route->name.' - Trip '.($timetableIndex + 1),
                 'start_departure_time' => $startDepartureTime,
                 'is_active' => true,
             ]);
@@ -226,7 +229,35 @@ class TimetableController extends Controller
                 'message' => "Timetable {$action} successfully!",
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error updating timetable status: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error updating timetable status: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Toggle timetable stop status (active/inactive)
+     */
+    public function toggleStopStatus(Request $request, $stopId): JsonResponse
+    {
+        try {
+            $stop = TimetableStop::findOrFail($stopId);
+            $newStatus = $request->input('status');
+
+            if (! in_array($newStatus, ['active', 'inactive'])) {
+                return response()->json(['success' => false, 'message' => 'Invalid status provided.'], 400);
+            }
+
+            $stop->update([
+                'is_active' => $newStatus === 'active',
+            ]);
+
+            $action = $newStatus === 'active' ? 'activated' : 'deactivated';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Stop {$action} successfully!",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error updating stop status: '.$e->getMessage()], 500);
         }
     }
 
@@ -240,7 +271,7 @@ class TimetableController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Timetable deleted successfully!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting timetable: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error deleting timetable: '.$e->getMessage()], 500);
         }
     }
 

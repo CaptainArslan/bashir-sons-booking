@@ -489,56 +489,109 @@ function editTimetable(timetableId) {
 function toggleTimetableStatus(timetableId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     const action = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionTitle = newStatus === 'active' ? 'Activate' : 'Deactivate';
     
-    if (confirm(`Are you sure you want to ${action} this timetable?`)) {
-        $.ajax({
-            url: "{{ route('admin.timetables.toggle-status', ':id') }}".replace(':id', timetableId),
-            type: 'PATCH',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            data: {
-                status: newStatus
-            },
-            success: function(response) {
-                if (response.success) {
-                    loadTimetables(); // Reload timetables
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
+    Swal.fire({
+        title: `${actionTitle} Timetable?`,
+        text: `Are you sure you want to ${action} this timetable?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: `Yes, ${action} it!`,
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('admin.timetables.toggle-status', ':id') }}".replace(':id', timetableId),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    status: newStatus
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadTimetables(); // Reload timetables
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response?.message || 'An error occurred while updating the timetable status.',
+                        icon: 'error'
+                    });
                 }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response.message || 'An error occurred while updating the timetable status.');
-            }
-        });
-    }
+            });
+        }
+    });
 }
 
 // Enhanced Delete Function
 function deleteTimetable(timetableId) {
-    if (confirm('Are you sure you want to delete this timetable? This action cannot be undone.')) {
-        $.ajax({
-            url: "{{ route('admin.timetables.destroy', ':id') }}".replace(':id', timetableId),
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    loadTimetables(); // Reload timetables
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
+    Swal.fire({
+        title: 'Delete Timetable?',
+        text: 'Are you sure you want to delete this timetable? This action cannot be undone!',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('admin.timetables.destroy', ':id') }}".replace(':id', timetableId),
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadTimetables(); // Reload timetables
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response?.message || 'An error occurred while deleting the timetable.',
+                        icon: 'error'
+                    });
                 }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response.message || 'An error occurred while deleting the timetable.');
-            }
-        });
-    }
+            });
+        }
+    });
 }
 
 // Stop action functions
@@ -555,15 +608,58 @@ function editStop(stopId) {
 function toggleStopStatus(stopId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     const action = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionTitle = newStatus === 'active' ? 'Activate' : 'Deactivate';
     
-    if (confirm(`Are you sure you want to ${action} this stop?`)) {
-        // Add your stop status toggle logic here
-        console.log(`Toggle stop ${stopId} from ${currentStatus} to ${newStatus}`);
-        
-        // You can add AJAX call here to update stop status
-        // For now, just reload the timetables to show updated status
-        loadTimetables();
-    }
+    Swal.fire({
+        title: `${actionTitle} Stop?`,
+        text: `Are you sure you want to ${action} this stop?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: `Yes, ${action} it!`,
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('admin.timetables.stops.toggle-status', ':stopId') }}".replace(':stopId', stopId),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    status: newStatus
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadTimetables(); // Reload timetables to show updated status
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response?.message || 'An error occurred while updating the stop status.',
+                        icon: 'error'
+                    });
+                }
+            });
+        }
+    });
 }
 
 // Add smooth scrolling for better UX
