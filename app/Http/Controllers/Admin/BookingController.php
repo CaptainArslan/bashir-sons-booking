@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\BookingStatusEnum;
-use App\Events\SeatLocked;
-use App\Events\SeatReleased;
-use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\BookingSeat;
 use App\Models\Fare;
-use App\Models\Route;
-use App\Models\RouteStop;
-use App\Models\Terminal;
 use App\Models\Trip;
+use App\Models\Route;
+use App\Models\Booking;
+use App\Models\Terminal;
+use App\Models\RouteStop;
+use App\Models\Timetable;
+use App\Events\SeatLocked;
+use App\Models\BookingSeat;
+use App\Events\SeatReleased;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use App\Enums\BookingStatusEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 
 class BookingController extends Controller
 {
@@ -75,6 +76,7 @@ class BookingController extends Controller
 
         // Get available times from timetables
         $availableTimes = [];
+        $now = now();
 
         foreach ($routes as $route) {
             // Validate that to_terminal comes after from_terminal in sequence
@@ -86,7 +88,7 @@ class BookingController extends Controller
             }
 
             // Get timetables for this route
-            $timetables = \App\Models\Timetable::where('route_id', $route->id)
+            $timetables = Timetable::where('route_id', $route->id)
                 ->where('is_active', true)
                 ->with(['timetableStops' => function ($query) use ($validated) {
                     $query->where('terminal_id', $validated['from_terminal_id'])
@@ -97,12 +99,17 @@ class BookingController extends Controller
             foreach ($timetables as $timetable) {
                 $timetableStop = $timetable->timetableStops->first();
                 if ($timetableStop && $timetableStop->departure_time) {
-                    $availableTimes[] = [
-                        'time' => date('H:i A', strtotime($timetableStop->departure_time)),
-                        'route_id' => $route->id,
-                        'route_name' => $route->name,
-                        'route_code' => $route->code,
-                    ];
+                    $departureDateTime = now()->setTimeFromTimeString($timetableStop->departure_time);
+                    
+                    // Only include times that are in the future
+                    if ($departureDateTime->isAfter($now)) {
+                        $availableTimes[] = [
+                            'time' => $departureDateTime->format('H:i A'),
+                            'route_id' => $route->id,
+                            'route_name' => $route->name,
+                            'route_code' => $route->code,
+                        ];
+                    }
                 }
             }
         }
