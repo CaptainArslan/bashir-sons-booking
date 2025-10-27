@@ -108,17 +108,8 @@
               </li>
           @endcan
 
-          @canany([
-              'view terminals',
-              'view buses',
-              'view bus types',
-              'view bus layouts',
-              'view facilities',
-              'view routes',
-              'view route stops',
-              'view timetables',
-              'view schedules',
-              ])
+          @canany(['view terminals', 'view buses', 'view bus types', 'view bus layouts', 'view facilities', 'view
+              routes', 'view route stops', 'view timetables', 'view schedules'])
               <li class="menu-label"
                   style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
                   Transport Management</li>
@@ -297,6 +288,72 @@
           @endcan
 
 
+          {{-- Booking System Management --}}
+          <li class="menu-label"
+              style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
+              Booking System</li>
+
+          <li>
+              <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                          class='bx bx-bus'></i>
+                  </div>
+                  <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Trip Management</div>
+              </a>
+              <ul style="padding-left: 0;">
+                  <li> <a href="{{ route('admin.trips.index') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>All Trips</a></li>
+                  <li> <a href="{{ route('admin.trips.dashboard') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Dashboard</a></li>
+                  <li> <a href="{{ route('admin.trips.requires-bus') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Requires Bus</a></li>
+              </ul>
+          </li>
+
+          <li>
+              <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                          class='bx bx-receipt'></i>
+                  </div>
+                  <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Booking Management</div>
+              </a>
+              <ul style="padding-left: 0;">
+                  <li> <a href="{{ route('admin.bookings.index') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>All Bookings</a></li>
+                  <li> <a href="{{ route('admin.bookings.create') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Create Booking</a></li>
+                  <li> <a href="{{ route('admin.bookings.reports') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Reports</a></li>
+              </ul>
+          </li>
+
+          <li>
+              <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                          class='bx bx-money'></i>
+                  </div>
+                  <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Expense Management</div>
+              </a>
+              <ul style="padding-left: 0;">
+                  <li> <a href="{{ route('admin.expenses.index') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>All Expenses</a></li>
+                  <li> <a href="{{ route('admin.expenses.create') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Add Expense</a></li>
+                  <li> <a href="{{ route('admin.expenses.reports') }}"
+                          style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                              style="font-size: 0.7rem;"></i>Reports</a></li>
+              </ul>
+          </li>
+
+
           @canany(['view banners', 'view announcements', 'view general settings'])
               <li class="menu-label"
                   style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
@@ -371,84 +428,19 @@
               </li>
           @endcan
 
-        {{-- Booking System Management --}}
-        <li class="menu-label"
-            style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
-            Booking System</li>
-
-        <li>
-            <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                        class='bx bx-bus'></i>
-                </div>
-                <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Trip Management</div>
-            </a>
-            <ul style="padding-left: 0;">
-                <li> <a href="{{ route('admin.trips.index') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>All Trips</a></li>
-                <li> <a href="{{ route('admin.trips.dashboard') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Dashboard</a></li>
-                <li> <a href="{{ route('admin.trips.requires-bus') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Requires Bus</a></li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                        class='bx bx-receipt'></i>
-                </div>
-                <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Booking Management</div>
-            </a>
-            <ul style="padding-left: 0;">
-                <li> <a href="{{ route('admin.bookings.index') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>All Bookings</a></li>
-                <li> <a href="{{ route('admin.bookings.create') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Create Booking</a></li>
-                <li> <a href="{{ route('admin.bookings.reports') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Reports</a></li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                        class='bx bx-money'></i>
-                </div>
-                <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Expense Management</div>
-            </a>
-            <ul style="padding-left: 0;">
-                <li> <a href="{{ route('admin.expenses.index') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>All Expenses</a></li>
-                <li> <a href="{{ route('admin.expenses.create') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Add Expense</a></li>
-                <li> <a href="{{ route('admin.expenses.reports') }}"
-                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                            style="font-size: 0.7rem;"></i>Reports</a></li>
-            </ul>
-        </li>
-
-        @can('view enquiries')
-            <li class="menu-label"
-                style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
-                Customer Support</li>
-            <li>
-                <a href="{{ route('admin.enquiries.index') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                    <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                            class='bx bx-message-dots'></i>
-                    </div>
-                    <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Customer Enquiries</div>
-                </a>
-            </li>
-        @endcan
+          @can('view enquiries')
+              <li class="menu-label"
+                  style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
+                  Customer Support</li>
+              <li>
+                  <a href="{{ route('admin.enquiries.index') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-message-dots'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Customer Enquiries</div>
+                  </a>
+              </li>
+          @endcan
       </ul>
       <!--end navigation-->
   </div>
