@@ -20,7 +20,7 @@ class Route extends Model
         'is_return_of',
         'base_currency',
         'status',
-    ];
+    ];  
 
     protected $casts = [
         'status' => RouteStatusEnum::class,
