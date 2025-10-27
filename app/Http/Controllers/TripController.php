@@ -55,7 +55,7 @@ class TripController extends Controller
     /**
      * Get trip details
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         try {
             $trip = \App\Models\Trip::with([
@@ -102,7 +102,7 @@ class TripController extends Controller
     /**
      * Start a trip
      */
-    public function start(int $id): JsonResponse
+    public function start(string $id): JsonResponse
     {
         try {
             $this->tripService->startTrip($id);
@@ -122,7 +122,7 @@ class TripController extends Controller
     /**
      * Complete a trip
      */
-    public function complete(int $id): JsonResponse
+    public function complete(string $id): JsonResponse
     {
         try {
             $this->tripService->completeTrip($id);
@@ -191,7 +191,7 @@ class TripController extends Controller
     /**
      * Get trip statistics
      */
-    public function statistics(int $id): JsonResponse
+    public function statistics(string $id): JsonResponse
     {
         try {
             $statistics = $this->tripService->getTripStatistics($id);

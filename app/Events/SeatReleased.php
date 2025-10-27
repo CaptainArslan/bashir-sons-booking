@@ -14,7 +14,10 @@ class SeatReleased implements ShouldBroadcast
 
     public function __construct(
         public int $tripId,
-        public string $seatId
+        public string $seatNumber,
+        public int $fromStopId,
+        public int $toStopId,
+        public string $sessionId
     ) {}
 
     /**
@@ -40,7 +43,10 @@ class SeatReleased implements ShouldBroadcast
     {
         return [
             'trip_id' => $this->tripId,
-            'seat_id' => $this->seatId,
+            'seat_number' => $this->seatNumber,
+            'from_stop_id' => $this->fromStopId,
+            'to_stop_id' => $this->toStopId,
+            'session_id' => $this->sessionId,
             'timestamp' => now()->toISOString(),
         ];
     }

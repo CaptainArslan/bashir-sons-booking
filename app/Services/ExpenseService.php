@@ -38,7 +38,7 @@ class ExpenseService
     /**
      * Update expense
      */
-    public function updateExpense(int $expenseId, array $data): Expense
+    public function updateExpense(int|string $expenseId, array $data): Expense
     {
         $expense = Expense::findOrFail($expenseId);
 
@@ -55,7 +55,7 @@ class ExpenseService
     /**
      * Delete expense
      */
-    public function deleteExpense(int $expenseId): bool
+    public function deleteExpense(int|string $expenseId): bool
     {
         $expense = Expense::findOrFail($expenseId);
 

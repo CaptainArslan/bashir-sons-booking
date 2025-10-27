@@ -98,7 +98,7 @@ class BookingService
     /**
      * Confirm a booking
      */
-    public function confirmBooking(int $bookingId): Booking
+    public function confirmBooking(int|string $bookingId): Booking
     {
         return DB::transaction(function () use ($bookingId) {
             $booking = Booking::with('bookingSeats', 'trip')->findOrFail($bookingId);
@@ -124,7 +124,7 @@ class BookingService
     /**
      * Cancel a booking
      */
-    public function cancelBooking(int $bookingId, ?string $reason = null): bool
+    public function cancelBooking(int|string $bookingId, ?string $reason = null): bool
     {
         return DB::transaction(function () use ($bookingId, $reason) {
             $booking = Booking::with('bookingSeats', 'trip')->findOrFail($bookingId);
@@ -238,7 +238,7 @@ class BookingService
     /**
      * Get booking details
      */
-    public function getBookingDetails(int $bookingId): Booking
+    public function getBookingDetails(int|string $bookingId): Booking
     {
         return Booking::with([
             'trip.route.routeStops.terminal',

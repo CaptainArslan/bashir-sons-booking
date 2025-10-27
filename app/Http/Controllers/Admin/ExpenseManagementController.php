@@ -87,7 +87,7 @@ class ExpenseManagementController extends Controller
         }
     }
 
-    public function edit(int $id)
+    public function edit(string $id)
     {
         $expense = Expense::with('trip.route')->findOrFail($id);
         $types = ExpenseTypeEnum::cases();
@@ -95,7 +95,7 @@ class ExpenseManagementController extends Controller
         return view('admin.expenses.edit', compact('expense', 'types'));
     }
 
-    public function update(UpdateExpenseRequest $request, int $id)
+    public function update(UpdateExpenseRequest $request, string $id)
     {
         try {
             $this->expenseService->updateExpense($id, $request->validated());
@@ -106,7 +106,7 @@ class ExpenseManagementController extends Controller
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         try {
             $this->expenseService->deleteExpense($id);

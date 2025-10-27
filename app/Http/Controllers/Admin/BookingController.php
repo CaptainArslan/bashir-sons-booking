@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingStatusEnum;
+use App\Events\SeatLocked;
+use App\Events\SeatReleased;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingSeat;
@@ -12,9 +14,9 @@ use App\Models\RouteStop;
 use App\Models\Terminal;
 use App\Models\Trip;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 
 class BookingController extends Controller
 {
@@ -189,10 +191,11 @@ class BookingController extends Controller
         // Calculate fare
         $fare = $this->calculateSegmentFare($fromStop, $toStop, $route);
 
-        // Get booked seats for this trip segment
+        // Get booked seats and their statuses for this trip segment
         $bookedSeats = $this->getBookedSeatsForSegment($trip->id, $fromStop->id, $toStop->id);
+        $seatStatuses = $this->getSeatStatusesForSegment($trip->id, $fromStop->id, $toStop->id);
 
-        return view('admin.bookings.select-seats', compact('trip', 'fromStop', 'toStop', 'fare', 'bookedSeats'));
+        return view('admin.bookings.select-seats', compact('trip', 'fromStop', 'toStop', 'fare', 'bookedSeats', 'seatStatuses'));
     }
 
     /**
@@ -376,7 +379,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Lock a seat temporarily using Redis
+     * Lock a seat temporarily using Cache (works with Pusher/Ably)
      */
     public function lockSeat(Request $request)
     {
@@ -389,23 +392,21 @@ class BookingController extends Controller
         ]);
 
         $lockKey = "seat_lock:{$validated['trip_id']}:{$validated['seat_number']}:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
-        $lockValue = json_encode([
+        $lockValue = [
             'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name,
             'session_id' => session()->getId(),
             'gender' => $validated['gender'],
             'locked_at' => now()->toDateTimeString(),
-        ]);
+        ];
 
         // Check if seat is already locked by another user
-        $existingLock = Redis::get($lockKey);
-        if ($existingLock) {
-            $lockData = json_decode($existingLock, true);
-            if ($lockData['session_id'] !== session()->getId()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This seat has been selected by another user.',
-                ]);
-            }
+        $existingLock = Cache::get($lockKey);
+        if ($existingLock && $existingLock['session_id'] !== session()->getId()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This seat has been selected by another user.',
+            ]);
         }
 
         // Check if seat is already booked
@@ -418,7 +419,18 @@ class BookingController extends Controller
         }
 
         // Lock seat for 10 minutes
-        Redis::setex($lockKey, 600, $lockValue);
+        Cache::put($lockKey, $lockValue, now()->addMinutes(10));
+
+        // Broadcast seat locked event
+        broadcast(new SeatLocked(
+            $validated['trip_id'],
+            $validated['seat_number'],
+            $validated['from_stop_id'],
+            $validated['to_stop_id'],
+            $validated['gender'],
+            auth()->user()->name,
+            session()->getId()
+        ))->toOthers();
 
         return response()->json([
             'success' => true,
@@ -441,12 +453,18 @@ class BookingController extends Controller
         $lockKey = "seat_lock:{$validated['trip_id']}:{$validated['seat_number']}:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
 
         // Only allow unlock if it's the same session
-        $existingLock = Redis::get($lockKey);
-        if ($existingLock) {
-            $lockData = json_decode($existingLock, true);
-            if ($lockData['session_id'] === session()->getId()) {
-                Redis::del($lockKey);
-            }
+        $existingLock = Cache::get($lockKey);
+        if ($existingLock && $existingLock['session_id'] === session()->getId()) {
+            Cache::forget($lockKey);
+
+            // Broadcast seat released event
+            broadcast(new SeatReleased(
+                $validated['trip_id'],
+                $validated['seat_number'],
+                $validated['from_stop_id'],
+                $validated['to_stop_id'],
+                session()->getId()
+            ))->toOthers();
         }
 
         return response()->json([
@@ -456,7 +474,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Check seat availability (for polling)
+     * Check seat availability and statuses
      */
     public function checkSeats(Request $request)
     {
@@ -466,31 +484,30 @@ class BookingController extends Controller
             'to_stop_id' => 'required|exists:route_stops,id',
         ]);
 
-        // Get locked seats from Redis
-        $pattern = "seat_lock:{$validated['trip_id']}:*:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
-        $keys = Redis::keys($pattern);
-
+        // Get locked seats from Cache with gender info
         $lockedSeats = [];
-        foreach ($keys as $key) {
-            $lockData = json_decode(Redis::get($key), true);
+        for ($seatNumber = 1; $seatNumber <= 45; $seatNumber++) {
+            $lockKey = "seat_lock:{$validated['trip_id']}:{$seatNumber}:{$validated['from_stop_id']}:{$validated['to_stop_id']}";
+            $lockData = Cache::get($lockKey);
+
             // Only include seats locked by OTHER users
             if ($lockData && $lockData['session_id'] !== session()->getId()) {
-                // Extract seat number from key
-                preg_match('/seat_lock:\d+:(\d+):\d+:\d+/', $key, $matches);
-                if (isset($matches[1])) {
-                    $lockedSeats[] = (int) $matches[1];
-                }
+                $lockedSeats[$seatNumber] = [
+                    'gender' => $lockData['gender'],
+                    'user_name' => $lockData['user_name'],
+                    'locked_at' => $lockData['locked_at'],
+                ];
             }
         }
 
-        // Get booked seats from database
-        $bookedSeats = $this->getBookedSeatsForSegment($validated['trip_id'], $validated['from_stop_id'], $validated['to_stop_id']);
+        // Get seat statuses from database (booked vs confirmed)
+        $seatStatuses = $this->getSeatStatusesForSegment($validated['trip_id'], $validated['from_stop_id'], $validated['to_stop_id']);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'locked_seats' => array_map('intval', $lockedSeats),
-                'booked_seats' => array_map('intval', $bookedSeats),
+                'locked_seats' => $lockedSeats,
+                'seat_statuses' => $seatStatuses,
             ],
         ]);
     }
@@ -531,7 +548,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Helper: Get booked seats for a trip segment
+     * Helper: Get booked seats for a trip segment with status
      */
     protected function getBookedSeatsForSegment(int $tripId, int $fromStopId, int $toStopId): array
     {
@@ -546,20 +563,55 @@ class BookingController extends Controller
             ->get();
 
         $bookedSeats = [];
+        $seatStatuses = [];
 
         foreach ($bookings as $booking) {
             // Check if segments overlap
             // Overlap occurs if: (booking_from < search_to) AND (booking_to > search_from)
             if ($booking->fromStop->sequence < $toStop->sequence &&
                 $booking->toStop->sequence > $fromStop->sequence) {
-                $bookedSeats = array_merge(
-                    $bookedSeats,
-                    $booking->bookingSeats->pluck('seat_number')->toArray()
-                );
+                foreach ($booking->bookingSeats as $seat) {
+                    $bookedSeats[] = $seat->seat_number;
+                    $seatStatuses[$seat->seat_number] = [
+                        'status' => $booking->status->value,
+                        'is_confirmed' => $booking->status === BookingStatusEnum::Confirmed,
+                    ];
+                }
             }
         }
 
         return array_unique($bookedSeats);
+    }
+
+    /**
+     * Helper: Get seat statuses (booked vs confirmed) for a trip segment
+     */
+    protected function getSeatStatusesForSegment(int $tripId, int $fromStopId, int $toStopId): array
+    {
+        $fromStop = RouteStop::findOrFail($fromStopId);
+        $toStop = RouteStop::findOrFail($toStopId);
+
+        $bookings = Booking::where('trip_id', $tripId)
+            ->whereIn('status', [BookingStatusEnum::Pending, BookingStatusEnum::Confirmed])
+            ->with(['fromStop', 'toStop', 'bookingSeats'])
+            ->get();
+
+        $seatStatuses = [];
+
+        foreach ($bookings as $booking) {
+            if ($booking->fromStop->sequence < $toStop->sequence &&
+                $booking->toStop->sequence > $fromStop->sequence) {
+                foreach ($booking->bookingSeats as $seat) {
+                    $seatStatuses[$seat->seat_number] = [
+                        'status' => $booking->status->value,
+                        'is_confirmed' => $booking->status === BookingStatusEnum::Confirmed,
+                        'booking_number' => $booking->booking_number,
+                    ];
+                }
+            }
+        }
+
+        return $seatStatuses;
     }
 
     /**

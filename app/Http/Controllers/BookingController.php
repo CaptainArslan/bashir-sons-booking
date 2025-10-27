@@ -59,7 +59,7 @@ class BookingController extends Controller
     /**
      * Confirm a booking
      */
-    public function confirm(int $id): JsonResponse
+    public function confirm(string $id): JsonResponse
     {
         try {
             $booking = $this->bookingService->confirmBooking($id);
@@ -101,7 +101,7 @@ class BookingController extends Controller
     /**
      * Get booking details
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         try {
             $booking = $this->bookingService->getBookingDetails($id);

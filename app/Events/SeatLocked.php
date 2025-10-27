@@ -14,8 +14,12 @@ class SeatLocked implements ShouldBroadcast
 
     public function __construct(
         public int $tripId,
-        public string $seatId,
-        public array $seatData
+        public string $seatNumber,
+        public int $fromStopId,
+        public int $toStopId,
+        public string $gender,
+        public string $userName,
+        public string $sessionId
     ) {}
 
     /**
@@ -41,8 +45,12 @@ class SeatLocked implements ShouldBroadcast
     {
         return [
             'trip_id' => $this->tripId,
-            'seat_id' => $this->seatId,
-            'seat_data' => $this->seatData,
+            'seat_number' => $this->seatNumber,
+            'from_stop_id' => $this->fromStopId,
+            'to_stop_id' => $this->toStopId,
+            'gender' => $this->gender,
+            'user_name' => $this->userName,
+            'session_id' => $this->sessionId,
             'timestamp' => now()->toISOString(),
         ];
     }

@@ -67,14 +67,14 @@ class BookingManagementController extends Controller
         return view('admin.bookings.index', compact('bookings', 'routes', 'statuses', 'types', 'stats'));
     }
 
-    public function show(int $id)
+    public function show(string $id)
     {
         $booking = $this->bookingService->getBookingDetails($id);
 
         return view('admin.bookings.show', compact('booking'));
     }
 
-    public function confirm(int $id)
+    public function confirm(string $id)
     {
         try {
             $this->bookingService->confirmBooking($id);
@@ -85,7 +85,7 @@ class BookingManagementController extends Controller
         }
     }
 
-    public function cancel(Request $request, int $id)
+    public function cancel(Request $request, string $id)
     {
         $request->validate([
             'reason' => 'nullable|string|max:500',

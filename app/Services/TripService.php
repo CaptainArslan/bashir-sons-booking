@@ -78,7 +78,7 @@ class TripService
     /**
      * Assign bus to trip
      */
-    public function assignBus(int $tripId, int $busId): bool
+    public function assignBus(int|string $tripId, int $busId): bool
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -109,7 +109,7 @@ class TripService
     /**
      * Update trip status
      */
-    public function updateStatus(int $tripId, TripStatusEnum $status): bool
+    public function updateStatus(int|string $tripId, TripStatusEnum $status): bool
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -119,7 +119,7 @@ class TripService
     /**
      * Start trip (mark as ongoing)
      */
-    public function startTrip(int $tripId): bool
+    public function startTrip(int|string $tripId): bool
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -133,7 +133,7 @@ class TripService
     /**
      * Complete trip
      */
-    public function completeTrip(int $tripId): bool
+    public function completeTrip(int|string $tripId): bool
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -143,7 +143,7 @@ class TripService
     /**
      * Cancel trip
      */
-    public function cancelTrip(int $tripId, string $reason): bool
+    public function cancelTrip(int|string $tripId, string $reason): bool
     {
         $trip = Trip::findOrFail($tripId);
 
@@ -199,7 +199,7 @@ class TripService
     /**
      * Get trip statistics
      */
-    public function getTripStatistics(int $tripId): array
+    public function getTripStatistics(int|string $tripId): array
     {
         $trip = Trip::with([
             'bookings',
@@ -272,7 +272,7 @@ class TripService
     /**
      * Delete trip if no bookings exist
      */
-    public function deleteTrip(int $tripId): bool
+    public function deleteTrip(int|string $tripId): bool
     {
         $trip = Trip::findOrFail($tripId);
 

@@ -62,7 +62,7 @@ class TripManagementController extends Controller
         return view('admin.trips.index', compact('trips', 'routes', 'buses', 'statuses', 'stats'));
     }
 
-    public function show(int $id)
+    public function show(string $id)
     {
         $trip = Trip::with([
             'route.routeStops.terminal',
@@ -79,7 +79,7 @@ class TripManagementController extends Controller
         return view('admin.trips.show', compact('trip', 'statistics', 'availableBuses'));
     }
 
-    public function assignBus(AssignBusToTripRequest $request, int $id)
+    public function assignBus(AssignBusToTripRequest $request, string $id)
     {
         try {
             $this->tripService->assignBus($id, $request->bus_id);
@@ -90,7 +90,7 @@ class TripManagementController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, int $id)
+    public function updateStatus(Request $request, string $id)
     {
         $request->validate([
             'status' => 'required|string',
@@ -106,7 +106,7 @@ class TripManagementController extends Controller
         }
     }
 
-    public function start(int $id)
+    public function start(string $id)
     {
         try {
             $this->tripService->startTrip($id);
@@ -117,7 +117,7 @@ class TripManagementController extends Controller
         }
     }
 
-    public function complete(int $id)
+    public function complete(string $id)
     {
         try {
             $this->tripService->completeTrip($id);
@@ -128,7 +128,7 @@ class TripManagementController extends Controller
         }
     }
 
-    public function cancel(Request $request, int $id)
+    public function cancel(Request $request, string $id)
     {
         $request->validate([
             'reason' => 'required|string|max:500',

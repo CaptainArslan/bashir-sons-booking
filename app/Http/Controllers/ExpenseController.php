@@ -59,7 +59,7 @@ class ExpenseController extends Controller
     /**
      * Delete an expense
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         try {
             $this->expenseService->deleteExpense($id);

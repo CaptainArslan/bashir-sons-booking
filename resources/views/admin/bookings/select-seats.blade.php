@@ -47,51 +47,138 @@
             position: relative;
         }
 
-        .seat:hover:not(.booked):not(.driver-seat) {
+        .seat:hover:not(.booked):not(.sold):not(.locked):not(.driver-seat) {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .seat.available {
             border-color: #28a745;
+            background: #f0fff4;
             color: #28a745;
         }
 
         .seat.available:hover {
             background: #28a745;
             color: white;
+            transform: scale(1.05);
         }
 
         .seat.selected {
             background: #0d6efd;
             border-color: #0d6efd;
             color: white;
+            font-weight: bold;
+            position: relative;
         }
 
-        .seat.selected-male {
-            background: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
+        .seat.selected .gender-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: 2px solid #0d6efd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .seat.selected-female {
-            background: #ec4899;
+        .seat.selected .gender-badge.male {
+            color: #0d6efd;
+        }
+
+        .seat.selected .gender-badge.female {
+            color: #ec4899;
             border-color: #ec4899;
-            color: white;
         }
 
         .seat.booked {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .seat.booked::before {
+            content: '⏳';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 14px;
+        }
+
+        .seat.sold {
             background: #dc3545;
             border-color: #dc3545;
             color: white;
             cursor: not-allowed;
+            position: relative;
+        }
+
+        .seat.sold::before {
+            content: '✓';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 14px;
+            background: white;
+            color: #dc3545;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         .seat.locked {
-            background: #ffc107;
-            border-color: #ffc107;
-            color: white;
+            background: #e9ecef;
+            border: 2px dashed #6c757d;
+            color: #6c757d;
             cursor: not-allowed;
+            position: relative;
+        }
+
+        .seat.locked::after {
+            content: '🔒';
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            font-size: 16px;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .seat.locked .gender-icon {
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: 1px solid #6c757d;
+        }
+
+        .seat.locked .gender-icon.male {
+            color: #0d6efd;
+        }
+
+        .seat.locked .gender-icon.female {
+            color: #ec4899;
         }
 
         .seat.driver-seat {
@@ -233,12 +320,24 @@
                                             @if ($seatNumber <= $totalSeats)
                                                 @php
                                                     $isBooked = in_array($seatNumber, $bookedSeats);
-                                                    $seatClass = $isBooked ? 'booked' : 'available';
+                                                    $seatStatus = isset($seatStatuses[$seatNumber]) ? $seatStatuses[$seatNumber] : null;
+                                                    $seatClass = 'available';
+                                                    $seatTitle = '';
+                                                    
+                                                    if ($isBooked && $seatStatus) {
+                                                        if ($seatStatus['is_confirmed']) {
+                                                            $seatClass = 'sold';
+                                                            $seatTitle = 'Confirmed Booking - ' . $seatStatus['booking_number'];
+                                                        } else {
+                                                            $seatClass = 'booked';
+                                                            $seatTitle = 'Pending Payment - ' . $seatStatus['booking_number'];
+                                                        }
+                                                    }
                                                 @endphp
                                                 <div class="seat {{ $seatClass }}"
                                                     data-seat="{{ $seatNumber }}"
                                                     data-fare="{{ $fare }}"
-                                                    {{ $isBooked ? 'title=Seat Booked' : '' }}>
+                                                    {{ $seatTitle ? "title=\"$seatTitle\"" : '' }}>
                                                     {{ $seatNumber }}
                                                 </div>
                                                 @php $seatNumber++; @endphp
@@ -251,12 +350,24 @@
                                             @if ($seatNumber <= $totalSeats)
                                                 @php
                                                     $isBooked = in_array($seatNumber, $bookedSeats);
-                                                    $seatClass = $isBooked ? 'booked' : 'available';
+                                                    $seatStatus = isset($seatStatuses[$seatNumber]) ? $seatStatuses[$seatNumber] : null;
+                                                    $seatClass = 'available';
+                                                    $seatTitle = '';
+                                                    
+                                                    if ($isBooked && $seatStatus) {
+                                                        if ($seatStatus['is_confirmed']) {
+                                                            $seatClass = 'sold';
+                                                            $seatTitle = 'Confirmed Booking - ' . $seatStatus['booking_number'];
+                                                        } else {
+                                                            $seatClass = 'booked';
+                                                            $seatTitle = 'Pending Payment - ' . $seatStatus['booking_number'];
+                                                        }
+                                                    }
                                                 @endphp
                                                 <div class="seat {{ $seatClass }}"
                                                     data-seat="{{ $seatNumber }}"
                                                     data-fare="{{ $fare }}"
-                                                    {{ $isBooked ? 'title=Seat Booked' : '' }}>
+                                                    {{ $seatTitle ? "title=\"$seatTitle\"" : '' }}>
                                                     {{ $seatNumber }}
                                                 </div>
                                                 @php $seatNumber++; @endphp
@@ -272,12 +383,24 @@
                                     @for ($seat = 41; $seat <= 45; $seat++)
                                         @php
                                             $isBooked = in_array($seat, $bookedSeats);
-                                            $seatClass = $isBooked ? 'booked' : 'available';
+                                            $seatStatus = isset($seatStatuses[$seat]) ? $seatStatuses[$seat] : null;
+                                            $seatClass = 'available';
+                                            $seatTitle = '';
+                                            
+                                            if ($isBooked && $seatStatus) {
+                                                if ($seatStatus['is_confirmed']) {
+                                                    $seatClass = 'sold';
+                                                    $seatTitle = 'Confirmed Booking - ' . $seatStatus['booking_number'];
+                                                } else {
+                                                    $seatClass = 'booked';
+                                                    $seatTitle = 'Pending Payment - ' . $seatStatus['booking_number'];
+                                                }
+                                            }
                                         @endphp
                                         <div class="seat {{ $seatClass }}"
                                             data-seat="{{ $seat }}"
                                             data-fare="{{ $fare }}"
-                                            {{ $isBooked ? 'title=Seat Booked' : '' }}>
+                                            {{ $seatTitle ? "title=\"$seatTitle\"" : '' }}>
                                             {{ $seat }}
                                         </div>
                                     @endfor
@@ -288,24 +411,33 @@
                         <!-- Legend -->
                         <div class="legend">
                             <div class="legend-item">
-                                <div class="legend-box" style="background: white; border-color: #28a745;"></div>
+                                <div class="legend-box" style="background: #f0fff4; border: 2px solid #28a745;"></div>
                                 <span>Available</span>
                             </div>
                             <div class="legend-item">
-                                <div class="legend-box" style="background: #0d6efd; border-color: #0d6efd;"></div>
-                                <span>Male</span>
+                                <div class="legend-box" style="background: #0d6efd; border-color: #0d6efd; position: relative;">
+                                    <span style="position: absolute; top: -8px; right: -8px; background: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 2px solid #0d6efd; font-size: 10px;">♂</span>
+                                </div>
+                                <span>Your Selection (♂/♀)</span>
                             </div>
                             <div class="legend-item">
-                                <div class="legend-box" style="background: #ec4899; border-color: #ec4899;"></div>
-                                <span>Female</span>
+                                <div class="legend-box" style="background: #e9ecef; border: 2px dashed #6c757d; position: relative;">
+                                    <span style="position: absolute; top: -8px; right: -8px; font-size: 10px;">🔒</span>
+                                    <span style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-size: 10px;">♂</span>
+                                </div>
+                                <span>Locked by Others</span>
                             </div>
                             <div class="legend-item">
-                                <div class="legend-box" style="background: #ffc107; border-color: #ffc107;"></div>
-                                <span>Locked</span>
+                                <div class="legend-box" style="background: #fff3cd; border: 2px solid #ffc107; position: relative;">
+                                    <span style="position: absolute; top: -6px; right: -6px; font-size: 10px;">⏳</span>
+                                </div>
+                                <span>Booked (Pending)</span>
                             </div>
                             <div class="legend-item">
-                                <div class="legend-box" style="background: #dc3545; border-color: #dc3545;"></div>
-                                <span>Booked</span>
+                                <div class="legend-box" style="background: #dc3545; border-color: #dc3545; position: relative;">
+                                    <span style="position: absolute; top: -6px; right: -6px; font-size: 10px; background: white; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;">✓</span>
+                                </div>
+                                <span>Sold (Confirmed)</span>
                             </div>
                         </div>
                     </div>
@@ -370,17 +502,45 @@
             const tripId = {{ $trip->id }};
             const fromStopId = {{ $fromStop->id }};
             const toStopId = {{ $toStop->id }};
-            let pollingInterval;
 
-            // Start polling for seat updates
-            startSeatPolling();
+            // Subscribe to Ably channel for real-time seat updates
+            if (typeof Echo !== 'undefined') {
+                console.log('🔌 Connecting to Ably channel: trip.' + tripId);
+                
+                Echo.channel('trip.' + tripId)
+                    .listen('.seat.locked', (data) => {
+                        console.log('🔒 Seat locked event received:', data);
+                        
+                        // Only process if it's for the same segment
+                        if (data.from_stop_id === fromStopId && data.to_stop_id === toStopId) {
+                            handleSeatLockedEvent(data);
+                        }
+                    })
+                    .listen('.seat.released', (data) => {
+                        console.log('🔓 Seat released event received:', data);
+                        
+                        // Only process if it's for the same segment
+                        if (data.from_stop_id === fromStopId && data.to_stop_id === toStopId) {
+                            handleSeatReleasedEvent(data);
+                        }
+                    })
+                    .error((error) => {
+                        console.error('❌ Echo channel error:', error);
+                        showToast('Real-time connection error. Please refresh the page.', 'error');
+                    });
+
+                console.log('✅ Real-time seat updates active via Ably');
+            } else {
+                console.warn('⚠️ Echo is not defined. Real-time updates will not work.');
+                showToast('Real-time updates unavailable. Please refresh to see seat changes.', 'warning');
+            }
 
             // Seat click handler
             $(document).on('click', '.seat.available', function() {
                 const seatNumber = $(this).data('seat');
                 const $seat = $(this);
 
-                if ($(this).hasClass('selected-male') || $(this).hasClass('selected-female')) {
+                if ($(this).hasClass('selected')) {
                     // Deselect seat
                     deselectSeat(seatNumber, $seat);
                 } else {
@@ -395,7 +555,8 @@
                         confirmButtonColor: '#0d6efd',
                         cancelButtonColor: '#ec4899',
                         showCloseButton: true,
-                        reverseButtons: true
+                        reverseButtons: true,
+                        allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
                             // Male selected
@@ -410,7 +571,15 @@
 
             function selectSeat(seatNumber, gender, $seat) {
                 // Immediately lock the seat visually
-                $seat.removeClass('available').addClass('selected-' + gender);
+                $seat.removeClass('available').addClass('selected');
+                
+                // Add gender badge to show male/female selection
+                const genderIcon = gender === 'male' 
+                    ? '<i class="bx bx-male"></i>' 
+                    : '<i class="bx bx-female"></i>';
+                const genderClass = gender === 'male' ? 'male' : 'female';
+                
+                $seat.append(`<span class="gender-badge ${genderClass}">${genderIcon}</span>`);
                 
                 // Add to selection
                 selectedSeats.push({
@@ -418,7 +587,7 @@
                     gender: gender
                 });
 
-                // Lock seat on server
+                // Lock seat on server and broadcast to others
                 lockSeatOnServer(seatNumber, gender);
                 
                 updateSelection();
@@ -431,16 +600,20 @@
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, remove it',
-                    cancelButtonText: 'Cancel'
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Remove gender class and make available
-                        $seat.removeClass('selected-male selected-female').addClass('available');
+                        // Remove selected class and gender badge, make available
+                        $seat.removeClass('selected')
+                             .addClass('available')
+                             .find('.gender-badge').remove();
                         
                         // Remove from selection
                         selectedSeats = selectedSeats.filter(s => s.seat !== seatNumber);
                         
-                        // Unlock seat on server
+                        // Unlock seat on server and broadcast to others
                         unlockSeatOnServer(seatNumber);
                         
                         updateSelection();
@@ -469,9 +642,11 @@
                                 title: 'Seat Unavailable',
                                 text: response.message || 'This seat has been taken by another user.'
                             });
-                            // Revert the selection
+                            // Revert the selection and remove gender badge
                             const $seat = $(`.seat[data-seat="${seatNumber}"]`);
-                            $seat.removeClass('selected-male selected-female').addClass('booked');
+                            $seat.removeClass('selected')
+                                 .addClass('available')
+                                 .find('.gender-badge').remove();
                             selectedSeats = selectedSeats.filter(s => s.seat !== seatNumber);
                             updateSelection();
                         }
@@ -502,55 +677,73 @@
                 });
             }
 
-            function startSeatPolling() {
-                // Poll every 3 seconds for seat updates
-                pollingInterval = setInterval(function() {
-                    checkSeatAvailability();
-                }, 3000);
+            // Handle real-time seat locked event from Ably
+            function handleSeatLockedEvent(data) {
+                const seatNumber = parseInt(data.seat_number);
+                const $seat = $(`.seat[data-seat="${seatNumber}"]`);
+                
+                // Only update if not selected by current user
+                const isSelectedByMe = selectedSeats.some(s => s.seat === seatNumber);
+                if (!isSelectedByMe && $seat.hasClass('available')) {
+                    // Add locked class and gender icon
+                    const genderIcon = data.gender === 'male' 
+                        ? '<i class="bx bx-male"></i>' 
+                        : '<i class="bx bx-female"></i>';
+                    const genderClass = data.gender === 'male' ? 'male' : 'female';
+                    
+                    $seat.removeClass('available')
+                         .addClass('locked')
+                         .attr('title', `Locked by ${data.user_name} (${data.gender.charAt(0).toUpperCase() + data.gender.slice(1)})`);
+                    
+                    // Add gender icon to the seat
+                    if (!$seat.find('.gender-icon').length) {
+                        $seat.append(`<span class="gender-icon ${genderClass}">${genderIcon}</span>`);
+                    }
+                    
+                    console.log(`🔒 Seat ${seatNumber} locked by ${data.user_name} (${data.gender})`);
+                    
+                    // Show toast notification
+                    showToast(`Seat ${seatNumber} was just selected by ${data.user_name}`, 'info');
+                }
             }
 
-            function checkSeatAvailability() {
-                $.ajax({
-                    url: "{{ route('admin.bookings.check-seats') }}",
-                    type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    data: {
-                        trip_id: tripId,
-                        from_stop_id: fromStopId,
-                        to_stop_id: toStopId
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            updateSeatStatus(response.data.locked_seats, response.data.booked_seats);
-                        }
+            // Handle real-time seat released event from Ably
+            function handleSeatReleasedEvent(data) {
+                const seatNumber = parseInt(data.seat_number);
+                const $seat = $(`.seat[data-seat="${seatNumber}"]`);
+                
+                // Only update if not selected by current user
+                const isSelectedByMe = selectedSeats.some(s => s.seat === seatNumber);
+                if (!isSelectedByMe && $seat.hasClass('locked')) {
+                    $seat.removeClass('locked')
+                         .addClass('available')
+                         .removeAttr('title')
+                         .find('.gender-icon').remove(); // Remove gender icon
+                    
+                    console.log(`🔓 Seat ${seatNumber} released`);
+                    
+                    // Show toast notification
+                    showToast(`Seat ${seatNumber} is now available`, 'success');
+                }
+            }
+            
+            // Show toast notification for real-time updates
+            function showToast(message, type = 'info') {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
                     }
                 });
-            }
 
-            function updateSeatStatus(lockedSeats, bookedSeats) {
-                $('.seat.available, .seat.locked').each(function() {
-                    const seatNumber = $(this).data('seat');
-                    const isSelectedByMe = selectedSeats.some(s => s.seat === seatNumber);
-                    
-                    // Skip if this user selected it
-                    if (isSelectedByMe) {
-                        return;
-                    }
-
-                    // Check if locked by another user
-                    if (lockedSeats.includes(seatNumber)) {
-                        if (!$(this).hasClass('locked')) {
-                            $(this).removeClass('available').addClass('locked');
-                        }
-                    } else if (bookedSeats.includes(seatNumber)) {
-                        $(this).removeClass('available locked').addClass('booked');
-                    } else {
-                        if ($(this).hasClass('locked')) {
-                            $(this).removeClass('locked').addClass('available');
-                        }
-                    }
+                Toast.fire({
+                    icon: type,
+                    title: message
                 });
             }
 
@@ -566,8 +759,9 @@
                     const seatsList = selectedSeats.sort((a, b) => a.seat - b.seat).map(item => {
                         const badgeColor = item.gender === 'male' ? 'bg-primary' : 'bg-pink';
                         const icon = item.gender === 'male' ? 'bx-male' : 'bx-female';
-                        return `<span class="badge ${badgeColor} me-1 mb-1">
-                            <i class="bx ${icon}"></i> Seat ${item.seat}
+                        const genderLabel = item.gender === 'male' ? 'Male' : 'Female';
+                        return `<span class="badge ${badgeColor} me-1 mb-1" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                            <i class="bx ${icon}"></i> Seat ${item.seat} - ${genderLabel}
                         </span>`;
                     }).join('');
                     $('#selected-seats-list').html(seatsList);
@@ -587,11 +781,17 @@
                 ).join(''));
             }
 
-            // Clear polling on page unload
+            // Cleanup on page unload
             $(window).on('beforeunload', function() {
-                if (pollingInterval) {
-                    clearInterval(pollingInterval);
+                // Disconnect from Ably channel
+                if (typeof Echo !== 'undefined') {
+                    Echo.leave('trip.' + tripId);
                 }
+                
+                // Unlock all selected seats on server
+                selectedSeats.forEach(item => {
+                    unlockSeatOnServer(item.seat);
+                });
             });
         });
     </script>

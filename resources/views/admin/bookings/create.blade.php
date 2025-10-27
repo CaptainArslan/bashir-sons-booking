@@ -238,16 +238,38 @@
                         $('#loading-indicator').hide();
                         
                         if (response.success && response.data.times.length > 0) {
-                            // Populate time dropdown
+                            // Populate time dropdown with enhanced time display
                             let options = '<option value="">Select departure time</option>';
+                            const selectedDate = new Date(departureDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
                             response.data.times.forEach(function(time) {
+                                // Determine if it's today, tomorrow, or future
+                                const dateLabel = selectedDate.getTime() === today.getTime() 
+                                    ? '🕐 Today' 
+                                    : selectedDate.getTime() === today.getTime() + 86400000 
+                                        ? '📅 Tomorrow' 
+                                        : '📅 ' + selectedDate.toLocaleDateString();
+                                
                                 options += `<option value="${time.time}" data-route-id="${time.route_id}">
-                                    ${time.time} - ${time.route_name}
+                                    ${dateLabel} at ${time.time} - ${time.route_name} (${time.route_code})
                                 </option>`;
                             });
                             
                             $('#departure_time').html(options);
                             $('#time-selection-container').show();
+                            
+                            // Show success message with count
+                            const timeCount = response.data.times.length;
+                            const message = timeCount === 1 
+                                ? '1 departure time available' 
+                                : `${timeCount} departure times available`;
+                            
+                            $('<div class="alert alert-success alert-dismissible fade show mt-2" role="alert">' +
+                                `<i class="bx bx-check-circle me-1"></i>${message}` +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                                '</div>').insertAfter('#time-selection-container').delay(5000).fadeOut();
                         } else {
                             Swal.fire({
                                 icon: 'info',
