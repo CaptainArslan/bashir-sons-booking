@@ -407,6 +407,9 @@
                 <li> <a href="{{ route('admin.bookings.index') }}"
                         style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                             style="font-size: 0.7rem;"></i>All Bookings</a></li>
+                <li> <a href="{{ route('admin.bookings.create') }}"
+                        style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                            style="font-size: 0.7rem;"></i>Create Booking</a></li>
                 <li> <a href="{{ route('admin.bookings.reports') }}"
                         style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                             style="font-size: 0.7rem;"></i>Reports</a></li>

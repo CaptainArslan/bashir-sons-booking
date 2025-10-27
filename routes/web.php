@@ -271,6 +271,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{id}/confirm', [BookingManagementController::class, 'confirm'])->name('bookings.confirm');
         Route::post('/bookings/{id}/cancel', [BookingManagementController::class, 'cancel'])->name('bookings.cancel');
 
+        // Booking Creation (New Flow)
+        Route::get('/bookings/create/search', [\App\Http\Controllers\Admin\BookingController::class, 'create'])->name('bookings.create');
+        Route::post('/bookings/search', [\App\Http\Controllers\Admin\BookingController::class, 'search'])->name('bookings.search');
+        Route::post('/bookings/select-seats', [\App\Http\Controllers\Admin\BookingController::class, 'selectSeats'])->name('bookings.select-seats');
+        Route::post('/bookings/store', [\App\Http\Controllers\Admin\BookingController::class, 'store'])->name('bookings.store');
+        Route::post('/bookings/{id}/cancel-booking', [\App\Http\Controllers\Admin\BookingController::class, 'cancel'])->name('bookings.cancel-booking');
+
         // Expense Management
         Route::get('/expenses', [ExpenseManagementController::class, 'index'])->name('expenses.index');
         Route::get('/expenses/create', [ExpenseManagementController::class, 'create'])->name('expenses.create');

@@ -36,6 +36,9 @@ class Booking extends Model
         'metadata',
         'confirmed_at',
         'cancelled_at',
+        'reserved_until',
+        'payment_status',
+        'payment_method',
     ];
 
     protected function casts(): array
@@ -50,6 +53,7 @@ class Booking extends Model
             'metadata' => 'array',
             'confirmed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'reserved_until' => 'datetime',
         ];
     }
 

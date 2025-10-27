@@ -584,7 +584,9 @@ class RouteController extends Controller
             return $fare->from_terminal_id.'-'.$fare->to_terminal_id;
         });
 
-        return view('admin.routes.manage-fares', compact('route', 'stops', 'stopCombinations', 'existingFares'));
+        $discountTypes = DiscountTypeEnum::getTypes();
+
+        return view('admin.routes.manage-fares', compact('route', 'stops', 'stopCombinations', 'existingFares', 'discountTypes'));
     }
 
     public function storeFares(Request $request, $id)

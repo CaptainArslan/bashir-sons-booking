@@ -4,14 +4,14 @@ namespace App\Enums;
 
 enum DiscountTypeEnum: string
 {
-    case FLAT = 'fixed';
-    case PERCENT = 'percentage';
+    case FLAT = 'flat';
+    case PERCENT = 'percent';
 
-    public static function getStatuses(): array
+    public static function getTypes(): array
     {
         return [
-            self::FLAT->value,
-            self::PERCENT->value,
+            self::FLAT->value => 'Flat',
+            self::PERCENT->value => 'Percent',
         ];
     }
 
