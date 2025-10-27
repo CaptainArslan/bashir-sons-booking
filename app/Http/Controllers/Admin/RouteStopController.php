@@ -22,7 +22,7 @@ class RouteStopController extends Controller
         if ($request->ajax()) {
             $routeStops = RouteStop::query()
                 ->with(['route:id,name,code', 'terminal:id,name,code,city_id', 'terminal.city:id,name'])
-                ->select('id', 'route_id', 'terminal_id', 'sequence', 'distance_from_previous', 'approx_travel_time', 'is_pickup_allowed', 'is_dropoff_allowed', 'created_at');
+                ->select('id', 'route_id', 'terminal_id', 'sequence', 'created_at');
 
             return DataTables::eloquent($routeStops)
                 ->addColumn('route_info', function ($routeStop) {
@@ -41,21 +41,6 @@ class RouteStopController extends Controller
                 })
                 ->addColumn('sequence_badge', function ($routeStop) {
                     return '<span class="badge bg-primary">'.$routeStop->sequence.'</span>';
-                })
-                ->addColumn('distance_info', function ($routeStop) {
-                    $distance = $routeStop->distance_from_previous ? $routeStop->distance_from_previous.' km' : '-';
-                    $time = $routeStop->approx_travel_time ? $routeStop->approx_travel_time.' min' : '-';
-
-                    return '<div class="d-flex flex-column">
-                                <small>'.$distance.'</small>
-                                <small class="text-muted">'.$time.'</small>
-                            </div>';
-                })
-                ->addColumn('services', function ($routeStop) {
-                    $pickup = $routeStop->is_pickup_allowed ? '<span class="badge bg-success me-1">Pickup</span>' : '';
-                    $dropoff = $routeStop->is_dropoff_allowed ? '<span class="badge bg-info">Dropoff</span>' : '';
-
-                    return $pickup.$dropoff;
                 })
                 ->addColumn('actions', function ($routeStop) {
                     // $actions = '<div class="dropdown">
@@ -96,7 +81,7 @@ class RouteStopController extends Controller
                 })
                 ->editColumn('created_at', fn ($routeStop) => $routeStop->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns(['route_info', 'terminal_info', 'sequence_badge', 'distance_info', 'services', 'actions'])
+                ->rawColumns(['route_info', 'terminal_info', 'sequence_badge', 'actions'])
                 ->make(true);
         }
     }
@@ -172,19 +157,15 @@ class RouteStopController extends Controller
         $validated = $request->validate([
             'route_id' => 'required|exists:routes,id',
             'terminal_id' => 'required|exists:terminals,id',
-            'distance_from_previous' => 'nullable|numeric|min:0',
-            'approx_travel_time' => 'nullable|integer|min:0',
-            'is_pickup_allowed' => 'boolean',
-            'is_dropoff_allowed' => 'boolean',
+            'sequence' => 'required|integer|min:1',
         ], [
             'route_id.required' => 'Route is required',
             'route_id.exists' => 'Selected route is invalid',
             'terminal_id.required' => 'Terminal is required',
             'terminal_id.exists' => 'Selected terminal is invalid',
-            'distance_from_previous.numeric' => 'Distance must be a number',
-            'distance_from_previous.min' => 'Distance cannot be negative',
-            'approx_travel_time.integer' => 'Travel time must be a number',
-            'approx_travel_time.min' => 'Travel time cannot be negative',
+            'sequence.required' => 'Sequence is required',
+            'sequence.integer' => 'Sequence must be a number',
+            'sequence.min' => 'Sequence must be at least 1',
         ]);
 
         try {

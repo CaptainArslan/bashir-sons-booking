@@ -477,38 +477,6 @@
                         <input type="number" class="form-control sequence-input" name="stops[${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
                     </div>
-                    ${!isFirstStop ? `
-                        <div class="col-md-2">
-                            <label class="form-label">Distance (km)</label>
-                            <input type="number" class="form-control distance-input" name="stops[${stopCounter}][distance_from_previous]" 
-                                   placeholder="0.0" step="0.1" min="0">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Travel Time (min)</label>
-                            <input type="number" class="form-control travel-time-input" name="stops[${stopCounter}][approx_travel_time]" 
-                                   placeholder="0" min="0">
-                        </div>
-                        ` : ''}
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-auto">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_pickup_allowed]" 
-                                   value="1" id="pickup_${stopCounter}" checked>
-                            <label class="form-check-label" for="pickup_${stopCounter}">
-                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][is_dropoff_allowed]" 
-                                   value="1" id="dropoff_${stopCounter}" checked>
-                            <label class="form-check-label" for="dropoff_${stopCounter}">
-                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                            </label>
-                        </div>
-                    </div>
                 </div>
             `;
 
@@ -523,8 +491,6 @@
 
                 // Add event listeners for this stop
                 const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-                const distanceInput = stopDiv.querySelector('.distance-input');
-                const travelTimeInput = stopDiv.querySelector('.travel-time-input');
 
                 removeBtn.addEventListener('click', function() {
                     // Destroy Select2 before removing the element
@@ -532,17 +498,6 @@
                     stopDiv.remove();
                     updateSequences();
                 });
-
-                // Auto-calculate travel time based on distance (only for non-first stops)
-                if (distanceInput && travelTimeInput) {
-                    distanceInput.addEventListener('input', function() {
-                        const distance = parseFloat(this.value);
-                        if (distance && !travelTimeInput.value) {
-                            const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                            travelTimeInput.value = travelTime;
-                        }
-                    });
-                }
             }
 
             function updateSequences() {

@@ -355,38 +355,6 @@
                                                         <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
                                                                value="{{ $stop->sequence }}" min="1" required readonly>
                                                     </div>
-                                                    @if($stop->sequence > 1)
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Distance (km)</label>
-                                                            <input type="number" class="form-control distance-input" name="stops[{{ $stop->id }}][distance_from_previous]" 
-                                                                   value="{{ $stop->distance_from_previous }}" placeholder="0.0" step="0.1" min="0">
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Travel Time (min)</label>
-                                                            <input type="number" class="form-control travel-time-input" name="stops[{{ $stop->id }}][approx_travel_time]" 
-                                                                   value="{{ $stop->approx_travel_time }}" placeholder="0" min="0">
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                <div class="row g-2 mt-2">
-                                                    <div class="col-auto">
-                                                        <div class="form-check mt-4">
-                                                            <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
-                                                                   value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="pickup_{{ $stop->id }}">
-                                                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <div class="form-check mt-4">
-                                                            <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
-                                                                   value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="dropoff_{{ $stop->id }}">
-                                                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                                                            </label>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -525,17 +493,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        document.querySelectorAll('.distance-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const distance = parseFloat(this.value);
-                const travelTimeInput = this.closest('.stop-item').querySelector('.travel-time-input');
-                if (distance && !travelTimeInput.value) {
-                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                    travelTimeInput.value = travelTime;
-                }
-            });
-        });
-
         function addStop() {
             stopCounter++;
             const isFirstStop = stopCounter === 1;
@@ -574,38 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
                     </div>
-                    ${!isFirstStop ? `
-                    <div class="col-md-2">
-                        <label class="form-label">Distance (km)</label>
-                        <input type="number" class="form-control distance-input" name="stops[new_${stopCounter}][distance_from_previous]" 
-                               placeholder="0.0" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Travel Time (min)</label>
-                        <input type="number" class="form-control travel-time-input" name="stops[new_${stopCounter}][approx_travel_time]" 
-                               placeholder="0" min="0">
-                    </div>
-                    ` : ''}
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-auto">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
-                                   value="1" id="pickup_new_${stopCounter}" checked>
-                            <label class="form-check-label" for="pickup_new_${stopCounter}">
-                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
-                                   value="1" id="dropoff_new_${stopCounter}" checked>
-                            <label class="form-check-label" for="dropoff_new_${stopCounter}">
-                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                            </label>
-                        </div>
-                    </div>
                 </div>
             `;
             
@@ -620,8 +545,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Add event listeners for this stop
             const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-            const distanceInput = stopDiv.querySelector('.distance-input');
-            const travelTimeInput = stopDiv.querySelector('.travel-time-input');
 
             removeBtn.addEventListener('click', function() {
                 // Destroy Select2 before removing the element
@@ -629,17 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopDiv.remove();
                 updateSequences();
             });
-
-            // Auto-calculate travel time based on distance (only for non-first stops)
-            if (distanceInput && travelTimeInput) {
-                distanceInput.addEventListener('input', function() {
-                    const distance = parseFloat(this.value);
-                    if (distance && !travelTimeInput.value) {
-                        const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                        travelTimeInput.value = travelTime;
-                    }
-                });
-            }
         }
 
         function updateSequences() {

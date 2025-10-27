@@ -107,23 +107,14 @@ class RouteSeeder extends Seeder
         }
 
         $sequence = 1;
-        $totalDistance = 0;
 
         foreach ($routeStops as $terminal) {
-            $distance = $this->calculateDistance($sequence);
-            $travelTime = $this->calculateTravelTime($distance);
-
             RouteStop::create([
                 'route_id' => $route->id,
                 'terminal_id' => $terminal->id,
                 'sequence' => $sequence,
-                'distance_from_previous' => $sequence > 1 ? $distance : 0,
-                'approx_travel_time' => $sequence > 1 ? $travelTime : 0,
-                'is_pickup_allowed' => true,
-                'is_dropoff_allowed' => true,
             ]);
 
-            $totalDistance += $distance;
             $sequence++;
         }
 
@@ -183,31 +174,5 @@ class RouteSeeder extends Seeder
         }
 
         return $stops->values();
-    }
-
-    /**
-     * Calculate distance between stops (simulated)
-     */
-    private function calculateDistance($sequence)
-    {
-        // Simulate distances between major cities in Pakistan
-        $distances = [
-            1 => 0,      // First stop
-            2 => 1200,   // Karachi to Lahore
-            3 => 1500,   // Karachi to Islamabad
-            4 => 400,    // Lahore to Peshawar
-            5 => 200,    // Additional stops
-        ];
-
-        return $distances[$sequence] ?? rand(100, 500);
-    }
-
-    /**
-     * Calculate travel time based on distance
-     */
-    private function calculateTravelTime($distance)
-    {
-        // Assume average speed of 60 km/h
-        return round($distance / 60 * 60); // Convert to minutes
     }
 }

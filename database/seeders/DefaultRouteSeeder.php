@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
+use Illuminate\Database\Seeder;
 
 class DefaultRouteSeeder extends Seeder
 {
@@ -85,8 +85,9 @@ class DefaultRouteSeeder extends Seeder
             foreach ($routeData['stops'] as $index => $terminalCode) {
                 $terminal = Terminal::where('code', $terminalCode)->first();
 
-                if (!$terminal) {
+                if (! $terminal) {
                     $this->command->warn("⚠️ Terminal with code {$terminalCode} not found. Skipping stop.");
+
                     continue;
                 }
 
@@ -94,10 +95,6 @@ class DefaultRouteSeeder extends Seeder
                     'route_id' => $route->id,
                     'terminal_id' => $terminal->id,
                     'sequence' => $index + 1,
-                    'distance_from_previous' => $index === 0 ? 0 : rand(20, 80), // Dummy distance
-                    'approx_travel_time' => $index === 0 ? 0 : rand(30, 90),   // Dummy minutes
-                    'is_pickup_allowed' => true,
-                    'is_dropoff_allowed' => true,
                 ]);
             }
         }

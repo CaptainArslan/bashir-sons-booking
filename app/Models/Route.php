@@ -20,7 +20,7 @@ class Route extends Model
         'is_return_of',
         'base_currency',
         'status',
-    ];  
+    ];
 
     protected $casts = [
         'status' => RouteStatusEnum::class,
@@ -57,13 +57,6 @@ class Route extends Model
         return $this->belongsToMany(Terminal::class, 'route_stops')
             ->withPivot([
                 'sequence',
-                'distance_from_previous',
-                'approx_travel_time',
-                'is_pickup_allowed',
-                'is_dropoff_allowed',
-                'arrival_time',
-                'departure_time',
-                'is_online_booking_allowed',
             ])
             ->orderBy('pivot_sequence');
     }
@@ -120,38 +113,10 @@ class Route extends Model
         );
     }
 
-    protected function totalTravelTime(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
-        );
-    }
-
-    protected function totalDistance(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
-        );
-    }
-
     protected function totalStops(): Attribute
     {
         return Attribute::make(
             get: fn ($value) => $this->routeStops()->count(),
-        );
-    }
-
-    protected function totalDropoffAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
-        );
-    }
-
-    protected function totalPickupAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
         );
     }
 

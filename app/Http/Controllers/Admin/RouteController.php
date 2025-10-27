@@ -183,24 +183,6 @@ class RouteController extends Controller
                 'min:1',
                 'max:100',
             ],
-            'stops.*.distance_from_previous' => [
-                'nullable',
-                'numeric',
-                'min:0',
-                'max:10000',
-            ],
-            'stops.*.approx_travel_time' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'max:1440',
-            ],
-            'stops.*.is_pickup_allowed' => [
-                'boolean',
-            ],
-            'stops.*.is_dropoff_allowed' => [
-                'boolean',
-            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -230,12 +212,6 @@ class RouteController extends Controller
             'stops.*.sequence.integer' => 'Sequence must be a whole number',
             'stops.*.sequence.min' => 'Sequence must be at least 1',
             'stops.*.sequence.max' => 'Sequence cannot exceed 100',
-            'stops.*.distance_from_previous.numeric' => 'Distance must be a valid number',
-            'stops.*.distance_from_previous.min' => 'Distance cannot be negative',
-            'stops.*.distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
-            'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
-            'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
-            'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
@@ -247,8 +223,6 @@ class RouteController extends Controller
             // Create route stops
             $stops = $validated['stops'];
             foreach ($stops as $stopData) {
-                $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
-                $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
                 $route->routeStops()->create($stopData);
             }
 
@@ -330,24 +304,6 @@ class RouteController extends Controller
                 'min:1',
                 'max:100',
             ],
-            'stops.*.distance_from_previous' => [
-                'nullable',
-                'numeric',
-                'min:0',
-                'max:10000',
-            ],
-            'stops.*.approx_travel_time' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'max:1440',
-            ],
-            'stops.*.is_pickup_allowed' => [
-                'boolean',
-            ],
-            'stops.*.is_dropoff_allowed' => [
-                'boolean',
-            ],
         ], [
             'code.required' => 'Route code is required',
             'code.string' => 'Route code must be a string',
@@ -377,12 +333,6 @@ class RouteController extends Controller
             'stops.*.sequence.integer' => 'Sequence must be a whole number',
             'stops.*.sequence.min' => 'Sequence must be at least 1',
             'stops.*.sequence.max' => 'Sequence cannot exceed 100',
-            'stops.*.distance_from_previous.numeric' => 'Distance must be a valid number',
-            'stops.*.distance_from_previous.min' => 'Distance cannot be negative',
-            'stops.*.distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
-            'stops.*.approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
-            'stops.*.approx_travel_time.min' => 'Travel time cannot be negative',
-            'stops.*.approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
@@ -400,8 +350,6 @@ class RouteController extends Controller
                 if (is_numeric($key)) {
                     // Existing stop
                     $existingStopIds[] = $key;
-                    $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
-                    $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
                     $route->routeStops()->where('id', $key)->update($stopData);
                 } else {
                     // New stop
@@ -414,8 +362,6 @@ class RouteController extends Controller
 
             // Create new stops
             foreach ($newStops as $stopData) {
-                $stopData['is_pickup_allowed'] = isset($stopData['is_pickup_allowed']);
-                $stopData['is_dropoff_allowed'] = isset($stopData['is_dropoff_allowed']);
                 $route->routeStops()->create($stopData);
             }
 
@@ -482,24 +428,6 @@ class RouteController extends Controller
                 'min:1',
                 'max:100',
             ],
-            'distance_from_previous' => [
-                'nullable',
-                'numeric',
-                'min:0',
-                'max:10000',
-            ],
-            'approx_travel_time' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'max:1440',
-            ],
-            'is_pickup_allowed' => [
-                'boolean',
-            ],
-            'is_dropoff_allowed' => [
-                'boolean',
-            ],
         ], [
             'terminal_id.required' => 'Terminal is required',
             'terminal_id.exists' => 'Selected terminal is invalid or does not exist',
@@ -507,12 +435,6 @@ class RouteController extends Controller
             'sequence.integer' => 'Sequence must be a whole number',
             'sequence.min' => 'Sequence must be at least 1',
             'sequence.max' => 'Sequence cannot exceed 100',
-            'distance_from_previous.numeric' => 'Distance must be a valid number',
-            'distance_from_previous.min' => 'Distance cannot be negative',
-            'distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
-            'approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
-            'approx_travel_time.min' => 'Travel time cannot be negative',
-            'approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
@@ -525,10 +447,6 @@ class RouteController extends Controller
                     'message' => 'Terminal already exists in this route.',
                 ], 400);
             }
-
-            // Handle checkbox values
-            $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
-            $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
 
             $route->routeStops()->create($validated);
 
@@ -564,24 +482,6 @@ class RouteController extends Controller
                 'min:1',
                 'max:100',
             ],
-            'distance_from_previous' => [
-                'nullable',
-                'numeric',
-                'min:0',
-                'max:10000',
-            ],
-            'approx_travel_time' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'max:1440',
-            ],
-            'is_pickup_allowed' => [
-                'boolean',
-            ],
-            'is_dropoff_allowed' => [
-                'boolean',
-            ],
         ], [
             'terminal_id.required' => 'Terminal is required',
             'terminal_id.exists' => 'Selected terminal is invalid or does not exist',
@@ -589,12 +489,6 @@ class RouteController extends Controller
             'sequence.integer' => 'Sequence must be a whole number',
             'sequence.min' => 'Sequence must be at least 1',
             'sequence.max' => 'Sequence cannot exceed 100',
-            'distance_from_previous.numeric' => 'Distance must be a valid number',
-            'distance_from_previous.min' => 'Distance cannot be negative',
-            'distance_from_previous.max' => 'Distance cannot exceed 10,000 km',
-            'approx_travel_time.integer' => 'Travel time must be a whole number (minutes)',
-            'approx_travel_time.min' => 'Travel time cannot be negative',
-            'approx_travel_time.max' => 'Travel time cannot exceed 24 hours (1440 minutes)',
         ]);
 
         try {
@@ -607,10 +501,6 @@ class RouteController extends Controller
                     'message' => 'Terminal already exists in this route.',
                 ], 400);
             }
-
-            // Handle checkbox values
-            $validated['is_pickup_allowed'] = $request->has('is_pickup_allowed');
-            $validated['is_dropoff_allowed'] = $request->has('is_dropoff_allowed');
 
             $stop->update($validated);
 
