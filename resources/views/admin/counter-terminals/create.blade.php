@@ -326,11 +326,30 @@
             // Reset form functionality
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
-                    if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
-                        form.reset();
-                    }
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'All entered data will be lost!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, reset it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.reset();
+                            Swal.fire({
+                                title: 'Reset!',
+                                text: 'The form has been cleared.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
                 });
             }
+
 
             // Initialize select2
             $('.select2').select2({
