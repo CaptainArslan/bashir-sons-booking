@@ -4,8 +4,8 @@ namespace App\Enums;
 
 enum DiscountTypeEnum: string
 {
-    case FLAT = 'fixed';
-    case PERCENT = 'percentage';
+    case FLAT = 'flat';
+    case PERCENT = 'percent';
 
     public static function getStatuses(): array
     {
@@ -14,7 +14,7 @@ enum DiscountTypeEnum: string
             self::PERCENT->value,
         ];
     }
-    
+
     public static function getStatusName(string $status): string
     {
         return match ($status) {
@@ -22,7 +22,7 @@ enum DiscountTypeEnum: string
             self::PERCENT->value => 'Percent',
         };
     }
-    
+
     public static function getStatusColor(string $status): string
     {
         return match ($status) {
@@ -30,15 +30,14 @@ enum DiscountTypeEnum: string
             self::PERCENT->value => 'warning',
         };
     }
-    
+
     public function getValue(): string
     {
         return $this->value;
     }
-    
+
     public function getName(): string
     {
         return self::getStatusName($this->value);
     }
-        
 }

@@ -172,7 +172,7 @@
     <!--end breadcrumb-->
 
     <div class="row">
-        <div class="col-xl-10 mx-auto">
+        <div class="col-xl-6 mx-auto">
             <div class="card route-card">
                 <div class="card-header-info">
                     <h5><i class="bx bx-edit me-2"></i>Edit Route: {{ $route->name }}</h5>
@@ -186,56 +186,6 @@
                         <!-- Info Box -->
                         <div class="info-box">
                             <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating route information will affect all timetables and bookings using this route. Please review carefully before saving changes.</p>
-                        </div>
-                        
-                        <!-- Route Information Card -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card route-info-card">
-                                    <div class="card-body" style="padding: 0.75rem;">
-                                        <div class="row">
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Route ID:</strong> 
-                                                    <span class="badge bg-secondary">{{ $route->id }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Code:</strong> 
-                                                    <span class="badge bg-info">{{ $route->code }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Status:</strong> 
-                                                    <span class="badge bg-{{ \App\Enums\RouteStatusEnum::getStatusColor($route->status->value) }} stats-badge">
-                                                        {{ \App\Enums\RouteStatusEnum::getStatusName($route->status->value) }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Direction:</strong> 
-                                                    <span class="badge bg-primary">{{ ucfirst($route->direction) }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Stops:</strong> 
-                                                    <span class="badge bg-success">{{ $route->routeStops->count() }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Created:</strong> 
-                                                    {{ $route->created_at->format('M d, Y') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- Basic Information -->
@@ -385,9 +335,9 @@
                                             <i class="bx bx-plus me-1"></i>Add Stop
                                         </button>
                                     </div>
-                                    <div id="stops-container">
+                                    <div id="stops-container" class="row g-4">
                                         @foreach($route->routeStops->sortBy('sequence') as $stop)
-                                            <div class="stop-item border rounded p-3 mb-3" data-stop-id="{{ $stop->id }}">
+                                            <div class="stop-item border rounded p-3 mb-1 col-md-6" data-stop-id="{{ $stop->id }}">
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <div class="d-flex align-items-center">
                                                         <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
@@ -399,8 +349,8 @@
                                                         <i class="bx bx-trash"></i>
                                                     </button>
                                                 </div>
-                                                <div class="row g-2">
-                                                    <div class="col-md-4">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
                                                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                                                         <select class="form-select terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
                                                             <option value="">Select Terminal</option>
@@ -411,40 +361,10 @@
                                                             @endforeach
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-2">
+                                                    <div class="col-md-6">
                                                         <label class="form-label">Sequence</label>
                                                         <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
                                                                value="{{ $stop->sequence }}" min="1" required readonly>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">Distance (km)</label>
-                                                        <input type="number" class="form-control distance-input" name="stops[{{ $stop->id }}][distance_from_previous]" 
-                                                               value="{{ $stop->distance_from_previous }}" placeholder="0.0" step="0.1" min="0">
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">Travel Time (min)</label>
-                                                        <input type="number" class="form-control travel-time-input" name="stops[{{ $stop->id }}][approx_travel_time]" 
-                                                               value="{{ $stop->approx_travel_time }}" placeholder="0" min="0">
-                                                    </div>
-                                                </div>
-                                                <div class="row g-2 mt-2">
-                                                    <div class="col-md-6">
-                                                        <div class="form-check mt-4">
-                                                            <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_pickup_allowed]" 
-                                                                   value="1" id="pickup_{{ $stop->id }}" {{ $stop->is_pickup_allowed ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="pickup_{{ $stop->id }}">
-                                                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-check mt-4">
-                                                            <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][is_dropoff_allowed]" 
-                                                                   value="1" id="dropoff_{{ $stop->id }}" {{ $stop->is_dropoff_allowed ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="dropoff_{{ $stop->id }}">
-                                                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                                                            </label>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -490,15 +410,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateRouteCode() {
         const name = nameInput.value.trim();
         const direction = directionSelect.value;
-        
-        console.log('Generating code for:', name, direction);
-        
+
         if (name && direction) {
             const code = generateCodeFromName(name, direction);
-            console.log('Generated code:', code);
             codeInput.value = code;
         } else {
-            console.log('Missing name or direction, clearing code');
             codeInput.value = '';
         }
     }
@@ -584,21 +500,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        document.querySelectorAll('.distance-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const distance = parseFloat(this.value);
-                const travelTimeInput = this.closest('.stop-item').querySelector('.travel-time-input');
-                if (distance && !travelTimeInput.value) {
-                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                    travelTimeInput.value = travelTime;
-                }
-            });
-        });
-
         function addStop() {
             stopCounter++;
             const stopDiv = document.createElement('div');
-            stopDiv.className = 'stop-item border rounded p-3 mb-3';
+            stopDiv.className = 'stop-item border rounded p-3 mb-4 col-md-6';
             stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
@@ -611,8 +516,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>
-                <div class="row g-2">
-                    <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                         <select class="form-select terminal-select" name="stops[new_${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
@@ -623,40 +528,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-6">
                         <label class="form-label">Sequence</label>
                         <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Distance (km)</label>
-                        <input type="number" class="form-control distance-input" name="stops[new_${stopCounter}][distance_from_previous]" 
-                               placeholder="0.0" step="0.1" min="0">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Travel Time (min)</label>
-                        <input type="number" class="form-control travel-time-input" name="stops[new_${stopCounter}][approx_travel_time]" 
-                               placeholder="0" min="0">
-                    </div>
-                </div>
-                <div class="row g-2 mt-2">
-                    <div class="col-md-6">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_pickup_allowed]" 
-                                   value="1" id="pickup_new_${stopCounter}" checked>
-                            <label class="form-check-label" for="pickup_new_${stopCounter}">
-                                <i class="bx bx-up-arrow-circle me-1 text-success"></i>Pickup
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][is_dropoff_allowed]" 
-                                   value="1" id="dropoff_new_${stopCounter}" checked>
-                            <label class="form-check-label" for="dropoff_new_${stopCounter}">
-                                <i class="bx bx-down-arrow-circle me-1 text-primary"></i>Dropoff
-                            </label>
-                        </div>
                     </div>
                 </div>
             `;
@@ -672,23 +547,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Add event listeners for this stop
             const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-            const distanceInput = stopDiv.querySelector('.distance-input');
-            const travelTimeInput = stopDiv.querySelector('.travel-time-input');
 
             removeBtn.addEventListener('click', function() {
                 // Destroy Select2 before removing the element
                 $(terminalSelect).select2('destroy');
                 stopDiv.remove();
                 updateSequences();
-            });
-
-            // Auto-calculate travel time based on distance
-            distanceInput.addEventListener('input', function() {
-                const distance = parseFloat(this.value);
-                if (distance && !travelTimeInput.value) {
-                    const travelTime = Math.round(distance / 60 * 60); // 60 km/h average
-                    travelTimeInput.value = travelTime;
-                }
             });
         }
 

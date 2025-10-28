@@ -120,62 +120,6 @@
         </div>
     </div>
 
-    <!-- Route Summary Card -->
-    @if($route->routeStops->count() > 0)
-    <div class="route-summary-card mb-3">
-        <h6 class="mb-2"><i class="bx bx-stats me-1"></i>Route Summary</h6>
-        <div class="row">
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-map text-primary fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Stops</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->count() }} stops</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-tachometer text-success fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Distance</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('distance_from_previous') }} km</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-time text-warning fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Travel Time</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('approx_travel_time') }} min</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-map-pin text-info fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Route Path</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">
-                            {{ $route->routeStops->first()->terminal->city->name ?? 'N/A' }} → 
-                            {{ $route->routeStops->last()->terminal->city->name ?? 'N/A' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <!-- Route Stops Card -->
     <div class="table-container">
         <div class="p-3">
@@ -187,9 +131,6 @@
                             <th>Sequence</th>
                             <th>Terminal</th>
                             <th>City</th>
-                            <th>Distance</th>
-                            <th>Travel Time</th>
-                            <th>Services</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -209,20 +150,6 @@
                                     <span class="badge bg-info">{{ $stop->terminal->city->name }}</span>
                                 </td>
                                 <td>
-                                    {{ $stop->distance_from_previous ? $stop->distance_from_previous . ' km' : '-' }}
-                                </td>
-                                <td>
-                                    {{ $stop->approx_travel_time ? $stop->approx_travel_time . ' min' : '-' }}
-                                </td>
-                                <td>
-                                    @if($stop->is_pickup_allowed)
-                                        <span class="badge bg-success me-1">Pickup</span>
-                                    @endif
-                                    @if($stop->is_dropoff_allowed)
-                                        <span class="badge bg-info">Dropoff</span>
-                                    @endif
-                                </td>
-                                <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                                                 type="button" 
@@ -235,7 +162,7 @@
                                             <li>
                                                 <a class="dropdown-item" 
                                                    href="javascript:void(0)" 
-                                                   onclick="editStop({{ $stop->id }}, {{ $stop->sequence }}, {{ $stop->distance_from_previous ?? 'null' }}, {{ $stop->approx_travel_time ?? 'null' }}, {{ $stop->is_pickup_allowed ? 'true' : 'false' }}, {{ $stop->is_dropoff_allowed ? 'true' : 'false' }})">
+                                                   onclick="editStop({{ $stop->id }})">
                                                     <i class="bx bx-edit me-2"></i>Edit Stop
                                                 </a>
                                             </li>
@@ -256,7 +183,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bx bx-map me-2"></i>No stops added to this route yet.
                                     <br>
                                     <small>Click "Add Stop" to start building your route.</small>
@@ -297,34 +224,6 @@
                                 <label for="sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="sequence" name="sequence" 
                                        placeholder="Enter sequence number" min="1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="distance_from_previous" class="form-label">Distance from Previous (km)</label>
-                                <input type="number" class="form-control" id="distance_from_previous" 
-                                       name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="approx_travel_time" class="form-label">Travel Time (minutes)</label>
-                                <input type="number" class="form-control" id="approx_travel_time" 
-                                       name="approx_travel_time" placeholder="Enter travel time" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_pickup_allowed" 
-                                           name="is_pickup_allowed" value="1" checked>
-                                    <label class="form-check-label" for="is_pickup_allowed">
-                                        Pickup Allowed
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_dropoff_allowed" 
-                                           name="is_dropoff_allowed" value="1" checked>
-                                    <label class="form-check-label" for="is_dropoff_allowed">
-                                        Dropoff Allowed
-                                    </label>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -368,34 +267,6 @@
                                  <input type="number" class="form-control" id="edit_sequence" name="sequence" 
                                         placeholder="Enter sequence number" min="1" required>
                              </div>
-                             <div class="col-md-6">
-                                 <label for="edit_distance_from_previous" class="form-label">Distance from Previous (km)</label>
-                                 <input type="number" class="form-control" id="edit_distance_from_previous" 
-                                        name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="edit_approx_travel_time" class="form-label">Travel Time (minutes)</label>
-                                 <input type="number" class="form-control" id="edit_approx_travel_time" 
-                                        name="approx_travel_time" placeholder="Enter travel time" min="0">
-                             </div>
-                             <div class="col-md-6">
-                                 <div class="form-check">
-                                     <input class="form-check-input" type="checkbox" id="edit_is_pickup_allowed" 
-                                            name="is_pickup_allowed" value="1">
-                                     <label class="form-check-label" for="edit_is_pickup_allowed">
-                                         Pickup Allowed
-                                     </label>
-                                 </div>
-                             </div>
-                             <div class="col-md-6">
-                                 <div class="form-check">
-                                     <input class="form-check-input" type="checkbox" id="edit_is_dropoff_allowed" 
-                                            name="is_dropoff_allowed" value="1">
-                                     <label class="form-check-label" for="edit_is_dropoff_allowed">
-                                         Dropoff Allowed
-                                     </label>
-                                 </div>
-                             </div>
                          </div>
                      </div>
                     <div class="modal-footer">
@@ -424,7 +295,7 @@
 
 
          // Edit Stop Function
-         function editStop(stopId, sequence, distance, travelTime, pickupAllowed, dropoffAllowed) {
+         function editStop(stopId) {
              currentStopId = stopId;
              
              // Get stop data via AJAX to populate terminal information
@@ -439,11 +310,7 @@
                  if (data.success) {
                      // Populate edit form with current values
                      document.getElementById('edit_terminal_id').value = data.data.terminal.id;
-                     document.getElementById('edit_sequence').value = sequence;
-                     document.getElementById('edit_distance_from_previous').value = distance || '';
-                     document.getElementById('edit_approx_travel_time').value = travelTime || '';
-                     document.getElementById('edit_is_pickup_allowed').checked = pickupAllowed;
-                     document.getElementById('edit_is_dropoff_allowed').checked = dropoffAllowed;
+                     document.getElementById('edit_sequence').value = data.data.sequence;
                      
                      // Show edit modal
                      const editModal = new bootstrap.Modal(document.getElementById('editStopModal'));
@@ -521,29 +388,6 @@
                 }
             });
         }
-
-        // Auto-calculate travel time based on distance
-        document.getElementById('distance_from_previous').addEventListener('input', function() {
-            const distance = parseFloat(this.value);
-            const travelTimeInput = document.getElementById('approx_travel_time');
-            
-            if (distance && !travelTimeInput.value) {
-                // Calculate travel time based on 60 km/h average speed
-                const travelTime = Math.round(distance / 60 * 60); // Convert to minutes
-                travelTimeInput.value = travelTime;
-            }
-        });
-
-        document.getElementById('edit_distance_from_previous').addEventListener('input', function() {
-            const distance = parseFloat(this.value);
-            const travelTimeInput = document.getElementById('edit_approx_travel_time');
-            
-            if (distance && !travelTimeInput.value) {
-                // Calculate travel time based on 60 km/h average speed
-                const travelTime = Math.round(distance / 60 * 60); // Convert to minutes
-                travelTimeInput.value = travelTime;
-            }
-        });
 
         // Reset form when modal is closed
         document.getElementById('addStopModal').addEventListener('hidden.bs.modal', function() {
