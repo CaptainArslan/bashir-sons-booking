@@ -114,7 +114,8 @@
               'view bus types',
               'view bus layouts',
               'view facilities',
-              'view routes',
+              'view
+              routes',
               'view route stops',
               'view timetables',
               'view schedules',
@@ -277,7 +278,7 @@
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                       <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-discount'></i>
+                              class='bx bx-money'></i>
                       </div>
                       <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Discount Management</div>
                   </a>
@@ -329,7 +330,7 @@
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                       <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-megaphone'></i>
+                              class='bx bx-calendar-check'></i>
                       </div>
                       <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Announcement Management</div>
                   </a>
