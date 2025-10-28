@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Route;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class BookingManagementController extends Controller
 {
@@ -16,41 +17,8 @@ class BookingManagementController extends Controller
         private BookingService $bookingService
     ) {}
 
-    public function index(Request $request)
+    public function index()
     {
-        $query = Booking::with(['trip.route', 'user', 'fromStop.terminal', 'toStop.terminal', 'bookingSeats']);
-
-        // Filters
-        if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->filled('route_id')) {
-            $query->whereHas('trip', function ($q) use ($request) {
-                $q->where('route_id', $request->route_id);
-            });
-        }
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        if ($request->filled('date')) {
-            $query->whereHas('trip', function ($q) use ($request) {
-                $q->whereDate('departure_date', $request->date);
-            });
-        }
-
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
-
         $routes = Route::where('status', 'active')->get();
         $statuses = BookingStatusEnum::cases();
         $types = BookingTypeEnum::cases();
@@ -64,7 +32,168 @@ class BookingManagementController extends Controller
             'total_revenue' => Booking::where('status', BookingStatusEnum::Confirmed)->sum('final_amount'),
         ];
 
-        return view('admin.bookings.index', compact('bookings', 'routes', 'statuses', 'types', 'stats'));
+        return view('admin.bookings.index', compact('routes', 'statuses', 'types', 'stats'));
+    }
+
+    public function getData(Request $request)
+    {
+        if ($request->ajax()) {
+            $bookings = Booking::query()
+                ->with(['trip.route', 'trip.bus', 'user', 'fromStop.terminal', 'toStop.terminal', 'bookingSeats', 'terminal'])
+                ->select('bookings.*');
+
+            // Apply filters
+            if ($request->filled('booking_number')) {
+                $bookings->where('booking_number', 'like', '%'.$request->booking_number.'%');
+            }
+
+            if ($request->filled('status')) {
+                $bookings->where('status', $request->status);
+            }
+
+            if ($request->filled('type')) {
+                $bookings->where('type', $request->type);
+            }
+
+            if ($request->filled('route_id')) {
+                $bookings->whereHas('trip', function ($q) use ($request) {
+                    $q->where('route_id', $request->route_id);
+                });
+            }
+
+            if ($request->filled('date')) {
+                $bookings->whereHas('trip', function ($q) use ($request) {
+                    $q->whereDate('departure_date', $request->date);
+                });
+            }
+
+            return DataTables::eloquent($bookings)
+                ->addColumn('booking_info', function ($booking) {
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-primary">'.e($booking->booking_number).'</span>
+                                <small class="text-muted">'.e($booking->created_at->format('M d, Y H:i')).'</small>
+                            </div>';
+                })
+                ->addColumn('passenger_info', function ($booking) {
+                    $name = $booking->passenger_contact_name ?? $booking->user?->name ?? 'N/A';
+                    $phone = $booking->passenger_contact_phone ?? 'N/A';
+
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold">'.e($name).'</span>
+                                <small class="text-muted"><i class="bx bx-phone me-1"></i>'.e($phone).'</small>
+                            </div>';
+                })
+                ->addColumn('trip_info', function ($booking) {
+                    $routeCode = $booking->trip?->route?->code ?? 'N/A';
+                    $departureDate = $booking->trip?->departure_datetime?->format('M d, Y') ?? 'N/A';
+                    $busName = $booking->trip?->bus?->name ?? 'Not Assigned';
+
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-primary">'.e($routeCode).'</span>
+                                <small class="text-muted">'.e($departureDate).'</small>
+                                <small class="badge bg-secondary mt-1">'.e($busName).'</small>
+                            </div>';
+                })
+                ->addColumn('route_info', function ($booking) {
+                    $from = $booking->fromStop?->terminal?->code ?? 'N/A';
+                    $to = $booking->toStop?->terminal?->code ?? 'N/A';
+
+                    return '<div class="d-flex align-items-center">
+                                <span class="badge bg-info">'.e($from).'</span>
+                                <i class="bx bx-right-arrow-alt mx-1"></i>
+                                <span class="badge bg-info">'.e($to).'</span>
+                            </div>';
+                })
+                ->addColumn('type_badge', function ($booking) {
+                    $color = match ($booking->type->value) {
+                        'online' => 'primary',
+                        'counter' => 'success',
+                        'phone' => 'warning',
+                        default => 'secondary',
+                    };
+
+                    return '<span class="badge bg-'.$color.'">'.e($booking->type->label()).'</span>';
+                })
+                ->addColumn('seats_count', function ($booking) {
+                    $count = $booking->bookingSeats->count();
+
+                    return '<span class="badge bg-dark">'.$count.' '.($count === 1 ? 'Seat' : 'Seats').'</span>';
+                })
+                ->addColumn('amount_info', function ($booking) {
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-success">₨'.number_format($booking->final_amount, 0).'</span>
+                                '.($booking->discount_amount > 0 ? '<small class="text-muted"><s>₨'.number_format($booking->total_fare, 0).'</s></small>' : '').'
+                            </div>';
+                })
+                ->addColumn('status_badge', function ($booking) {
+                    $color = match ($booking->status->value) {
+                        'confirmed' => 'success',
+                        'pending' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'secondary',
+                    };
+
+                    return '<span class="badge bg-'.$color.'">'.e($booking->status->label()).'</span>';
+                })
+                ->addColumn('terminal_info', function ($booking) {
+                    if ($booking->terminal) {
+                        return '<span class="badge bg-info">'.e($booking->terminal->code).'</span>';
+                    }
+
+                    return '<span class="text-muted">Online</span>';
+                })
+                ->addColumn('actions', function ($booking) {
+                    $actions = '
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="bx bx-dots-horizontal-rounded"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="'.route('admin.bookings.show', $booking->id).'">
+                                        <i class="bx bx-show me-2"></i>View Details
+                                    </a>
+                                </li>';
+
+                    if ($booking->status === BookingStatusEnum::Pending) {
+                        $actions .= '
+                                <li>
+                                    <form action="'.route('admin.bookings.confirm', $booking->id).'" method="POST" class="d-inline">
+                                        '.csrf_field().'
+                                        <button type="submit" class="dropdown-item text-success">
+                                            <i class="bx bx-check me-2"></i>Confirm Booking
+                                        </button>
+                                    </form>
+                                </li>';
+                    }
+
+                    if ($booking->canBeCancelled()) {
+                        $actions .= '
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="cancelBooking('.$booking->id.')">
+                                        <i class="bx bx-x me-2"></i>Cancel Booking
+                                    </a>
+                                </li>';
+                    }
+
+                    $actions .= '
+                            </ul>
+                        </div>';
+
+                    return $actions;
+                })
+                ->editColumn('created_at', fn ($booking) => $booking->created_at->format('M d, Y H:i'))
+                ->orderColumn('booking_number', 'booking_number $1')
+                ->filterColumn('booking_number', function ($query, $keyword) {
+                    $query->where('booking_number', 'like', "%{$keyword}%");
+                })
+                ->rawColumns(['booking_info', 'passenger_info', 'trip_info', 'route_info', 'type_badge', 'seats_count', 'amount_info', 'status_badge', 'terminal_info', 'actions'])
+                ->make(true);
+        }
     }
 
     public function show(string $id)

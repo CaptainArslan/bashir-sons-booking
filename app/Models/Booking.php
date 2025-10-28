@@ -20,6 +20,7 @@ class Booking extends Model
         'trip_id',
         'user_id',
         'booked_by_user_id',
+        'terminal_id',
         'from_stop_id',
         'to_stop_id',
         'type',
@@ -103,6 +104,11 @@ class Booking extends Model
     public function toStop(): BelongsTo
     {
         return $this->belongsTo(RouteStop::class, 'to_stop_id');
+    }
+
+    public function terminal(): BelongsTo
+    {
+        return $this->belongsTo(Terminal::class);
     }
 
     public function bookingSeats(): HasMany

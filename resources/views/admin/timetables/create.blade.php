@@ -443,6 +443,11 @@ $(document).ready(function() {
             $(this).removeClass('is-invalid');
         }
     });
+
+    // add select 
+    $('#route_id').select2({
+        width: 'resolve',
+    });
 });
 </script>
 @endsection

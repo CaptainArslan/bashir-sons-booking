@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('trip_id')->constrained('trips')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('booked_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('terminal_id')->nullable()->constrained('terminals')->nullOnDelete();
 
             $table->foreignId('from_stop_id')->constrained('route_stops')->cascadeOnDelete();
             $table->foreignId('to_stop_id')->constrained('route_stops')->cascadeOnDelete();

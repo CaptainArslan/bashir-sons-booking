@@ -268,6 +268,7 @@ Route::middleware('auth')->group(function () {
 
         // Booking Management
         Route::get('/bookings', [BookingManagementController::class, 'index'])->name('bookings.index');
+        Route::get('/bookings/data', [BookingManagementController::class, 'getData'])->name('bookings.data');
         Route::get('/bookings/reports', [BookingManagementController::class, 'reports'])->name('bookings.reports');
         Route::get('/bookings/{id}', [BookingManagementController::class, 'show'])->name('bookings.show');
         Route::post('/bookings/{id}/confirm', [BookingManagementController::class, 'confirm'])->name('bookings.confirm');

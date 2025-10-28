@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Fare;
-use App\Models\Trip;
-use App\Models\Route;
-use App\Models\Booking;
-use App\Models\Terminal;
-use App\Models\RouteStop;
-use App\Models\Timetable;
-use App\Events\SeatLocked;
-use App\Models\BookingSeat;
-use App\Events\SeatReleased;
-use Illuminate\Http\Request;
 use App\Enums\BookingStatusEnum;
+use App\Events\SeatLocked;
+use App\Events\SeatReleased;
+use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\BookingSeat;
+use App\Models\Fare;
+use App\Models\Route;
+use App\Models\RouteStop;
+use App\Models\Terminal;
+use App\Models\Timetable;
+use App\Models\Trip;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Cache;
 
 class BookingController extends Controller
 {
@@ -34,13 +34,54 @@ class BookingController extends Controller
     }
 
     /**
-     * Show the search form for creating a new booking
+     * Show the comprehensive single-page booking form
      */
     public function create()
     {
         $terminals = Terminal::where('status', 'active')->get();
 
-        return view('admin.bookings.create', compact('terminals'));
+        // Get employee's authorized terminals/routes if applicable
+        $employeeRoutes = $this->getEmployeeAuthorizedRoutes();
+
+        return view('admin.bookings.single-page', compact('terminals', 'employeeRoutes'));
+    }
+
+    /**
+     * Get employee's authorized routes based on their assignments
+     */
+    protected function getEmployeeAuthorizedRoutes(): array
+    {
+        $user = auth()->user();
+
+        // Super Admin and Admin can book for all routes
+        if ($user->hasRole(['Super Admin', 'Admin'])) {
+            return [
+                'all' => true,
+                'routes' => Route::where('status', 'active')->get(),
+                'terminals' => Terminal::where('status', 'active')->get(),
+            ];
+        }
+
+        // Employee - check their assigned routes
+        if ($user->hasRole('Employee')) {
+            $employeeRoutes = \App\Models\EmployeeRoute::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->with(['route', 'startingTerminal'])
+                ->get();
+
+            return [
+                'all' => false,
+                'employee_routes' => $employeeRoutes,
+                'allowed_route_ids' => $employeeRoutes->pluck('route_id')->unique()->toArray(),
+                'allowed_terminal_ids' => $employeeRoutes->pluck('starting_terminal_id')->unique()->toArray(),
+            ];
+        }
+
+        return [
+            'all' => false,
+            'routes' => collect([]),
+            'terminals' => collect([]),
+        ];
     }
 
     /**
@@ -54,8 +95,20 @@ class BookingController extends Controller
             'departure_date' => 'required|date|after_or_equal:today',
         ]);
 
+        // Check employee permissions
+        $permissions = $this->getEmployeeAuthorizedRoutes();
+        if (! $permissions['all']) {
+            // Validate employee can book from this terminal
+            if (! in_array($validated['from_terminal_id'], $permissions['allowed_terminal_ids'] ?? [])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to create bookings from this terminal.',
+                ], 403);
+            }
+        }
+
         // Find routes that connect these two terminals
-        $routes = Route::where('status', 'active')
+        $routesQuery = Route::where('status', 'active')
             ->whereHas('routeStops', function ($query) use ($validated) {
                 $query->where('terminal_id', $validated['from_terminal_id']);
             })
@@ -64,8 +117,14 @@ class BookingController extends Controller
             })
             ->with(['routeStops' => function ($query) {
                 $query->orderBy('sequence');
-            }])
-            ->get();
+            }]);
+
+        // Filter by employee authorized routes if applicable
+        if (! $permissions['all'] && ! empty($permissions['allowed_route_ids'])) {
+            $routesQuery->whereIn('id', $permissions['allowed_route_ids']);
+        }
+
+        $routes = $routesQuery->get();
 
         if ($routes->isEmpty()) {
             return response()->json([
@@ -100,11 +159,11 @@ class BookingController extends Controller
                 $timetableStop = $timetable->timetableStops->first();
                 if ($timetableStop && $timetableStop->departure_time) {
                     $departureDateTime = now()->setTimeFromTimeString($timetableStop->departure_time);
-                    
+
                     // Only include times that are in the future
                     if ($departureDateTime->isAfter($now)) {
                         $availableTimes[] = [
-                            'time' => $departureDateTime->format('H:i A'),
+                            'time' => $departureDateTime->format('g:i A'), // Changed to 12-hour format
                             'route_id' => $route->id,
                             'route_name' => $route->name,
                             'route_code' => $route->code,
@@ -252,6 +311,7 @@ class BookingController extends Controller
             'trip_id' => 'required|exists:trips,id',
             'from_stop_id' => 'required|exists:route_stops,id',
             'to_stop_id' => 'required|exists:route_stops,id',
+            'terminal_id' => 'nullable|exists:terminals,id',
             'booking_type' => 'required|in:counter,phone',
             'payment_method' => 'required|in:cash,card,mobile_wallet,bank_transfer,other',
             'payment_status' => 'required|in:pending,paid',
@@ -263,6 +323,8 @@ class BookingController extends Controller
             'notes' => 'nullable|string',
             'seats' => 'required|array|min:1',
             'seats.*.seat_number' => 'required|string',
+            'seats.*.seat_row' => 'nullable|string',
+            'seats.*.seat_column' => 'nullable|string',
             'seats.*.passenger_name' => 'required|string|max:255',
             'seats.*.passenger_cnic' => 'required|string|max:20',
             'seats.*.passenger_phone' => 'nullable|string|max:20',
@@ -300,6 +362,7 @@ class BookingController extends Controller
                 'trip_id' => $validated['trip_id'],
                 'user_id' => null, // No customer user for counter/phone bookings
                 'booked_by_user_id' => auth()->id(),
+                'terminal_id' => $validated['terminal_id'] ?? null,
                 'from_stop_id' => $validated['from_stop_id'],
                 'to_stop_id' => $validated['to_stop_id'],
                 'type' => $validated['booking_type'],
@@ -324,6 +387,8 @@ class BookingController extends Controller
                 BookingSeat::create([
                     'booking_id' => $booking->id,
                     'seat_number' => $seatData['seat_number'],
+                    'seat_row' => $seatData['seat_row'] ?? null,
+                    'seat_column' => $seatData['seat_column'] ?? null,
                     'passenger_name' => $seatData['passenger_name'],
                     'passenger_cnic' => $seatData['passenger_cnic'],
                     'passenger_phone' => $seatData['passenger_phone'] ?? null,
@@ -339,9 +404,14 @@ class BookingController extends Controller
                 ->with('success', 'Booking created successfully! Booking Number: '.$booking->booking_number);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Booking creation failed: '.$e->getMessage());
+            Log::error('Booking creation failed: '.$e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-            return back()->with('error', 'Failed to create booking. Please try again.');
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create booking: '.$e->getMessage());
         }
     }
 
