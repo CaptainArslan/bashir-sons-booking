@@ -1356,6 +1356,7 @@
                 trip_id: tripData.id || 1, // Mock
                 from_stop_id: 1, // Mock
                 to_stop_id: 2, // Mock
+                terminal_id: $('#from_terminal_id').val(), // Terminal where booking is made
                 
                 // Booking details
                 booking_type: $('#booking_type').val(),

@@ -138,6 +138,61 @@
             font-weight: bold;
         }
 
+        .seat-segment-badge {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 8px;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .seat.sold .seat-segment-badge {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .seat.booked .seat-segment-badge {
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .seat-info-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .seat-info-panel h6 {
+            color: #495057;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .booking-segment-item {
+            background: white;
+            border-left: 3px solid #6c757d;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .booking-segment-item.confirmed {
+            border-left-color: #dc3545;
+        }
+
+        .booking-segment-item.pending {
+            border-left-color: #ffc107;
+        }
+
         .seat.locked {
             background: #e9ecef;
             border: 2px dashed #6c757d;
@@ -440,6 +495,43 @@
                                 <span>Sold (Confirmed)</span>
                             </div>
                         </div>
+
+                        <!-- Seat Booking Information -->
+                        @if(count($allSeatsInfo) > 0)
+                        <div class="seat-info-panel mt-4">
+                            <h6><i class="bx bx-info-circle me-1"></i>Booked Seats Segments</h6>
+                            <small class="text-muted d-block mb-3">These seats have existing bookings for different segments:</small>
+                            @foreach($allSeatsInfo as $seatNum => $bookings)
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-secondary me-2">Seat {{ $seatNum }}</span>
+                                        <small class="text-muted">{{ count($bookings) }} booking(s)</small>
+                                    </div>
+                                    @foreach($bookings as $booking)
+                                        <div class="booking-segment-item {{ $booking['is_confirmed'] ? 'confirmed' : 'pending' }}">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <span class="badge bg-{{ $booking['is_confirmed'] ? 'danger' : 'warning' }} me-2" style="font-size: 0.7rem;">
+                                                        {{ $booking['is_confirmed'] ? 'CONFIRMED' : 'PENDING' }}
+                                                    </span>
+                                                    <strong class="text-primary">{{ $booking['from_terminal_code'] }} → {{ $booking['to_terminal_code'] }}</strong>
+                                                    <br>
+                                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                                        {{ $booking['from_terminal'] }} → {{ $booking['to_terminal'] }}
+                                                    </small>
+                                                    <br>
+                                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                                        <i class="bx bx-user"></i> {{ $booking['passenger_name'] }}
+                                                    </small>
+                                                </div>
+                                                <small class="text-muted" style="font-size: 0.65rem;">{{ $booking['booking_number'] }}</small>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -232,6 +232,11 @@ class BookingController extends Controller
             return back()->with('error', 'Selected terminals are not part of this route.');
         }
 
+        // Ensure both stops belong to the same route
+        if ($fromStop->route_id !== $toStop->route_id || $fromStop->route_id !== $route->id) {
+            return back()->with('error', 'Route stops do not belong to the selected route.');
+        }
+
         // Validate sequence (to_stop must come after from_stop)
         if ($toStop->sequence <= $fromStop->sequence) {
             return back()->with('error', 'Destination must come after starting point in the route.');
@@ -260,8 +265,9 @@ class BookingController extends Controller
         // Get booked seats and their statuses for this trip segment
         $bookedSeats = $this->getBookedSeatsForSegment($trip->id, $fromStop->id, $toStop->id);
         $seatStatuses = $this->getSeatStatusesForSegment($trip->id, $fromStop->id, $toStop->id);
+        $allSeatsInfo = $this->getAllSeatInformation($trip->id);
 
-        return view('admin.bookings.select-seats', compact('trip', 'fromStop', 'toStop', 'fare', 'bookedSeats', 'seatStatuses'));
+        return view('admin.bookings.select-seats', compact('trip', 'fromStop', 'toStop', 'fare', 'bookedSeats', 'seatStatuses', 'allSeatsInfo'));
     }
 
     /**
@@ -339,6 +345,19 @@ class BookingController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Validate trip and route stops consistency
+            $trip = Trip::findOrFail($validated['trip_id']);
+            $fromStop = RouteStop::findOrFail($validated['from_stop_id']);
+            $toStop = RouteStop::findOrFail($validated['to_stop_id']);
+
+            if ($fromStop->route_id !== $trip->route_id || $toStop->route_id !== $trip->route_id) {
+                DB::rollBack();
+
+                return back()
+                    ->withInput()
+                    ->with('error', 'Route stops do not match the trip route. Please start over.');
+            }
 
             // Check if seats are still available
             $seatNumbers = array_column($validated['seats'], 'seat_number');
@@ -670,7 +689,7 @@ class BookingController extends Controller
 
         $bookings = Booking::where('trip_id', $tripId)
             ->whereIn('status', [BookingStatusEnum::Pending, BookingStatusEnum::Confirmed])
-            ->with(['fromStop', 'toStop', 'bookingSeats'])
+            ->with(['fromStop.terminal', 'toStop.terminal', 'bookingSeats'])
             ->get();
 
         $seatStatuses = [];
@@ -683,12 +702,57 @@ class BookingController extends Controller
                         'status' => $booking->status->value,
                         'is_confirmed' => $booking->status === BookingStatusEnum::Confirmed,
                         'booking_number' => $booking->booking_number,
+                        'from_terminal' => $booking->fromStop->terminal->name,
+                        'to_terminal' => $booking->toStop->terminal->name,
+                        'from_terminal_code' => $booking->fromStop->terminal->code,
+                        'to_terminal_code' => $booking->toStop->terminal->code,
+                        'passenger_name' => $seat->passenger_name,
+                        'is_full_overlap' => $booking->fromStop->sequence == $fromStop->sequence &&
+                                           $booking->toStop->sequence == $toStop->sequence,
+                        'is_partial_overlap' => ! ($booking->fromStop->sequence == $fromStop->sequence &&
+                                                   $booking->toStop->sequence == $toStop->sequence),
                     ];
                 }
             }
         }
 
         return $seatStatuses;
+    }
+
+    /**
+     * Get all seat information for the trip (for displaying all segments)
+     */
+    protected function getAllSeatInformation(int $tripId): array
+    {
+        $bookings = Booking::where('trip_id', $tripId)
+            ->whereIn('status', [BookingStatusEnum::Pending, BookingStatusEnum::Confirmed])
+            ->with(['fromStop.terminal', 'toStop.terminal', 'bookingSeats'])
+            ->get();
+
+        $allSeatsInfo = [];
+
+        foreach ($bookings as $booking) {
+            foreach ($booking->bookingSeats as $seat) {
+                if (! isset($allSeatsInfo[$seat->seat_number])) {
+                    $allSeatsInfo[$seat->seat_number] = [];
+                }
+
+                $allSeatsInfo[$seat->seat_number][] = [
+                    'booking_number' => $booking->booking_number,
+                    'status' => $booking->status->value,
+                    'is_confirmed' => $booking->status === BookingStatusEnum::Confirmed,
+                    'from_terminal' => $booking->fromStop->terminal->name,
+                    'to_terminal' => $booking->toStop->terminal->name,
+                    'from_terminal_code' => $booking->fromStop->terminal->code,
+                    'to_terminal_code' => $booking->toStop->terminal->code,
+                    'from_sequence' => $booking->fromStop->sequence,
+                    'to_sequence' => $booking->toStop->sequence,
+                    'passenger_name' => $seat->passenger_name,
+                ];
+            }
+        }
+
+        return $allSeatsInfo;
     }
 
     /**

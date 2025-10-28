@@ -106,6 +106,7 @@
                 <input type="hidden" name="trip_id" value="{{ $trip->id }}">
                 <input type="hidden" name="from_stop_id" value="{{ $fromStop->id }}">
                 <input type="hidden" name="to_stop_id" value="{{ $toStop->id }}">
+                <input type="hidden" name="terminal_id" value="{{ $fromStop->terminal_id }}">
                 <input type="hidden" name="total_fare" value="{{ $totalFare }}">
 
                 <!-- Passenger Details for Each Seat -->
