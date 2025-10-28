@@ -38,6 +38,8 @@ class DatabaseSeeder extends Seeder
             BusLayoutSeeder::class,
             BusTypeSeeder::class,
             FacilitySeeder::class,
+            DefaultTerminalSeeder::class,
+            DefaultRouteSeeder::class,
             // AnnouncementSeeder::class,
             // DiscountSeeder::class,
             // TerminalSeeder::class,

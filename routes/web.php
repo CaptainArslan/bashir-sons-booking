@@ -194,7 +194,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/route-stops/data', [RouteStopController::class, 'getData'])->can('view route stops')->name('route-stops.data');
         // Route::get('/route-stops/{id}/edit', [RouteStopController::class, 'edit'])->can('edit route stops')->name('route-stops.edit');
         // Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
-        // Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
+        Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
 
         // Fares Management
         Route::get('/fares', [FareController::class, 'index'])->can('view fares')->name('fares.index');

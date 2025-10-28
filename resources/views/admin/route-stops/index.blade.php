@@ -36,10 +36,7 @@
                             <th>Route</th>
                             <th>Terminal</th>
                             <th>Sequence</th>
-                            <th>Distance & Time</th>
-                            <th>Services</th>
                             <th>Created Date</th>
-                            {{-- <th>Actions</th> --}}
                         </tr>
                     </thead>
                 </table>
@@ -80,18 +77,6 @@
                         name: 'sequence',
                     },
                     {
-                        data: 'distance_info',
-                        name: 'distance_info',
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
-                        data: 'services',
-                        name: 'services',
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
                         data: 'created_at',
                         name: 'created_at',
                     },
@@ -104,30 +89,5 @@
                 ],
             });
         });
-
-        // Delete route stop function
-        function deleteRouteStop(routeStopId) {
-            if (confirm('Are you sure you want to delete this route stop?')) {
-                $.ajax({
-                    url: "{{ route('admin.route-stops.destroy', ':id') }}".replace(':id', routeStopId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#route-stops-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the route stop.');
-                    }
-                });
-            }
-        }
     </script>
 @endsection
