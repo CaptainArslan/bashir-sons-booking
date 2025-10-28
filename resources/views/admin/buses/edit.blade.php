@@ -431,4 +431,18 @@
 @endsection
 
 @section('scripts')
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for select boxes
+        $('#bus_type_id').select2({
+            width: 'resolve'
+        });
+        $('#bus_layout_id').select2({
+            width: 'resolve'
+        });
+        $('#status').select2({
+            width: 'resolve'
+        });
+    });
+</script>
 @endsection
