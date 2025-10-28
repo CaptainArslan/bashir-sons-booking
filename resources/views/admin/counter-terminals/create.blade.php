@@ -266,11 +266,6 @@
                                 @enderror
                             </div>
                         </div>
-
-                        <!-- Terminal Preview Section -->
-                        <div class="preview-section" id="terminal-preview" style="display: none;">
-                            <div class="preview-content" id="terminal-details"></div>
-                        </div>
                     </div>
 
                     <!-- Action Buttons -->
@@ -298,7 +293,7 @@
 @endsection
 
 @section('scripts')
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const resetBtn = document.getElementById('resetFormBtn');
@@ -306,15 +301,8 @@
             const citySelect = document.getElementById('city_id');
             const nameInput = document.getElementById('name');
             const codeInput = document.getElementById('code');
-            const addressTextarea = document.getElementById('address');
-            const landmarkInput = document.getElementById('landmark');
-            const phoneInput = document.getElementById('phone');
-            const emailInput = document.getElementById('email');
-            const latitudeInput = document.getElementById('latitude');
-            const longitudeInput = document.getElementById('longitude');
-            const statusSelect = document.getElementById('status');
 
-            // ✅ Auto-generate terminal code based on city and name
+            // Auto-generate terminal code based on city and name
             function generateTerminalCode() {
                 const cityOption = citySelect.selectedOptions[0];
                 const name = nameInput.value.trim();
@@ -329,91 +317,28 @@
                 }
             }
 
-            // ✅ Update terminal preview
-            function updateTerminalPreview() {
-                const cityOption = citySelect.selectedOptions[0];
-                const name = nameInput.value.trim();
-                const code = codeInput.value.trim();
-                const address = addressTextarea.value.trim();
-                const phone = phoneInput.value.trim();
-                const status = statusSelect.value;
-
-                if (cityOption && name && code) {
-                    const statusBadge = status === 'active' ?
-                        '<span class="badge bg-success">Active</span>' :
-                        '<span class="badge bg-secondary">Inactive</span>';
-
-                    let previewHtml = `
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <strong>${name}</strong> <small class="text-muted">(${code})</small>
-                    </div>
-                    <div>${statusBadge}</div>
-                </div>
-                <div class="mb-1"><strong>City:</strong> ${cityOption.textContent}</div>
-            `;
-
-                    if (address) {
-                        previewHtml += `<div class="mb-1"><strong>Address:</strong> ${address}</div>`;
-                    }
-
-                    if (phone) {
-                        previewHtml += `<div class="mb-1"><strong>Phone:</strong> ${phone}</div>`;
-                    }
-
-                    if (emailInput.value.trim()) {
-                        previewHtml += `<div class="mb-1"><strong>Email:</strong> ${emailInput.value.trim()}</div>`;
-                    }
-
-                    if (landmarkInput.value.trim()) {
-                        previewHtml +=
-                            `<div class="mb-1"><strong>Landmark:</strong> ${landmarkInput.value.trim()}</div>`;
-                    }
-
-                    if (latitudeInput.value.trim() && longitudeInput.value.trim()) {
-                        previewHtml +=
-                            `<div class="mb-1"><strong>Coordinates:</strong> ${latitudeInput.value.trim()}, ${longitudeInput.value.trim()}</div>`;
-                    }
-
-                    document.getElementById('terminal-details').innerHTML = previewHtml;
-                    document.getElementById('terminal-preview').style.display = 'block';
-                } else {
-                    document.getElementById('terminal-preview').style.display = 'none';
-                }
-            }
-
-            // ✅ Event listeners
+            // Event listeners for terminal code generation
             [citySelect, nameInput].forEach(element => {
                 element.addEventListener('input', generateTerminalCode);
                 element.addEventListener('change', generateTerminalCode);
             });
 
-            [citySelect, nameInput, codeInput, addressTextarea, landmarkInput, phoneInput, emailInput,
-                latitudeInput, longitudeInput, statusSelect
-            ].forEach(element => {
-                element.addEventListener('input', updateTerminalPreview);
-                element.addEventListener('change', updateTerminalPreview);
-            });
-
-            // ✅ Reset form functionality
+            // Reset form functionality
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
-                    if (confirm(
-                            'Are you sure you want to reset the form? All entered data will be lost.')) {
+                    if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
                         form.reset();
-                        document.getElementById('terminal-preview').style.display = 'none';
                     }
                 });
             }
 
-            // ✅ Initial updates
-            generateTerminalCode();
-            updateTerminalPreview();
-
+            // Initialize select2
             $('.select2').select2({
-                width: 'resolve', // need to override the changed default
-                // theme: "classic"
+                width: 'resolve'
             });
+
+            // Initial terminal code generation
+            generateTerminalCode();
         });
     </script>
 @endsection
