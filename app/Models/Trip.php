@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Trip extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'timetable_id',
@@ -26,10 +28,14 @@ class Trip extends Model
         'notes',
     ];
 
-    protected $casts = [
-        'departure_datetime' => 'datetime',
-        'estimated_arrival_datetime' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'departure_date' => 'date',
+            'departure_datetime' => 'datetime',
+            'estimated_arrival_datetime' => 'datetime',
+        ];
+    }
 
     // =============================
     // Relationships
@@ -47,5 +53,10 @@ class Trip extends Model
     public function bus(): BelongsTo
     {
         return $this->belongsTo(Bus::class);
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 }

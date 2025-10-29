@@ -109,7 +109,7 @@ class User extends Authenticatable
     // =============================
     public function profile(): HasOne
     {
-        return $this->hasOne(profile::class);
+        return $this->hasOne(Profile::class);
     }
 
     public function terminal(): BelongsTo

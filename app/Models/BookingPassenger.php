@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Enums\GenderEnum;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BookingPassenger extends Model
 {
@@ -18,10 +19,22 @@ class BookingPassenger extends Model
         'cnic',
         'phone',
         'email',
+        'status',
     ];
 
-    protected $casts = [
-        'age' => 'integer',
-        'gender' => GenderEnum::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'age' => 'integer',
+            'gender' => GenderEnum::class,
+        ];
+    }
+
+    // =============================
+    // Relationships
+    // =============================
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
+    }
 }

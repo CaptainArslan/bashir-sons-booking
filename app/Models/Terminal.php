@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use App\Enums\TerminalEnum;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Terminal extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'city_id',
@@ -39,41 +41,36 @@ class Terminal extends Model
         return $this->belongsTo(City::class, 'city_id');
     }
 
-    public function routeStops()
+    public function routeStops(): HasMany
     {
         return $this->hasMany(RouteStop::class);
+    }
+
+    public function timetableStops(): HasMany
+    {
+        return $this->hasMany(TimetableStop::class);
     }
 
     public function routes()
     {
         return $this->belongsToMany(Route::class, 'route_stops')
-            ->withPivot([
-                'sequence',
-                'distance_from_previous',
-                'approx_travel_time',
-                'is_pickup_allowed',
-                'is_dropoff_allowed',
-                'arrival_time',
-                'departure_time',
-                'is_online_booking_allowed',
-            ])
+            ->withPivot(['sequence'])
             ->orderBy('pivot_sequence');
     }
-
 
     // Accessors & Mutators
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => ucfirst($value),
+            get: fn ($value) => ucfirst($value),
         );
     }
 
     protected function code(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => strtoupper($value),
-            set: fn($value) => strtoupper($value),
+            get: fn ($value) => strtoupper($value),
+            set: fn ($value) => strtoupper($value),
         );
     }
 }

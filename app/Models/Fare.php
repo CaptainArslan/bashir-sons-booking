@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\FareStatusEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Fare extends Model
 {
@@ -26,13 +25,15 @@ class Fare extends Model
         'status',
     ];
 
-    protected $casts = [
-        'base_fare' => 'decimal:2',
-        'discount_value' => 'decimal:2',
-        'final_fare' => 'decimal:2',
-        'status' => FareStatusEnum::class,
-        'discount_type' => DiscountTypeEnum::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'base_fare' => 'decimal:2',
+            'discount_value' => 'decimal:2',
+            'final_fare' => 'decimal:2',
+            'status' => FareStatusEnum::class,
+        ];
+    }
 
     // =============================
     // Relationships
@@ -55,44 +56,44 @@ class Fare extends Model
     protected function calculatedFare(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->calculateFare(),
+            get: fn ($value) => $this->calculateFare(),
         );
     }
 
     protected function formattedBaseFare(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->currency . ' ' . number_format($this->base_fare, 2),
+            get: fn ($value) => $this->currency.' '.number_format($this->base_fare, 2),
         );
     }
 
     protected function formattedFinalFare(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->currency . ' ' . number_format($this->final_fare, 2),
+            get: fn ($value) => $this->currency.' '.number_format($this->final_fare, 2),
         );
     }
 
     protected function formattedDiscount(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->discount_type === DiscountTypeEnum::PERCENT 
-                ? $this->discount_value . '%' 
-                : $this->currency . ' ' . number_format($this->discount_value, 2),
+            get: fn ($value) => $this->discount_type === 'percent'
+                ? $this->discount_value.'%'
+                : $this->currency.' '.number_format($this->discount_value, 2),
         );
     }
 
     protected function routePath(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->fromTerminal?->city?->name . ' → ' . $this->toTerminal?->city?->name,
+            get: fn ($value) => $this->fromTerminal?->city?->name.' → '.$this->toTerminal?->city?->name,
         );
     }
 
     protected function terminalPath(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->fromTerminal?->name . ' → ' . $this->toTerminal?->name,
+            get: fn ($value) => $this->fromTerminal?->name.' → '.$this->toTerminal?->name,
         );
     }
 
@@ -101,13 +102,13 @@ class Fare extends Model
     // =============================
     private function calculateFare(): float
     {
-        if (!$this->discount_type || !$this->discount_value) {
+        if (! $this->discount_type || ! $this->discount_value) {
             return $this->base_fare;
         }
 
         return match ($this->discount_type) {
-            DiscountTypeEnum::FLAT => max(0, $this->base_fare - $this->discount_value),
-            DiscountTypeEnum::PERCENT => max(0, $this->base_fare - ($this->base_fare * $this->discount_value / 100)),
+            'flat' => max(0, $this->base_fare - $this->discount_value),
+            'percent' => max(0, $this->base_fare - ($this->base_fare * $this->discount_value / 100)),
             default => $this->base_fare,
         };
     }
@@ -120,13 +121,13 @@ class Fare extends Model
 
     public function getDiscountAmount(): float
     {
-        if (!$this->discount_type || !$this->discount_value) {
+        if (! $this->discount_type || ! $this->discount_value) {
             return 0;
         }
 
         return match ($this->discount_type) {
-            DiscountTypeEnum::FLAT => $this->discount_value,
-            DiscountTypeEnum::PERCENT => $this->base_fare * $this->discount_value / 100,
+            'flat' => $this->discount_value,
+            'percent' => $this->base_fare * $this->discount_value / 100,
             default => 0,
         };
     }
@@ -147,15 +148,15 @@ class Fare extends Model
     public function scopeBetweenTerminals($query, $fromTerminalId, $toTerminalId)
     {
         return $query->where('from_terminal_id', $fromTerminalId)
-                    ->where('to_terminal_id', $toTerminalId);
+            ->where('to_terminal_id', $toTerminalId);
     }
 
     public function scopeForRoute($query, $routeId)
     {
         // Get terminals in the route
         $terminalIds = RouteStop::where('route_id', $routeId)->pluck('terminal_id')->toArray();
-        
+
         return $query->whereIn('from_terminal_id', $terminalIds)
-                    ->whereIn('to_terminal_id', $terminalIds);
+            ->whereIn('to_terminal_id', $terminalIds);
     }
 }

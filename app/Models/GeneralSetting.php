@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class GeneralSetting extends Model
 {
@@ -33,9 +33,14 @@ class GeneralSetting extends Model
         'support_phone',
         'business_hours',
         'advance_booking_enable',
+        'is_active',
     ];
 
-    protected $casts = [
-        'advance_booking_enable' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'advance_booking_enable' => 'boolean',
+            'is_active' => 'boolean',
+        ];
+    }
 }
