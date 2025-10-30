@@ -3,6 +3,104 @@
 @section('title', 'Booking Console')
 
 @section('content')
+<style>
+    /* Responsive Layout Styles */
+    @media (max-width: 1199px) {
+        .col-lg-3, .col-lg-5, .col-lg-4 {
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .col-md-6 {
+            font-size: 0.9rem;
+        }
+        
+        .form-control-sm {
+            font-size: 0.8rem !important;
+        }
+        
+        .small {
+            font-size: 0.75rem !important;
+        }
+    }
+
+    /* Seat map styling */
+    .seat-row {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .seat-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 0.5rem;
+    }
+
+    /* Card body compact padding */
+    .card-body.p-2 {
+        padding: 0.5rem !important;
+    }
+
+    /* Scrollable areas */
+    .scrollable-content {
+        max-height: calc(100vh - 300px);
+        overflow-y: auto;
+    }
+
+    /* Badge sizing */
+    .badge.small {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Alert sizing */
+    .alert.small {
+        padding: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Form label sizing */
+    .form-label.small {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Passenger info container */
+    #passengerInfoContainer {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.2) rgba(0,0,0,0.1);
+    }
+
+    #passengerInfoContainer::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #passengerInfoContainer::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.1);
+    }
+
+    #passengerInfoContainer::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.2);
+        border-radius: 3px;
+    }
+
+    /* Seat map legend - horizontal flex layout */
+    .seat-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .seat-legend .badge {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+</style>
 <div class="container-fluid p-4">
     <!-- Header Section -->
     <div class="card mb-4 shadow-sm">
@@ -62,148 +160,136 @@
 
     <!-- Trip Content (shown when trip loaded) -->
     <div id="tripContent" style="display: none;">
-        <div class="row g-4">
-            <!-- Left Column: Seat Map & Booking Form (8 columns) -->
-            <div class="col-lg-8">
-                <!-- Seat Map Section -->
-                <div class="card shadow-sm mb-4">
+        <div class="row g-3">
+            <!-- Left Column: Seat Map (3 columns) -->
+            <div class="col-lg-3 col-md-6">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-success text-white">
                         <h6 class="mb-0">
-                            <i class="fas fa-chair"></i> Seat Map (44 Seats - 4x11 Layout)
+                            <i class="fas fa-chair"></i> Seat Map
                         </h6>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
                         <!-- Legend -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <span class="badge bg-success me-3 p-2">🟩 Available</span>
-                            <span class="badge bg-danger me-3 p-2">🟥 Booked</span>
-                            <span class="badge bg-warning me-3 p-2">🟨 Held by Others</span>
-                            <span class="badge bg-info p-2">🟦 Your Selection</span>
+                        <div class="mb-2 p-2 bg-light rounded border border-success-subtle w-100">
+                            <div class="seat-legend">
+                                <span class="badge bg-success small p-1" title="Available">🟩 Available</span>
+                                <span class="badge bg-danger small p-1" title="Booked">🟥 Booked</span>
+                                <span class="badge bg-warning text-dark small p-1" title="Held">🟨 Held</span>
+                                <span class="badge bg-info small p-1" title="Selected">🟦 Selected</span>
+                            </div>
                         </div>
                         <!-- Seat Grid -->
-                        <div class="seat-grid" id="seatGrid"></div>
+                        <div class="seat-grid" id="seatGrid" style="width: auto; max-width: 100%;"></div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Booking Form Section -->
-                <div class="card shadow-sm">
+            <!-- Middle Column: Booking Form (5 columns) -->
+            <div class="col-lg-5 col-md-6">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-info text-white">
                         <h6 class="mb-0">
                             <i class="fas fa-clipboard-list"></i> Booking Summary
                         </h6>
                     </div>
-                    <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
+                    <div class="card-body" style="max-height: calc(100vh - 250px); overflow-y: auto; padding: 1rem;">
                         <!-- Trip Info Section -->
-                        <div class="mb-3 p-3 bg-light rounded border-start border-4 border-info">
-                            <h6 class="fw-bold mb-2">📍 Trip Details</h6>
-                            <div class="row">
+                        <div class="mb-3 p-2 bg-light rounded border-start border-4 border-info small">
+                            <h6 class="fw-bold mb-2 small">📍 Trip Details</h6>
+                            <div class="row g-2">
                                 <div class="col-md-6">
-                                    <small class="text-muted">Route</small>
-                                    <p class="mb-2"><strong><span id="tripRoute">-</span></strong></p>
+                                    <small class="text-muted d-block">Route</small>
+                                    <p class="mb-1 fw-bold small"><span id="tripRoute">-</span></p>
                                 </div>
                                 <div class="col-md-6">
-                                    <small class="text-muted">Date</small>
-                                    <p class="mb-2"><strong><span id="tripDate">-</span></strong></p>
+                                    <small class="text-muted d-block">Date</small>
+                                    <p class="mb-1 fw-bold small"><span id="tripDate">-</span></p>
                                 </div>
                                 <div class="col-12">
-                                    <small class="text-muted">Departure Time</small>
-                                    <p class="mb-0"><strong><span id="tripTime">-</span></strong></p>
+                                    <small class="text-muted d-block">Time</small>
+                                    <p class="mb-0 fw-bold small"><span id="tripTime">-</span></p>
                                 </div>
                             </div>
 
                             <!-- Bus & Driver Section -->
-                            <div class="mt-3 pt-3 border-top">
-                                <h6 class="fw-bold mb-2">🚌 Bus & Driver</h6>
+                            <div class="mt-2 pt-2 border-top small">
+                                <h6 class="fw-bold mb-2 small">🚌 Bus & Driver</h6>
                                 <div id="busDriverSection"></div>
                             </div>
                         </div>
 
                         <!-- Selected Seats -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small mb-1">
                                 <i class="fas fa-list"></i> Selected Seats 
                                 <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
                             </label>
-                            <div class="alert alert-info border-2" id="selectedSeatsList" style="min-height: 100px; font-size: 0.95rem;">
+                            <div class="alert alert-info border-1 p-2 mb-0 small" id="selectedSeatsList" style="min-height: 60px; font-size: 0.85rem;">
                                 <p class="text-muted mb-0">No seats selected yet</p>
                             </div>
                         </div>
 
                         <!-- Fare Calculation -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-calculator"></i> Fare Calculation</h6>
-                            <div class="mb-3">
-                                <label class="form-label">Base Fare (PKR) - Per Seat</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control form-control-lg" id="baseFare" 
-                                        min="0" step="0.01" placeholder="0.00" readonly>
-                                    <span class="input-group-text">Read-only</span>
-                                </div>
-                                <small class="form-text text-muted">Automatically fetched from fare database</small>
+                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                            <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Base Fare (PKR)</label>
+                                <input type="number" class="form-control form-control-sm" id="baseFare" 
+                                    min="0" step="0.01" placeholder="0.00" readonly>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Discount Applied</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control form-control-lg" id="discountInfo" 
-                                        placeholder="None" readonly>
-                                    <span class="input-group-text">-</span>
-                                </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Discount</label>
+                                <input type="text" class="form-control form-control-sm" id="discountInfo" 
+                                    placeholder="None" readonly>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Total Fare (PKR)</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control form-control-lg fw-bold text-success" id="totalFare" 
-                                        min="0" step="0.01" placeholder="0.00" readonly>
-                                    <span class="input-group-text">Calculated</span>
-                                </div>
-                                <small class="form-text text-muted">Base Fare × Number of Seats</small>
+                            <div class="mb-2">
+                                <label class="form-label small">Total Fare (PKR)</label>
+                                <input type="number" class="form-control form-control-sm fw-bold text-success" id="totalFare" 
+                                    min="0" step="0.01" placeholder="0.00" readonly>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Additional Tax/Service Charge (PKR)</label>
-                                <input type="number" class="form-control form-control-lg" id="tax" 
+                            <div class="mb-2">
+                                <label class="form-label small">Tax/Charge (PKR)</label>
+                                <input type="number" class="form-control form-control-sm" id="tax" 
                                     min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
                             </div>
-                            <div class="alert alert-primary border-3 mb-0 py-3">
-                                <h5 class="mb-0">
-                                    <strong>Final Amount: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
-                                </h5>
+                            <div class="alert alert-primary border-1 mb-0 p-2 small">
+                                <strong>Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
                             </div>
                         </div>
 
                         <!-- Booking Type -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-bookmark"></i> Booking Type</h6>
-                            <div>
-                                <div class="form-check form-check-lg">
-                                    <input class="form-check-input" type="radio" name="bookingType" 
-                                        id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
-                                    <label class="form-check-label fw-bold" for="counterBooking">
-                                        🏪 Counter Booking (Immediate Confirmation)
-                                    </label>
-                                </div>
-                                <div class="form-check form-check-lg">
-                                    <input class="form-check-input" type="radio" name="bookingType" 
-                                        id="phoneBooking" value="phone" onchange="togglePaymentFields()">
-                                    <label class="form-check-label fw-bold" for="phoneBooking">
-                                        📞 Phone Booking (Hold for 15 mins)
-                                    </label>
-                                </div>
+                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                            <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type</h6>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="bookingType" 
+                                    id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
+                                <label class="form-check-label small" for="counterBooking">
+                                    🏪 Counter
+                                </label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="bookingType" 
+                                    id="phoneBooking" value="phone" onchange="togglePaymentFields()">
+                                <label class="form-check-label small" for="phoneBooking">
+                                    📞 Phone (Hold 15 mins)
+                                </label>
                             </div>
                         </div>
 
                         <!-- Payment Fields (Counter Only) -->
-                        <div id="paymentFields" class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-credit-card"></i> Payment Details</h6>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Payment Method</label>
+                        <div id="paymentFields" class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                            <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment</h6>
+                            <div class="mb-2">
+                                <label class="form-label fw-bold small">Method</label>
                                 <div>
                                     @foreach($paymentMethods as $method)
-                                        <div class="form-check form-check-lg">
+                                        <div class="form-check form-check-sm">
                                             <input class="form-check-input" type="radio" name="paymentMethod" 
                                                 id="payment_{{ $method['value'] }}" value="{{ $method['value'] }}"
                                                 {{ $loop->first ? 'checked' : '' }}
                                                 onchange="toggleTransactionIdField()">
-                                            <label class="form-check-label fw-bold" for="payment_{{ $method['value'] }}">
+                                            <label class="form-check-label small" for="payment_{{ $method['value'] }}">
                                                 <i class="{{ $method['icon'] }}"></i> {{ $method['label'] }}
                                             </label>
                                         </div>
@@ -212,49 +298,45 @@
                             </div>
 
                             <!-- Transaction ID Field (for non-cash payments) -->
-                            <div class="mb-3" id="transactionIdField" style="display: none;">
-                                <label class="form-label fw-bold">Transaction ID / Reference Number</label>
-                                <input type="text" class="form-control form-control-lg" id="transactionId" 
-                                    placeholder="e.g., TXN123456789 or Card Last 4 Digits" maxlength="100">
-                                <small class="form-text text-muted">Required for non-cash payments</small>
+                            <div class="mb-2" id="transactionIdField" style="display: none;">
+                                <label class="form-label small">Transaction ID</label>
+                                <input type="text" class="form-control form-control-sm" id="transactionId" 
+                                    placeholder="TXN123456789" maxlength="100">
                             </div>
 
-                            <div class="mb-3" id="amountReceivedField">
-                                <label class="form-label fw-bold">Amount Received (PKR)</label>
-                                <input type="number" class="form-control form-control-lg" id="amountReceived" 
+                            <div class="mb-2" id="amountReceivedField">
+                                <label class="form-label small">Amount Received (PKR)</label>
+                                <input type="number" class="form-control form-control-sm" id="amountReceived" 
                                     min="0" step="0.01" placeholder="0.00" value="0" onchange="calculateReturn()">
                             </div>
                             <div id="returnDiv" style="display: none;">
-                                <div class="alert alert-success border-3 mb-0 py-3">
-                                    <h5 class="mb-0">
-                                        <strong>💰 Return: PKR <span id="returnAmount">0.00</span></strong>
-                                    </h5>
+                                <div class="alert alert-success border-1 mb-0 p-2 small">
+                                    <strong>💰 Return: PKR <span id="returnAmount">0.00</span></strong>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Notes -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
-                            <textarea class="form-control" id="notes" rows="3" maxlength="500" 
-                                placeholder="Add any special notes..."></textarea>
-                            <small class="form-text text-muted">Max 500 characters</small>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
+                            <textarea class="form-control form-control-sm" id="notes" rows="2" maxlength="500" 
+                                placeholder="Optional notes..."></textarea>
                         </div>
 
                         <!-- Passenger Information Section -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0"><i class="fas fa-users"></i> Passenger Information</h6>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="addPassengerBtn" onclick="addExtraPassenger()" style="display: none;">
-                                    <i class="fas fa-plus-circle"></i> Add Extra Passenger
+                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
+                                <button type="button" class="btn btn-outline-primary btn-sm p-1" id="addPassengerBtn" onclick="addExtraPassenger()" style="display: none; font-size: 0.7rem;">
+                                    <i class="fas fa-plus-circle"></i> Add
                                 </button>
                             </div>
-                            <p class="text-muted small mb-3"><strong>Required:</strong> One passenger per selected seat. <strong>Optional:</strong> Add extra passengers using the button.</p>
-                            <div id="passengerInfoContainer"></div>
+                            <p class="text-muted small mb-2" style="font-size: 0.75rem;"><strong>Required:</strong> One per seat.</p>
+                            <div id="passengerInfoContainer" style="max-height: 250px; overflow-y: auto;"></div>
                         </div>
 
                         <!-- Confirm Button -->
-                        <button class="btn btn-success btn-lg w-100 fw-bold py-3" onclick="confirmBooking()" id="confirmBtn">
+                        <button class="btn btn-success w-100 fw-bold py-2 small" onclick="confirmBooking()" id="confirmBtn">
                             <i class="fas fa-check-circle"></i> Confirm Booking
                         </button>
                     </div>
@@ -262,14 +344,14 @@
             </div>
 
             <!-- Right Column: Trip Passengers List (4 columns) -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm">
+            <div class="col-lg-4 col-md-12">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-warning text-dark">
-                        <h6 class="mb-0">
-                            <i class="fas fa-list-check"></i> Trip Passengers (Booked Seats)
+                        <h6 class="mb-0 small">
+                            <i class="fas fa-list-check"></i> Booked Passengers
                         </h6>
                     </div>
-                    <div class="card-body" style="max-height: 85vh; overflow-y: auto;">
+                    <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto;">
                         <div id="tripPassengersList"></div>
                     </div>
                 </div>
@@ -678,9 +760,21 @@
         const grid = document.getElementById('seatGrid');
         grid.innerHTML = '';
 
+        // Create container for seat rows
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.alignItems = 'center';
+        container.style.gap = '0.25rem';
+        container.style.width = '100%';
+
         for (let row = 0; row < 11; row++) {
             const rowDiv = document.createElement('div');
-            rowDiv.className = 'seat-row mb-2 d-flex gap-2';
+            rowDiv.className = 'seat-row';
+            rowDiv.style.display = 'flex';
+            rowDiv.style.gap = '0.25rem';
+            rowDiv.style.justifyContent = 'center';
+            rowDiv.style.width = 'fit-content';
 
             for (let col = 0; col < 4; col++) {
                 const seatNumber = row * 4 + col + 1;
@@ -688,8 +782,12 @@
 
                 const button = document.createElement('button');
                 button.className = 'btn btn-sm';
-                button.style.width = '50px';
-                button.style.height = '50px';
+                button.style.width = '32px';
+                button.style.height = '32px';
+                button.style.fontSize = '0.65rem';
+                button.style.padding = '1px';
+                button.style.lineHeight = '1';
+                button.style.flexShrink = '0';
                 button.textContent = seatNumber;
                 button.title = `Seat ${seatNumber} - ${seat.status}`;
 
@@ -713,8 +811,10 @@
                 rowDiv.appendChild(button);
             }
 
-            grid.appendChild(rowDiv);
+            container.appendChild(rowDiv);
         }
+
+        grid.appendChild(container);
     }
 
     // ========================================
