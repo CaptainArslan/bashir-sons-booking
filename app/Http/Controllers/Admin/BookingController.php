@@ -45,8 +45,108 @@ class BookingController extends Controller
 
     public function getData(Request $request)
     {
-        // TODO: Implement getData for bookings table
-        return response()->json(['data' => []]);
+        $query = Booking::query()
+            ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user'])
+            ->latest();
+
+        // Filter by date
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by payment status
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        // Filter by channel
+        if ($request->filled('channel')) {
+            $query->where('channel', $request->channel);
+        }
+
+        // Filter by booking number
+        if ($request->filled('booking_number')) {
+            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+        }
+
+        return datatables()
+            ->eloquent($query)
+            ->addColumn('booking_number', function (Booking $booking) {
+                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
+            })
+            ->addColumn('created_at', function (Booking $booking) {
+                return $booking->created_at->format('d M Y, H:i');
+            })
+            ->addColumn('route', function (Booking $booking) {
+                $from = $booking->fromStop?->terminal?->code ?? 'N/A';
+                $to = $booking->toStop?->terminal?->code ?? 'N/A';
+
+                return '<strong>'.$from.' → '.$to.'</strong>';
+            })
+            ->addColumn('seats', function (Booking $booking) {
+                $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
+
+                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
+            })
+            ->addColumn('passengers_count', function (Booking $booking) {
+                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
+            })
+            ->addColumn('amount', function (Booking $booking) {
+                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
+            })
+            ->addColumn('channel', function (Booking $booking) {
+                $icons = [
+                    'counter' => '<i class="fas fa-store"></i> Counter',
+                    'phone' => '<i class="fas fa-phone"></i> Phone',
+                    'online' => '<i class="fas fa-globe"></i> Online',
+                ];
+
+                return $icons[$booking->channel] ?? $booking->channel;
+            })
+            ->addColumn('status', function (Booking $booking) {
+                $badgeClass = match ($booking->status) {
+                    'confirmed' => 'bg-success',
+                    'hold' => 'bg-warning',
+                    'checked_in' => 'bg-info',
+                    'boarded' => 'bg-primary',
+                    'cancelled' => 'bg-danger',
+                    default => 'bg-secondary',
+                };
+
+                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status).'</span>';
+            })
+            ->addColumn('payment_status', function (Booking $booking) {
+                $badgeClass = match ($booking->payment_status) {
+                    'paid' => 'bg-success',
+                    'unpaid' => 'bg-danger',
+                    'partial' => 'bg-warning',
+                    default => 'bg-secondary',
+                };
+
+                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
+            })
+            ->addColumn('actions', function (Booking $booking) {
+                return '
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                ';
+            })
+            ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'status', 'payment_status', 'actions'])
+            ->make(true);
     }
 
     public function create(): View
@@ -54,8 +154,10 @@ class BookingController extends Controller
         return view('admin.bookings.create');
     }
 
-    public function show(Booking $booking)
+    public function show(Booking $booking): View
     {
+        $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user']);
+
         return view('admin.bookings.show', compact('booking'));
     }
 
@@ -66,8 +168,61 @@ class BookingController extends Controller
 
     public function update(Request $request, Booking $booking)
     {
-        // TODO: Implement update
-        return redirect()->route('admin.bookings.index');
+        $validated = $request->validate([
+            'status' => 'required|in:confirmed,hold,checked_in,boarded,cancelled',
+            'payment_status' => 'required|in:paid,unpaid,partial',
+            'payment_method' => 'nullable|in:cash,card,mobile_wallet,bank_transfer',
+            'online_transaction_id' => 'nullable|string|max:100',
+            'reserved_until' => 'nullable|date_format:Y-m-d\TH:i',
+            'notes' => 'nullable|string|max:500',
+            'passengers' => 'nullable|array',
+            'passengers.*.name' => 'nullable|string|max:100',
+            'passengers.*.gender' => 'nullable|in:male,female',
+            'passengers.*.age' => 'nullable|integer|min:1|max:120',
+            'passengers.*.cnic' => 'nullable|string|max:20',
+            'passengers.*.phone' => 'nullable|string|max:20',
+            'passengers.*.email' => 'nullable|email|max:100',
+        ]);
+
+        try {
+            // Update basic booking information
+            $booking->update([
+                'status' => $validated['status'],
+                'payment_status' => $validated['payment_status'],
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'online_transaction_id' => $validated['online_transaction_id'] ?? null,
+                'reserved_until' => $validated['status'] === 'hold' ? ($validated['reserved_until'] ?? now()->addMinutes(15)) : null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            // Update passengers if provided
+            if ($validated['passengers'] ?? false) {
+                $passengers = $booking->passengers()->get();
+
+                foreach ($validated['passengers'] as $index => $passengerData) {
+                    if (isset($passengers[$index])) {
+                        $passengers[$index]->update([
+                            'name' => $passengerData['name'] ?? $passengers[$index]->name,
+                            'gender' => $passengerData['gender'] ?? $passengers[$index]->gender,
+                            'age' => $passengerData['age'] ?? $passengers[$index]->age,
+                            'cnic' => $passengerData['cnic'] ?? $passengers[$index]->cnic,
+                            'phone' => $passengerData['phone'] ?? $passengers[$index]->phone,
+                            'email' => $passengerData['email'] ?? $passengers[$index]->email,
+                        ]);
+                    }
+                }
+            }
+
+            return response()->json([
+                'message' => 'Booking updated successfully',
+                'booking' => $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers']),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update booking',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     public function destroy(Booking $booking)
