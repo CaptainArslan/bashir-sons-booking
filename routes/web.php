@@ -1,31 +1,31 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\EnquiryController;
-use App\Http\Controllers\Admin\DiscountController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\Citycontroller;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TwoFactorController;
+use Illuminate\Support\Facades\Route;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -225,6 +225,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
 
+        // Booking Console Routes (Live Seat Map)
+        Route::get('/bookings/console/load', [BookingController::class, 'consoleIndex'])->can('create bookings')->name('bookings.console');
+        Route::get('/bookings/console/terminals', [BookingController::class, 'getTerminals'])->can('view bookings')->name('bookings.terminals');
+        Route::get('/bookings/console/routes', [BookingController::class, 'getRoutes'])->can('view bookings')->name('bookings.routes');
+        Route::get('/bookings/console/stops', [BookingController::class, 'getStops'])->can('view bookings')->name('bookings.stops');
+        Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTrip'])->can('view bookings')->name('bookings.load-trip');
+        Route::post('/bookings/console/lock-seats', [BookingController::class, 'lockSeats'])->can('create bookings')->name('bookings.lock-seats');
+        Route::post('/bookings/console/unlock-seats', [BookingController::class, 'unlockSeats'])->can('create bookings')->name('bookings.unlock-seats');
+
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
         Route::get('/announcements/data', [AnnouncementController::class, 'getData'])->can('view announcements')->name('announcements.data');
@@ -257,4 +266,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

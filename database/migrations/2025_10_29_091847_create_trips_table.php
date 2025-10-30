@@ -13,9 +13,20 @@ return new class extends Migration
     {
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('timetable_id')->constrained('timetables')->nullOnDelete();
-            $table->foreignId('route_id')->constrained('routes')->cascadeOnDelete();
-            $table->foreignId('bus_id')->nullable()->constrained('buses')->nullOnDelete();
+
+            $table->foreignId('timetable_id')
+                ->nullable()
+                ->constrained('timetables')
+                ->nullOnDelete();
+
+            $table->foreignId('route_id')
+                ->constrained('routes')
+                ->cascadeOnDelete();
+
+            $table->foreignId('bus_id')
+                ->nullable()
+                ->constrained('buses')
+                ->nullOnDelete();
 
             $table->date('departure_date');
             $table->timestamp('departure_datetime');
@@ -24,7 +35,6 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->text('notes')->nullable();
 
-            // Driver info (inline, not a separate table)
             $table->string('driver_name')->nullable();
             $table->string('driver_phone')->nullable();
             $table->string('driver_license')->nullable();
