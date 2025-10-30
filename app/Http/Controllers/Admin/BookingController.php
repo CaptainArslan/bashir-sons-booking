@@ -783,6 +783,10 @@ class BookingController extends Controller
 
                 $data['payment_received_from_customer'] = $amountReceived;
                 $data['return_after_deduction_from_customer'] = $returnAmount;
+            } else {
+                // For phone and online bookings, set default payment values
+                $data['payment_received_from_customer'] = 0;
+                $data['return_after_deduction_from_customer'] = 0;
             }
 
             // Create booking
