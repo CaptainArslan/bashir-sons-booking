@@ -19,7 +19,7 @@ class BookingPassenger extends Model
         'cnic',
         'phone',
         'email',
-        'status',
+        // 'status',
     ];
 
     protected function casts(): array

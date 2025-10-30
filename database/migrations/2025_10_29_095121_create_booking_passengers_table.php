@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\GenderEnum;
+use App\Enums\BookingStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,11 +18,11 @@ return new class extends Migration
             $table->foreignId('booking_id')->constrained('bookings')->cascadeOnDelete();
             $table->string('name');
             $table->integer('age')->nullable();
-            $table->enum('gender', GenderEnum::getGenders())->nullable();
+            $table->string('gender')->default(GenderEnum::MALE->value)->nullable();
             $table->string('cnic')->nullable();
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
-            $table->enum('status', ['hold', 'confirmed', 'cancelled', 'expired'])->default('hold');
+            // $table->string('status')->default(BookingStatusEnum::HOLD->value);
             $table->timestamps();
         });
     }

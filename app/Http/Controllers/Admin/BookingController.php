@@ -605,13 +605,15 @@ class BookingController extends Controller
 
             if ($bookingFrom < $queryTo && $queryFrom < $bookingTo) {
                 foreach ($booking->seats as $seat) {
-                    $passenger = $booking->passengers()->find(function ($p) use ($seat) {
+                    // Find matching passenger for this seat
+                    $passenger = $booking->passengers->first(function ($p) use ($seat) {
                         return $p->booking_id === $seat->booking_id;
                     });
+
                     $bookedSeats[$seat->seat_number] = [
                         'status' => $booking->status === 'hold' ? 'held' : 'booked',
                         'booking_id' => $booking->id,
-                        'gender' => $passenger?->gender ?? null,
+                        'gender' => $passenger?->gender ?? $seat->gender ?? null,
                     ];
                 }
             }

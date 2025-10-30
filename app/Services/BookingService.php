@@ -115,18 +115,18 @@ class BookingService
                 ]);
             }
 
-            // foreach ($data['passengers'] ?? [] as $p) {
-            //     BookingPassenger::create([
-            //         'booking_id' => $booking->id,
-            //         'name' => $p['name'],
-            //         'age'  => $p['age'] ?? null,
-            //         'gender' => $p['gender'] ?? null,
-            //         'cnic'   => $p['cnic'] ?? null,
-            //         'phone'  => $p['phone'] ?? null,
-            //         'email'  => $p['email'] ?? null,
-            //         'status' => 'active',
-            //     ]);
-            // }
+            foreach ($data['passengers'] ?? [] as $p) {
+                BookingPassenger::create([
+                    'booking_id' => $booking->id,
+                    'name' => $p['name'],
+                    'age' => $p['age'] ?? null,
+                    'gender' => $p['gender'] ?? null,
+                    'cnic' => $p['cnic'] ?? null,
+                    'phone' => $p['phone'] ?? null,
+                    'email' => $p['email'] ?? null,
+                    'status' => 'active',
+                ]);
+            }
 
             return $booking->load(['seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
         });

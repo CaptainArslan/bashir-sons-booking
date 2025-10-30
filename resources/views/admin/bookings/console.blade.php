@@ -225,6 +225,16 @@
                             <small class="form-text text-muted">Max 500 characters</small>
                         </div>
 
+                        <!-- Passenger Information Section -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-users"></i> Passenger Information</h6>
+                            <p class="text-muted small mb-3">Add detailed information for each passenger</p>
+                            <div id="passengerInfoContainer"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addPassengerBtn" onclick="addPassengerForm()" style="display: none;">
+                                <i class="fas fa-plus-circle"></i> Add Passenger
+                            </button>
+                        </div>
+
                         <!-- Confirm Button -->
                         <button class="btn btn-success btn-lg w-100 fw-bold py-3" onclick="confirmBooking()" id="confirmBtn">
                             <i class="fas fa-check-circle"></i> Confirm Booking
@@ -318,6 +328,7 @@
         tripData: null,
         seatMap: {},
         selectedSeats: {},
+        passengerInfo: {},  // ← New: Store passenger details
         pendingSeat: null,
         tripLoaded: false,
         fareData: null,
@@ -662,6 +673,7 @@
 
         if (count === 0) {
             list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
+            updatePassengerForms(); // ← Clear passenger forms
             calculateTotalFare();
             return;
         }
@@ -672,7 +684,150 @@
             html += `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
         });
         list.innerHTML = html;
+        updatePassengerForms(); // ← Update passenger forms based on seats
         calculateTotalFare();
+    }
+
+    // ========================================
+    // UPDATE PASSENGER FORMS
+    // ========================================
+    function updatePassengerForms() {
+        const container = document.getElementById('passengerInfoContainer');
+        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
+        
+        if (selectedSeats.length === 0) {
+            container.innerHTML = '';
+            document.getElementById('addPassengerBtn').style.display = 'none';
+            return;
+        }
+
+        // Initialize passengerInfo for new seats
+        selectedSeats.forEach(seat => {
+            if (!appState.passengerInfo[seat]) {
+                appState.passengerInfo[seat] = {
+                    seat_number: parseInt(seat),
+                    name: '',
+                    age: '',
+                    gender: appState.selectedSeats[seat],
+                    cnic: '',
+                    phone: '',
+                    email: ''
+                };
+            }
+        });
+
+        // Remove passengerInfo for deselected seats
+        Object.keys(appState.passengerInfo).forEach(seat => {
+            if (!selectedSeats.includes(seat)) {
+                delete appState.passengerInfo[seat];
+            }
+        });
+
+        // Generate forms
+        let html = '';
+        selectedSeats.forEach(seat => {
+            const info = appState.passengerInfo[seat];
+            const icon = info.gender === 'male' ? '👨' : '👩';
+            
+            html += `
+                <div class="card mb-3 border-2" style="border-color: #e9ecef;">
+                    <div class="card-header" style="background-color: #f8f9fa;">
+                        <h6 class="mb-0">
+                            <span>${icon} Seat ${seat}</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger float-end" onclick="removePassenger(${seat})">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Name *</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                    value="${info.name}" 
+                                    onchange="updatePassengerField(${seat}, 'name', this.value)"
+                                    placeholder="Full Name" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Age</label>
+                                <input type="number" class="form-control form-control-sm" 
+                                    value="${info.age}" 
+                                    onchange="updatePassengerField(${seat}, 'age', this.value)"
+                                    placeholder="Age" min="1" max="120">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">CNIC</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                    value="${info.cnic}" 
+                                    onchange="updatePassengerField(${seat}, 'cnic', this.value)"
+                                    placeholder="CNIC / ID Number" maxlength="20">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Phone</label>
+                                <input type="tel" class="form-control form-control-sm" 
+                                    value="${info.phone}" 
+                                    onchange="updatePassengerField(${seat}, 'phone', this.value)"
+                                    placeholder="Phone Number" maxlength="20">
+                            </div>
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label small fw-bold">Email</label>
+                                <input type="email" class="form-control form-control-sm" 
+                                    value="${info.email}" 
+                                    onchange="updatePassengerField(${seat}, 'email', this.value)"
+                                    placeholder="Email Address" maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('addPassengerBtn').style.display = selectedSeats.length > 0 ? 'inline-block' : 'none';
+    }
+
+    // ========================================
+    // UPDATE PASSENGER FIELD
+    // ========================================
+    function updatePassengerField(seat, field, value) {
+        if (appState.passengerInfo[seat]) {
+            appState.passengerInfo[seat][field] = value;
+        }
+    }
+
+    // ========================================
+    // REMOVE PASSENGER
+    // ========================================
+    function removePassenger(seat) {
+        if (appState.passengerInfo[seat]) {
+            delete appState.passengerInfo[seat];
+            updatePassengerForms();
+        }
+    }
+
+    // ========================================
+    // ADD PASSENGER FORM
+    // ========================================
+    function addPassengerForm() {
+        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
+        alert(`You have ${selectedSeats.length} seats selected. Please fill passenger information for each seat.`);
+    }
+
+    // ========================================
+    // VALIDATE PASSENGER INFORMATION
+    // ========================================
+    function validatePassengerInfo() {
+        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
+        
+        for (let seat of selectedSeats) {
+            const info = appState.passengerInfo[seat];
+            if (!info || !info.name || info.name.trim() === '') {
+                alert(`Please enter passenger name for Seat ${seat}`);
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     // ========================================
@@ -761,6 +916,11 @@
             return;
         }
 
+        // Validate passenger information
+        if (!validatePassengerInfo()) {
+            return;
+        }
+
         if (!appState.baseFare || appState.baseFare <= 0) {
             alert('Fare not loaded. Please select destination first.');
             return;
@@ -775,12 +935,19 @@
             return;
         }
 
-        // Create passengers array with seat numbers and gender
-        const passengers = selectedSeats.map(seat => ({
-            seat_number: parseInt(seat),
-            name: `Passenger - Seat ${seat}`,
-            gender: appState.selectedSeats[seat]
-        }));
+        // Create passengers array with detailed information
+        const passengers = selectedSeats.map(seat => {
+            const info = appState.passengerInfo[seat];
+            return {
+                seat_number: parseInt(seat),
+                name: info.name || `Passenger - Seat ${seat}`,
+                age: info.age || null,
+                gender: info.gender,
+                cnic: info.cnic || null,
+                phone: info.phone || null,
+                email: info.email || null
+            };
+        });
 
         const paymentMethod = isCounter 
             ? document.querySelector('input[name="paymentMethod"]:checked').value 
@@ -845,6 +1012,7 @@
     // ========================================
     function resetForm() {
         appState.selectedSeats = {};
+        appState.passengerInfo = {};  // ← Clear passenger info
         appState.tripLoaded = false;
         appState.fareData = null;
         appState.baseFare = 0;
@@ -853,7 +1021,7 @@
         document.getElementById('discountInfo').value = '';
         document.getElementById('totalFare').value = '';
         document.getElementById('tax').value = '0';
-        document.getElementById('amountReceived').value = '';
+        document.getElementById('amountReceived').value = '0';
         document.getElementById('notes').value = '';
         document.getElementById('finalAmount').textContent = '0.00';
         document.getElementById('departureTime').value = '';
