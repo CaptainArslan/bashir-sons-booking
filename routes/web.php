@@ -1,30 +1,31 @@
 <?php
 
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BannerController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\CounterTerminalController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TwoFactorController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -214,6 +215,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy'])->can('delete timetables')->name('timetables.destroy');
         Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
 
+        // bookings Routes
+        Route::get('/bookings', [BookingController::class, 'index'])->can('view bookings')->name('bookings.index');
+        Route::get('/bookings/data', [BookingController::class, 'getData'])->can('view bookings')->name('bookings.data');
+        Route::get('/bookings/create', [BookingController::class, 'create'])->can('create bookings')->name('bookings.create');
+        Route::post('/bookings', [BookingController::class, 'store'])->can('create bookings')->name('bookings.store');
+        Route::get('/bookings/{booking}', [BookingController::class, 'show'])->can('view bookings')->name('bookings.show');
+        Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->can('edit bookings')->name('bookings.edit');
+        Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
+        Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
+
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
         Route::get('/announcements/data', [AnnouncementController::class, 'getData'])->can('view announcements')->name('announcements.data');
@@ -243,8 +254,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->can('edit discounts')->name('discounts.update');
         Route::patch('/discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])->can('edit discounts')->name('discounts.toggle-status');
         Route::delete('/discounts/{discount}', [DiscountController::class, 'destroy'])->can('delete discounts')->name('discounts.destroy');
-
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
