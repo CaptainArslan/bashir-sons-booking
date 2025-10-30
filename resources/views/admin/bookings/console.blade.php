@@ -153,6 +153,9 @@
                     <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
                         <i class="fas fa-play"></i> Load Trip & Seats
                     </button>
+                    <button class="btn btn-warning btn-lg fw-bold" id="assignBusBtnHeader" onclick="openAssignBusModalFromHeader()" style="display: none;">
+                        <i class="fas fa-bus"></i> Assign Bus
+                    </button>
                 </div>
             </div>
         </div>
@@ -1429,12 +1432,15 @@
 
                 if (response.success) {
                     const booking = response.booking;
-                    const passengers = booking.passengers;
-                    const seats = booking.seats;
-                    const totalFare = booking.total_fare;
-                    const discount = booking.discount_amount;
-                    const tax = booking.tax_amount;
-                    const finalAmount = booking.final_amount;
+                    const passengers = booking.passengers || [];
+                    const seats = booking.seats || [];
+                    
+                    // Convert to numbers to ensure toFixed() works
+                    const totalFare = parseFloat(booking.total_fare || 0);
+                    const discount = parseFloat(booking.discount_amount || 0);
+                    const tax = parseFloat(booking.tax_amount || 0);
+                    const finalAmount = parseFloat(booking.final_amount || 0);
+                    
                     const paymentMethod = booking.payment_method;
                     const notes = booking.notes;
                     const transactionId = booking.transaction_id;
@@ -1473,7 +1479,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${passengers.map(p => `
+                                    ${passengers.length > 0 ? passengers.map(p => `
                                         <tr>
                                             <td>${p.seat_number || 'N/A'}</td>
                                             <td>${p.name || 'N/A'}</td>
@@ -1483,18 +1489,20 @@
                                             <td>${p.phone || 'N/A'}</td>
                                             <td>${p.email || 'N/A'}</td>
                                         </tr>
-                                    `).join('')}
+                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
                     `;
                     modal.show();
                 } else {
-                    alert('Failed to load booking details');
+                    console.error('Failed to load booking details:', response);
+                    alert('Failed to load booking details: ' + (response.error || 'Unknown error'));
                 }
             },
-            error: function() {
-                alert('Failed to load booking details');
+            error: function(error) {
+                console.error('AJAX Error:', error);
+                alert('Failed to load booking details. Please try again.');
             }
         });
     }
@@ -1506,13 +1514,17 @@
         const busDriverSection = document.getElementById('busDriverSection');
         busDriverSection.innerHTML = ''; // Clear previous content
 
+        // Show/hide assign bus button in header
+        const assignBusBtn = document.getElementById('assignBusBtnHeader');
+        if (assignBusBtn) {
+            assignBusBtn.style.display = 'block';
+            assignBusBtn.textContent = trip.bus_id ? '🔄 Change Bus' : '🚌 Assign Bus';
+        }
+
         if (!trip.bus_id) {
             busDriverSection.innerHTML = `
-                <div class="alert alert-warning text-center py-3 mb-0">
-                    <p class="mb-2"><strong>Bus and Driver not assigned for this trip.</strong></p>
-                    <button class="btn btn-primary btn-sm" onclick="openAssignBusModal(${trip.id})">
-                        <i class="fas fa-bus"></i> Assign Bus & Driver
-                    </button>
+                <div class="alert alert-warning text-center py-2 mb-0 small">
+                    <p class="mb-0"><i class="fas fa-info-circle"></i> Bus and Driver not assigned yet. Use the "Assign Bus" button in the search form.</p>
                 </div>
             `;
             return;
@@ -1520,58 +1532,45 @@
 
         // Bus assigned - show details
         busDriverSection.innerHTML = `
-            <div class="row">
+            <div class="row g-2">
                 <div class="col-md-6">
-                    <div class="card border-left-primary shadow-sm h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-bus text-primary"></i> Bus Details</h6>
-                            <p class="mb-2">
-                                <small class="text-muted">Bus Name</small><br>
+                    <div class="card border-left-primary shadow-sm h-100" style="font-size: 0.85rem;">
+                        <div class="card-body p-2">
+                            <h6 class="fw-bold mb-2 small"><i class="fas fa-bus text-primary"></i> Bus</h6>
+                            <p class="mb-1">
+                                <small class="text-muted d-block">Bus Name</small>
                                 <strong>${trip.bus?.name || 'N/A'}</strong>
                             </p>
-                            <p class="mb-2">
-                                <small class="text-muted">Registration Number</small><br>
+                            <p class="mb-1">
+                                <small class="text-muted d-block">Reg #</small>
                                 <strong>${trip.bus?.registration_number || 'N/A'}</strong>
                             </p>
-                            <p class="mb-2">
-                                <small class="text-muted">Model</small><br>
+                            <p class="mb-0">
+                                <small class="text-muted d-block">Model</small>
                                 <strong>${trip.bus?.model || 'N/A'}</strong>
-                            </p>
-                            <p class="mb-2">
-                                <small class="text-muted">Color</small><br>
-                                <strong>${trip.bus?.color || 'N/A'}</strong>
                             </p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card border-left-success shadow-sm h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-user-tie text-success"></i> Driver Details</h6>
-                            <p class="mb-2">
-                                <small class="text-muted">Driver Name</small><br>
+                    <div class="card border-left-success shadow-sm h-100" style="font-size: 0.85rem;">
+                        <div class="card-body p-2">
+                            <h6 class="fw-bold mb-2 small"><i class="fas fa-user-tie text-success"></i> Driver</h6>
+                            <p class="mb-1">
+                                <small class="text-muted d-block">Name</small>
                                 <strong>${trip.driver_name || 'N/A'}</strong>
                             </p>
-                            <p class="mb-2">
-                                <small class="text-muted">Driver Phone</small><br>
+                            <p class="mb-1">
+                                <small class="text-muted d-block">Phone</small>
                                 <strong>${trip.driver_phone || 'N/A'}</strong>
                             </p>
-                            <p class="mb-2">
-                                <small class="text-muted">Driver CNIC</small><br>
-                                <strong>${trip.driver_cnic || 'N/A'}</strong>
-                            </p>
                             <p class="mb-0">
-                                <small class="text-muted">Driver License</small><br>
-                                <strong>${trip.driver_license || 'N/A'}</strong>
+                                <small class="text-muted d-block">CNIC</small>
+                                <strong>${trip.driver_cnic || 'N/A'}</strong>
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="text-center mt-3">
-                <button class="btn btn-outline-primary btn-sm" onclick="openAssignBusModal(${trip.id})">
-                    <i class="fas fa-edit"></i> Change Bus & Driver
-                </button>
             </div>
         `;
     }
@@ -1694,6 +1693,18 @@
                 alert('Failed to fetch buses');
             }
         });
+    }
+
+    // ========================================
+    // OPEN ASSIGN BUS MODAL FROM HEADER
+    // ========================================
+    function openAssignBusModalFromHeader() {
+        const tripId = appState.tripData ? appState.tripData.trip.id : null;
+        if (tripId) {
+            openAssignBusModal(tripId);
+        } else {
+            alert('No trip data loaded. Please load a trip first.');
+        }
     }
 
     // ========================================
