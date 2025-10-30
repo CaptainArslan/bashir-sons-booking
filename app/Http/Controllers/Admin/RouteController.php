@@ -39,7 +39,49 @@ class RouteController extends Controller
                     return '<span class="badge ' . $color . '">' . e($direction) . '</span>';
                 })
                 ->addColumn('total_fare', function ($route) {
-                    return '<span class="badge bg-primary">' . $route->total_fare . ' ' . $route->base_currency . '</span>';
+                    // Get all stops for this route
+                    $stops = $route->routeStops()->orderBy('sequence')->get();
+                    
+                    if ($stops->isEmpty()) {
+                        return '<span class="badge bg-secondary">No stops</span>';
+                    }
+
+                    // Get all fares for this route
+                    $fares = Fare::where(function ($query) use ($stops) {
+                        $terminalIds = $stops->pluck('terminal_id')->toArray();
+                        $query->whereIn('from_terminal_id', $terminalIds)
+                              ->whereIn('to_terminal_id', $terminalIds);
+                    })->get()->keyBy(function ($fare) {
+                        return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
+                    });
+
+                    // Generate all possible stop combinations
+                    $html = '<div style="max-height: 200px; overflow-y: auto;">';
+                    $stopCount = $stops->count();
+                    
+                    for ($i = 0; $i < $stopCount; $i++) {
+                        for ($j = $i + 1; $j < $stopCount; $j++) {
+                            $fromStop = $stops[$i];
+                            $toStop = $stops[$j];
+                            $key = $fromStop->terminal_id . '-' . $toStop->terminal_id;
+                            $fare = $fares->get($key);
+                            
+                            if ($fare) {
+                                $html .= '<div class="mb-1"><small>';
+                                $html .= '<strong>' . e($fromStop->terminal->code) . '</strong> → <strong>' . e($toStop->terminal->code) . '</strong>: ';
+                                $html .= '<span class="badge bg-primary">' . $fare->final_fare . ' ' . $fare->currency . '</span>';
+                                $html .= '</small></div>';
+                            } else {
+                                $html .= '<div class="mb-1"><small>';
+                                $html .= '<strong>' . e($fromStop->terminal->code) . '</strong> → <strong>' . e($toStop->terminal->code) . '</strong>: ';
+                                $html .= '<span class="badge bg-danger" title="No fare configured">❌ Not Set</span>';
+                                $html .= '</small></div>';
+                            }
+                        }
+                    }
+                    
+                    $html .= '</div>';
+                    return $html;
                 })
                 ->addColumn('return_route', function ($route) {
                     if ($route->is_return_of) {
