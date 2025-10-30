@@ -17,14 +17,26 @@ class TripStop extends Model
         'arrival_at',
         'departure_at',
         'is_active',
+        'is_origin',
+        'is_destination',
+        'actual_arrival_at',
+        'actual_departure_at',
+        'remarks',
     ];
 
     protected $casts = [
         'arrival_at' => 'datetime',
         'departure_at' => 'datetime',
+        'actual_arrival_at' => 'datetime',
+        'actual_departure_at' => 'datetime',
         'is_active' => 'boolean',
+        'is_origin' => 'boolean',
+        'is_destination' => 'boolean',
     ];
 
+    // =============================
+    // Relationships
+    // =============================
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);

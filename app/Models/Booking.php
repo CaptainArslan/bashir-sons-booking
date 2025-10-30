@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Trip;
+use App\Models\RouteStop;
+use App\Models\BookingSeat;
+use App\Models\BookingPassenger;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Booking extends Model
 {
@@ -64,21 +69,6 @@ class Booking extends Model
         return $this->belongsTo(Trip::class);
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function bookedByUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'booked_by_user_id');
-    }
-
-    public function terminal(): BelongsTo
-    {
-        return $this->belongsTo(Terminal::class);
-    }
-
     public function fromStop(): BelongsTo
     {
         return $this->belongsTo(RouteStop::class, 'from_stop_id');
@@ -97,5 +87,43 @@ class Booking extends Model
     public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function bookedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'booked_by_user_id');
+    }
+
+    public function sourceTerminal(): BelongsTo
+    {
+        return $this->belongsTo(Terminal::class, 'terminal_id');
+    }
+
+    // =============================
+    // Accessors & Mutators
+    // =============================
+    protected function bookingNumber(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
+            set: fn($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
+        );
+    }
+
+    // =============================
+    // Scopes
+    // =============================
+    public function scopeActiveForAvailability($q)
+    {
+        return $q->whereIn('status', ['hold', 'confirmed', 'checked_in', 'boarded'])
+            ->where(function ($qq) {
+                $qq->where('status', '!=', 'hold')
+                    ->orWhere('reserved_until', '>', now());
+            });
     }
 }

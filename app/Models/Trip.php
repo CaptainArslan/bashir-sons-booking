@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Trip extends Model
@@ -52,7 +53,12 @@ class Trip extends Model
 
     public function bus(): BelongsTo
     {
-        return $this->belongsTo(Bus::class);
+        return $this->belongsTo(Bus::class, 'bus_id');
+    }
+
+    public function stops(): HasMany
+    {
+        return $this->hasMany(TripStop::class)->orderBy('sequence');
     }
 
     public function bookings(): HasMany
@@ -60,8 +66,13 @@ class Trip extends Model
         return $this->hasMany(Booking::class);
     }
 
-    public function tripStops(): HasMany
+    public function originStop(): HasOne
     {
-        return $this->hasMany(TripStop::class)->orderBy('sequence');
+        return $this->hasOne(TripStop::class)->where('is_origin', true)->orderBy('sequence');
+    }
+
+    public function destinationStop(): HasOne
+    {
+        return $this->hasOne(TripStop::class)->where('is_destination', true)->orderBy('sequence');
     }
 }

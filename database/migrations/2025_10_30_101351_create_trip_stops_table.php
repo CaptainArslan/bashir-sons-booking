@@ -15,13 +15,8 @@ return new class extends Migration
             $table->id();
 
             // Core relationships
-            $table->foreignId('trip_id')
-                ->constrained('trips')
-                ->cascadeOnDelete();
-
-            $table->foreignId('terminal_id')
-                ->constrained('terminals')
-                ->restrictOnDelete();
+            $table->foreignId('trip_id')->constrained('trips')->cascadeOnDelete();
+            $table->foreignId('terminal_id')->constrained('terminals')->restrictOnDelete();
 
             // Position of this terminal along the trip route
             $table->unsignedInteger('sequence')->comment('Order of stop along the trip route');
