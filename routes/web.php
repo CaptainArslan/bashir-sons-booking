@@ -230,7 +230,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/console/terminals', [BookingController::class, 'getTerminals'])->can('view bookings')->name('bookings.terminals');
         Route::get('/bookings/console/routes', [BookingController::class, 'getRoutes'])->can('view bookings')->name('bookings.routes');
         Route::get('/bookings/console/stops', [BookingController::class, 'getStops'])->can('view bookings')->name('bookings.stops');
-        Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTrip'])->can('view bookings')->name('bookings.load-trip');
+        Route::get('/bookings/console/route-stops', [BookingController::class, 'getRouteStops'])->can('view bookings')->name('bookings.route-stops');
+        Route::get('/bookings/console/departure-times', [BookingController::class, 'getDepartureTimes'])->can('view bookings')->name('bookings.departure-times');
+        Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTripUpdated'])->can('view bookings')->name('bookings.load-trip');
         Route::post('/bookings/console/lock-seats', [BookingController::class, 'lockSeats'])->can('create bookings')->name('bookings.lock-seats');
         Route::post('/bookings/console/unlock-seats', [BookingController::class, 'unlockSeats'])->can('create bookings')->name('bookings.unlock-seats');
 

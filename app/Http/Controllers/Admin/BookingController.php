@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
+use App\Models\TimetableStop;
 use App\Models\Trip;
 use App\Models\TripStop;
 use App\Services\AvailabilityService;
@@ -97,7 +98,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -125,71 +126,207 @@ class BookingController extends Controller
     }
 
     /**
-     * POST /admin/bookings/load-trip
-     * Load or create trip and return seat map
+     * GET /admin/bookings/console/route-stops?from_terminal_id={id}
+     * Fetch route stops after a given terminal
      */
-    public function loadTrip(Request $request): JsonResponse
+    public function getRouteStops(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'route_id' => 'required|exists:routes,id',
-            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
-            'from_stop_id' => 'required|exists:trip_stops,id|integer',
-            'to_stop_id' => 'required|exists:trip_stops,id|integer',
+            'from_terminal_id' => 'required|exists:terminals,id',
         ]);
 
         try {
-            $route = Route::with(['routeStops', 'timetables'])->findOrFail($validated['route_id']);
-            $date = $validated['date'];
+            // Find all routes that have this terminal, then get forward stops
+            $routes = Route::query()
+                ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                ->where('status', 'active')
+                ->get();
 
-            // Check for existing trip
-            $trip = Trip::where('route_id', $route->id)
-                ->whereDate('departure_date', $date)
-                ->with(['stops', 'bus'])
+            $routeStops = [];
+            foreach ($routes as $route) {
+                // Get all stops for this route
+                $stops = RouteStop::where('route_id', $route->id)
+                    ->with('terminal:id,name,code')
+                    ->orderBy('sequence')
+                    ->get();
+
+                // Find the from terminal sequence
+                $fromTerminalSequence = $stops->firstWhere('terminal_id', $validated['from_terminal_id'])?->sequence;
+
+                if ($fromTerminalSequence === null) {
+                    continue;
+                }
+
+                // Get only forward stops (sequence > from_terminal sequence)
+                foreach ($stops as $stop) {
+                    if ($stop->sequence > $fromTerminalSequence) {
+                        $routeStops[] = $stop;
+                    }
+                }
+            }
+
+            return response()->json(['route_stops' => $routeStops]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * GET /admin/bookings/console/departure-times
+     * Fetch available departure times for a route segment on a given date
+     */
+    public function getDepartureTimes(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+        ]);
+
+        try {
+            // Validate terminals are different
+            if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
+                throw new \Exception('From and To terminals must be different');
+            }
+
+            // Get timetable stops for the FROM terminal only on the given date
+            $timetableStops = [];
+
+            $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
+                ->where('is_active', true)
+                ->with('timetable.route')
+                ->get();
+
+            foreach ($timetableStopsQuery as $ts) {
+                // Verify timetable and route exist
+                if (! $ts->timetable || ! $ts->timetable->route) {
+                    continue;
+                }
+
+                // Check if route has the to_terminal in forward sequence
+                $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
+                    ->orderBy('sequence')
+                    ->get();
+
+                $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+                $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+
+                // Skip if destination is not in forward sequence or doesn't exist
+                if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+                    continue;
+                }
+
+                // Combine date with departure_time to create full datetime
+                if ($ts->departure_time) {
+                    $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
+
+                    // Only include times that are in future
+                    if (strtotime($departureDateTime) >= time()) {
+                        $timetableStops[] = [
+                            'id' => $ts->id,
+                            'departure_at' => $departureDateTime,
+                            'terminal_id' => $ts->terminal_id,
+                            'timetable_id' => $ts->timetable_id,
+                            'route_id' => $ts->timetable->route->id,
+                            'route_name' => $ts->timetable->route->name,
+                        ];
+                    }
+                }
+            }
+
+            // Remove duplicates and sort by departure time
+            $timetableStops = collect($timetableStops)
+                ->unique('departure_at')
+                ->sortBy('departure_at')
+                ->values();
+
+            return response()->json(['timetable_stops' => $timetableStops]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * POST /admin/bookings/load-trip (UPDATED)
+     * Load or create trip using timetable_stop_id
+     */
+    public function loadTripUpdated(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
+            'timetable_stop_id' => 'required|exists:timetable_stops,id',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+        ]);
+
+        try {
+            // Get the timetable stop
+            $timetableStop = TimetableStop::findOrFail($validated['timetable_stop_id']);
+            $timetable = $timetableStop->timetable;
+
+            if (! $timetable) {
+                throw new \Exception('Timetable not found for selected stop');
+            }
+
+            $route = $timetable->route;
+
+            if (! $route) {
+                throw new \Exception('Route not found for selected timetable');
+            }
+
+
+            // Check for existing trip - load stops separately
+            $trip = Trip::where('timetable_id', $timetable->id)
+                ->whereDate('departure_date', $validated['date'])
                 ->first();
 
             // Create trip if not exists
-            if (! $trip && $route->timetables()->exists()) {
-                $timetable = $route->timetables()->first();
-                $trip = $this->tripFactory->createFromTimetable($timetable->id, $date);
-                $trip->load(['stops', 'bus']);
-            }
-
             if (! $trip) {
-                throw ValidationException::withMessages([
-                    'trip' => 'No timetable configured for this route. Please create one first.',
-                ]);
+                $trip = $this->tripFactory->createFromTimetable($timetable->id, $validated['date']);
             }
 
-            // Validate from/to stops exist in this trip
-            $fromStop = $trip->stops()->whereKey($validated['from_stop_id'])->first();
-            $toStop = $trip->stops()->whereKey($validated['to_stop_id'])->first();
+            // Load the stops relationship
+            $trip->load('stops');
+
+            // Get route stops for the segment
+            $routeStops = RouteStop::where('route_id', $route->id)
+                ->with('terminal:id,name,code')
+                ->orderBy('sequence')
+                ->get();
+
+            $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+            $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
 
             if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
-                throw ValidationException::withMessages([
-                    'stops' => 'Invalid stop selection or invalid sequence.',
-                ]);
+                throw new \Exception('Invalid segment selection');
+            }
+
+            // Map to trip stops
+            $tripFromStop = $trip->stops->firstWhere('terminal_id', $validated['from_terminal_id']);
+            $tripToStop = $trip->stops->firstWhere('terminal_id', $validated['to_terminal_id']);
+
+            if (! $tripFromStop || ! $tripToStop) {
+                throw new \Exception('Selected terminals not found in trip');
             }
 
             // Get seat map
             $seatCount = $this->availabilityService->seatCount($trip);
             $availableSeats = $this->availabilityService->availableSeats(
                 $trip->id,
-                $fromStop->id,
-                $toStop->id
+                $tripFromStop->id,
+                $tripToStop->id
             );
 
-            // Build seat map with booking info
-            $seatMap = $this->buildSeatMap($trip, $fromStop, $toStop, $seatCount, $availableSeats);
+            $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
             return response()->json([
                 'trip' => $trip->only(['id', 'departure_datetime', 'estimated_arrival_datetime']),
-                'from_stop' => $fromStop->only(['id', 'terminal_id', 'departure_at', 'sequence']),
-                'to_stop' => $toStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
+                'route' => $route->only(['id', 'name', 'code']),
+                'from_stop' => $tripFromStop->only(['id', 'terminal_id', 'departure_at', 'sequence']),
+                'to_stop' => $tripToStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
             ]);
-        } catch (ValidationException $e) {
-            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

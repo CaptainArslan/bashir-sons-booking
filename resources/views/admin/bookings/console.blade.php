@@ -5,55 +5,55 @@
 @section('content')
 <div class="container-fluid p-4">
     <!-- Header Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Booking Console - Live Seat Map</h5>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-ticket-alt"></i> 
+                Booking Console - Real-Time Seat Booking
+                @if(auth()->user()->hasRole('admin'))
+                    <span class="badge bg-info ms-2">Admin Mode</span>
+                @else
+                    <span class="badge bg-warning ms-2">Employee Mode - Terminal: {{ auth()->user()->terminal?->name ?? 'N/A' }}</span>
+                @endif
+            </h5>
         </div>
-        <div class="card-body">
+        <div class="card-body bg-light">
             <div class="row g-3">
-                <!-- Terminal -->
+                <!-- From Terminal / Stop -->
                 <div class="col-md-2">
-                    <label class="form-label">Terminal</label>
-                    <select class="form-select" id="terminal" disabled>
+                    <label class="form-label fw-bold">From Terminal</label>
+                    <select class="form-select form-select-lg" id="fromTerminal" @if(!auth()->user()->hasRole('admin')) disabled @endif>
                         <option value="">Loading...</option>
                     </select>
                 </div>
 
-                <!-- Route -->
+                <!-- To Terminal / Stop -->
                 <div class="col-md-2">
-                    <label class="form-label">Route</label>
-                    <select class="form-select" id="route" disabled>
-                        <option value="">Select Route</option>
+                    <label class="form-label fw-bold">To Terminal</label>
+                    <select class="form-select form-select-lg" id="toTerminal" disabled>
+                        <option value="">Select Destination</option>
                     </select>
                 </div>
 
                 <!-- Date -->
                 <div class="col-md-2">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control" id="date" 
+                    <label class="form-label fw-bold">Travel Date</label>
+                    <input type="date" class="form-control form-control-lg" id="travelDate"
                         min="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}" />
                 </div>
 
-                <!-- From Stop -->
-                <div class="col-md-2">
-                    <label class="form-label">From Stop</label>
-                    <select class="form-select" id="fromStop" disabled>
-                        <option value="">Select From</option>
-                    </select>
-                </div>
-
-                <!-- To Stop -->
-                <div class="col-md-2">
-                    <label class="form-label">To Stop</label>
-                    <select class="form-select" id="toStop" disabled>
-                        <option value="">Select To</option>
+                <!-- Departure Time (Timetable Stops) -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Departure Time</label>
+                    <select class="form-select form-select-lg" id="departureTime" disabled>
+                        <option value="">Select Departure Time</option>
                     </select>
                 </div>
 
                 <!-- Load Trip Button -->
-                <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary w-100" id="loadTripBtn" onclick="loadTrip()">
-                        Load Trip
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
+                        <i class="fas fa-play"></i> Load Trip & Seats
                     </button>
                 </div>
             </div>
@@ -62,117 +62,146 @@
 
     <!-- Trip Content (shown when trip loaded) -->
     <div id="tripContent" style="display: none;">
-        <div class="row">
+        <div class="row g-4">
             <!-- Seat Map Section -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Seat Map (44 Seats - 4x11)</h6>
+            <div class="col-lg-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chair"></i> Seat Map (44 Seats - 4x11 Layout)
+                        </h6>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <span class="badge bg-success me-2">🟩 Available</span>
-                            <span class="badge bg-danger me-2">🟥 Booked</span>
-                            <span class="badge bg-warning me-2">🟨 Held</span>
-                            <span class="badge bg-info">🟦 Selected</span>
+                        <!-- Legend -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <span class="badge bg-success me-3 p-2">🟩 Available</span>
+                            <span class="badge bg-danger me-3 p-2">🟥 Booked</span>
+                            <span class="badge bg-warning me-3 p-2">🟨 Held by Others</span>
+                            <span class="badge bg-info p-2">🟦 Your Selection</span>
                         </div>
+                        <!-- Seat Grid -->
                         <div class="seat-grid" id="seatGrid"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Booking Summary Section -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Booking Summary</h6>
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-clipboard-list"></i> Booking Summary
+                        </h6>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
+                        <!-- Trip Info -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-2">Trip Details</h6>
+                            <p class="mb-1"><small><strong>Route:</strong> <span id="tripRoute">-</span></small></p>
+                            <p class="mb-1"><small><strong>Date:</strong> <span id="tripDate">-</span></small></p>
+                            <p class="mb-0"><small><strong>Time:</strong> <span id="tripTime">-</span></small></p>
+                        </div>
+
                         <!-- Selected Seats -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Selected Seats <span id="seatCount">(0)</span></label>
-                            <div class="alert alert-info" id="selectedSeatsList" style="min-height: 80px;">
-                                No seats selected
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-list"></i> Selected Seats 
+                                <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
+                            </label>
+                            <div class="alert alert-info border-2" id="selectedSeatsList" style="min-height: 100px; font-size: 0.95rem;">
+                                <p class="text-muted mb-0">No seats selected yet</p>
                             </div>
                         </div>
 
                         <!-- Fare Calculation -->
-                        <div class="mb-3">
-                            <div class="mb-2">
-                                <label class="form-label">Total Fare</label>
-                                <input type="number" class="form-control" id="totalFare" 
-                                    min="0" step="0.01" onchange="calculateFinal()">
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-calculator"></i> Fare Calculation</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Total Fare (PKR)</label>
+                                <input type="number" class="form-control form-control-lg" id="totalFare" 
+                                    min="0" step="0.01" placeholder="0.00" onchange="calculateFinal()">
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Discount</label>
-                                <input type="number" class="form-control" id="discount" 
-                                    min="0" step="0.01" value="0" onchange="calculateFinal()">
+                            <div class="mb-3">
+                                <label class="form-label">Discount (PKR)</label>
+                                <input type="number" class="form-control form-control-lg" id="discount" 
+                                    min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Tax</label>
-                                <input type="number" class="form-control" id="tax" 
-                                    min="0" step="0.01" value="0" onchange="calculateFinal()">
+                            <div class="mb-3">
+                                <label class="form-label">Tax/Service Charge (PKR)</label>
+                                <input type="number" class="form-control form-control-lg" id="tax" 
+                                    min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
                             </div>
-                            <div class="alert alert-primary mb-2">
-                                <strong>Final Amount: PKR <span id="finalAmount">0.00</span></strong>
+                            <div class="alert alert-primary border-3 mb-0 py-3">
+                                <h5 class="mb-0">
+                                    <strong>Final Amount: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
+                                </h5>
                             </div>
                         </div>
 
                         <!-- Booking Type -->
-                        <div class="mb-3">
-                            <label class="form-label">Booking Type</label>
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-bookmark"></i> Booking Type</h6>
                             <div>
-                                <div class="form-check">
+                                <div class="form-check form-check-lg">
                                     <input class="form-check-input" type="radio" name="bookingType" 
                                         id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
-                                    <label class="form-check-label" for="counterBooking">Counter Booking</label>
+                                    <label class="form-check-label fw-bold" for="counterBooking">
+                                        🏪 Counter Booking (Immediate Confirmation)
+                                    </label>
                                 </div>
-                                <div class="form-check">
+                                <div class="form-check form-check-lg">
                                     <input class="form-check-input" type="radio" name="bookingType" 
                                         id="phoneBooking" value="phone" onchange="togglePaymentFields()">
-                                    <label class="form-check-label" for="phoneBooking">Phone Booking (Hold)</label>
+                                    <label class="form-check-label fw-bold" for="phoneBooking">
+                                        📞 Phone Booking (Hold for 15 mins)
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Payment Fields (Counter Only) -->
-                        <div id="paymentFields">
+                        <div id="paymentFields" class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-credit-card"></i> Payment Details</h6>
                             <div class="mb-3">
-                                <label class="form-label">Payment Method</label>
+                                <label class="form-label fw-bold">Payment Method</label>
                                 <div>
-                                    <div class="form-check">
+                                    <div class="form-check form-check-lg">
                                         <input class="form-check-input" type="radio" name="paymentMethod" 
                                             id="cashPayment" value="cash" checked>
-                                        <label class="form-check-label" for="cashPayment">Cash</label>
+                                        <label class="form-check-label fw-bold" for="cashPayment">💵 Cash</label>
                                     </div>
-                                    <div class="form-check">
+                                    <div class="form-check form-check-lg">
                                         <input class="form-check-input" type="radio" name="paymentMethod" 
                                             id="cardPayment" value="card">
-                                        <label class="form-check-label" for="cardPayment">Card</label>
+                                        <label class="form-check-label fw-bold" for="cardPayment">💳 Card</label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Amount Received</label>
-                                <input type="number" class="form-control" id="amountReceived" 
-                                    min="0" step="0.01" onchange="calculateReturn()">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Amount Received (PKR)</label>
+                                <input type="number" class="form-control form-control-lg" id="amountReceived" 
+                                    min="0" step="0.01" placeholder="0.00" onchange="calculateReturn()">
                             </div>
                             <div id="returnDiv" style="display: none;">
-                                <div class="alert alert-success mb-3">
-                                    <strong>Return: PKR <span id="returnAmount">0.00</span></strong>
+                                <div class="alert alert-success border-3 mb-0 py-3">
+                                    <h5 class="mb-0">
+                                        <strong>💰 Return: PKR <span id="returnAmount">0.00</span></strong>
+                                    </h5>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Notes -->
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="notes" rows="2" maxlength="500"></textarea>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" rows="3" maxlength="500" 
+                                placeholder="Add any special notes..."></textarea>
+                            <small class="form-text text-muted">Max 500 characters</small>
                         </div>
 
                         <!-- Confirm Button -->
-                        <button class="btn btn-success w-100" onclick="confirmBooking()" id="confirmBtn">
-                            Confirm Booking
+                        <button class="btn btn-success btn-lg w-100 fw-bold py-3" onclick="confirmBooking()" id="confirmBtn">
+                            <i class="fas fa-check-circle"></i> Confirm Booking
                         </button>
                     </div>
                 </div>
@@ -181,22 +210,24 @@
     </div>
 </div>
 
-<!-- Gender Modal -->
+<!-- Gender Selection Modal -->
 <div class="modal fade" id="genderModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Select Gender - <span id="seatLabel">Seat</span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-user"></i> Select Gender - <span id="seatLabel">Seat</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>Please select passenger gender:</p>
+            <div class="modal-body py-4">
+                <p class="text-center mb-0">Please select passenger gender:</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="selectGender('male')">
+            <div class="modal-footer gap-2">
+                <button type="button" class="btn btn-outline-primary btn-lg flex-grow-1 fw-bold" onclick="selectGender('male')">
                     👨 Male
                 </button>
-                <button type="button" class="btn btn-outline-secondary" onclick="selectGender('female')">
+                <button type="button" class="btn btn-outline-danger btn-lg flex-grow-1 fw-bold" onclick="selectGender('female')">
                     👩 Female
                 </button>
             </div>
@@ -204,31 +235,41 @@
     </div>
 </div>
 
-<!-- Success Modal -->
+<!-- Booking Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content shadow-lg">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">✓ Booking Confirmed</h5>
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-check-circle"></i> Booking Confirmed Successfully!
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <p><strong>Booking Number:</strong> <span id="bookingNumber"></span></p>
-                    <p><strong>Seats:</strong> <span id="bookedSeats"></span></p>
-                    <p><strong>Status:</strong> <span id="bookingStatus"></span></p>
+            <div class="modal-body py-4">
+                <div class="mb-4 p-3 bg-light rounded text-center">
+                    <h6 class="text-muted mb-2">Booking Number</h6>
+                    <h3 class="fw-bold text-primary" id="bookingNumber">-</h3>
                 </div>
-                <div class="alert alert-info">
-                    <p class="mb-1"><strong>Total Fare:</strong> PKR <span id="confirmedFare"></span></p>
-                    <p class="mb-1"><strong>Discount:</strong> PKR <span id="confirmedDiscount"></span></p>
-                    <p class="mb-1"><strong>Tax:</strong> PKR <span id="confirmedTax"></span></p>
-                    <p class="mb-0"><strong>Final Amount:</strong> PKR <span id="confirmedFinal"></span></p>
+                
+                <div class="mb-4">
+                    <p class="mb-2"><strong>Seats:</strong> <span id="bookedSeats" class="badge bg-info ms-2"></span></p>
+                    <p class="mb-0"><strong>Status:</strong> <span id="bookingStatus" class="badge bg-success ms-2"></span></p>
                 </div>
-                <p><strong>Payment Method:</strong> <span id="paymentMethodDisplay"></span></p>
+
+                <div class="alert alert-light border-2 mb-4">
+                    <h6 class="fw-bold mb-3">Fare Breakdown</h6>
+                    <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR <span id="confirmedFare">0.00</span></span></p>
+                    <p class="mb-2"><strong>Discount:</strong> <span class="float-end">-PKR <span id="confirmedDiscount">0.00</span></span></p>
+                    <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR <span id="confirmedTax">0.00</span></span></p>
+                    <hr>
+                    <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR <span id="confirmedFinal">0.00</span></span></p>
+                </div>
+
+                <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2" id="paymentMethodDisplay">-</span></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="resetForm()">
-                    Done
+                <button type="button" class="btn btn-success btn-lg fw-bold w-100" data-bs-dismiss="modal" onclick="resetForm()">
+                    <i class="fas fa-check"></i> Done
                 </button>
             </div>
         </div>
@@ -239,11 +280,15 @@
 
 @section('scripts')
 <script>
-    // State variables
+    // ========================================
+    // STATE MANAGEMENT
+    // ========================================
     let appState = {
+        isAdmin: {{ auth()->user()->hasRole('admin') ? 'true' : 'false' }},
+        userTerminalId: {{ auth()->user()->terminal_id ?? 'null' }},
         terminals: [],
-        routes: [],
-        stops: [],
+        routeStops: [],
+        timetableStops: [],
         tripData: null,
         seatMap: {},
         selectedSeats: {},
@@ -251,116 +296,160 @@
         tripLoaded: false,
     };
 
-    // Initialize
+    // ========================================
+    // INITIALIZATION
+    // ========================================
     document.addEventListener('DOMContentLoaded', function() {
         fetchTerminals();
         setupWebSocket();
     });
 
-    // Fetch terminals
+    // ========================================
+    // FETCH TERMINALS
+    // ========================================
     function fetchTerminals() {
         $.ajax({
             url: '/admin/bookings/console/terminals',
             type: 'GET',
             success: function(response) {
                 appState.terminals = response.terminals;
-                const select = document.getElementById('terminal');
-                select.innerHTML = '<option value="">Select Terminal</option>';
+                const fromSelect = document.getElementById('fromTerminal');
+                
+                fromSelect.innerHTML = '<option value="">Select Terminal</option>';
                 response.terminals.forEach(t => {
-                    select.innerHTML += `<option value="${t.id}">${t.name} (${t.code})</option>`;
+                    fromSelect.innerHTML += `<option value="${t.id}">${t.name} (${t.code})</option>`;
                 });
-                select.disabled = false;
+                
+                // Employee: Set their terminal and disable
+                if (!appState.isAdmin && appState.userTerminalId) {
+                    fromSelect.value = appState.userTerminalId;
+                    fromSelect.disabled = true;
+                    onFromTerminalChange();
+                } else {
+                    fromSelect.disabled = false;
+                }
             },
-            error: function(error) {
-                console.error('Failed to fetch terminals', error);
+            error: function() {
                 alert('Failed to load terminals');
             }
         });
     }
 
-    // Terminal change
-    document.getElementById('terminal')?.addEventListener('change', function() {
-        const terminalId = this.value;
-        document.getElementById('route').value = '';
-        document.getElementById('fromStop').value = '';
-        document.getElementById('toStop').value = '';
-        document.getElementById('route').disabled = true;
-        
-        if (terminalId) {
-            fetchRoutes(terminalId);
-        }
-    });
+    // ========================================
+    // ON FROM TERMINAL CHANGE
+    // ========================================
+    document.getElementById('fromTerminal')?.addEventListener('change', onFromTerminalChange);
 
-    // Fetch routes
-    function fetchRoutes(terminalId) {
-        $.ajax({
-            url: '/admin/bookings/console/routes',
-            type: 'GET',
-            data: { terminal_id: terminalId },
-            success: function(response) {
-                appState.routes = response.routes;
-                const select = document.getElementById('route');
-                select.innerHTML = '<option value="">Select Route</option>';
-                response.routes.forEach(r => {
-                    select.innerHTML += `<option value="${r.id}">${r.name} (${r.code})</option>`;
-                });
-                select.disabled = false;
-            },
-            error: function(error) {
-                console.error('Failed to fetch routes', error);
-            }
-        });
+    function onFromTerminalChange() {
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        document.getElementById('toTerminal').value = '';
+        document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+        document.getElementById('toTerminal').disabled = true;
+        document.getElementById('departureTime').disabled = true;
+        
+        if (fromTerminalId) {
+            fetchToTerminals(fromTerminalId);
+        }
     }
 
-    // Route change
-    document.getElementById('route')?.addEventListener('change', function() {
-        const routeId = this.value;
-        document.getElementById('fromStop').value = '';
-        document.getElementById('toStop').value = '';
-        document.getElementById('fromStop').disabled = true;
-        document.getElementById('toStop').disabled = true;
-        
-        if (routeId) {
-            fetchStops(routeId);
-        }
-    });
-
-    // Fetch stops
-    function fetchStops(routeId) {
+    // ========================================
+    // FETCH TO TERMINALS (Route Stops)
+    // ========================================
+    function fetchToTerminals(fromTerminalId) {
         $.ajax({
-            url: '/admin/bookings/console/stops',
+            url: '/admin/bookings/console/route-stops',
             type: 'GET',
-            data: { route_id: routeId },
+            data: { from_terminal_id: fromTerminalId },
             success: function(response) {
-                appState.stops = response.stops;
-                const fromSelect = document.getElementById('fromStop');
-                const toSelect = document.getElementById('toStop');
+                appState.routeStops = response.route_stops;
+                const toSelect = document.getElementById('toTerminal');
                 
-                fromSelect.innerHTML = '<option value="">Select From</option>';
-                toSelect.innerHTML = '<option value="">Select To</option>';
-                
-                response.stops.forEach(s => {
-                    fromSelect.innerHTML += `<option value="${s.id}">${s.terminal.name}</option>`;
-                    toSelect.innerHTML += `<option value="${s.id}">${s.terminal.name}</option>`;
+                toSelect.innerHTML = '<option value="">Select Destination</option>';
+                response.route_stops.forEach(stop => {
+                    toSelect.innerHTML += `<option value="${stop.id}">${stop.terminal.name}</option>`;
                 });
                 
-                fromSelect.disabled = false;
                 toSelect.disabled = false;
             },
-            error: function(error) {
-                console.error('Failed to fetch stops', error);
+            error: function() {
+                alert('Failed to load destination terminals');
             }
         });
     }
 
-    // Load Trip
-    function loadTrip() {
-        const route = document.getElementById('route').value;
-        const date = document.getElementById('date').value;
-        const fromStop = document.getElementById('fromStop').value;
-        const toStop = document.getElementById('toStop').value;
+    // ========================================
+    // ON TO TERMINAL CHANGE
+    // ========================================
+    document.getElementById('toTerminal')?.addEventListener('change', onToTerminalChange);
 
-        if (!route || !date || !fromStop || !toStop) {
+    function onToTerminalChange() {
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        const toTerminalId = document.getElementById('toTerminal').value;
+        const date = document.getElementById('travelDate').value;
+        
+        document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+        document.getElementById('departureTime').disabled = true;
+        
+        if (fromTerminalId && toTerminalId && date) {
+            fetchDepartureTimes(fromTerminalId, toTerminalId, date);
+        }
+    }
+
+    // ========================================
+    // FETCH DEPARTURE TIMES (Timetable Stops)
+    // ========================================
+    function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
+        $.ajax({
+            url: '/admin/bookings/console/departure-times',
+            type: 'GET',
+            data: {
+                from_terminal_id: fromTerminalId,
+                to_terminal_id: toTerminalId,
+                date: date
+            },
+            success: function(response) {
+                appState.timetableStops = response.timetable_stops;
+                const timeSelect = document.getElementById('departureTime');
+                
+                timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
+                response.timetable_stops.forEach(stop => {
+                    const time = new Date(stop.departure_at).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    timeSelect.innerHTML += `<option value="${stop.id}">${time}</option>`;
+                });
+                
+                timeSelect.disabled = false;
+            },
+            error: function() {
+                alert('No trips available for this route and date');
+            }
+        });
+    }
+
+    // ========================================
+    // ON TRAVEL DATE CHANGE
+    // ========================================
+    document.getElementById('travelDate')?.addEventListener('change', function() {
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        const toTerminalId = document.getElementById('toTerminal').value;
+        
+        if (fromTerminalId && toTerminalId) {
+            fetchDepartureTimes(fromTerminalId, toTerminalId, this.value);
+        }
+    });
+
+    // ========================================
+    // LOAD TRIP
+    // ========================================
+    function loadTrip() {
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        const toTerminalId = document.getElementById('toTerminal').value;
+        const departureTimeId = document.getElementById('departureTime').value;
+        const date = document.getElementById('travelDate').value;
+
+        if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
             alert('Please fill all fields');
             return;
         }
@@ -371,21 +460,27 @@
             url: '/admin/bookings/console/load-trip',
             type: 'POST',
             data: {
-                route_id: route,
+                from_terminal_id: fromTerminalId,
+                to_terminal_id: toTerminalId,
+                timetable_stop_id: departureTimeId,
                 date: date,
-                from_stop_id: fromStop,
-                to_stop_id: toStop,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             },
             success: function(response) {
                 appState.tripData = response;
                 appState.seatMap = response.seat_map;
                 appState.tripLoaded = true;
+                
+                // Update trip info display
+                document.getElementById('tripRoute').textContent = response.route.name;
+                document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime).toLocaleDateString();
+                document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime).toLocaleTimeString();
+                
                 renderSeatMap();
                 document.getElementById('tripContent').style.display = 'block';
+                document.getElementById('tripContent').scrollIntoView({ behavior: 'smooth' });
             },
             error: function(error) {
-                console.error('Failed to load trip', error);
                 const message = error.responseJSON?.error || 'Failed to load trip';
                 alert(message);
             },
@@ -395,7 +490,9 @@
         });
     }
 
-    // Render seat map
+    // ========================================
+    // RENDER SEAT MAP
+    // ========================================
     function renderSeatMap() {
         const grid = document.getElementById('seatGrid');
         grid.innerHTML = '';
@@ -417,13 +514,13 @@
 
                 // Set color
                 if (appState.selectedSeats[seatNumber]) {
-                    button.className += ' bg-info';
+                    button.className += ' bg-info text-white';
                 } else if (seat.status === 'booked') {
-                    button.className += ' bg-danger';
+                    button.className += ' bg-danger text-white';
                 } else if (seat.status === 'held') {
-                    button.className += ' bg-warning';
+                    button.className += ' bg-warning text-dark';
                 } else {
-                    button.className += ' bg-success';
+                    button.className += ' bg-success text-white';
                 }
 
                 // Disable if not available
@@ -439,7 +536,9 @@
         }
     }
 
-    // Handle seat click
+    // ========================================
+    // HANDLE SEAT CLICK
+    // ========================================
     function handleSeatClick(seatNumber) {
         if (appState.selectedSeats[seatNumber]) {
             delete appState.selectedSeats[seatNumber];
@@ -450,7 +549,9 @@
         }
     }
 
-    // Select gender
+    // ========================================
+    // SELECT GENDER
+    // ========================================
     function selectGender(gender) {
         if (appState.pendingSeat) {
             appState.selectedSeats[appState.pendingSeat] = gender;
@@ -461,26 +562,30 @@
         renderSeatMap();
     }
 
-    // Update seats list
+    // ========================================
+    // UPDATE SEATS LIST
+    // ========================================
     function updateSeatsList() {
         const list = document.getElementById('selectedSeatsList');
         const count = Object.keys(appState.selectedSeats).length;
         document.getElementById('seatCount').textContent = `(${count})`;
 
         if (count === 0) {
-            list.innerHTML = 'No seats selected';
+            list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
             return;
         }
 
         let html = '';
         Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
             const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
-            html += `<div>Seat ${seat} - ${gender}</div>`;
+            html += `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
         });
         list.innerHTML = html;
     }
 
-    // Calculate final amount
+    // ========================================
+    // CALCULATE FINAL AMOUNT
+    // ========================================
     function calculateFinal() {
         const fare = parseFloat(document.getElementById('totalFare').value) || 0;
         const discount = parseFloat(document.getElementById('discount').value) || 0;
@@ -490,7 +595,9 @@
         calculateReturn();
     }
 
-    // Calculate return
+    // ========================================
+    // CALCULATE RETURN
+    // ========================================
     function calculateReturn() {
         const final = parseFloat(document.getElementById('finalAmount').textContent);
         const received = parseFloat(document.getElementById('amountReceived').value) || 0;
@@ -504,13 +611,17 @@
         }
     }
 
-    // Toggle payment fields
+    // ========================================
+    // TOGGLE PAYMENT FIELDS
+    // ========================================
     function togglePaymentFields() {
         const isCounter = document.getElementById('counterBooking').checked;
         document.getElementById('paymentFields').style.display = isCounter ? 'block' : 'none';
     }
 
-    // Confirm booking
+    // ========================================
+    // CONFIRM BOOKING
+    // ========================================
     function confirmBooking() {
         const selectedSeats = Object.keys(appState.selectedSeats);
         
@@ -550,8 +661,8 @@
             type: 'POST',
             data: {
                 trip_id: appState.tripData.trip.id,
-                from_stop_id: appState.tripData.from_stop.id,
-                to_stop_id: appState.tripData.to_stop.id,
+                from_terminal_id: document.getElementById('fromTerminal').value,
+                to_terminal_id: document.getElementById('toTerminal').value,
                 seat_numbers: selectedSeats.map(Number),
                 passengers: JSON.stringify(passengers),
                 channel: isCounter ? 'counter' : 'phone',
@@ -562,7 +673,6 @@
                 tax_amount: parseFloat(document.getElementById('tax').value) || 0,
                 final_amount: final,
                 notes: document.getElementById('notes').value,
-                terminal_id: document.getElementById('terminal').value,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             },
             success: function(response) {
@@ -574,12 +684,11 @@
                 document.getElementById('confirmedDiscount').textContent = parseFloat(booking.discount_amount).toFixed(2);
                 document.getElementById('confirmedTax').textContent = parseFloat(booking.tax_amount).toFixed(2);
                 document.getElementById('confirmedFinal').textContent = parseFloat(booking.final_amount).toFixed(2);
-                document.getElementById('paymentMethodDisplay').textContent = booking.payment_method;
+                document.getElementById('paymentMethodDisplay').textContent = booking.payment_method || 'N/A';
 
                 new bootstrap.Modal(document.getElementById('successModal')).show();
             },
             error: function(error) {
-                console.error('Failed to create booking', error);
                 const message = error.responseJSON?.error || 'Failed to create booking';
                 alert(message);
             },
@@ -589,7 +698,9 @@
         });
     }
 
-    // Reset form
+    // ========================================
+    // RESET FORM
+    // ========================================
     function resetForm() {
         appState.selectedSeats = {};
         appState.tripLoaded = false;
@@ -600,10 +711,13 @@
         document.getElementById('amountReceived').value = '';
         document.getElementById('notes').value = '';
         document.getElementById('finalAmount').textContent = '0.00';
+        document.getElementById('departureTime').value = '';
         updateSeatsList();
     }
 
-    // Setup WebSocket
+    // ========================================
+    // SETUP WEBSOCKET
+    // ========================================
     function setupWebSocket() {
         if (!window.Echo) return;
 

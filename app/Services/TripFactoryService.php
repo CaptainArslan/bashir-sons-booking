@@ -11,7 +11,7 @@ class TripFactoryService
 {
     public function createFromTimetable(int $timetableId, string $date, array $attrs = []): Trip
     {
-        $tt = Timetable::with(['route', 'stops' => fn($q) => $q->orderBy('sequence')])->findOrFail($timetableId);
+        $tt = Timetable::with(['route', 'timetableStops' => fn($q) => $q->orderBy('sequence')])->findOrFail($timetableId);
 
         $trip = Trip::create([
             'timetable_id' => $tt->id,
@@ -28,7 +28,7 @@ class TripFactoryService
         ]);
 
         $rows = [];
-        foreach ($tt->stops as $i => $s) {
+        foreach ($tt->timetableStops as $i => $s) {
             $arr = Carbon::parse("{$date} {$s->arrival_time}");
             $dep = Carbon::parse("{$date} {$s->departure_time}");
             $rows[] = [
@@ -39,7 +39,7 @@ class TripFactoryService
                 'departure_at' => $dep,
                 'is_active' => (bool)$s->is_active,
                 'is_origin' => $i === 0,
-                'is_destination' => $i === (count($tt->stops) - 1),
+                'is_destination' => $i === (count($tt->timetableStops) - 1),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
