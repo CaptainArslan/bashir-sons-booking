@@ -203,7 +203,7 @@
                                 <small class="form-text text-muted">Required for non-cash payments</small>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="mb-3" id="amountReceivedField">
                                 <label class="form-label fw-bold">Amount Received (PKR)</label>
                                 <input type="number" class="form-control form-control-lg" id="amountReceived" 
                                     min="0" step="0.01" placeholder="0.00" value="0" onchange="calculateReturn()">
@@ -227,12 +227,14 @@
 
                         <!-- Passenger Information Section -->
                         <div class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold mb-3"><i class="fas fa-users"></i> Passenger Information</h6>
-                            <p class="text-muted small mb-3">Add detailed information for each passenger</p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0"><i class="fas fa-users"></i> Passenger Information</h6>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="addPassengerBtn" onclick="addExtraPassenger()" style="display: none;">
+                                    <i class="fas fa-plus-circle"></i> Add Extra Passenger
+                                </button>
+                            </div>
+                            <p class="text-muted small mb-3"><strong>Required:</strong> One passenger per selected seat. <strong>Optional:</strong> Add extra passengers using the button.</p>
                             <div id="passengerInfoContainer"></div>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addPassengerBtn" onclick="addPassengerForm()" style="display: none;">
-                                <i class="fas fa-plus-circle"></i> Add Passenger
-                            </button>
                         </div>
 
                         <!-- Confirm Button -->
@@ -698,13 +700,15 @@
         if (selectedSeats.length === 0) {
             container.innerHTML = '';
             document.getElementById('addPassengerBtn').style.display = 'none';
+            appState.passengerInfo = {};
             return;
         }
 
-        // Initialize passengerInfo for new seats
+        // Initialize passengerInfo for new seats (mandatory)
         selectedSeats.forEach(seat => {
             if (!appState.passengerInfo[seat]) {
                 appState.passengerInfo[seat] = {
+                    type: 'mandatory',
                     seat_number: parseInt(seat),
                     name: '',
                     age: '',
@@ -717,14 +721,16 @@
         });
 
         // Remove passengerInfo for deselected seats
-        Object.keys(appState.passengerInfo).forEach(seat => {
-            if (!selectedSeats.includes(seat)) {
-                delete appState.passengerInfo[seat];
+        Object.keys(appState.passengerInfo).forEach(key => {
+            if (appState.passengerInfo[key].type === 'mandatory' && !selectedSeats.includes(key)) {
+                delete appState.passengerInfo[key];
             }
         });
 
-        // Generate forms
+        // Generate forms - Mandatory passengers first
         let html = '';
+        
+        // Render mandatory passengers
         selectedSeats.forEach(seat => {
             const info = appState.passengerInfo[seat];
             const icon = info.gender === 'male' ? '👨' : '👩';
@@ -732,12 +738,12 @@
             html += `
                 <div class="card mb-3 border-2" style="border-color: #e9ecef;">
                     <div class="card-header" style="background-color: #f8f9fa;">
-                        <h6 class="mb-0">
-                            <span>${icon} Seat ${seat}</span>
-                            <button type="button" class="btn btn-sm btn-outline-danger float-end" onclick="removePassenger(${seat})">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <span>${icon} Seat ${seat}</span>
+                            </h6>
+                            <span class="badge bg-secondary">Required</span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -753,14 +759,14 @@
                                 <input type="number" class="form-control form-control-sm" 
                                     value="${info.age}" 
                                     onchange="updatePassengerField(${seat}, 'age', this.value)"
-                                    placeholder="Age" min="1" max="120">
+                                    placeholder="Age" min="1" max="120" required>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold">CNIC</label>
                                 <input type="text" class="form-control form-control-sm" 
                                     value="${info.cnic}" 
                                     onchange="updatePassengerField(${seat}, 'cnic', this.value)"
-                                    placeholder="CNIC / ID Number" maxlength="20">
+                                    placeholder="CNIC / ID Number" maxlength="20" required>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold">Phone</label>
@@ -782,6 +788,77 @@
             `;
         });
 
+        // Render extra passengers (optional, with remove button)
+        const extraPassengers = Object.keys(appState.passengerInfo).filter(
+            key => appState.passengerInfo[key].type === 'extra'
+        );
+
+        extraPassengers.forEach((passengerId, index) => {
+            const info = appState.passengerInfo[passengerId];
+            
+            html += `
+                <div class="card mb-3 border-2 border-warning" style="border-color: #ffc107;">
+                    <div class="card-header" style="background-color: #fff3cd;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-plus"></i> Extra Passenger ${index + 1}
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Name *</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                    value="${info.name}" 
+                                    onchange="updatePassengerField('${passengerId}', 'name', this.value)"
+                                    placeholder="Full Name" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Gender *</label>
+                                <select class="form-control form-control-sm" onchange="updatePassengerField('${passengerId}', 'gender', this.value)">
+                                    <option value="">Select Gender</option>
+                                    <option value="male" ${info.gender === 'male' ? 'selected' : ''}>👨 Male</option>
+                                    <option value="female" ${info.gender === 'female' ? 'selected' : ''}>👩 Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Age</label>
+                                <input type="number" class="form-control form-control-sm" 
+                                    value="${info.age}" 
+                                    onchange="updatePassengerField('${passengerId}', 'age', this.value)"
+                                    placeholder="Age" min="1" max="120">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">CNIC</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                    value="${info.cnic}" 
+                                    onchange="updatePassengerField('${passengerId}', 'cnic', this.value)"
+                                    placeholder="CNIC / ID Number" maxlength="20">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Phone</label>
+                                <input type="tel" class="form-control form-control-sm" 
+                                    value="${info.phone}" 
+                                    onchange="updatePassengerField('${passengerId}', 'phone', this.value)"
+                                    placeholder="Phone Number" maxlength="20">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Email</label>
+                                <input type="email" class="form-control form-control-sm" 
+                                    value="${info.email}" 
+                                    onchange="updatePassengerField('${passengerId}', 'email', this.value)"
+                                    placeholder="Email Address" maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
         container.innerHTML = html;
         document.getElementById('addPassengerBtn').style.display = selectedSeats.length > 0 ? 'inline-block' : 'none';
     }
@@ -789,28 +866,25 @@
     // ========================================
     // UPDATE PASSENGER FIELD
     // ========================================
-    function updatePassengerField(seat, field, value) {
-        if (appState.passengerInfo[seat]) {
-            appState.passengerInfo[seat][field] = value;
+    function updatePassengerField(key, field, value) {
+        if (appState.passengerInfo[key]) {
+            appState.passengerInfo[key][field] = value;
         }
     }
 
     // ========================================
-    // REMOVE PASSENGER
+    // REMOVE EXTRA PASSENGER
     // ========================================
-    function removePassenger(seat) {
-        if (appState.passengerInfo[seat]) {
-            delete appState.passengerInfo[seat];
-            updatePassengerForms();
-        }
+    function removeExtraPassenger(passengerId) {
+        delete appState.passengerInfo[passengerId];
+        updatePassengerForms();
     }
 
     // ========================================
-    // ADD PASSENGER FORM
+    // ADD PASSENGER FORM (Legacy - now calls addExtraPassenger)
     // ========================================
     function addPassengerForm() {
-        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
-        alert(`You have ${selectedSeats.length} seats selected. Please fill passenger information for each seat.`);
+        addExtraPassenger();
     }
 
     // ========================================
@@ -819,10 +893,28 @@
     function validatePassengerInfo() {
         const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
         
+        // Validate mandatory passengers
         for (let seat of selectedSeats) {
             const info = appState.passengerInfo[seat];
             if (!info || !info.name || info.name.trim() === '') {
                 alert(`Please enter passenger name for Seat ${seat}`);
+                return false;
+            }
+        }
+
+        // Validate extra passengers if any
+        const extraPassengers = Object.keys(appState.passengerInfo).filter(
+            key => appState.passengerInfo[key].type === 'extra'
+        );
+
+        for (let passengerId of extraPassengers) {
+            const info = appState.passengerInfo[passengerId];
+            if (!info.name || info.name.trim() === '') {
+                alert(`Extra Passenger: Please enter name`);
+                return false;
+            }
+            if (!info.gender || info.gender === '') {
+                alert(`Extra Passenger: Please select gender`);
                 return false;
             }
         }
@@ -876,16 +968,30 @@
         const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
         const transactionIdField = document.getElementById('transactionIdField');
         const transactionIdInput = document.getElementById('transactionId');
+        const amountReceivedField = document.getElementById('amountReceivedField');
+        const amountReceivedInput = document.getElementById('amountReceived');
         
-        if (transactionIdField) {
-            // Show field only if payment method is NOT cash
-            if (paymentMethod !== 'cash') {
-                transactionIdField.style.display = 'block';
-                transactionIdInput.required = true;
-            } else {
+        if (paymentMethod === 'cash') {
+            // Cash payment: show Amount Received, hide Transaction ID
+            if (transactionIdField) {
                 transactionIdField.style.display = 'none';
                 transactionIdInput.required = false;
-                transactionIdInput.value = ''; // Clear if hiding
+                transactionIdInput.value = '';
+            }
+            if (amountReceivedField) {
+                amountReceivedField.style.display = 'block';
+                amountReceivedInput.required = true;
+            }
+        } else {
+            // Non-cash payment: show Transaction ID, hide Amount Received
+            if (transactionIdField) {
+                transactionIdField.style.display = 'block';
+                transactionIdInput.required = true;
+            }
+            if (amountReceivedField) {
+                amountReceivedField.style.display = 'none';
+                amountReceivedInput.required = false;
+                amountReceivedInput.value = '0';
             }
         }
     }
@@ -929,8 +1035,11 @@
         const isCounter = document.getElementById('counterBooking').checked;
         const final = parseFloat(document.getElementById('finalAmount').textContent);
         const received = parseFloat(document.getElementById('amountReceived').value) || 0;
+        const paymentMethod = isCounter 
+            ? document.querySelector('input[name="paymentMethod"]:checked').value 
+            : 'cash';
 
-        if (isCounter && received < final) {
+        if (isCounter && paymentMethod === 'cash' && received < final) {
             alert('Insufficient amount received from customer');
             return;
         }
@@ -949,17 +1058,28 @@
             };
         });
 
-        const paymentMethod = isCounter 
-            ? document.querySelector('input[name="paymentMethod"]:checked').value 
-            : 'cash';
+        // Add extra passengers to the array
+        const extraPassengers = Object.keys(appState.passengerInfo).filter(
+            key => appState.passengerInfo[key].type === 'extra'
+        );
+
+        extraPassengers.forEach(passengerId => {
+            const info = appState.passengerInfo[passengerId];
+            passengers.push({
+                passenger_id: info.passenger_id,
+                seat_number: null, // Extra passengers not tied to seats
+                name: info.name,
+                age: info.age || null,
+                gender: info.gender,
+                cnic: info.cnic || null,
+                phone: info.phone || null,
+                email: info.email || null
+            });
+        });
 
         const totalFare = parseFloat(document.getElementById('totalFare').value);
         const tax = parseFloat(document.getElementById('tax').value) || 0;
         const farePerSeat = selectedSeats.length > 0 ? totalFare / selectedSeats.length : 0;
-
-        const transactionId = isCounter 
-            ? document.getElementById('transactionId').value 
-            : null;
 
         document.getElementById('confirmBtn').disabled = true;
 
@@ -974,14 +1094,14 @@
                 passengers: JSON.stringify(passengers),
                 channel: isCounter ? 'counter' : 'phone',
                 payment_method: paymentMethod,
-                amount_received: isCounter ? received : null,
+                amount_received: paymentMethod === 'cash' && isCounter ? received : null,
                 fare_per_seat: farePerSeat,
                 total_fare: totalFare,
                 discount_amount: 0,
                 tax_amount: tax,
                 final_amount: final,
                 notes: document.getElementById('notes').value,
-                transaction_id: transactionId,
+                transaction_id: paymentMethod !== 'cash' && isCounter ? document.getElementById('transactionId').value : null,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             },
             success: function(response) {
