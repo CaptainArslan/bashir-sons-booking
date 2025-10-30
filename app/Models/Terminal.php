@@ -51,6 +51,11 @@ class Terminal extends Model
         return $this->hasMany(TimetableStop::class);
     }
 
+    public function tripStops(): HasMany
+    {
+        return $this->hasMany(TripStop::class);
+    }
+
     public function routes()
     {
         return $this->belongsToMany(Route::class, 'route_stops')
@@ -58,7 +63,9 @@ class Terminal extends Model
             ->orderBy('pivot_sequence');
     }
 
+    // =============================
     // Accessors & Mutators
+    // =============================
     protected function name(): Attribute
     {
         return Attribute::make(

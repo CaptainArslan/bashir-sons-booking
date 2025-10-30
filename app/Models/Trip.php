@@ -59,4 +59,9 @@ class Trip extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function tripStops(): HasMany
+    {
+        return $this->hasMany(TripStop::class)->orderBy('sequence');
+    }
 }
