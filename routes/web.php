@@ -236,6 +236,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTripUpdated'])->can('view bookings')->name('bookings.load-trip');
         Route::post('/bookings/console/lock-seats', [BookingController::class, 'lockSeats'])->can('create bookings')->name('bookings.lock-seats');
         Route::post('/bookings/console/unlock-seats', [BookingController::class, 'unlockSeats'])->can('create bookings')->name('bookings.unlock-seats');
+        Route::get('/bookings/console/trip-passengers/{tripId}', [BookingController::class, 'getTripPassengers'])->can('view bookings')->name('bookings.trip-passengers');
+        Route::get('/bookings/console/booking-details/{bookingId}', [BookingController::class, 'getBookingDetailsForConsole'])->can('view bookings')->name('bookings.console-details');
+        Route::get('/bookings/console/list-buses', [BookingController::class, 'listBuses'])->can('view bookings')->name('bookings.list-buses');
+        Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');

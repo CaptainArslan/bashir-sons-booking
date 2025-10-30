@@ -63,9 +63,10 @@
     <!-- Trip Content (shown when trip loaded) -->
     <div id="tripContent" style="display: none;">
         <div class="row g-4">
-            <!-- Seat Map Section -->
+            <!-- Left Column: Seat Map & Booking Form (8 columns) -->
             <div class="col-lg-8">
-                <div class="card shadow-sm h-100">
+                <!-- Seat Map Section -->
+                <div class="card shadow-sm mb-4">
                     <div class="card-header bg-success text-white">
                         <h6 class="mb-0">
                             <i class="fas fa-chair"></i> Seat Map (44 Seats - 4x11 Layout)
@@ -83,10 +84,8 @@
                         <div class="seat-grid" id="seatGrid"></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Booking Summary Section -->
-            <div class="col-lg-4">
+                <!-- Booking Form Section -->
                 <div class="card shadow-sm">
                     <div class="card-header bg-info text-white">
                         <h6 class="mb-0">
@@ -94,12 +93,29 @@
                         </h6>
                     </div>
                     <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
-                        <!-- Trip Info -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold mb-2">Trip Details</h6>
-                            <p class="mb-1"><small><strong>Route:</strong> <span id="tripRoute">-</span></small></p>
-                            <p class="mb-1"><small><strong>Date:</strong> <span id="tripDate">-</span></small></p>
-                            <p class="mb-0"><small><strong>Time:</strong> <span id="tripTime">-</span></small></p>
+                        <!-- Trip Info Section -->
+                        <div class="mb-3 p-3 bg-light rounded border-start border-4 border-info">
+                            <h6 class="fw-bold mb-2">📍 Trip Details</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Route</small>
+                                    <p class="mb-2"><strong><span id="tripRoute">-</span></strong></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Date</small>
+                                    <p class="mb-2"><strong><span id="tripDate">-</span></strong></p>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted">Departure Time</small>
+                                    <p class="mb-0"><strong><span id="tripTime">-</span></strong></p>
+                                </div>
+                            </div>
+
+                            <!-- Bus & Driver Section -->
+                            <div class="mt-3 pt-3 border-top">
+                                <h6 class="fw-bold mb-2">🚌 Bus & Driver</h6>
+                                <div id="busDriverSection"></div>
+                            </div>
                         </div>
 
                         <!-- Selected Seats -->
@@ -244,6 +260,20 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Right Column: Trip Passengers List (4 columns) -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list-check"></i> Trip Passengers (Booked Seats)
+                        </h6>
+                    </div>
+                    <div class="card-body" style="max-height: 85vh; overflow-y: auto;">
+                        <div id="tripPassengersList"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -308,6 +338,51 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-success btn-lg fw-bold w-100" data-bs-dismiss="modal" onclick="resetForm()">
                     <i class="fas fa-check"></i> Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-receipt"></i> Booking Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div id="bookingDetailsModalBody"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Bus/Driver Modal -->
+<div class="modal fade" id="assignBusModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-bus"></i> Assign Bus & Driver
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div id="assignBusModalBody"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmAssignBusBtn">
+                    <i class="fas fa-check"></i> Assign Bus & Driver
                 </button>
             </div>
         </div>
@@ -579,9 +654,12 @@
                 document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime).toLocaleDateString();
                 document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime).toLocaleTimeString();
                 
+                // Update bus & driver section
+                renderBusDriverSection(response.trip);
                 renderSeatMap();
                 document.getElementById('tripContent').style.display = 'block';
                 document.getElementById('tripContent').scrollIntoView({ behavior: 'smooth' });
+                loadTripPassengers(response.trip.id);
             },
             error: function(error) {
                 const message = error.responseJSON?.error || 'Failed to load trip';
@@ -1155,6 +1233,374 @@
         if (!window.Echo) return;
 
         window.Echo.connector.options.auth.headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').content;
+    }
+
+    // ========================================
+    // LOAD TRIP PASSENGERS
+    // ========================================
+    function loadTripPassengers(tripId) {
+        $.ajax({
+            url: `/admin/bookings/console/trip-passengers/${tripId}`,
+            type: 'GET',
+            success: function(response) {
+                const passengersList = document.getElementById('tripPassengersList');
+                passengersList.innerHTML = ''; // Clear previous content
+
+                if (response.length === 0) {
+                    passengersList.innerHTML = '<p class="text-muted text-center py-4"><i class="fas fa-inbox"></i><br>No passengers booked for this trip yet.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'table table-striped table-bordered table-hover table-sm';
+                table.style.width = '100%';
+                table.style.fontSize = '0.88rem';
+
+                const headerRow = document.createElement('tr');
+                headerRow.className = '';
+                headerRow.innerHTML = `
+                    <th style="width: 8%;">Seat</th>
+                    <th style="width: 18%;">Passenger</th>
+                    <th style="width: 10%;">Route</th>
+                    <th style="width: 12%;">From</th>
+                    <th style="width: 12%;">To</th>
+                    <th style="width: 8%;">Gender</th>
+                    <th style="width: 8%;">Booking #</th>
+                    <th style="width: 8%;">Status</th>
+                `;
+                table.appendChild(headerRow);
+
+                response.forEach(passenger => {
+                    const row = document.createElement('tr');
+                    const genderIcon = passenger.gender === 'male' ? 'Male' : passenger.gender === 'female' ? 'Female' : 'Unknown';
+                    const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' : 
+                                            passenger.status === 'hold' ? 'bg-warning' :
+                                            passenger.status === 'checked_in' ? 'bg-info' :
+                                            passenger.status === 'boarded' ? 'bg-primary' : 'bg-secondary';
+                    const channelIcon = passenger.channel === 'counter' ? '🏪' :
+                                       passenger.channel === 'phone' ? '📞' :
+                                       passenger.channel === 'online' ? '🌐' : '❓';
+
+                    row.innerHTML = `
+                        <td class="text-center fw-bold"><span class="badge bg-info">${passenger.seat_number || 'N/A'}</span></td>
+                        <td>
+                            <div class="fw-bold">${passenger.name || 'N/A'}</div>
+                            <small class="text-muted">${passenger.phone || 'No phone'}</small>
+                        </td>
+                        <td class="text-center"><span class="badge bg-secondary">${passenger.from_code} → ${passenger.to_code}</span></td>
+                        <td>
+                            <small><strong>${passenger.from_stop}</strong></small>
+                        </td>
+                        <td>
+                            <small><strong>${passenger.to_stop}</strong></small>
+                        </td>
+                        <td class="text-center">${genderIcon}</td>
+                        <td class="text-center"><small class="badge bg-light text-dark">#${passenger.booking_number}</small></td>
+                        <td class="text-center">
+                            <span class="badge ${statusBadgeClass}">${passenger.status}</span>
+                            <br>
+                            <button class="btn btn-link btn-sm text-primary p-0 mt-1" onclick="viewPassengerBooking(${passenger.booking_id}, '${passenger.booking_number}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    `;
+                    table.appendChild(row);
+                });
+
+                passengersList.appendChild(table);
+            },
+            error: function() {
+                alert('Failed to load trip passengers');
+            }
+        });
+    }
+
+    // ========================================
+    // VIEW PASSENGER BOOKING DETAILS
+    // ========================================
+    function viewPassengerBooking(bookingId, bookingNumber) {
+        $.ajax({
+            url: `/admin/bookings/console/booking-details/${bookingId}`,
+            type: 'GET',
+            success: function(response) {
+                const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
+                const modalBody = document.getElementById('bookingDetailsModalBody');
+                modalBody.innerHTML = ''; // Clear previous content
+
+                if (response.success) {
+                    const booking = response.booking;
+                    const passengers = booking.passengers;
+                    const seats = booking.seats;
+                    const totalFare = booking.total_fare;
+                    const discount = booking.discount_amount;
+                    const tax = booking.tax_amount;
+                    const finalAmount = booking.final_amount;
+                    const paymentMethod = booking.payment_method;
+                    const notes = booking.notes;
+                    const transactionId = booking.transaction_id;
+                    const channel = booking.channel;
+                    const status = booking.status;
+                    const createdAt = booking.created_at;
+                    const updatedAt = booking.updated_at;
+
+                    modalBody.innerHTML = `
+                        <div class="mb-3">
+                            <h5 class="fw-bold">Booking #${bookingNumber}</h5>
+                            <p class="text-muted">Status: <span class="badge ${status === 'hold' ? 'bg-warning' : status === 'confirmed' ? 'bg-success' : 'bg-info'}">${status}</span></p>
+                            <p class="text-muted">Channel: <span class="badge ${channel === 'counter' ? 'bg-primary' : channel === 'phone' ? 'bg-info' : 'bg-secondary'}">${channel}</span></p>
+                            <p class="text-muted">Payment Method: <span class="badge ${paymentMethod === 'cash' ? 'bg-success' : 'bg-warning'}">${paymentMethod}</span></p>
+                            <p class="text-muted">Total Fare: PKR <span class="fw-bold text-success">${totalFare.toFixed(2)}</span></p>
+                            <p class="text-muted">Discount: PKR <span class="text-danger">-${discount.toFixed(2)}</span></p>
+                            <p class="text-muted">Tax/Charge: PKR <span class="text-success">+${tax.toFixed(2)}</span></p>
+                            <p class="text-muted">Final Amount: PKR <span class="fw-bold text-success">${finalAmount.toFixed(2)}</span></p>
+                            <p class="text-muted">Notes: ${notes || 'N/A'}</p>
+                            <p class="text-muted">Transaction ID: ${transactionId || 'N/A'}</p>
+                            <p class="text-muted">Created At: ${new Date(createdAt).toLocaleString()}</p>
+                            <p class="text-muted">Updated At: ${new Date(updatedAt).toLocaleString()}</p>
+                        </div>
+                        <h6 class="fw-bold mb-2">Passengers:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Seat</th>
+                                        <th>Name</th>
+                                        <th>Age</th>
+                                        <th>Gender</th>
+                                        <th>CNIC</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${passengers.map(p => `
+                                        <tr>
+                                            <td>${p.seat_number || 'N/A'}</td>
+                                            <td>${p.name || 'N/A'}</td>
+                                            <td>${p.age || 'N/A'}</td>
+                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                            <td>${p.cnic || 'N/A'}</td>
+                                            <td>${p.phone || 'N/A'}</td>
+                                            <td>${p.email || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    modal.show();
+                } else {
+                    alert('Failed to load booking details');
+                }
+            },
+            error: function() {
+                alert('Failed to load booking details');
+            }
+        });
+    }
+
+    // ========================================
+    // RENDER BUS & DRIVER SECTION
+    // ========================================
+    function renderBusDriverSection(trip) {
+        const busDriverSection = document.getElementById('busDriverSection');
+        busDriverSection.innerHTML = ''; // Clear previous content
+
+        if (!trip.bus_id) {
+            busDriverSection.innerHTML = `
+                <div class="alert alert-warning text-center py-3 mb-0">
+                    <p class="mb-2"><strong>Bus and Driver not assigned for this trip.</strong></p>
+                    <button class="btn btn-primary btn-sm" onclick="openAssignBusModal(${trip.id})">
+                        <i class="fas fa-bus"></i> Assign Bus & Driver
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Bus assigned - show details
+        busDriverSection.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-left-primary shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-bus text-primary"></i> Bus Details</h6>
+                            <p class="mb-2">
+                                <small class="text-muted">Bus Name</small><br>
+                                <strong>${trip.bus?.name || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Registration Number</small><br>
+                                <strong>${trip.bus?.registration_number || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Model</small><br>
+                                <strong>${trip.bus?.model || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Color</small><br>
+                                <strong>${trip.bus?.color || 'N/A'}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-left-success shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-user-tie text-success"></i> Driver Details</h6>
+                            <p class="mb-2">
+                                <small class="text-muted">Driver Name</small><br>
+                                <strong>${trip.driver_name || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Driver Phone</small><br>
+                                <strong>${trip.driver_phone || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Driver CNIC</small><br>
+                                <strong>${trip.driver_cnic || 'N/A'}</strong>
+                            </p>
+                            <p class="mb-0">
+                                <small class="text-muted">Driver License</small><br>
+                                <strong>${trip.driver_license || 'N/A'}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="openAssignBusModal(${trip.id})">
+                    <i class="fas fa-edit"></i> Change Bus & Driver
+                </button>
+            </div>
+        `;
+    }
+
+    // ========================================
+    // OPEN ASSIGN BUS MODAL
+    // ========================================
+    function openAssignBusModal(tripId) {
+        // Fetch list of available buses
+        $.ajax({
+            url: '/admin/bookings/console/list-buses',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const buses = response.buses;
+                    let busesHtml = '<option value="">-- Select a Bus --</option>';
+                    buses.forEach(bus => {
+                        busesHtml += `<option value="${bus.id}">${bus.name} (${bus.registration_number})</option>`;
+                    });
+
+                    const modalBody = document.getElementById('assignBusModalBody');
+                    modalBody.innerHTML = `
+                        <form id="assignBusForm">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-bus"></i> Select Bus
+                                </label>
+                                <select id="busSelect" class="form-select form-select-lg" required>
+                                    ${busesHtml}
+                                </select>
+                                <small class="text-muted d-block mt-2">Choose a bus to assign to this trip</small>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <h6 class="fw-bold mb-3"><i class="fas fa-user-tie"></i> Driver Information</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label">Driver Name <span class="text-danger">*</span></label>
+                                <input type="text" id="driverName" class="form-control" placeholder="Enter driver name" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Driver Phone <span class="text-danger">*</span></label>
+                                    <input type="tel" id="driverPhone" class="form-control" placeholder="03001234567" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Driver CNIC <span class="text-danger">*</span></label>
+                                    <input type="text" id="driverCnic" class="form-control" placeholder="12345-6789012-3" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Driver License <span class="text-danger">*</span></label>
+                                <input type="text" id="driverLicense" class="form-control" placeholder="License number" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Driver Address</label>
+                                <textarea id="driverAddress" class="form-control" rows="2" placeholder="Enter driver address"></textarea>
+                            </div>
+
+                            <input type="hidden" id="tripIdInput" value="${tripId}">
+                        </form>
+                    `;
+
+                    const modal = new bootstrap.Modal(document.getElementById('assignBusModal'));
+                    modal.show();
+
+                    // Handle confirm button
+                    document.getElementById('confirmAssignBusBtn').onclick = () => {
+                        const busId = document.getElementById('busSelect').value;
+                        const driverName = document.getElementById('driverName').value;
+                        const driverPhone = document.getElementById('driverPhone').value;
+                        const driverCnic = document.getElementById('driverCnic').value;
+                        const driverLicense = document.getElementById('driverLicense').value;
+                        const driverAddress = document.getElementById('driverAddress').value;
+
+                        if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
+                            alert('Please fill all required fields!');
+                            return;
+                        }
+
+                        // Submit to backend
+                        $.ajax({
+                            url: `/admin/bookings/console/assign-bus-driver/${tripId}`,
+                            type: 'POST',
+                            data: {
+                                bus_id: busId,
+                                driver_name: driverName,
+                                driver_phone: driverPhone,
+                                driver_cnic: driverCnic,
+                                driver_license: driverLicense,
+                                driver_address: driverAddress,
+                                _token: document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Bus and Driver assigned successfully!');
+                                    modal.hide();
+                                    // Reload trip data
+                                    const tripId = appState.currentTrip.id;
+                                    loadTrip();
+                                } else {
+                                    alert('Error: ' + (response.error || 'Failed to assign'));
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error:', error);
+                                alert('Failed to assign bus and driver');
+                            }
+                        });
+                    };
+                } else {
+                    alert('Failed to load buses list');
+                }
+            },
+            error: function() {
+                alert('Failed to fetch buses');
+            }
+        });
+    }
+
+    // ========================================
+    // ASSIGN DRIVER (OLD - DEPRECATED)
+    // ========================================
+    function assignDriver(tripId) {
+        // Now handled in assignBus modal
     }
 </script>
 @endsection

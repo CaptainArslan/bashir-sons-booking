@@ -232,6 +232,108 @@ class BookingController extends Controller
     }
 
     /**
+     * GET /admin/bookings/console/trip-passengers/{tripId}
+     * Fetch all passengers for a trip with their booking details
+     */
+    public function getTripPassengers(int $tripId): JsonResponse
+    {
+        try {
+            $bookings = Booking::query()
+                ->where('trip_id', $tripId)
+                ->where('status', '!=', 'cancelled')
+                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal'])
+                ->get();
+
+            $passengers = [];
+
+            foreach ($bookings as $booking) {
+                foreach ($booking->passengers as $passenger) {
+                    // Find the seat number for this passenger
+                    $seatNumber = $booking->seats->first()?->seat_number;
+
+                    $passengers[] = [
+                        'id' => $passenger->id,
+                        'booking_id' => $booking->id,
+                        'name' => $passenger->name,
+                        'gender' => $passenger->gender,
+                        'age' => $passenger->age,
+                        'cnic' => $passenger->cnic,
+                        'phone' => $passenger->phone,
+                        'email' => $passenger->email,
+                        'seat_number' => $seatNumber,
+                        'from_stop' => $booking->fromStop?->terminal?->name ?? 'N/A',
+                        'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
+                        'to_stop' => $booking->toStop?->terminal?->name ?? 'N/A',
+                        'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
+                        'status' => $booking->status,
+                        'payment_status' => $booking->payment_status,
+                        'booking_number' => $booking->booking_number,
+                        'channel' => $booking->channel,
+                    ];
+                }
+            }
+
+            return response()->json($passengers);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * GET /admin/bookings/console/booking-details/{bookingId}
+     * Fetch complete booking details for modal display
+     */
+    public function getBookingDetailsForConsole(int $bookingId): JsonResponse
+    {
+        try {
+            $booking = Booking::query()
+                ->where('id', $bookingId)
+                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal', 'user'])
+                ->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'booking' => [
+                    'id' => $booking->id,
+                    'booking_number' => $booking->booking_number,
+                    'status' => $booking->status,
+                    'channel' => $booking->channel,
+                    'payment_method' => $booking->payment_method,
+                    'payment_status' => $booking->payment_status,
+                    'total_fare' => $booking->total_fare,
+                    'discount_amount' => $booking->discount_amount,
+                    'tax_amount' => $booking->tax_amount,
+                    'final_amount' => $booking->final_amount,
+                    'notes' => $booking->notes,
+                    'transaction_id' => $booking->online_transaction_id,
+                    'created_at' => $booking->created_at,
+                    'updated_at' => $booking->updated_at,
+                    'from_stop' => $booking->fromStop?->terminal?->name,
+                    'to_stop' => $booking->toStop?->terminal?->name,
+                    'passengers' => $booking->passengers->map(fn ($p) => [
+                        'name' => $p->name,
+                        'age' => $p->age,
+                        'gender' => $p->gender,
+                        'cnic' => $p->cnic,
+                        'phone' => $p->phone,
+                        'email' => $p->email,
+                        'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
+                    ])->toArray(),
+                    'seats' => $booking->seats->map(fn ($s) => [
+                        'seat_number' => $s->seat_number,
+                        'gender' => $s->gender,
+                        'fare' => $s->fare,
+                        'tax_amount' => $s->tax_amount,
+                        'final_amount' => $s->final_amount,
+                    ])->toArray(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
      * GET /admin/bookings/terminals
      * Fetch terminals for the current user (employee or admin)
      */
@@ -775,5 +877,76 @@ class BookingController extends Controller
         }
 
         return $bookedSeats;
+    }
+
+    /**
+     * List all available buses
+     */
+    public function listBuses(): JsonResponse
+    {
+        try {
+            $buses = \App\Models\Bus::where('status', 'active')
+                ->select('id', 'name', 'registration_number', 'model', 'color')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'buses' => $buses,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Assign bus and driver to a trip
+     */
+    public function assignBusDriver(Request $request, int $tripId): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'bus_id' => 'required|exists:buses,id',
+                'driver_name' => 'required|string|max:255',
+                'driver_phone' => 'required|string|max:20',
+                'driver_cnic' => 'required|string|max:50',
+                'driver_license' => 'required|string|max:100',
+                'driver_address' => 'nullable|string|max:500',
+            ]);
+
+            $trip = Trip::findOrFail($tripId);
+
+            // Update trip with bus and driver information
+            $trip->update([
+                'bus_id' => $validated['bus_id'],
+                'driver_name' => $validated['driver_name'],
+                'driver_phone' => $validated['driver_phone'],
+                'driver_cnic' => $validated['driver_cnic'],
+                'driver_license' => $validated['driver_license'],
+                'driver_address' => $validated['driver_address'] ?? null,
+            ]);
+
+            // Load bus relationship
+            $trip->load('bus');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bus and driver assigned successfully!',
+                'trip' => $trip,
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 }
