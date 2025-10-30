@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PaymentMethodEnum;
 use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Fare;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
@@ -31,7 +33,9 @@ class BookingController extends Controller
 
     public function consoleIndex(): View
     {
-        return view('admin.bookings.console');
+        return view('admin.bookings.console', [
+            'paymentMethods' => PaymentMethodEnum::options(),
+        ]);
     }
 
     public function index(): View
@@ -98,7 +102,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -138,7 +142,7 @@ class BookingController extends Controller
         try {
             // Find all routes that have this terminal, then get forward stops
             $routes = Route::query()
-                ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
                 ->where('status', 'active')
                 ->get();
 
@@ -168,6 +172,51 @@ class BookingController extends Controller
             return response()->json(['route_stops' => $routeStops]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * GET /admin/bookings/console/fare
+     * Fetch fare for a terminal segment
+     */
+    public function getFare(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
+        ]);
+
+        try {
+            if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
+                throw new \Exception('From and To terminals must be different');
+            }
+
+            $fare = Fare::active()
+                ->where('from_terminal_id', $validated['from_terminal_id'])
+                ->where('to_terminal_id', $validated['to_terminal_id'])
+                ->first();
+
+            if (! $fare) {
+                throw new \Exception('No fare found for this route segment');
+            }
+
+            return response()->json([
+                'success' => true,
+                'fare' => [
+                    'id' => $fare->id,
+                    'base_fare' => (float) $fare->base_fare,
+                    'final_fare' => (float) $fare->final_fare,
+                    'discount_type' => $fare->discount_type?->value,
+                    'discount_value' => (float) $fare->discount_value,
+                    'discount_amount' => $fare->getDiscountAmount(),
+                    'currency' => $fare->currency,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
         }
     }
 
@@ -218,7 +267,7 @@ class BookingController extends Controller
 
                 // Combine date with departure_time to create full datetime
                 if ($ts->departure_time) {
-                    $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
+                    $departureDateTime = $validated['date'].' '.$ts->departure_time;
 
                     // Only include times that are in future
                     if (strtotime($departureDateTime) >= time()) {
@@ -273,7 +322,6 @@ class BookingController extends Controller
             if (! $route) {
                 throw new \Exception('Route not found for selected timetable');
             }
-
 
             // Check for existing trip - load stops separately
             $trip = Trip::where('timetable_id', $timetable->id)
@@ -413,39 +461,61 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'trip_id' => 'required|exists:trips,id',
-            'from_stop_id' => 'required|exists:trip_stops,id',
-            'to_stop_id' => 'required|exists:trip_stops,id',
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
             'seat_numbers' => 'required|array|min:1',
             'seat_numbers.*' => 'integer',
-            'passengers' => 'required|array|min:1',
-            'passengers.*.name' => 'required|string',
-            'passengers.*.gender' => 'in:male,female',
+            'passengers' => 'required|json',
             'channel' => 'required|in:counter,phone,online',
-            'payment_method' => 'in:cash,card,online',
+            'payment_method' => 'nullable|in:cash,card,mobile_wallet,bank_transfer',
+            'transaction_id' => 'nullable|string|max:100',
             'amount_received' => 'nullable|numeric|min:0',
+            'fare_per_seat' => 'required|numeric|min:0',
             'total_fare' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'tax_amount' => 'nullable|numeric|min:0',
             'final_amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string|max:500',
-            'terminal_id' => 'nullable|exists:terminals,id',
         ]);
 
         try {
+            // Validate transaction ID for non-cash counter payments
+            if ($validated['channel'] === 'counter' && $validated['payment_method'] !== 'cash' && empty($validated['transaction_id'])) {
+                throw new \Exception('Transaction ID is required for non-cash payments');
+            }
+
+            // Parse passengers JSON
+            $passengers = json_decode($validated['passengers'], true);
+            if (! is_array($passengers) || count($passengers) === 0) {
+                throw new \Exception('Invalid passengers data');
+            }
+
+            // Get trip stops
+            $trip = Trip::findOrFail($validated['trip_id']);
+            $fromTerminalId = $validated['from_terminal_id'];
+            $toTerminalId = $validated['to_terminal_id'];
+
+            $fromStop = $trip->stops()->where('terminal_id', $fromTerminalId)->firstOrFail();
+            $toStop = $trip->stops()->where('terminal_id', $toTerminalId)->firstOrFail();
+
+            if ($fromStop->sequence >= $toStop->sequence) {
+                throw new \Exception('Invalid segment selection');
+            }
+
             $data = [
                 'trip_id' => $validated['trip_id'],
-                'from_stop_id' => $validated['from_stop_id'],
-                'to_stop_id' => $validated['to_stop_id'],
+                'from_stop_id' => $fromStop->id,
+                'to_stop_id' => $toStop->id,
                 'seat_numbers' => $validated['seat_numbers'],
-                'passengers' => $validated['passengers'],
+                'passengers' => $passengers,
                 'channel' => $validated['channel'],
-                'payment_method' => $validated['payment_method'] ?? 'none',
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'online_transaction_id' => $validated['transaction_id'] ?? null,
                 'total_fare' => $validated['total_fare'],
                 'discount_amount' => $validated['discount_amount'] ?? 0,
                 'tax_amount' => $validated['tax_amount'] ?? 0,
                 'final_amount' => $validated['final_amount'],
                 'notes' => $validated['notes'] ?? null,
-                'terminal_id' => $validated['terminal_id'] ?? null,
                 'user_id' => auth()->id(),
             ];
 
@@ -467,7 +537,6 @@ class BookingController extends Controller
             }
 
             return response()->json([
-                'message' => 'Booking created successfully',
                 'booking' => [
                     'id' => $booking->id,
                     'booking_number' => $booking->booking_number,
@@ -477,8 +546,8 @@ class BookingController extends Controller
                     'tax_amount' => $booking->tax_amount,
                     'final_amount' => $booking->final_amount,
                     'payment_method' => $booking->payment_method,
+                    'transaction_id' => $booking->online_transaction_id,
                     'seats' => $booking->seats->pluck('seat_number')->toArray(),
-                    'passengers' => $booking->passengers->toArray(),
                 ],
             ], 201);
         } catch (ValidationException $e) {

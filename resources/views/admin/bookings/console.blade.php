@@ -117,17 +117,33 @@
                         <div class="mb-4 p-3 bg-light rounded">
                             <h6 class="fw-bold mb-3"><i class="fas fa-calculator"></i> Fare Calculation</h6>
                             <div class="mb-3">
+                                <label class="form-label">Base Fare (PKR) - Per Seat</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" id="baseFare" 
+                                        min="0" step="0.01" placeholder="0.00" readonly>
+                                    <span class="input-group-text">Read-only</span>
+                                </div>
+                                <small class="form-text text-muted">Automatically fetched from fare database</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Discount Applied</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-lg" id="discountInfo" 
+                                        placeholder="None" readonly>
+                                    <span class="input-group-text">-</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Total Fare (PKR)</label>
-                                <input type="number" class="form-control form-control-lg" id="totalFare" 
-                                    min="0" step="0.01" placeholder="0.00" onchange="calculateFinal()">
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg fw-bold text-success" id="totalFare" 
+                                        min="0" step="0.01" placeholder="0.00" readonly>
+                                    <span class="input-group-text">Calculated</span>
+                                </div>
+                                <small class="form-text text-muted">Base Fare × Number of Seats</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Discount (PKR)</label>
-                                <input type="number" class="form-control form-control-lg" id="discount" 
-                                    min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Tax/Service Charge (PKR)</label>
+                                <label class="form-label">Additional Tax/Service Charge (PKR)</label>
                                 <input type="number" class="form-control form-control-lg" id="tax" 
                                     min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
                             </div>
@@ -165,22 +181,32 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Payment Method</label>
                                 <div>
-                                    <div class="form-check form-check-lg">
-                                        <input class="form-check-input" type="radio" name="paymentMethod" 
-                                            id="cashPayment" value="cash" checked>
-                                        <label class="form-check-label fw-bold" for="cashPayment">💵 Cash</label>
-                                    </div>
-                                    <div class="form-check form-check-lg">
-                                        <input class="form-check-input" type="radio" name="paymentMethod" 
-                                            id="cardPayment" value="card">
-                                        <label class="form-check-label fw-bold" for="cardPayment">💳 Card</label>
-                                    </div>
+                                    @foreach($paymentMethods as $method)
+                                        <div class="form-check form-check-lg">
+                                            <input class="form-check-input" type="radio" name="paymentMethod" 
+                                                id="payment_{{ $method['value'] }}" value="{{ $method['value'] }}"
+                                                {{ $loop->first ? 'checked' : '' }}
+                                                onchange="toggleTransactionIdField()">
+                                            <label class="form-check-label fw-bold" for="payment_{{ $method['value'] }}">
+                                                <i class="{{ $method['icon'] }}"></i> {{ $method['label'] }}
+                                            </label>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
+
+                            <!-- Transaction ID Field (for non-cash payments) -->
+                            <div class="mb-3" id="transactionIdField" style="display: none;">
+                                <label class="form-label fw-bold">Transaction ID / Reference Number</label>
+                                <input type="text" class="form-control form-control-lg" id="transactionId" 
+                                    placeholder="e.g., TXN123456789 or Card Last 4 Digits" maxlength="100">
+                                <small class="form-text text-muted">Required for non-cash payments</small>
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Amount Received (PKR)</label>
                                 <input type="number" class="form-control form-control-lg" id="amountReceived" 
-                                    min="0" step="0.01" placeholder="0.00" onchange="calculateReturn()">
+                                    min="0" step="0.01" placeholder="0.00" value="0" onchange="calculateReturn()">
                             </div>
                             <div id="returnDiv" style="display: none;">
                                 <div class="alert alert-success border-3 mb-0 py-3">
@@ -294,6 +320,8 @@
         selectedSeats: {},
         pendingSeat: null,
         tripLoaded: false,
+        fareData: null,
+        baseFare: 0,
     };
 
     // ========================================
@@ -302,6 +330,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         fetchTerminals();
         setupWebSocket();
+        togglePaymentFields(); // Initialize payment fields visibility
     });
 
     // ========================================
@@ -349,6 +378,7 @@
         
         if (fromTerminalId) {
             fetchToTerminals(fromTerminalId);
+            fetchFare(fromTerminalId); // Fetch fare when from terminal changes
         }
     }
 
@@ -378,6 +408,65 @@
     }
 
     // ========================================
+    // FETCH FARE FOR SEGMENT
+    // ========================================
+    function fetchFare(fromTerminalId, toTerminalId) {
+        if (!fromTerminalId || !toTerminalId) {
+            resetFareDisplay();
+            return;
+        }
+
+        $.ajax({
+            url: '/admin/bookings/console/fare',
+            type: 'GET',
+            data: {
+                from_terminal_id: fromTerminalId,
+                to_terminal_id: toTerminalId
+            },
+            success: function(response) {
+                if (response.success) {
+                    appState.fareData = response.fare;
+                    appState.baseFare = response.fare.final_fare;
+                    
+                    // Update UI with fare info
+                    document.getElementById('baseFare').value = parseFloat(response.fare.final_fare).toFixed(2);
+                    
+                    // Display discount info
+                    if (response.fare.discount_type === 'flat') {
+                        document.getElementById('discountInfo').value = `Flat: PKR ${parseFloat(response.fare.discount_value).toFixed(2)}`;
+                    } else if (response.fare.discount_type === 'percent') {
+                        document.getElementById('discountInfo').value = `${parseFloat(response.fare.discount_value).toFixed(0)}% Discount`;
+                    } else {
+                        document.getElementById('discountInfo').value = 'None';
+                    }
+                    
+                    calculateTotalFare();
+                } else {
+                    alert('No fare found for this route segment');
+                    resetFareDisplay();
+                }
+            },
+            error: function(error) {
+                const message = error.responseJSON?.error || 'Failed to load fare';
+                alert(message);
+                resetFareDisplay();
+            }
+        });
+    }
+
+    // ========================================
+    // RESET FARE DISPLAY
+    // ========================================
+    function resetFareDisplay() {
+        appState.fareData = null;
+        appState.baseFare = 0;
+        document.getElementById('baseFare').value = '';
+        document.getElementById('discountInfo').value = '';
+        document.getElementById('totalFare').value = '';
+        calculateFinal();
+    }
+
+    // ========================================
     // ON TO TERMINAL CHANGE
     // ========================================
     document.getElementById('toTerminal')?.addEventListener('change', onToTerminalChange);
@@ -392,6 +481,7 @@
         
         if (fromTerminalId && toTerminalId && date) {
             fetchDepartureTimes(fromTerminalId, toTerminalId, date);
+            fetchFare(fromTerminalId, toTerminalId);
         }
     }
 
@@ -572,6 +662,7 @@
 
         if (count === 0) {
             list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
+            calculateTotalFare();
             return;
         }
 
@@ -581,6 +672,19 @@
             html += `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
         });
         list.innerHTML = html;
+        calculateTotalFare();
+    }
+
+    // ========================================
+    // CALCULATE TOTAL FARE (based on seat count)
+    // ========================================
+    function calculateTotalFare() {
+        const seatCount = Object.keys(appState.selectedSeats).length;
+        const baseFare = appState.baseFare || 0;
+        const totalFare = baseFare * seatCount;
+        
+        document.getElementById('totalFare').value = totalFare.toFixed(2);
+        calculateFinal();
     }
 
     // ========================================
@@ -588,9 +692,8 @@
     // ========================================
     function calculateFinal() {
         const fare = parseFloat(document.getElementById('totalFare').value) || 0;
-        const discount = parseFloat(document.getElementById('discount').value) || 0;
         const tax = parseFloat(document.getElementById('tax').value) || 0;
-        const final = fare - discount + tax;
+        const final = fare + tax;
         document.getElementById('finalAmount').textContent = final.toFixed(2);
         calculateReturn();
     }
@@ -612,11 +715,39 @@
     }
 
     // ========================================
+    // TOGGLE TRANSACTION ID FIELD
+    // ========================================
+    function toggleTransactionIdField() {
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
+        const transactionIdField = document.getElementById('transactionIdField');
+        const transactionIdInput = document.getElementById('transactionId');
+        
+        if (transactionIdField) {
+            // Show field only if payment method is NOT cash
+            if (paymentMethod !== 'cash') {
+                transactionIdField.style.display = 'block';
+                transactionIdInput.required = true;
+            } else {
+                transactionIdField.style.display = 'none';
+                transactionIdInput.required = false;
+                transactionIdInput.value = ''; // Clear if hiding
+            }
+        }
+    }
+
+    // ========================================
     // TOGGLE PAYMENT FIELDS
     // ========================================
     function togglePaymentFields() {
         const isCounter = document.getElementById('counterBooking').checked;
         document.getElementById('paymentFields').style.display = isCounter ? 'block' : 'none';
+        
+        if (!isCounter) {
+            // Clear transaction ID if switching to phone booking
+            document.getElementById('transactionId').value = '';
+        }
+        
+        toggleTransactionIdField();
     }
 
     // ========================================
@@ -630,9 +761,8 @@
             return;
         }
 
-        const fare = parseFloat(document.getElementById('totalFare').value);
-        if (!fare || fare <= 0) {
-            alert('Please enter total fare');
+        if (!appState.baseFare || appState.baseFare <= 0) {
+            alert('Fare not loaded. Please select destination first.');
             return;
         }
 
@@ -645,14 +775,24 @@
             return;
         }
 
+        // Create passengers array with seat numbers and gender
         const passengers = selectedSeats.map(seat => ({
+            seat_number: parseInt(seat),
             name: `Passenger - Seat ${seat}`,
             gender: appState.selectedSeats[seat]
         }));
 
         const paymentMethod = isCounter 
             ? document.querySelector('input[name="paymentMethod"]:checked').value 
-            : 'none';
+            : 'cash';
+
+        const totalFare = parseFloat(document.getElementById('totalFare').value);
+        const tax = parseFloat(document.getElementById('tax').value) || 0;
+        const farePerSeat = selectedSeats.length > 0 ? totalFare / selectedSeats.length : 0;
+
+        const transactionId = isCounter 
+            ? document.getElementById('transactionId').value 
+            : null;
 
         document.getElementById('confirmBtn').disabled = true;
 
@@ -668,11 +808,13 @@
                 channel: isCounter ? 'counter' : 'phone',
                 payment_method: paymentMethod,
                 amount_received: isCounter ? received : null,
-                total_fare: fare,
-                discount_amount: parseFloat(document.getElementById('discount').value) || 0,
-                tax_amount: parseFloat(document.getElementById('tax').value) || 0,
+                fare_per_seat: farePerSeat,
+                total_fare: totalFare,
+                discount_amount: 0,
+                tax_amount: tax,
                 final_amount: final,
                 notes: document.getElementById('notes').value,
+                transaction_id: transactionId,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             },
             success: function(response) {
@@ -681,7 +823,7 @@
                 document.getElementById('bookedSeats').textContent = booking.seats.join(', ');
                 document.getElementById('bookingStatus').textContent = booking.status === 'hold' ? 'On Hold' : 'Confirmed';
                 document.getElementById('confirmedFare').textContent = parseFloat(booking.total_fare).toFixed(2);
-                document.getElementById('confirmedDiscount').textContent = parseFloat(booking.discount_amount).toFixed(2);
+                document.getElementById('confirmedDiscount').textContent = '0.00';
                 document.getElementById('confirmedTax').textContent = parseFloat(booking.tax_amount).toFixed(2);
                 document.getElementById('confirmedFinal').textContent = parseFloat(booking.final_amount).toFixed(2);
                 document.getElementById('paymentMethodDisplay').textContent = booking.payment_method || 'N/A';
@@ -704,9 +846,12 @@
     function resetForm() {
         appState.selectedSeats = {};
         appState.tripLoaded = false;
+        appState.fareData = null;
+        appState.baseFare = 0;
         document.getElementById('tripContent').style.display = 'none';
+        document.getElementById('baseFare').value = '';
+        document.getElementById('discountInfo').value = '';
         document.getElementById('totalFare').value = '';
-        document.getElementById('discount').value = '0';
         document.getElementById('tax').value = '0';
         document.getElementById('amountReceived').value = '';
         document.getElementById('notes').value = '';

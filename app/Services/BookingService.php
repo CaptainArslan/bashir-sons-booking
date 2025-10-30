@@ -88,30 +88,45 @@ class BookingService
             ]);
 
             foreach ($seatNumbers as $sn) {
+                // Calculate per-seat fare and amounts
+                $seatCount = count($seatNumbers);
+                $farePerSeat = $seatCount > 0 ? ($data['total_fare'] ?? 0) / $seatCount : 0;
+                $taxPerSeat = $seatCount > 0 ? ($data['tax_amount'] ?? 0) / $seatCount : 0;
+                $finalPerSeat = $farePerSeat + $taxPerSeat;
+
+                // Find gender for this seat from passengers array
+                $passengerGender = null;
+                foreach ($data['passengers'] as $passenger) {
+                    if (isset($passenger['seat_number']) && $passenger['seat_number'] == $sn) {
+                        $passengerGender = $passenger['gender'] ?? null;
+                        break;
+                    }
+                }
+
                 BookingSeat::create([
                     'booking_id' => $booking->id,
                     'from_stop_id' => $from->id,
                     'to_stop_id' => $to->id,
                     'seat_number' => $sn,
-                    // optional pricing per seat:
-                    'fare' => null,
-                    'tax_amount' => null,
-                    'final_amount' => null,
+                    'gender' => $passengerGender,
+                    'fare' => $farePerSeat,
+                    'tax_amount' => $taxPerSeat,
+                    'final_amount' => $finalPerSeat,
                 ]);
             }
 
-            foreach ($data['passengers'] ?? [] as $p) {
-                BookingPassenger::create([
-                    'booking_id' => $booking->id,
-                    'name' => $p['name'],
-                    'age'  => $p['age'] ?? null,
-                    'gender' => $p['gender'] ?? null,
-                    'cnic'   => $p['cnic'] ?? null,
-                    'phone'  => $p['phone'] ?? null,
-                    'email'  => $p['email'] ?? null,
-                    'status' => 'active',
-                ]);
-            }
+            // foreach ($data['passengers'] ?? [] as $p) {
+            //     BookingPassenger::create([
+            //         'booking_id' => $booking->id,
+            //         'name' => $p['name'],
+            //         'age'  => $p['age'] ?? null,
+            //         'gender' => $p['gender'] ?? null,
+            //         'cnic'   => $p['cnic'] ?? null,
+            //         'phone'  => $p['phone'] ?? null,
+            //         'email'  => $p['email'] ?? null,
+            //         'status' => 'active',
+            //     ]);
+            // }
 
             return $booking->load(['seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
         });

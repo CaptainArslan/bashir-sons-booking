@@ -1,5 +1,9 @@
 <?php
 
+use App\Enums\BookingStatusEnum;
+use App\Enums\ChannelEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -24,12 +28,12 @@ return new class extends Migration
             $table->foreignId('from_stop_id')->constrained('route_stops')->cascadeOnDelete();
             $table->foreignId('to_stop_id')->constrained('route_stops')->cascadeOnDelete();
 
-            $table->enum('channel', ['online', 'counter', 'phone'])->default('online');
-            $table->enum('status', ['hold', 'confirmed', 'cancelled', 'expired'])->default('hold');
+            $table->string('channel')->default(ChannelEnum::ONLINE->value)->nullable();
+            $table->string('status')->default(BookingStatusEnum::HOLD->value)->nullable();
 
             $table->timestamp('reserved_until')->nullable();
-            $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'failed'])->default('unpaid');
-            $table->enum('payment_method', ['cash', 'card', 'mobile_wallet', 'bank_transfer', 'other'])->nullable();
+            $table->string('payment_status')->default(PaymentStatusEnum::UNPAID->value)->nullable();
+            $table->string('payment_method')->default(PaymentMethodEnum::CASH->value)->nullable();
             $table->string('online_transaction_id')->nullable();
 
             $table->decimal('total_fare', 10, 2);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DiscountTypeEnum;
 use App\Enums\FareStatusEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,7 @@ class Fare extends Model
             'discount_value' => 'decimal:2',
             'final_fare' => 'decimal:2',
             'status' => FareStatusEnum::class,
+            'discount_type' => DiscountTypeEnum::class,
         ];
     }
 
