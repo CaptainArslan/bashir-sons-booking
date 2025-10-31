@@ -253,57 +253,58 @@
             // Initial statistics load
             updateStatistics();
 
-            // Delete employee function with SweetAlert
-            function deleteEmployee(userId) {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: "{{ route('admin.employees.destroy', ':id') }}".replace(':id',
-                                userId),
-                            type: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire(
-                                        'Deleted!',
-                                        response.message || 'Employee has been deleted.',
-                                        'success'
-                                    );
-                                    // Reload the employees table
-                                    table.ajax.reload();
-                                    // Update statistics
-                                    updateStatistics();
-                                } else {
-                                    Swal.fire(
-                                        'Error!',
-                                        response?.message || 'Failed to delete employee.',
-                                        'error'
-                                    );
-                                }
-                            },
-                            error: function(error) {
+        });
+        
+        // Delete employee function with SweetAlert
+        function deleteEmployee(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('admin.employees.destroy', ':id') }}".replace(':id',
+                            userId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Employee has been deleted.',
+                                    'success'
+                                );
+                                // Reload the employees table
+                                table.ajax.reload();
+                                // Update statistics
+                                updateStatistics();
+                            } else {
                                 Swal.fire(
                                     'Error!',
-                                    error?.responseJSON?.message ||
-                                    'An error occurred while deleting the employee.',
+                                    response?.message || 'Failed to delete employee.',
                                     'error'
                                 );
                             }
-                        });
-                    }
-                });
-            }
-        });
+                        },
+                        error: function(error) {
+                            Swal.fire(
+                                'Error!',
+                                error?.responseJSON?.message ||
+                                'An error occurred while deleting the employee.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endsection
