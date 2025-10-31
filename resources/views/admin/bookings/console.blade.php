@@ -566,7 +566,12 @@
                     }
                 },
                 error: function() {
-                    alert('Failed to load terminals');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Terminals',
+                        text: 'Unable to fetch terminals. Please check your connection and try again.',
+                        confirmButtonColor: '#d33'
+                    });
                 }
             });
         }
@@ -612,7 +617,12 @@
                     toSelect.disabled = false;
                 },
                 error: function() {
-                    alert('Failed to load destination terminals');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Destinations',
+                        text: 'Unable to fetch available destinations for the selected terminal. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
                 }
             });
         }
@@ -655,13 +665,23 @@
 
                         calculateTotalFare();
                     } else {
-                        alert('No fare found for this route segment');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'No Fare Found',
+                            text: 'No fare configuration found for this route segment. Please contact administrator.',
+                            confirmButtonColor: '#ffc107'
+                        });
                         resetFareDisplay();
                     }
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || 'Failed to load fare';
-                    alert(message);
+                    const message = error.responseJSON?.error || 'Unable to fetch fare information';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Fare',
+                        text: message,
+                        confirmButtonColor: '#d33'
+                    });
                     resetFareDisplay();
                 }
             });
@@ -723,7 +743,12 @@
                     timeSelect.disabled = false;
                 },
                 error: function() {
-                    alert('No trips available for this route and date');
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Trips Available',
+                        text: 'No trips are available for the selected route and date. Please try a different date or route.',
+                        confirmButtonColor: '#3085d6'
+                    });
                 }
             });
         }
@@ -750,7 +775,12 @@
             const date = document.getElementById('travelDate').value;
 
             if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
-                alert('Please fill all fields');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please fill all required fields: From Terminal, To Terminal, Departure Time, and Travel Date.',
+                    confirmButtonColor: '#ffc107'
+                });
                 return;
             }
 
@@ -788,8 +818,13 @@
                     loadTripPassengers(response.trip.id);
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || 'Failed to load trip';
-                    alert(message);
+                    const message = error.responseJSON?.error || 'Unable to load trip information. Please check all selections and try again.';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Trip',
+                        text: message,
+                        confirmButtonColor: '#d33'
+                    });
                 },
                 complete: function() {
                     document.getElementById('loadTripBtn').disabled = false;
@@ -1137,7 +1172,12 @@
             for (let seat of selectedSeats) {
                 const info = appState.passengerInfo[seat];
                 if (!info || !info.name || info.name.trim() === '') {
-                    alert(`Please enter passenger name for Seat ${seat}`);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Passenger Information',
+                        text: `Please enter passenger name for Seat ${seat}`,
+                        confirmButtonColor: '#ffc107'
+                    });
                     return false;
                 }
             }
@@ -1150,11 +1190,21 @@
             for (let passengerId of extraPassengers) {
                 const info = appState.passengerInfo[passengerId];
                 if (!info.name || info.name.trim() === '') {
-                    alert(`Extra Passenger: Please enter name`);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Extra Passenger: Please enter passenger name',
+                        confirmButtonColor: '#ffc107'
+                    });
                     return false;
                 }
                 if (!info.gender || info.gender === '') {
-                    alert(`Extra Passenger: Please select gender`);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Extra Passenger: Please select gender',
+                        confirmButtonColor: '#ffc107'
+                    });
                     return false;
                 }
             }
@@ -1258,7 +1308,12 @@
             const selectedSeats = Object.keys(appState.selectedSeats);
 
             if (selectedSeats.length === 0) {
-                alert('Please select at least one seat');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Seats Selected',
+                    text: 'Please select at least one seat before confirming the booking.',
+                    confirmButtonColor: '#ffc107'
+                });
                 return;
             }
 
@@ -1268,7 +1323,12 @@
             }
 
             if (!appState.baseFare || appState.baseFare <= 0) {
-                alert('Fare not loaded. Please select destination first.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Fare Not Loaded',
+                    text: 'Fare information is not available. Please select destination terminal first.',
+                    confirmButtonColor: '#ffc107'
+                });
                 return;
             }
 
@@ -1280,7 +1340,12 @@
                 'cash';
 
             if (isCounter && paymentMethod === 'cash' && received < final) {
-                alert('Insufficient amount received from customer');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Insufficient Payment',
+                    text: `Insufficient amount received from customer. Required: PKR ${final.toFixed(2)}, Received: PKR ${received.toFixed(2)}`,
+                    confirmButtonColor: '#d33'
+                });
                 return;
             }
 
@@ -1364,8 +1429,13 @@
                     new bootstrap.Modal(document.getElementById('successModal')).show();
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || 'Failed to create booking';
-                    alert(message);
+                    const message = error.responseJSON?.error || error.responseJSON?.message || 'Unable to complete the booking. Please check all information and try again.';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Booking Failed',
+                        text: message,
+                        confirmButtonColor: '#d33'
+                    });
                 },
                 complete: function() {
                     document.getElementById('confirmBtn').disabled = false;
@@ -1481,7 +1551,12 @@
                     passengersList.appendChild(table);
                 },
                 error: function() {
-                    alert('Failed to load trip passengers');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Passengers',
+                        text: 'Unable to fetch passenger list for this trip. Please refresh and try again.',
+                        confirmButtonColor: '#d33'
+                    });
                 }
             });
         }
@@ -1565,12 +1640,23 @@
                         modal.show();
                     } else {
                         console.error('Failed to load booking details:', response);
-                        alert('Failed to load booking details: ' + (response.error || 'Unknown error'));
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Load Booking Details',
+                            text: response.error || 'Unable to fetch booking information. Please try again.',
+                            confirmButtonColor: '#d33'
+                        });
                     }
                 },
                 error: function(error) {
                     console.error('AJAX Error:', error);
-                    alert('Failed to load booking details. Please try again.');
+                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message || 'Unable to load booking details. Please check your connection and try again.';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Booking Details',
+                        text: errorMessage,
+                        confirmButtonColor: '#d33'
+                    });
                 }
             });
         }
@@ -1720,7 +1806,12 @@
                             const driverAddress = document.getElementById('driverAddress').value;
 
                             if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
-                                alert('Please fill all required fields!');
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Missing Information',
+                                    text: 'Please fill all required fields: Bus, Driver Name, Phone, CNIC, and License.',
+                                    confirmButtonColor: '#ffc107'
+                                });
                                 return;
                             }
 
@@ -1740,28 +1831,57 @@
                                 },
                                 success: function(response) {
                                     if (response.success) {
-                                        alert('Bus and Driver assigned successfully!');
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success!',
+                                            text: 'Bus and Driver assigned successfully!',
+                                            confirmButtonColor: '#28a745',
+                                            timer: 2000,
+                                            timerProgressBar: true
+                                        });
                                         modal.hide();
                                         // Reload trip data
-                                        const tripId = appState.currentTrip.id;
-                                        loadTrip();
+                                        const tripId = appState.tripData ? appState.tripData.trip.id : null;
+                                        if (tripId) {
+                                            loadTrip();
+                                        }
                                     } else {
-                                        alert('Error: ' + (response.error ||
-                                            'Failed to assign'));
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Assignment Failed',
+                                            text: response.error || response.message || 'Unable to assign bus and driver. Please check all information and try again.',
+                                            confirmButtonColor: '#d33'
+                                        });
                                     }
                                 },
                                 error: function(error) {
                                     console.error('Error:', error);
-                                    alert('Failed to assign bus and driver');
+                                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message || 'Unable to assign bus and driver. Please check your connection and try again.';
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Failed to Assign Bus & Driver',
+                                        text: errorMessage,
+                                        confirmButtonColor: '#d33'
+                                    });
                                 }
                             });
                         };
                     } else {
-                        alert('Failed to load buses list');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Load Buses',
+                            text: 'Unable to fetch available buses. Please try again.',
+                            confirmButtonColor: '#d33'
+                        });
                     }
                 },
                 error: function() {
-                    alert('Failed to fetch buses');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Fetch Buses',
+                        text: 'Unable to load bus list. Please check your connection and try again.',
+                        confirmButtonColor: '#d33'
+                    });
                 }
             });
         }
@@ -1774,7 +1894,12 @@
             if (tripId) {
                 openAssignBusModal(tripId);
             } else {
-                alert('No trip data loaded. Please load a trip first.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Trip Loaded',
+                    text: 'Please load a trip first before assigning a bus and driver.',
+                    confirmButtonColor: '#ffc107'
+                });
             }
         }
 
