@@ -145,11 +145,12 @@
                             <option value="">Select Destination</option>
                         </select>
                     </div>
-                    
+
                     <!-- Departure Time (Timetable Stops) -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Departure Time</label>
-                        <select class="form-select form-select-lg select2" id="departureTime" disabled>
+                        <select class="form-select form-select-lg select2" id="departureTime" onchange="fetchArrivalTime()"
+                            disabled>
                             <option value="">Select Departure Time</option>
                         </select>
                     </div>
@@ -157,7 +158,7 @@
                     <!-- Arrival Time (Timetable Stops) -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Arrival Time</label>
-                        <input type="time" class="form-control form-control-lg" id="arrivalTime" disabled>
+                        <input type="text" class="form-control form-control-lg" id="arrivalTime" disabled readonly>
                     </div>
 
                     <!-- Load Trip Button -->
@@ -510,7 +511,6 @@
 
 @section('scripts')
     <script>
-
         // ========================================
         // STATE MANAGEMENT
         // ========================================
@@ -627,7 +627,7 @@
             }
 
             $.ajax({
-                url: '/admin/bookings/console/fare',
+                url: "{{ route('admin.bookings.fare') }}",
                 type: 'GET',
                 data: {
                     from_terminal_id: fromTerminalId,
@@ -693,8 +693,8 @@
             document.getElementById('departureTime').disabled = true;
 
             if (fromTerminalId && toTerminalId && date) {
-                fetchDepartureTimes(fromTerminalId, toTerminalId, date);
                 fetchFare(fromTerminalId, toTerminalId);
+                fetchDepartureTimes(fromTerminalId, toTerminalId, date);
             }
         }
 
@@ -716,13 +716,10 @@
 
                     timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
                     response.timetable_stops.forEach(stop => {
-                        const time = new Date(stop.departure_at).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        timeSelect.innerHTML += `<option value="${stop.id}">${time}</option>`;
+                        timeSelect.innerHTML +=
+                            `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at}">${stop.departure_at}</option>`;
                     });
-
+                    console.log(timeSelect.innerHTML);
                     timeSelect.disabled = false;
                 },
                 error: function() {
@@ -760,7 +757,7 @@
             document.getElementById('loadTripBtn').disabled = true;
 
             $.ajax({
-                url: '/admin/bookings/console/load-trip',
+                url: "{{ route('admin.bookings.load-trip') }}",
                 type: 'POST',
                 data: {
                     from_terminal_id: fromTerminalId,
@@ -799,6 +796,23 @@
                 }
             });
         }
+
+        // ========================================
+        // FETCH ARRIVAL TIME
+        // ========================================
+        function fetchArrivalTime() {
+            const select = document.getElementById('departureTime');
+            const selectedOption = select.options[select.selectedIndex];
+
+            // Read data-arrival attribute
+            const arrivalTime = selectedOption.getAttribute('data-arrival');
+
+            // Set input value
+            const arrivalInput = document.getElementById('arrivalTime');
+            arrivalInput.value = arrivalTime;
+            arrivalInput.disabled = false;
+        }
+
 
         // ========================================
         // RENDER SEAT MAP
@@ -1534,16 +1548,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                        <tr>
-                                                                            <td>${p.seat_number || 'N/A'}</td>
-                                                                            <td>${p.name || 'N/A'}</td>
-                                                                            <td>${p.age || 'N/A'}</td>
-                                                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                            <td>${p.cnic || 'N/A'}</td>
-                                                                            <td>${p.phone || 'N/A'}</td>
-                                                                            <td>${p.email || 'N/A'}</td>
-                                                                        </tr>
-                                                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                                                        <tr>
+                                                                                                            <td>${p.seat_number || 'N/A'}</td>
+                                                                                                            <td>${p.name || 'N/A'}</td>
+                                                                                                            <td>${p.age || 'N/A'}</td>
+                                                                                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                                                            <td>${p.cnic || 'N/A'}</td>
+                                                                                                            <td>${p.phone || 'N/A'}</td>
+                                                                                                            <td>${p.email || 'N/A'}</td>
+                                                                                                        </tr>
+                                                                                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -1635,7 +1649,7 @@
         function openAssignBusModal(tripId) {
             // Fetch list of available buses
             $.ajax({
-                url: '/admin/bookings/console/list-buses',
+                url: "{{ route('admin.bookings.list-buses') }}",
                 type: 'GET',
                 success: function(response) {
                     if (response.success) {
@@ -1712,7 +1726,7 @@
 
                             // Submit to backend
                             $.ajax({
-                                url: `/admin/bookings/console/assign-bus-driver/${tripId}`,
+                                url: "{{ route('admin.bookings.assign-bus-driver', ['tripId' => ':tripId']) }}",
                                 type: 'POST',
                                 data: {
                                     bus_id: busId,
