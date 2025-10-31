@@ -232,10 +232,6 @@ class BookingController extends Controller
         return response()->json(['message' => 'Booking deleted']);
     }
 
-    /**
-     * GET /admin/bookings/console/trip-passengers/{tripId}
-     * Fetch all passengers for a trip with their booking details
-     */
     public function getTripPassengers(int $tripId): JsonResponse
     {
         try {
@@ -280,10 +276,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * GET /admin/bookings/console/booking-details/{bookingId}
-     * Fetch complete booking details for modal display
-     */
     public function getBookingDetailsForConsole(int $bookingId): JsonResponse
     {
         try {
@@ -334,10 +326,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * GET /admin/bookings/terminals
-     * Fetch terminals for the current user (employee or admin)
-     */
     public function getTerminals(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -352,10 +340,6 @@ class BookingController extends Controller
         return response()->json(['terminals' => $terminals]);
     }
 
-    /**
-     * GET /admin/bookings/routes?terminal_id={id}
-     * Fetch routes for a given terminal
-     */
     public function getRoutes(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -371,10 +355,6 @@ class BookingController extends Controller
         return response()->json(['routes' => $routes]);
     }
 
-    /**
-     * GET /admin/bookings/stops?route_id={id}
-     * Fetch stops (terminals) for a given route
-     */
     public function getStops(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -390,10 +370,47 @@ class BookingController extends Controller
         return response()->json(['stops' => $stops]);
     }
 
-    /**
-     * GET /admin/bookings/console/route-stops?from_terminal_id={id}
-     * Fetch route stops after a given terminal
-     */
+    // public function getRouteStops(Request $request): JsonResponse
+    // {
+    //     $validated = $request->validate([
+    //         'from_terminal_id' => 'required|exists:terminals,id',
+    //     ]);
+
+    //     try {
+    //         // Find all routes that have this terminal, then get forward stops
+    //         $routes = Route::query()
+    //             ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+    //             ->where('status', 'active')
+    //             ->get();
+
+    //         $routeStops = [];
+    //         foreach ($routes as $route) {
+    //             // Get all stops for this route
+    //             $stops = RouteStop::where('route_id', $route->id)
+    //                 ->with('terminal:id,name,code')
+    //                 ->orderBy('sequence')
+    //                 ->get();
+
+    //             // Find the from terminal sequence
+    //             $fromTerminalSequence = $stops->firstWhere('terminal_id', $validated['from_terminal_id'])?->sequence;
+
+    //             if ($fromTerminalSequence === null) {
+    //                 continue;
+    //             }
+
+    //             // Get only forward stops (sequence > from_terminal sequence)
+    //             foreach ($stops as $stop) {
+    //                 if ($stop->sequence > $fromTerminalSequence) {
+    //                     $routeStops[] = $stop;
+    //                 }
+    //             }
+    //         }
+
+    //         return response()->json(['route_stops' => $routeStops]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 400);
+    //     }
+    // }
     public function getRouteStops(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -401,45 +418,50 @@ class BookingController extends Controller
         ]);
 
         try {
-            // Find all routes that have this terminal, then get forward stops
-            $routes = Route::query()
-                ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
-                ->where('status', 'active')
-                ->get();
 
-            $routeStops = [];
+            $user = Auth::user();
+
+            if ($user->routes()->exists()) {
+                $routes = $user->routes->where('status', 'active');
+            } else {
+                $routes = Route::query()
+                    ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                    ->where('status', 'active')
+                    ->get();
+            }
+
+            $routeStops = collect();
+
             foreach ($routes as $route) {
-                // Get all stops for this route
+
                 $stops = RouteStop::where('route_id', $route->id)
                     ->with('terminal:id,name,code')
                     ->orderBy('sequence')
                     ->get();
 
-                // Find the from terminal sequence
-                $fromTerminalSequence = $stops->firstWhere('terminal_id', $validated['from_terminal_id'])?->sequence;
+                // Remove user's own stop
+                $filteredStops = $stops->filter(
+                    fn($stop) =>
+                    $stop->terminal_id != $validated['from_terminal_id']
+                );
 
-                if ($fromTerminalSequence === null) {
-                    continue;
-                }
-
-                // Get only forward stops (sequence > from_terminal sequence)
-                foreach ($stops as $stop) {
-                    if ($stop->sequence > $fromTerminalSequence) {
-                        $routeStops[] = $stop;
-                    }
-                }
+                // Merge into collection
+                $routeStops = $routeStops->merge($filteredStops);
             }
 
-            return response()->json(['route_stops' => $routeStops]);
+            // ✅ DISTINCT: remove duplicates using terminal_id
+            $uniqueStops = $routeStops
+                ->unique('terminal_id')
+                ->values()
+                ->all();
+
+            return response()->json(['route_stops' => $uniqueStops]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * GET /admin/bookings/console/fare
-     * Fetch fare for a terminal segment
-     */
+
     public function getFare(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -481,10 +503,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * GET /admin/bookings/console/departure-times
-     * Fetch available departure times for a route segment on a given date
-     */
     public function getDepartureTimes(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -556,10 +574,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * POST /admin/bookings/load-trip (UPDATED)
-     * Load or create trip using timetable_stop_id
-     */
     public function loadTripUpdated(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -641,10 +655,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * POST /admin/bookings/lock-seats
-     * Lock selected seats
-     */
     public function lockSeats(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -677,7 +687,7 @@ class BookingController extends Controller
             SeatLocked::dispatch(
                 $trip->id,
                 $validated['seat_numbers'],
-                auth()->user()
+                Auth::user()
             );
 
             return response()->json([
@@ -691,10 +701,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * POST /admin/bookings/unlock-seats
-     * Unlock seats (user deselection)
-     */
     public function unlockSeats(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -706,7 +712,7 @@ class BookingController extends Controller
         SeatUnlocked::dispatch(
             $validated['trip_id'],
             $validated['seat_numbers'],
-            auth()->user()
+            Auth::user()
         );
 
         return response()->json([
@@ -714,10 +720,7 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * POST /admin/bookings/store
-     * Create booking
-     */
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -777,7 +780,7 @@ class BookingController extends Controller
                 'tax_amount' => $validated['tax_amount'] ?? 0,
                 'final_amount' => $validated['final_amount'],
                 'notes' => $validated['notes'] ?? null,
-                'user_id' => auth()->id(),
+                'user_id' => Auth::user()->id,
             ];
 
             // Handle payment for counter bookings
@@ -794,11 +797,11 @@ class BookingController extends Controller
             }
 
             // Create booking
-            $booking = $this->bookingService->create($data, auth()->user());
+            $booking = $this->bookingService->create($data, Auth::user());
 
             // Broadcast seat confirmed event
             foreach ($validated['seat_numbers'] as $seat) {
-                SeatConfirmed::dispatch($validated['trip_id'], [$seat], auth()->user());
+                SeatConfirmed::dispatch($validated['trip_id'], [$seat], Auth::user());
             }
 
             return response()->json([
@@ -824,9 +827,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * Build seat map with status
-     */
     private function buildSeatMap(Trip $trip, TripStop $fromStop, TripStop $toStop, int $total, array $available): array
     {
         $seatMap = [];
@@ -850,9 +850,6 @@ class BookingController extends Controller
         return $seatMap;
     }
 
-    /**
-     * Get booked seats for segment
-     */
     private function getBookedSeats(Trip $trip, TripStop $fromStop, TripStop $toStop): array
     {
         $bookings = Booking::with(['seats', 'passengers'])
@@ -887,9 +884,6 @@ class BookingController extends Controller
         return $bookedSeats;
     }
 
-    /**
-     * List all available buses
-     */
     public function listBuses(): JsonResponse
     {
         try {
@@ -910,9 +904,6 @@ class BookingController extends Controller
         }
     }
 
-    /**
-     * Assign bus and driver to a trip
-     */
     public function assignBusDriver(Request $request, int $tripId): JsonResponse
     {
         try {
