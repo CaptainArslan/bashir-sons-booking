@@ -502,6 +502,77 @@ class BookingController extends Controller
         }
     }
 
+    // public function getDepartureTimes(Request $request): JsonResponse
+    // {
+    //     $validated = $request->validate([
+    //         'from_terminal_id' => 'required|exists:terminals,id',
+    //         'to_terminal_id' => 'required|exists:terminals,id',
+    //         'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+    //     ]);
+
+    //     try {
+    //         // Validate terminals are different
+    //         if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
+    //             throw new \Exception('From and To terminals must be different');
+    //         }
+
+    //         // Get timetable stops for the FROM terminal only on the given date
+    //         $timetableStops = [];
+
+    //         $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
+    //             ->where('is_active', true)
+    //             ->with('timetable.route')
+    //             ->get();
+
+    //         foreach ($timetableStopsQuery as $ts) {
+    //             // Verify timetable and route exist
+    //             if (! $ts->timetable || ! $ts->timetable->route) {
+    //                 continue;
+    //             }
+
+    //             // Check if route has the to_terminal in forward sequence
+    //             $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
+    //                 ->orderBy('sequence')
+    //                 ->get();
+
+    //             $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+    //             $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+
+    //             // Skip if destination is not in forward sequence or doesn't exist
+    //             if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+    //                 continue;
+    //             }
+
+    //             // Combine date with departure_time to create full datetime
+    //             if ($ts->departure_time) {
+    //                 $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
+
+    //                 // Only include times that are in future
+    //                 if (strtotime($departureDateTime) >= time()) {
+    //                     $timetableStops[] = [
+    //                         'id' => $ts->id,
+    //                         'departure_at' => $departureDateTime,
+    //                         'terminal_id' => $ts->terminal_id,
+    //                         'timetable_id' => $ts->timetable_id,
+    //                         'route_id' => $ts->timetable->route->id,
+    //                         'route_name' => $ts->timetable->route->name,
+    //                     ];
+    //                 }
+    //             }
+    //         }
+
+    //         // Remove duplicates and sort by departure time
+    //         $timetableStops = collect($timetableStops)
+    //             ->unique('departure_at')
+    //             ->sortBy('departure_at')
+    //             ->values();
+
+    //         return response()->json(['timetable_stops' => $timetableStops]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 400);
+    //     }
+    // }
+
     public function getDepartureTimes(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -511,67 +582,92 @@ class BookingController extends Controller
         ]);
 
         try {
-            // Validate terminals are different
+
             if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
                 throw new \Exception('From and To terminals must be different');
             }
 
-            // Get timetable stops for the FROM terminal only on the given date
-            $timetableStops = [];
+            $fromId = $validated['from_terminal_id'];
+            $toId   = $validated['to_terminal_id'];
+            $date   = $validated['date'];
 
-            $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
+            $result = collect();
+
+            // Get timetables from FROM terminal
+            $timetables = TimetableStop::where('terminal_id', $fromId)
                 ->where('is_active', true)
-                ->with('timetable.route')
+                ->with(['timetable.route'])
                 ->get();
 
-            foreach ($timetableStopsQuery as $ts) {
-                // Verify timetable and route exist
+            foreach ($timetables as $ts) {
+
                 if (! $ts->timetable || ! $ts->timetable->route) {
                     continue;
                 }
 
-                // Check if route has the to_terminal in forward sequence
+                // Load route stops
                 $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
                     ->orderBy('sequence')
                     ->get();
 
-                $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
-                $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+                $fromStop = $routeStops->firstWhere('terminal_id', $fromId);
+                $toStop   = $routeStops->firstWhere('terminal_id', $toId);
 
-                // Skip if destination is not in forward sequence or doesn't exist
-                if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+                if (! $fromStop || ! $toStop) {
                     continue;
                 }
 
-                // Combine date with departure_time to create full datetime
-                if ($ts->departure_time) {
-                    $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
+                $isForward = $fromStop->sequence < $toStop->sequence;
+                $isReverse = $fromStop->sequence > $toStop->sequence;
 
-                    // Only include times that are in future
-                    if (strtotime($departureDateTime) >= time()) {
-                        $timetableStops[] = [
-                            'id' => $ts->id,
-                            'departure_at' => $departureDateTime,
-                            'terminal_id' => $ts->terminal_id,
-                            'timetable_id' => $ts->timetable_id,
-                            'route_id' => $ts->timetable->route->id,
-                            'route_name' => $ts->timetable->route->name,
-                        ];
+                if (! $isForward && ! $isReverse) {
+                    continue;
+                }
+
+                if (! $ts->departure_time) {
+                    continue;
+                }
+
+                // ✅ Build departure datetime
+                $departureDateTime = "{$date} {$ts->departure_time}";
+
+                // ✅ Build arrival datetime (from toStop arrival_time)
+                $arrivalDateTime = null;
+                if ($toStop->arrival_time) {
+                    $arrivalDateTime = "{$date} {$toStop->arrival_time}";
+                }
+
+                // ✅ Filter past times only for TODAY
+                if ($date == date('Y-m-d')) {
+                    if (strtotime($departureDateTime) < time()) {
+                        continue;
                     }
                 }
+
+                $result->push([
+                    'timetable_stop_id' => $ts->id,
+                    'departure_at'      => $departureDateTime,
+                    'arrival_at'        => $arrivalDateTime, // ✅ Added
+                    'from_terminal_id'  => $fromId,
+                    'to_terminal_id'    => $toId,
+                    'timetable_id'      => $ts->timetable_id,
+                    'route_id'          => $ts->timetable->route->id,
+                    'route_name'        => $ts->timetable->route->name,
+                    'direction'         => $isForward ? 'forward' : 'return',
+                ]);
             }
 
-            // Remove duplicates and sort by departure time
-            $timetableStops = collect($timetableStops)
-                ->unique('departure_at')
+            // ✅ Unique + sorted
+            $final = $result->unique('departure_at')
                 ->sortBy('departure_at')
                 ->values();
 
-            return response()->json(['timetable_stops' => $timetableStops]);
+            return response()->json(['timetable_stops' => $final]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+
 
     public function loadTripUpdated(Request $request): JsonResponse
     {
@@ -718,7 +814,6 @@ class BookingController extends Controller
             'message' => 'Seats unlocked successfully',
         ]);
     }
-
 
     public function store(Request $request): JsonResponse
     {

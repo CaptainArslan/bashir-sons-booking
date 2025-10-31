@@ -360,24 +360,41 @@
                                         <div class="stop-type">{{ $stop->terminal->city->name ?? 'N/A' }}</div>
                                     </td>
                                     <td>
-                                        <input type="time" 
-                                               name="stops[{{ $index }}][arrival_time]" 
-                                               class="form-control" 
-                                               value="{{ old('stops.' . $index . '.arrival_time', $stop->arrival_time) }}"
-                                               {{ $index === 0 ? 'readonly' : '' }}>
-                                        <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
                                         @if($index === 0)
-                                            <div class="form-text">First stop - no arrival time</div>
+                                            <input type="hidden" name="stops[{{ $index }}][arrival_time]" value="">
+                                            <input type="time" 
+                                                   class="form-control" 
+                                                   value=""
+                                                   disabled
+                                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                                            <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
+                                            <div class="form-text text-muted">
+                                                <i class="bx bx-info-circle me-1"></i>First stop - no arrival time
+                                            </div>
+                                        @else
+                                            <input type="time" 
+                                                   name="stops[{{ $index }}][arrival_time]" 
+                                                   class="form-control" 
+                                                   value="{{ old('stops.' . $index . '.arrival_time', $stop->arrival_time) }}">
+                                            <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
                                         @endif
                                     </td>
                                     <td>
-                                        <input type="time" 
-                                               name="stops[{{ $index }}][departure_time]" 
-                                               class="form-control" 
-                                               value="{{ old('stops.' . $index . '.departure_time', $stop->departure_time) }}"
-                                               {{ $index === $timetableStops->count() - 1 ? 'readonly' : '' }}>
                                         @if($index === $timetableStops->count() - 1)
-                                            <div class="form-text">Last stop - no departure time</div>
+                                            <input type="hidden" name="stops[{{ $index }}][departure_time]" value="">
+                                            <input type="time" 
+                                                   class="form-control" 
+                                                   value=""
+                                                   disabled
+                                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                                            <div class="form-text text-muted">
+                                                <i class="bx bx-info-circle me-1"></i>Last stop - no departure time
+                                            </div>
+                                        @else
+                                            <input type="time" 
+                                                   name="stops[{{ $index }}][departure_time]" 
+                                                   class="form-control" 
+                                                   value="{{ old('stops.' . $index . '.departure_time', $stop->departure_time) }}">
                                         @endif
                                     </td>
                                 </tr>
@@ -403,9 +420,9 @@
 <script>
 $(document).ready(function() {
     // Auto-calculate end arrival time based on last stop
-    $('input[name*="[arrival_time]"]').on('change', function() {
+    $('input[name*="[arrival_time]"]:not(:disabled)').on('change', function() {
         const lastStopIndex = {{ $timetableStops->count() - 1 }};
-        const lastArrivalTime = $(`input[name="stops[${lastStopIndex}][arrival_time]"]`).val();
+        const lastArrivalTime = $(`input[name="stops[${lastStopIndex}][arrival_time]"]:not(:disabled)`).val();
         
         if (lastArrivalTime) {
             $('#end_arrival_time').val(lastArrivalTime);
@@ -424,10 +441,10 @@ $(document).ready(function() {
             isValid = false;
         }
         
-        // Check if at least one stop has times set
+        // Check if at least one stop has times set (excluding disabled fields)
         let hasStopTimes = false;
-        $('input[name*="[arrival_time]"], input[name*="[departure_time]"]').each(function() {
-            if ($(this).val() && !$(this).prop('readonly')) {
+        $('input[name*="[arrival_time]"]:not(:disabled), input[name*="[departure_time]"]:not(:disabled)').each(function() {
+            if ($(this).val()) {
                 hasStopTimes = true;
                 return false;
             }

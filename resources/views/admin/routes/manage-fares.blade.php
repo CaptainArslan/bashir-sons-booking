@@ -167,7 +167,7 @@
                                         <th width="10%">Discount Type</th>
                                         <th width="10%">Discount Value</th>
                                         <th width="15%">Final Fare</th>
-                                        <th width="10%">Status</th>
+                                        {{-- <th width="10%">Status</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -219,12 +219,12 @@
                                                            readonly>
                                                 </div>
                                             </td>
-                                            <td>
+                                            {{-- <td>
                                                 <select class="form-select" name="fares[{{ $index }}][status]">
                                                     <option value="active" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'active' ? 'selected' : '' }}>Active</option>
                                                     <option value="inactive" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                                 </select>
-                                            </td>
+                                            </td> --}}
                                         </tr>
                                         
                                         <!-- Hidden fields for terminal IDs -->

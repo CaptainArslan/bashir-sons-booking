@@ -10,6 +10,7 @@ use App\Enums\RouteStatusEnum;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Enums\DiscountTypeEnum;
+use App\Enums\FareStatusEnum;
 use Yajra\DataTables\Facades\DataTables;
 
 class RouteController extends Controller
@@ -41,7 +42,7 @@ class RouteController extends Controller
                 ->addColumn('total_fare', function ($route) {
                     // Get all stops for this route
                     $stops = $route->routeStops()->orderBy('sequence')->get();
-                    
+
                     if ($stops->isEmpty()) {
                         return '<span class="badge bg-secondary">No stops</span>';
                     }
@@ -50,7 +51,7 @@ class RouteController extends Controller
                     $fares = Fare::where(function ($query) use ($stops) {
                         $terminalIds = $stops->pluck('terminal_id')->toArray();
                         $query->whereIn('from_terminal_id', $terminalIds)
-                              ->whereIn('to_terminal_id', $terminalIds);
+                            ->whereIn('to_terminal_id', $terminalIds);
                     })->get()->keyBy(function ($fare) {
                         return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
                     });
@@ -58,14 +59,14 @@ class RouteController extends Controller
                     // Generate all possible stop combinations
                     $html = '<div style="max-height: 200px; overflow-y: auto;">';
                     $stopCount = $stops->count();
-                    
+
                     for ($i = 0; $i < $stopCount; $i++) {
                         for ($j = $i + 1; $j < $stopCount; $j++) {
                             $fromStop = $stops[$i];
                             $toStop = $stops[$j];
                             $key = $fromStop->terminal_id . '-' . $toStop->terminal_id;
                             $fare = $fares->get($key);
-                            
+
                             if ($fare) {
                                 $html .= '<div class="mb-1"><small>';
                                 $html .= '<strong>' . e($fromStop->terminal->code) . '</strong> → <strong>' . e($toStop->terminal->code) . '</strong>: ';
@@ -79,7 +80,7 @@ class RouteController extends Controller
                             }
                         }
                     }
-                    
+
                     $html .= '</div>';
                     return $html;
                 })
@@ -742,7 +743,7 @@ class RouteController extends Controller
             'fares.*.discount_type' => 'nullable|in:flat,percent',
             'fares.*.discount_value' => 'nullable|numeric|min:0',
             'fares.*.currency' => 'required|string|max:3',
-            'fares.*.status' => 'required|in:active,inactive',
+            // 'fares.*.status' => 'required|in:active,inactive',`  
         ]);
 
         try {
@@ -773,7 +774,7 @@ class RouteController extends Controller
                         'discount_value' => $fareData['discount_value'] ?? 0,
                         'final_fare' => $finalFare,
                         'currency' => $fareData['currency'],
-                        'status' => $fareData['status'],
+                        'status' => $fareData['status'] ?? FareStatusEnum::ACTIVE->value,
                     ]
                 );
             }

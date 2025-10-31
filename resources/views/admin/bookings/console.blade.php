@@ -121,22 +121,6 @@
             </div>
             <div class="card-body bg-light">
                 <div class="row g-3">
-                    <!-- From Terminal / Stop -->
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">From Terminal</label>
-                        <select class="form-select form-select-lg" id="fromTerminal"
-                            @if (!auth()->user()->hasRole('admin')) disabled @endif>
-                            <option value="">Loading...</option>
-                        </select>
-                    </div>
-
-                    <!-- To Terminal / Stop -->
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">To Terminal</label>
-                        <select class="form-select form-select-lg" id="toTerminal" disabled>
-                            <option value="">Select Destination</option>
-                        </select>
-                    </div>
 
                     <!-- Date -->
                     <div class="col-md-2">
@@ -145,18 +129,41 @@
                             min="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}" />
                     </div>
 
+                    <!-- From Terminal / Stop -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">From Terminal</label>
+                        <select class="form-select form-select-lg select2" id="fromTerminal"
+                            @if (!auth()->user()->hasRole('admin')) disabled @endif>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+
+                    <!-- To Terminal / Stop -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">To Terminal</label>
+                        <select class="form-select form-select-lg select2" id="toTerminal" disabled>
+                            <option value="">Select Destination</option>
+                        </select>
+                    </div>
+                    
                     <!-- Departure Time (Timetable Stops) -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-bold">Departure Time</label>
-                        <select class="form-select form-select-lg" id="departureTime" disabled>
+                        <select class="form-select form-select-lg select2" id="departureTime" disabled>
                             <option value="">Select Departure Time</option>
                         </select>
                     </div>
 
+                    <!-- Arrival Time (Timetable Stops) -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Arrival Time</label>
+                        <input type="time" class="form-control form-control-lg" id="arrivalTime" disabled>
+                    </div>
+
                     <!-- Load Trip Button -->
-                    <div class="col-md-3 d-flex align-items-end gap-2">
+                    <div class="col-md-1 d-flex align-items-end gap-2">
                         <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
-                            <i class="fas fa-play"></i> Load Trip & Seats
+                            <i class="fas fa-play"></i> Load
                         </button>
                         <button class="btn btn-warning btn-lg fw-bold" id="assignBusBtnHeader"
                             onclick="openAssignBusModalFromHeader()" style="display: none;">
@@ -503,6 +510,7 @@
 
 @section('scripts')
     <script>
+
         // ========================================
         // STATE MANAGEMENT
         // ========================================
@@ -539,7 +547,6 @@
                 url: "{{ route('admin.bookings.terminals') }}",
                 type: 'GET',
                 success: function(response) {
-                    console.log(response);
                     appState.terminals = response.terminals;
                     const fromSelect = document.getElementById('fromTerminal');
 
@@ -696,7 +703,7 @@
         // ========================================
         function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
             $.ajax({
-                url: '/admin/bookings/console/departure-times',
+                url: "{{ route('admin.bookings.departure-times') }}",
                 type: 'GET',
                 data: {
                     from_terminal_id: fromTerminalId,
@@ -1527,16 +1534,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                <tr>
-                                                    <td>${p.seat_number || 'N/A'}</td>
-                                                    <td>${p.name || 'N/A'}</td>
-                                                    <td>${p.age || 'N/A'}</td>
-                                                    <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                    <td>${p.cnic || 'N/A'}</td>
-                                                    <td>${p.phone || 'N/A'}</td>
-                                                    <td>${p.email || 'N/A'}</td>
-                                                </tr>
-                                            `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                        <tr>
+                                                                            <td>${p.seat_number || 'N/A'}</td>
+                                                                            <td>${p.name || 'N/A'}</td>
+                                                                            <td>${p.age || 'N/A'}</td>
+                                                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                            <td>${p.cnic || 'N/A'}</td>
+                                                                            <td>${p.phone || 'N/A'}</td>
+                                                                            <td>${p.email || 'N/A'}</td>
+                                                                        </tr>
+                                                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>

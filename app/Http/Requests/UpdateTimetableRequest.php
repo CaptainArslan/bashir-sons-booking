@@ -84,25 +84,34 @@ class UpdateTimetableRequest extends FormRequest
         $validator->after(function ($validator) {
             // Custom validation logic
             $stops = $this->input('stops', []);
-            
+
             if (count($stops) > 0) {
-                // Check if first stop has departure time
+                // First stop: must have departure time, should NOT have arrival time
                 $firstStop = $stops[0];
                 if (empty($firstStop['departure_time'])) {
                     $validator->errors()->add('stops.0.departure_time', 'First stop must have a departure time.');
                 }
-                
-                // Check if last stop has arrival time
-                $lastStop = end($stops);
-                if (empty($lastStop['arrival_time'])) {
-                    $validator->errors()->add('stops.' . (count($stops) - 1) . '.arrival_time', 'Last stop must have an arrival time.');
+                // First stop arrival_time should be empty (it's the starting point)
+                if (! empty($firstStop['arrival_time'])) {
+                    $validator->errors()->add('stops.0.arrival_time', 'First stop should not have an arrival time.');
                 }
-                
+
+                // Last stop: must have arrival time, should NOT have departure time
+                $lastIndex = count($stops) - 1;
+                $lastStop = $stops[$lastIndex];
+                if (empty($lastStop['arrival_time'])) {
+                    $validator->errors()->add('stops.'.$lastIndex.'.arrival_time', 'Last stop must have an arrival time.');
+                }
+                // Last stop departure_time should be empty (it's the destination)
+                if (! empty($lastStop['departure_time'])) {
+                    $validator->errors()->add('stops.'.$lastIndex.'.departure_time', 'Last stop should not have a departure time.');
+                }
+
                 // Check if middle stops have at least one time
-                for ($i = 1; $i < count($stops) - 1; $i++) {
+                for ($i = 1; $i < $lastIndex; $i++) {
                     $stop = $stops[$i];
                     if (empty($stop['arrival_time']) && empty($stop['departure_time'])) {
-                        $validator->errors()->add('stops.' . $i . '.arrival_time', 'Middle stops must have either arrival or departure time.');
+                        $validator->errors()->add('stops.'.$i.'.arrival_time', 'Middle stops must have either arrival or departure time.');
                     }
                 }
             }
