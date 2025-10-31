@@ -692,6 +692,7 @@ class BookingController extends Controller
             return response()->json([
                 'message' => 'Seats locked successfully',
                 'locked_seats' => $validated['seat_numbers'],
+                'trip_id' => $trip->id,
             ]);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);

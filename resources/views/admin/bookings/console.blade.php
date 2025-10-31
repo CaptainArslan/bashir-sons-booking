@@ -516,6 +516,7 @@
         // ========================================
         let appState = {
             isAdmin: {{ auth()->user()->hasRole('admin') ? 'true' : 'false' }},
+            userId: {{ auth()->user()->id }},
             userTerminalId: {{ auth()->user()->terminal_id ?? 'null' }},
             terminals: [],
             routeStops: [],
@@ -528,6 +529,8 @@
             tripLoaded: false,
             fareData: null,
             baseFare: 0,
+            lockedSeats: {}, // Track locked seats: {seatNumber: userId}
+            echoChannel: null, // Echo channel for this trip
         };
 
         // ========================================
@@ -739,7 +742,7 @@
                         timeSelect.innerHTML +=
                             `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at}">${stop.departure_at}</option>`;
                     });
-                    console.log(timeSelect.innerHTML);
+                    // console.log(timeSelect.innerHTML);
                     timeSelect.disabled = false;
                 },
                 error: function() {
@@ -816,9 +819,11 @@
                         behavior: 'smooth'
                     });
                     loadTripPassengers(response.trip.id);
+                    setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || 'Unable to load trip information. Please check all selections and try again.';
+                    const message = error.responseJSON?.error ||
+                        'Unable to load trip information. Please check all selections and try again.';
                     Swal.fire({
                         icon: 'error',
                         title: 'Failed to Load Trip',
@@ -887,19 +892,28 @@
                     button.textContent = seatNumber;
                     button.title = `Seat ${seatNumber} - ${seat.status}`;
 
-                    // Set color
+                    // Set color and status
                     if (appState.selectedSeats[seatNumber]) {
+                        // User's own selected seat
                         button.className += ' bg-info text-white';
+                    } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+                        // Locked by another user - show as held
+                        button.className += ' bg-warning text-dark';
+                        button.disabled = true;
+                        button.title = `Seat ${seatNumber} - Locked by another user`;
                     } else if (seat.status === 'booked') {
                         button.className += ' bg-danger text-white';
+                        button.disabled = true;
                     } else if (seat.status === 'held') {
                         button.className += ' bg-warning text-dark';
+                        button.disabled = true;
                     } else {
                         button.className += ' bg-success text-white';
                     }
 
-                    // Disable if not available
-                    if (seat.status === 'booked' || seat.status === 'held') {
+                    // Disable if not available or locked by another user
+                    if (seat.status === 'booked' || seat.status === 'held' ||
+                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
                         button.disabled = true;
                     }
 
@@ -917,13 +931,46 @@
         // HANDLE SEAT CLICK
         // ========================================
         function handleSeatClick(seatNumber) {
+            // If seat is already selected, deselect it (and unlock)
             if (appState.selectedSeats[seatNumber]) {
+                unlockSeats([seatNumber]);
                 delete appState.selectedSeats[seatNumber];
-            } else {
-                appState.pendingSeat = seatNumber;
-                document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
-                new bootstrap.Modal(document.getElementById('genderModal')).show();
+                updateSeatsList();
+                renderSeatMap();
+                return;
             }
+
+            // Check if seat is locked by another user
+            if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Seat Already Selected',
+                    text: 'This seat is currently being booked by another user. Please select a different seat.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return;
+            }
+
+            // Check if seat is available
+            const seat = appState.seatMap[seatNumber];
+            if (!seat || seat.status === 'booked' || seat.status === 'held') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Seat Not Available',
+                    text: 'This seat is not available for booking.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return;
+            }
+
+            // Lock the seat first, then show gender modal
+            lockSeats([seatNumber], (success) => {
+                if (success) {
+                    appState.pendingSeat = seatNumber;
+                    document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
+                    new bootstrap.Modal(document.getElementById('genderModal')).show();
+                }
+            });
         }
 
         // ========================================
@@ -1389,7 +1436,7 @@
             document.getElementById('confirmBtn').disabled = true;
 
             $.ajax({
-                url: '/admin/bookings',
+                url: "{{ route('admin.bookings.store') }}",
                 type: 'POST',
                 data: {
                     trip_id: appState.tripData.trip.id,
@@ -1426,10 +1473,15 @@
                     document.getElementById('paymentMethodDisplay').textContent = booking.payment_method ||
                         'N/A';
 
+                    // Unlock seats after successful booking (they will be confirmed via WebSocket)
+                    const bookedSeats = booking.seats.map(Number);
+                    unlockSeats(bookedSeats);
+
                     new bootstrap.Modal(document.getElementById('successModal')).show();
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || error.responseJSON?.message || 'Unable to complete the booking. Please check all information and try again.';
+                    const message = error.responseJSON?.error || error.responseJSON?.message ||
+                        'Unable to complete the booking. Please check all information and try again.';
                     Swal.fire({
                         icon: 'error',
                         title: 'Booking Failed',
@@ -1447,8 +1499,23 @@
         // RESET FORM
         // ========================================
         function resetForm() {
+            // Unlock all seats before resetting
+            const lockedSeats = Object.keys(appState.lockedSeats).filter(
+                seat => appState.lockedSeats[seat] === appState.userId
+            );
+            if (lockedSeats.length > 0 && appState.tripLoaded) {
+                unlockSeats(lockedSeats.map(Number));
+            }
+
+            // Leave WebSocket channel
+            if (appState.echoChannel && appState.tripData?.trip?.id) {
+                window.Echo.leave(`trip.${appState.tripData.trip.id}`);
+                appState.echoChannel = null;
+            }
+
             appState.selectedSeats = {};
             appState.passengerInfo = {}; // ← Clear passenger info
+            appState.lockedSeats = {};
             appState.tripLoaded = false;
             appState.fareData = null;
             appState.baseFare = 0;
@@ -1461,6 +1528,8 @@
             document.getElementById('notes').value = '';
             document.getElementById('finalAmount').textContent = '0.00';
             document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            document.getElementById('arrivalTime').disabled = true;
             updateSeatsList();
         }
 
@@ -1475,11 +1544,140 @@
         }
 
         // ========================================
+        // SETUP TRIP WEBSOCKET LISTENERS
+        // ========================================
+        function setupTripWebSocket(tripId) {
+            console.log(' setting up trip web socket for tripId', tripId);
+            if (!window.Echo) return;
+
+            console.log('appState.tripData?.trip?.id', appState.tripData?.trip?.id);
+            // Leave previous channel if exists
+            if (appState.echoChannel) {
+                window.Echo.leave(`trip.${appState.tripData?.trip?.id}`);
+            }
+
+            // Join the trip channel
+            appState.echoChannel = window.Echo.channel(`trip.${tripId}`);
+            console.log('channel subscribed to', appState.echoChannel);
+
+            // Listen for seat locked events
+            appState.echoChannel.listen('.seat-locked', (event) => {
+                console.log(' seat locked event', event);
+                event.seat_numbers.forEach(seatNumber => {
+                    appState.lockedSeats[seatNumber] = event.user_id;
+                });
+                renderSeatMap();
+            });
+
+            // Listen for seat unlocked events
+            appState.echoChannel.listen('.seat-unlocked', (event) => {
+                event.seat_numbers.forEach(seatNumber => {
+                    delete appState.lockedSeats[seatNumber];
+                });
+                renderSeatMap();
+            });
+
+            // Listen for seat confirmed events (seats become booked)
+            appState.echoChannel.listen('.seat-confirmed', (event) => {
+                event.seat_numbers.forEach(seatNumber => {
+                    delete appState.lockedSeats[seatNumber];
+                    if (appState.seatMap[seatNumber]) {
+                        appState.seatMap[seatNumber].status = 'booked';
+                    }
+                });
+                renderSeatMap();
+            });
+        }
+
+        // ========================================
+        // LOCK SEATS
+        // ========================================
+        function lockSeats(seatNumbers, callback) {
+            if (!appState.tripData || !appState.tripLoaded) {
+                if (callback) callback(false);
+                return;
+            }
+
+            const tripId = appState.tripData.trip.id;
+            const fromStopId = appState.tripData.from_stop.id;
+            const toStopId = appState.tripData.to_stop.id;
+
+            $.ajax({
+                url: "{{ route('admin.bookings.lock-seats') }}",
+                type: 'POST',
+                data: {
+                    trip_id: tripId,
+                    seat_numbers: seatNumbers,
+                    from_stop_id: fromStopId,
+                    to_stop_id: toStopId,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                },
+                success: function(response) {
+                    // Mark seats as locked by current user
+                    seatNumbers.forEach(seatNumber => {
+                        appState.lockedSeats[seatNumber] = appState.userId;
+                    });
+                    renderSeatMap();
+                    if (callback) callback(true);
+                },
+                error: function(error) {
+                    const message = error.responseJSON?.error || error.responseJSON?.errors?.seats?.[0] ||
+                        'Failed to lock seat';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Lock Seat',
+                        text: message,
+                        confirmButtonColor: '#d33'
+                    });
+                    if (callback) callback(false);
+                }
+            });
+        }
+
+        // ========================================
+        // UNLOCK SEATS
+        // ========================================
+        function unlockSeats(seatNumbers) {
+            if (!appState.tripData || !appState.tripLoaded) {
+                return;
+            }
+
+            const tripId = appState.tripData.trip.id;
+
+            $.ajax({
+                url: "{{ route('admin.bookings.unlock-seats') }}",
+                type: 'POST',
+                data: {
+                    trip_id: tripId,
+                    seat_numbers: seatNumbers,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                },
+                success: function(response) {
+                    // Remove from locked seats
+                    seatNumbers.forEach(seatNumber => {
+                        delete appState.lockedSeats[seatNumber];
+                    });
+                    renderSeatMap();
+                },
+                error: function(error) {
+                    // Silently fail for unlock - not critical
+                    console.error('Failed to unlock seats:', error);
+                    // Still remove from local state
+                    seatNumbers.forEach(seatNumber => {
+                        delete appState.lockedSeats[seatNumber];
+                    });
+                    renderSeatMap();
+                }
+            });
+        }
+
+        // ========================================
         // LOAD TRIP PASSENGERS
         // ========================================
         function loadTripPassengers(tripId) {
             $.ajax({
-                url: `/admin/bookings/console/trip-passengers/${tripId}`,
+                url: "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId',
+                    tripId),
                 type: 'GET',
                 success: function(response) {
                     const passengersList = document.getElementById('tripPassengersList');
@@ -1623,16 +1821,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                                                        <tr>
-                                                                                                            <td>${p.seat_number || 'N/A'}</td>
-                                                                                                            <td>${p.name || 'N/A'}</td>
-                                                                                                            <td>${p.age || 'N/A'}</td>
-                                                                                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                                                            <td>${p.cnic || 'N/A'}</td>
-                                                                                                            <td>${p.phone || 'N/A'}</td>
-                                                                                                            <td>${p.email || 'N/A'}</td>
-                                                                                                        </tr>
-                                                                                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                                                                                    <tr>
+                                                                                                                                        <td>${p.seat_number || 'N/A'}</td>
+                                                                                                                                        <td>${p.name || 'N/A'}</td>
+                                                                                                                                        <td>${p.age || 'N/A'}</td>
+                                                                                                                                        <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                                                                                        <td>${p.cnic || 'N/A'}</td>
+                                                                                                                                        <td>${p.phone || 'N/A'}</td>
+                                                                                                                                        <td>${p.email || 'N/A'}</td>
+                                                                                                                                    </tr>
+                                                                                                                                `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -1643,14 +1841,16 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Failed to Load Booking Details',
-                            text: response.error || 'Unable to fetch booking information. Please try again.',
+                            text: response.error ||
+                                'Unable to fetch booking information. Please try again.',
                             confirmButtonColor: '#d33'
                         });
                     }
                 },
                 error: function(error) {
                     console.error('AJAX Error:', error);
-                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message || 'Unable to load booking details. Please check your connection and try again.';
+                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message ||
+                        'Unable to load booking details. Please check your connection and try again.';
                     Swal.fire({
                         icon: 'error',
                         title: 'Failed to Load Booking Details',
@@ -1841,7 +2041,8 @@
                                         });
                                         modal.hide();
                                         // Reload trip data
-                                        const tripId = appState.tripData ? appState.tripData.trip.id : null;
+                                        const tripId = appState.tripData ? appState.tripData
+                                            .trip.id : null;
                                         if (tripId) {
                                             loadTrip();
                                         }
@@ -1849,14 +2050,17 @@
                                         Swal.fire({
                                             icon: 'error',
                                             title: 'Assignment Failed',
-                                            text: response.error || response.message || 'Unable to assign bus and driver. Please check all information and try again.',
+                                            text: response.error || response.message ||
+                                                'Unable to assign bus and driver. Please check all information and try again.',
                                             confirmButtonColor: '#d33'
                                         });
                                     }
                                 },
                                 error: function(error) {
                                     console.error('Error:', error);
-                                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message || 'Unable to assign bus and driver. Please check your connection and try again.';
+                                    const errorMessage = error.responseJSON?.error || error
+                                        .responseJSON?.message ||
+                                        'Unable to assign bus and driver. Please check your connection and try again.';
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'Failed to Assign Bus & Driver',
