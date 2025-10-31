@@ -3,58 +3,93 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = [
-            'Super Admin',
-            'Admin',
-            'Customer',
-            'Employee',
-        ];
         // Create roles
-        foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName]);
-        }
-
-        $permissions = [
-            'access admin panel',
-            'manage users',
-            'manage roles',
-            'manage permissions',
-            'view reports',
-            'manage enquiries',
+        $roles = [
+            'super_admin',
+            'admin',
+            'employee',
+            'customer',
         ];
 
-        // Create permissions
-        foreach ($permissions as $permissionName) {
-            Permission::firstOrCreate(['name' => $permissionName]);
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate(
+                ['name' => $roleName],
+                ['guard_name' => 'web']
+            );
         }
 
-        // Assign all permissions to super admin
-        $superAdminRole = Role::where('name', 'Super Admin')->first();
-        $allPermissions = Permission::all();
-        $superAdminRole->syncPermissions($allPermissions);
+        // Ensure PermissionSeeder has run first
+        $this->command->info('Assuming PermissionSeeder has already run. If not, run it first.');
 
-        // Assign limited permissions to admin
-        $adminRole = Role::where('name', 'Admin')->first();
-        $adminPermissions = Permission::whereIn('name', [
-            'access admin panel',
-            'manage users',
-            'view reports',
-            'manage enquiries',
-        ])->get();
-        $adminRole->syncPermissions($adminPermissions);
+        // Super Admin - All permissions
+        $superAdminRole = Role::where('name', 'super_admin')->first();
+        if ($superAdminRole) {
+            $allPermissions = Permission::all();
+            $superAdminRole->syncPermissions($allPermissions);
+            $this->command->info('Super Admin role assigned all '.$allPermissions->count().' permissions.');
+        }
 
-        // Customer and Employee have minimal or no permissions
-        $customerRole = Role::where('name', 'Customer')->first();
-        $employeeRole = Role::where('name', 'Employee')->first();
+        // Admin - Most permissions except system management and super admin restrictions
+        $adminRole = Role::where('name', 'admin')->first();
+        if ($adminRole) {
+            $adminPermissions = Permission::whereNotIn('name', [
+                'manage system settings',
+                'view system logs',
+                'backup system',
+                'delete roles',
+                'delete permissions',
+            ])->get();
+            $adminRole->syncPermissions($adminPermissions);
+            $this->command->info('Admin role assigned '.$adminPermissions->count().' permissions.');
+        }
 
-        $customerRole->syncPermissions([]);
-        $employeeRole->syncPermissions([]);
+        // Employee - Full booking management and viewing permissions
+        $employeeRole = Role::where('name', 'employee')->first();
+        if ($employeeRole) {
+            $employeePermissions = Permission::whereIn('name', [
+                'access admin panel',
+                'view dashboard',
+                'view cities',
+                'view terminals',
+                'view routes',
+                'view route stops',
+                'view fares',
+                'view timetables',
+                'view buses',
+                'view bus types',
+                'view bus layouts',
+                'view facilities',
+                // Full booking management
+                'view bookings',
+                'create bookings',
+                'edit bookings',
+                'delete bookings',
+                // Enquiry management
+                'view enquiries',
+                'reply to enquiries',
+                'delete enquiries',
+                // Content viewing
+                'view banners',
+                'view announcements',
+                'view discounts',
+                'view reports',
+            ])->get();
+            $employeeRole->syncPermissions($employeePermissions);
+            $this->command->info('Employee role assigned '.$employeePermissions->count().' permissions.');
+        }
+
+        // Customer - No admin permissions (frontend only)
+        $customerRole = Role::where('name', 'customer')->first();
+        if ($customerRole) {
+            $customerRole->syncPermissions([]);
+            $this->command->info('Customer role has no admin permissions.');
+        }
     }
 }
