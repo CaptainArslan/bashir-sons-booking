@@ -461,7 +461,6 @@ class BookingController extends Controller
         }
     }
 
-
     public function getFare(Request $request): JsonResponse
     {
         $validated = $request->validate([
