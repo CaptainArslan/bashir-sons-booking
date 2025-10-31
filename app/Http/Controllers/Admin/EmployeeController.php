@@ -177,10 +177,39 @@ class EmployeeController extends Controller
     {
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
-        $terminals = Terminal::with('city')->get();
-        $routes = Route::with(['routeStops.terminal'])->get();
+        $terminals = Terminal::with('city')->where('status', 'active')->get();
 
         return view('admin.employees.create', get_defined_vars());
+    }
+
+    public function getRoutesByTerminal(Request $request)
+    {
+        $validated = $request->validate([
+            'terminal_id' => 'required|exists:terminals,id',
+        ]);
+
+        $routes = Route::whereHas('routeStops', function ($query) use ($validated) {
+            $query->where('terminal_id', $validated['terminal_id']);
+        })
+            ->where('status', 'active')
+            ->with(['routeStops' => function ($query) {
+                $query->with('terminal')->orderBy('sequence');
+            }])
+            ->get()
+            ->map(function ($route) {
+                $firstStop = $route->routeStops->first();
+                $lastStop = $route->routeStops->last();
+
+                return [
+                    'id' => $route->id,
+                    'code' => $route->code,
+                    'name' => $route->name,
+                    'first_terminal' => $firstStop?->terminal?->name,
+                    'last_terminal' => $lastStop?->terminal?->name,
+                ];
+            });
+
+        return response()->json(['routes' => $routes]);
     }
 
     public function store(Request $request)
@@ -215,6 +244,22 @@ class EmployeeController extends Controller
             'date_of_birth.before' => 'Date of birth must be in the past',
             'address.required' => 'Address is required',
         ]);
+
+        // Validate that all selected routes belong to the selected terminal
+        if (! empty($validated['routes'])) {
+            $validRoutes = Route::whereHas('routeStops', function ($query) use ($validated) {
+                $query->where('terminal_id', $validated['terminal_id']);
+            })
+                ->whereIn('id', $validated['routes'])
+                ->pluck('id')
+                ->toArray();
+
+            if (count($validRoutes) !== count($validated['routes'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['routes' => 'One or more selected routes do not belong to the selected terminal.']);
+            }
+        }
 
         try {
             DB::beginTransaction();
@@ -270,10 +315,9 @@ class EmployeeController extends Controller
         }
 
         $genders = GenderEnum::getGenders();
-        $terminals = Terminal::with('city')->get();
-        $routes = Route::with(['routeStops.terminal'])->get();
+        $terminals = Terminal::with('city')->where('status', 'active')->get();
 
-        return view('admin.employees.edit', compact('user', 'genders', 'terminals', 'routes'));
+        return view('admin.employees.edit', compact('user', 'genders', 'terminals'));
     }
 
     public function update(Request $request, $id)
@@ -315,6 +359,22 @@ class EmployeeController extends Controller
             'date_of_birth.before' => 'Date of birth must be in the past',
             'address.required' => 'Address is required',
         ]);
+
+        // Validate that all selected routes belong to the selected terminal
+        if (! empty($validated['routes'])) {
+            $validRoutes = Route::whereHas('routeStops', function ($query) use ($validated) {
+                $query->where('terminal_id', $validated['terminal_id']);
+            })
+                ->whereIn('id', $validated['routes'])
+                ->pluck('id')
+                ->toArray();
+
+            if (count($validRoutes) !== count($validated['routes'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['routes' => 'One or more selected routes do not belong to the selected terminal.']);
+            }
+        }
 
         try {
             DB::beginTransaction();

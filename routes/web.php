@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/employees/data', [EmployeeController::class, 'getData'])->can('manage users')->name('employees.data');
         Route::get('/employees/stats', [EmployeeController::class, 'stats'])->can('manage users')->name('employees.stats');
         Route::get('/employees/create', [EmployeeController::class, 'create'])->can('manage users')->name('employees.create');
+        Route::get('/employees/routes-by-terminal', [EmployeeController::class, 'getRoutesByTerminal'])->can('manage users')->name('employees.routes-by-terminal');
         Route::post('/employees', [EmployeeController::class, 'store'])->can('manage users')->name('employees.store');
         Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->can('manage users')->name('employees.edit');
         Route::put('/employees/{id}', [EmployeeController::class, 'update'])->can('manage users')->name('employees.update');

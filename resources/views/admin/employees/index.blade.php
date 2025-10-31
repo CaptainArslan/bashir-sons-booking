@@ -13,19 +13,19 @@
             padding: 0.75rem 1rem;
             margin-bottom: 0.75rem;
         }
-        
+
         .employees-header h4 {
             margin: 0;
             font-size: 1rem;
             font-weight: 600;
         }
-        
+
         .employees-header p {
             margin: 0.15rem 0 0 0;
             opacity: 0.9;
             font-size: 0.8rem;
         }
-        
+
         .add-employee-btn {
             background: linear-gradient(45deg, #007bff, #0056b3);
             border: none;
@@ -36,17 +36,17 @@
             font-size: 0.8rem;
             transition: all 0.2s ease;
         }
-        
+
         .add-employee-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
             color: white;
         }
-        
+
         .table-container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
 
@@ -165,64 +165,69 @@
 @section('scripts')
     {{-- @include('admin.layouts.datatables') --}}
     <script>
+        var table = null;
         $(document).ready(function() {
             // Initialize the employees table
-            $('#employees-table').DataTable({
+            table = $('#employees-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('admin.employees.data') }}",
                 columns: [{
-                    data: 'id',
-                    name: 'id',
-                },
-                {
-                    data: 'employee_info',
-                    name: 'name',
-                    orderable: false,
-                },
-                {
-                    data: 'contact_info',
-                    name: 'profile.phone',
-                    orderable: false,
-                },
-                {
-                    data: 'personal_info',
-                    name: 'profile.gender',
-                    orderable: false,
-                },
-                {
-                    data: 'terminal_info',
-                    name: 'terminal.name',
-                    orderable: false,
-                },
-                {
-                    data: 'routes_info',
-                    name: 'routes',
-                    orderable: false,
-                },
-                {
-                    data: 'address_info',
-                    name: 'profile.address',
-                    orderable: false,
-                },
-                {
-                    data: 'status_info',
-                    name: 'terminal_id',
-                    orderable: false,
-                },
-                {
-                    data: 'created_at',
-                    name: 'created_at',
-                },
-                {
-                    data: 'actions',
-                    name: 'actions',
-                    orderable: false,
-                    searchable: false,
-                }],
+                        data: 'id',
+                        name: 'id',
+                    },
+                    {
+                        data: 'employee_info',
+                        name: 'name',
+                        orderable: false,
+                    },
+                    {
+                        data: 'contact_info',
+                        name: 'profile.phone',
+                        orderable: false,
+                    },
+                    {
+                        data: 'personal_info',
+                        name: 'profile.gender',
+                        orderable: false,
+                    },
+                    {
+                        data: 'terminal_info',
+                        name: 'terminal.name',
+                        orderable: false,
+                    },
+                    {
+                        data: 'routes_info',
+                        name: 'routes',
+                        orderable: false,
+                    },
+                    {
+                        data: 'address_info',
+                        name: 'profile.address',
+                        orderable: false,
+                    },
+                    {
+                        data: 'status_info',
+                        name: 'terminal_id',
+                        orderable: false,
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at',
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                    }
+                ],
                 autoWidth: false,
                 pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
                 drawCallback: function(settings) {
                     updateStatistics();
                 }
@@ -247,31 +252,58 @@
 
             // Initial statistics load
             updateStatistics();
-        });
 
-        // Delete employee function
-        function deleteEmployee(userId) {
-            if (confirm('Are you sure you want to delete this employee?')) {
-                $.ajax({
-                    url: "{{ route('admin.employees.destroy', ':id') }}".replace(':id', userId),
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Reload the employees table
-                            $('#employees-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        toastr.error('Error deleting employee');
+            // Delete employee function with SweetAlert
+            function deleteEmployee(userId) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('admin.employees.destroy', ':id') }}".replace(':id',
+                                userId),
+                            type: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire(
+                                        'Deleted!',
+                                        response.message || 'Employee has been deleted.',
+                                        'success'
+                                    );
+                                    // Reload the employees table
+                                    table.ajax.reload();
+                                    // Update statistics
+                                    updateStatistics();
+                                } else {
+                                    Swal.fire(
+                                        'Error!',
+                                        response?.message || 'Failed to delete employee.',
+                                        'error'
+                                    );
+                                }
+                            },
+                            error: function(error) {
+                                Swal.fire(
+                                    'Error!',
+                                    error?.responseJSON?.message ||
+                                    'An error occurred while deleting the employee.',
+                                    'error'
+                                );
+                            }
+                        });
                     }
                 });
             }
-        }
+        });
     </script>
 @endsection
