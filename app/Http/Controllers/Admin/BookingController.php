@@ -21,6 +21,7 @@ use App\Services\TripFactoryService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -71,13 +72,13 @@ class BookingController extends Controller
 
         // Filter by booking number
         if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+            $query->where('booking_number', 'like', '%' . $request->booking_number . '%');
         }
 
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
-                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
+                return '<span class="badge bg-primary">#' . $booking->booking_number . '</span>';
             })
             ->addColumn('created_at', function (Booking $booking) {
                 return $booking->created_at->format('d M Y, H:i');
@@ -86,18 +87,18 @@ class BookingController extends Controller
                 $from = $booking->fromStop?->terminal?->code ?? 'N/A';
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
-                return '<strong>'.$from.' → '.$to.'</strong>';
+                return '<strong>' . $from . ' → ' . $to . '</strong>';
             })
             ->addColumn('seats', function (Booking $booking) {
                 $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
 
-                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
+                return '<span class="badge bg-info">' . $seatNumbers . '</span>';
             })
             ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
+                return '<span class="badge bg-secondary">' . $booking->passengers->count() . ' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
+                return '<strong>PKR ' . number_format($booking->final_amount, 2) . '</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
                 $icons = [
@@ -118,7 +119,7 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->status) . '</span>';
             })
             ->addColumn('payment_status', function (Booking $booking) {
                 $badgeClass = match ($booking->payment_status) {
@@ -128,18 +129,18 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->payment_status) . '</span>';
             })
             ->addColumn('actions', function (Booking $booking) {
                 return '
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails(' . $booking->id . ')">
                             <i class="fas fa-eye"></i> View
                         </button>
-                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
+                        <a href="' . route('admin.bookings.edit', $booking->id) . '" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking(' . $booking->id . ')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -310,7 +311,7 @@ class BookingController extends Controller
                     'updated_at' => $booking->updated_at,
                     'from_stop' => $booking->fromStop?->terminal?->name,
                     'to_stop' => $booking->toStop?->terminal?->name,
-                    'passengers' => $booking->passengers->map(fn ($p) => [
+                    'passengers' => $booking->passengers->map(fn($p) => [
                         'name' => $p->name,
                         'age' => $p->age,
                         'gender' => $p->gender,
@@ -319,7 +320,7 @@ class BookingController extends Controller
                         'email' => $p->email,
                         'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
                     ])->toArray(),
-                    'seats' => $booking->seats->map(fn ($s) => [
+                    'seats' => $booking->seats->map(fn($s) => [
                         'seat_number' => $s->seat_number,
                         'gender' => $s->gender,
                         'fare' => $s->fare,
@@ -339,9 +340,12 @@ class BookingController extends Controller
      */
     public function getTerminals(Request $request): JsonResponse
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $terminals = Terminal::query()
             ->where('status', 'active')
+            ->when($user->terminal_id, function ($query) use ($user) {
+                $query->where('id', $user->terminal_id);
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'city_id', 'code']);
 
@@ -359,7 +363,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -399,7 +403,7 @@ class BookingController extends Controller
         try {
             // Find all routes that have this terminal, then get forward stops
             $routes = Route::query()
-                ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
                 ->where('status', 'active')
                 ->get();
 
@@ -524,7 +528,7 @@ class BookingController extends Controller
 
                 // Combine date with departure_time to create full datetime
                 if ($ts->departure_time) {
-                    $departureDateTime = $validated['date'].' '.$ts->departure_time;
+                    $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
 
                     // Only include times that are in future
                     if (strtotime($departureDateTime) >= time()) {

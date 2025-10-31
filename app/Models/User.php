@@ -169,6 +169,11 @@ class User extends Authenticatable
     // =============================
     // Helper Methods
     // =============================
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
     public function isEmployee(): bool
     {
         return $this->hasRole('Employee');

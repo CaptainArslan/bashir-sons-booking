@@ -6,9 +6,9 @@ use App\Enums\TerminalEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Terminal extends Model
 {
@@ -36,6 +36,12 @@ class Terminal extends Model
     // =============================
     // Relationships
     // =============================
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class, 'city_id');
@@ -69,15 +75,15 @@ class Terminal extends Model
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => ucfirst($value),
+            get: fn($value) => ucfirst($value),
         );
     }
 
     protected function code(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => strtoupper($value),
-            set: fn ($value) => strtoupper($value),
+            get: fn($value) => strtoupper($value),
+            set: fn($value) => strtoupper($value),
         );
     }
 }

@@ -3,920 +3,958 @@
 @section('title', 'Booking Console')
 
 @section('content')
-<style>
-    /* Responsive Layout Styles */
-    @media (max-width: 1199px) {
-        .col-lg-3, .col-lg-5, .col-lg-4 {
-            margin-bottom: 1.5rem;
+    <style>
+        /* Responsive Layout Styles */
+        @media (max-width: 1199px) {
+
+            .col-lg-3,
+            .col-lg-5,
+            .col-lg-4 {
+                margin-bottom: 1.5rem;
+            }
         }
-    }
 
-    @media (max-width: 767px) {
-        .col-md-6 {
-            font-size: 0.9rem;
+        @media (max-width: 767px) {
+            .col-md-6 {
+                font-size: 0.9rem;
+            }
+
+            .form-control-sm {
+                font-size: 0.8rem !important;
+            }
+
+            .small {
+                font-size: 0.75rem !important;
+            }
         }
-        
-        .form-control-sm {
-            font-size: 0.8rem !important;
+
+        /* Seat map styling */
+        .seat-row {
+            justify-content: center;
+            width: 100%;
         }
-        
-        .small {
-            font-size: 0.75rem !important;
+
+        .seat-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem;
         }
-    }
 
-    /* Seat map styling */
-    .seat-row {
-        justify-content: center;
-        width: 100%;
-    }
+        /* Card body compact padding */
+        .card-body.p-2 {
+            padding: 0.5rem !important;
+        }
 
-    .seat-grid {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        padding: 0.5rem;
-    }
+        /* Scrollable areas */
+        .scrollable-content {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
 
-    /* Card body compact padding */
-    .card-body.p-2 {
-        padding: 0.5rem !important;
-    }
+        /* Badge sizing */
+        .badge.small {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
 
-    /* Scrollable areas */
-    .scrollable-content {
-        max-height: calc(100vh - 300px);
-        overflow-y: auto;
-    }
+        /* Alert sizing */
+        .alert.small {
+            padding: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
 
-    /* Badge sizing */
-    .badge.small {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.5rem;
-    }
+        /* Form label sizing */
+        .form-label.small {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
 
-    /* Alert sizing */
-    .alert.small {
-        padding: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
+        /* Passenger info container */
+        #passengerInfoContainer {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.1);
+        }
 
-    /* Form label sizing */
-    .form-label.small {
-        font-size: 0.8rem;
-        margin-bottom: 0.25rem;
-    }
+        #passengerInfoContainer::-webkit-scrollbar {
+            width: 6px;
+        }
 
-    /* Passenger info container */
-    #passengerInfoContainer {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0,0,0,0.2) rgba(0,0,0,0.1);
-    }
+        #passengerInfoContainer::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
 
-    #passengerInfoContainer::-webkit-scrollbar {
-        width: 6px;
-    }
+        #passengerInfoContainer::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
 
-    #passengerInfoContainer::-webkit-scrollbar-track {
-        background: rgba(0,0,0,0.1);
-    }
+        /* Seat map legend - horizontal flex layout */
+        .seat-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            width: 100%;
+        }
 
-    #passengerInfoContainer::-webkit-scrollbar-thumb {
-        background: rgba(0,0,0,0.2);
-        border-radius: 3px;
-    }
-
-    /* Seat map legend - horizontal flex layout */
-    .seat-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
-        width: 100%;
-    }
-
-    .seat-legend .badge {
-        flex-shrink: 0;
-        white-space: nowrap;
-    }
-</style>
-<div class="container-fluid p-4">
-    <!-- Header Section -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-ticket-alt"></i> 
-                Booking Console - Real-Time Seat Booking
-                @if(auth()->user()->hasRole('admin'))
-                    <span class="badge bg-info ms-2">Admin Mode</span>
-                @else
-                    <span class="badge bg-warning ms-2">Employee Mode - Terminal: {{ auth()->user()->terminal?->name ?? 'N/A' }}</span>
-                @endif
-            </h5>
-        </div>
-        <div class="card-body bg-light">
-            <div class="row g-3">
-                <!-- From Terminal / Stop -->
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">From Terminal</label>
-                    <select class="form-select form-select-lg" id="fromTerminal" @if(!auth()->user()->hasRole('admin')) disabled @endif>
-                        <option value="">Loading...</option>
-                    </select>
-                </div>
-
-                <!-- To Terminal / Stop -->
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">To Terminal</label>
-                    <select class="form-select form-select-lg" id="toTerminal" disabled>
-                        <option value="">Select Destination</option>
-                    </select>
-                </div>
-
-                <!-- Date -->
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Travel Date</label>
-                    <input type="date" class="form-control form-control-lg" id="travelDate"
-                        min="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}" />
-                </div>
-
-                <!-- Departure Time (Timetable Stops) -->
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Departure Time</label>
-                    <select class="form-select form-select-lg" id="departureTime" disabled>
-                        <option value="">Select Departure Time</option>
-                    </select>
-                </div>
-
-                <!-- Load Trip Button -->
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
-                        <i class="fas fa-play"></i> Load Trip & Seats
-                    </button>
-                    <button class="btn btn-warning btn-lg fw-bold" id="assignBusBtnHeader" onclick="openAssignBusModalFromHeader()" style="display: none;">
-                        <i class="fas fa-bus"></i> Assign Bus
-                    </button>
-                </div>
+        .seat-legend .badge {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+    </style>
+    <div class="container-fluid p-4">
+        <!-- Header Section -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-ticket-alt"></i>
+                    Booking Console - Real-Time Seat Booking
+                    @if (auth()->user()->hasRole('admin'))
+                        <span class="badge bg-info ms-2">Admin Mode</span>
+                    @else
+                        <span class="badge bg-warning ms-2">Employee Mode - Terminal:
+                            {{ auth()->user()->terminal?->name ?? 'N/A' }}</span>
+                    @endif
+                </h5>
             </div>
-        </div>
-    </div>
-
-    <!-- Trip Content (shown when trip loaded) -->
-    <div id="tripContent" style="display: none;">
-        <div class="row g-3">
-            <!-- Left Column: Seat Map (3 columns) -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chair"></i> Seat Map
-                        </h6>
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    <!-- From Terminal / Stop -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">From Terminal</label>
+                        <select class="form-select form-select-lg" id="fromTerminal"
+                            @if (!auth()->user()->hasRole('admin')) disabled @endif>
+                            <option value="">Loading...</option>
+                        </select>
                     </div>
-                    <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
-                        <!-- Legend -->
-                        <div class="mb-2 p-2 bg-light rounded border border-success-subtle w-100">
-                            <div class="seat-legend">
-                                <span class="badge bg-success small p-1" title="Available">🟩 Available</span>
-                                <span class="badge bg-danger small p-1" title="Booked">🟥 Booked</span>
-                                <span class="badge bg-warning text-dark small p-1" title="Held">🟨 Held</span>
-                                <span class="badge bg-info small p-1" title="Selected">🟦 Selected</span>
-                            </div>
-                        </div>
-                        <!-- Seat Grid -->
-                        <div class="seat-grid" id="seatGrid" style="width: auto; max-width: 100%;"></div>
+
+                    <!-- To Terminal / Stop -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">To Terminal</label>
+                        <select class="form-select form-select-lg" id="toTerminal" disabled>
+                            <option value="">Select Destination</option>
+                        </select>
                     </div>
-                </div>
-            </div>
 
-            <!-- Middle Column: Booking Form (5 columns) -->
-            <div class="col-lg-5 col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-clipboard-list"></i> Booking Summary
-                        </h6>
+                    <!-- Date -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Travel Date</label>
+                        <input type="date" class="form-control form-control-lg" id="travelDate"
+                            min="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}" />
                     </div>
-                    <div class="card-body" style="max-height: calc(100vh - 250px); overflow-y: auto; padding: 1rem;">
-                        <!-- Trip Info Section -->
-                        <div class="mb-3 p-2 bg-light rounded border-start border-4 border-info small">
-                            <h6 class="fw-bold mb-2 small">📍 Trip Details</h6>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <small class="text-muted d-block">Route</small>
-                                    <p class="mb-1 fw-bold small"><span id="tripRoute">-</span></p>
-                                </div>
-                                <div class="col-md-6">
-                                    <small class="text-muted d-block">Date</small>
-                                    <p class="mb-1 fw-bold small"><span id="tripDate">-</span></p>
-                                </div>
-                                <div class="col-12">
-                                    <small class="text-muted d-block">Time</small>
-                                    <p class="mb-0 fw-bold small"><span id="tripTime">-</span></p>
-                                </div>
-                            </div>
 
-                            <!-- Bus & Driver Section -->
-                            <div class="mt-2 pt-2 border-top small">
-                                <h6 class="fw-bold mb-2 small">🚌 Bus & Driver</h6>
-                                <div id="busDriverSection"></div>
-                            </div>
-                        </div>
+                    <!-- Departure Time (Timetable Stops) -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Departure Time</label>
+                        <select class="form-select form-select-lg" id="departureTime" disabled>
+                            <option value="">Select Departure Time</option>
+                        </select>
+                    </div>
 
-                        <!-- Selected Seats -->
-                        <div class="mb-2">
-                            <label class="form-label fw-bold small mb-1">
-                                <i class="fas fa-list"></i> Selected Seats 
-                                <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
-                            </label>
-                            <div class="alert alert-info border-1 p-2 mb-0 small" id="selectedSeatsList" style="min-height: 60px; font-size: 0.85rem;">
-                                <p class="text-muted mb-0">No seats selected yet</p>
-                            </div>
-                        </div>
-
-                        <!-- Fare Calculation -->
-                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                            <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare</h6>
-                            <div class="mb-2">
-                                <label class="form-label small">Base Fare (PKR)</label>
-                                <input type="number" class="form-control form-control-sm" id="baseFare" 
-                                    min="0" step="0.01" placeholder="0.00" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Discount</label>
-                                <input type="text" class="form-control form-control-sm" id="discountInfo" 
-                                    placeholder="None" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Total Fare (PKR)</label>
-                                <input type="number" class="form-control form-control-sm fw-bold text-success" id="totalFare" 
-                                    min="0" step="0.01" placeholder="0.00" readonly>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Tax/Charge (PKR)</label>
-                                <input type="number" class="form-control form-control-sm" id="tax" 
-                                    min="0" step="0.01" value="0" placeholder="0.00" onchange="calculateFinal()">
-                            </div>
-                            <div class="alert alert-primary border-1 mb-0 p-2 small">
-                                <strong>Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
-                            </div>
-                        </div>
-
-                        <!-- Booking Type -->
-                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                            <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type</h6>
-                            <div class="form-check form-check-sm">
-                                <input class="form-check-input" type="radio" name="bookingType" 
-                                    id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
-                                <label class="form-check-label small" for="counterBooking">
-                                    🏪 Counter
-                                </label>
-                            </div>
-                            <div class="form-check form-check-sm">
-                                <input class="form-check-input" type="radio" name="bookingType" 
-                                    id="phoneBooking" value="phone" onchange="togglePaymentFields()">
-                                <label class="form-check-label small" for="phoneBooking">
-                                    📞 Phone (Hold 15 mins)
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Payment Fields (Counter Only) -->
-                        <div id="paymentFields" class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                            <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment</h6>
-                            <div class="mb-2">
-                                <label class="form-label fw-bold small">Method</label>
-                                <div>
-                                    @foreach($paymentMethods as $method)
-                                        <div class="form-check form-check-sm">
-                                            <input class="form-check-input" type="radio" name="paymentMethod" 
-                                                id="payment_{{ $method['value'] }}" value="{{ $method['value'] }}"
-                                                {{ $loop->first ? 'checked' : '' }}
-                                                onchange="toggleTransactionIdField()">
-                                            <label class="form-check-label small" for="payment_{{ $method['value'] }}">
-                                                <i class="{{ $method['icon'] }}"></i> {{ $method['label'] }}
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <!-- Transaction ID Field (for non-cash payments) -->
-                            <div class="mb-2" id="transactionIdField" style="display: none;">
-                                <label class="form-label small">Transaction ID</label>
-                                <input type="text" class="form-control form-control-sm" id="transactionId" 
-                                    placeholder="TXN123456789" maxlength="100">
-                            </div>
-
-                            <div class="mb-2" id="amountReceivedField">
-                                <label class="form-label small">Amount Received (PKR)</label>
-                                <input type="number" class="form-control form-control-sm" id="amountReceived" 
-                                    min="0" step="0.01" placeholder="0.00" value="0" onchange="calculateReturn()">
-                            </div>
-                            <div id="returnDiv" style="display: none;">
-                                <div class="alert alert-success border-1 mb-0 p-2 small">
-                                    <strong>💰 Return: PKR <span id="returnAmount">0.00</span></strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notes -->
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
-                            <textarea class="form-control form-control-sm" id="notes" rows="2" maxlength="500" 
-                                placeholder="Optional notes..."></textarea>
-                        </div>
-
-                        <!-- Passenger Information Section -->
-                        <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
-                                <button type="button" class="btn btn-outline-primary btn-sm p-1" id="addPassengerBtn" onclick="addExtraPassenger()" style="display: none; font-size: 0.7rem;">
-                                    <i class="fas fa-plus-circle"></i> Add
-                                </button>
-                            </div>
-                            <p class="text-muted small mb-2" style="font-size: 0.75rem;"><strong>Required:</strong> One per seat.</p>
-                            <div id="passengerInfoContainer" style="max-height: 250px; overflow-y: auto;"></div>
-                        </div>
-
-                        <!-- Confirm Button -->
-                        <button class="btn btn-success w-100 fw-bold py-2 small" onclick="confirmBooking()" id="confirmBtn">
-                            <i class="fas fa-check-circle"></i> Confirm Booking
+                    <!-- Load Trip Button -->
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
+                            <i class="fas fa-play"></i> Load Trip & Seats
+                        </button>
+                        <button class="btn btn-warning btn-lg fw-bold" id="assignBusBtnHeader"
+                            onclick="openAssignBusModalFromHeader()" style="display: none;">
+                            <i class="fas fa-bus"></i> Assign Bus
                         </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column: Trip Passengers List (4 columns) -->
-            <div class="col-lg-4 col-md-12">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="mb-0 small">
-                            <i class="fas fa-list-check"></i> Booked Passengers
-                        </h6>
+        <!-- Trip Content (shown when trip loaded) -->
+        <div id="tripContent" style="display: none;">
+            <div class="row g-3">
+                <!-- Left Column: Seat Map (3 columns) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chair"></i> Seat Map
+                            </h6>
+                        </div>
+                        <div class="card-body p-2"
+                            style="max-height: calc(100vh - 250px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
+                            <!-- Legend -->
+                            <div class="mb-2 p-2 bg-light rounded border border-success-subtle w-100">
+                                <div class="seat-legend">
+                                    <span class="badge bg-success small p-1" title="Available">🟩 Available</span>
+                                    <span class="badge bg-danger small p-1" title="Booked">🟥 Booked</span>
+                                    <span class="badge bg-warning text-dark small p-1" title="Held">🟨 Held</span>
+                                    <span class="badge bg-info small p-1" title="Selected">🟦 Selected</span>
+                                </div>
+                            </div>
+                            <!-- Seat Grid -->
+                            <div class="seat-grid" id="seatGrid" style="width: auto; max-width: 100%;"></div>
+                        </div>
                     </div>
-                    <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto;">
-                        <div id="tripPassengersList"></div>
+                </div>
+
+                <!-- Middle Column: Booking Form (5 columns) -->
+                <div class="col-lg-5 col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-clipboard-list"></i> Booking Summary
+                            </h6>
+                        </div>
+                        <div class="card-body" style="max-height: calc(100vh - 250px); overflow-y: auto; padding: 1rem;">
+                            <!-- Trip Info Section -->
+                            <div class="mb-3 p-2 bg-light rounded border-start border-4 border-info small">
+                                <h6 class="fw-bold mb-2 small">📍 Trip Details</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Route</small>
+                                        <p class="mb-1 fw-bold small"><span id="tripRoute">-</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Date</small>
+                                        <p class="mb-1 fw-bold small"><span id="tripDate">-</span></p>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted d-block">Time</small>
+                                        <p class="mb-0 fw-bold small"><span id="tripTime">-</span></p>
+                                    </div>
+                                </div>
+
+                                <!-- Bus & Driver Section -->
+                                <div class="mt-2 pt-2 border-top small">
+                                    <h6 class="fw-bold mb-2 small">🚌 Bus & Driver</h6>
+                                    <div id="busDriverSection"></div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Seats -->
+                            <div class="mb-2">
+                                <label class="form-label fw-bold small mb-1">
+                                    <i class="fas fa-list"></i> Selected Seats
+                                    <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
+                                </label>
+                                <div class="alert alert-info border-1 p-2 mb-0 small" id="selectedSeatsList"
+                                    style="min-height: 60px; font-size: 0.85rem;">
+                                    <p class="text-muted mb-0">No seats selected yet</p>
+                                </div>
+                            </div>
+
+                            <!-- Fare Calculation -->
+                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare</h6>
+                                <div class="mb-2">
+                                    <label class="form-label small">Base Fare (PKR)</label>
+                                    <input type="number" class="form-control form-control-sm" id="baseFare"
+                                        min="0" step="0.01" placeholder="0.00" readonly>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Discount</label>
+                                    <input type="text" class="form-control form-control-sm" id="discountInfo"
+                                        placeholder="None" readonly>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Total Fare (PKR)</label>
+                                    <input type="number" class="form-control form-control-sm fw-bold text-success"
+                                        id="totalFare" min="0" step="0.01" placeholder="0.00" readonly>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Tax/Charge (PKR)</label>
+                                    <input type="number" class="form-control form-control-sm" id="tax"
+                                        min="0" step="0.01" value="0" placeholder="0.00"
+                                        onchange="calculateFinal()">
+                                </div>
+                                <div class="alert alert-primary border-1 mb-0 p-2 small">
+                                    <strong>Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
+                                </div>
+                            </div>
+
+                            <!-- Booking Type -->
+                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type</h6>
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input" type="radio" name="bookingType"
+                                        id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
+                                    <label class="form-check-label small" for="counterBooking">
+                                        🏪 Counter
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input" type="radio" name="bookingType" id="phoneBooking"
+                                        value="phone" onchange="togglePaymentFields()">
+                                    <label class="form-check-label small" for="phoneBooking">
+                                        📞 Phone (Hold 15 mins)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Payment Fields (Counter Only) -->
+                            <div id="paymentFields" class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment</h6>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold small">Method</label>
+                                    <div>
+                                        @foreach ($paymentMethods as $method)
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="radio" name="paymentMethod"
+                                                    id="payment_{{ $method['value'] }}" value="{{ $method['value'] }}"
+                                                    {{ $loop->first ? 'checked' : '' }}
+                                                    onchange="toggleTransactionIdField()">
+                                                <label class="form-check-label small"
+                                                    for="payment_{{ $method['value'] }}">
+                                                    <i class="{{ $method['icon'] }}"></i> {{ $method['label'] }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Transaction ID Field (for non-cash payments) -->
+                                <div class="mb-2" id="transactionIdField" style="display: none;">
+                                    <label class="form-label small">Transaction ID</label>
+                                    <input type="text" class="form-control form-control-sm" id="transactionId"
+                                        placeholder="TXN123456789" maxlength="100">
+                                </div>
+
+                                <div class="mb-2" id="amountReceivedField">
+                                    <label class="form-label small">Amount Received (PKR)</label>
+                                    <input type="number" class="form-control form-control-sm" id="amountReceived"
+                                        min="0" step="0.01" placeholder="0.00" value="0"
+                                        onchange="calculateReturn()">
+                                </div>
+                                <div id="returnDiv" style="display: none;">
+                                    <div class="alert alert-success border-1 mb-0 p-2 small">
+                                        <strong>💰 Return: PKR <span id="returnAmount">0.00</span></strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
+                                <textarea class="form-control form-control-sm" id="notes" rows="2" maxlength="500"
+                                    placeholder="Optional notes..."></textarea>
+                            </div>
+
+                            <!-- Passenger Information Section -->
+                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm p-1"
+                                        id="addPassengerBtn" onclick="addExtraPassenger()"
+                                        style="display: none; font-size: 0.7rem;">
+                                        <i class="fas fa-plus-circle"></i> Add
+                                    </button>
+                                </div>
+                                <p class="text-muted small mb-2" style="font-size: 0.75rem;"><strong>Required:</strong>
+                                    One per seat.</p>
+                                <div id="passengerInfoContainer" style="max-height: 250px; overflow-y: auto;"></div>
+                            </div>
+
+                            <!-- Confirm Button -->
+                            <button class="btn btn-success w-100 fw-bold py-2 small" onclick="confirmBooking()"
+                                id="confirmBtn">
+                                <i class="fas fa-check-circle"></i> Confirm Booking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Trip Passengers List (4 columns) -->
+                <div class="col-lg-4 col-md-12">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0 small">
+                                <i class="fas fa-list-check"></i> Booked Passengers
+                            </h6>
+                        </div>
+                        <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto;">
+                            <div id="tripPassengersList"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Gender Selection Modal -->
-<div class="modal fade" id="genderModal" tabindex="-1">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-user"></i> Select Gender - <span id="seatLabel">Seat</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-4">
-                <p class="text-center mb-0">Please select passenger gender:</p>
-            </div>
-            <div class="modal-footer gap-2">
-                <button type="button" class="btn btn-outline-primary btn-lg flex-grow-1 fw-bold" onclick="selectGender('male')">
-                    👨 Male
-                </button>
-                <button type="button" class="btn btn-outline-danger btn-lg flex-grow-1 fw-bold" onclick="selectGender('female')">
-                    👩 Female
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Booking Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-check-circle"></i> Booking Confirmed Successfully!
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-4">
-                <div class="mb-4 p-3 bg-light rounded text-center">
-                    <h6 class="text-muted mb-2">Booking Number</h6>
-                    <h3 class="fw-bold text-primary" id="bookingNumber">-</h3>
+    <!-- Gender Selection Modal -->
+    <div class="modal fade" id="genderModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-user"></i> Select Gender - <span id="seatLabel">Seat</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                
-                <div class="mb-4">
-                    <p class="mb-2"><strong>Seats:</strong> <span id="bookedSeats" class="badge bg-info ms-2"></span></p>
-                    <p class="mb-0"><strong>Status:</strong> <span id="bookingStatus" class="badge bg-success ms-2"></span></p>
+                <div class="modal-body py-4">
+                    <p class="text-center mb-0">Please select passenger gender:</p>
                 </div>
-
-                <div class="alert alert-light border-2 mb-4">
-                    <h6 class="fw-bold mb-3">Fare Breakdown</h6>
-                    <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR <span id="confirmedFare">0.00</span></span></p>
-                    <p class="mb-2"><strong>Discount:</strong> <span class="float-end">-PKR <span id="confirmedDiscount">0.00</span></span></p>
-                    <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR <span id="confirmedTax">0.00</span></span></p>
-                    <hr>
-                    <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR <span id="confirmedFinal">0.00</span></span></p>
+                <div class="modal-footer gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-lg flex-grow-1 fw-bold"
+                        onclick="selectGender('male')">
+                        👨 Male
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-lg flex-grow-1 fw-bold"
+                        onclick="selectGender('female')">
+                        👩 Female
+                    </button>
                 </div>
-
-                <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2" id="paymentMethodDisplay">-</span></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success btn-lg fw-bold w-100" data-bs-dismiss="modal" onclick="resetForm()">
-                    <i class="fas fa-check"></i> Done
-                </button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Booking Details Modal -->
-<div class="modal fade" id="bookingDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-receipt"></i> Booking Details
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-4">
-                <div id="bookingDetailsModalBody"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    <!-- Booking Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-check-circle"></i> Booking Confirmed Successfully!
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="mb-4 p-3 bg-light rounded text-center">
+                        <h6 class="text-muted mb-2">Booking Number</h6>
+                        <h3 class="fw-bold text-primary" id="bookingNumber">-</h3>
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Seats:</strong> <span id="bookedSeats"
+                                class="badge bg-info ms-2"></span></p>
+                        <p class="mb-0"><strong>Status:</strong> <span id="bookingStatus"
+                                class="badge bg-success ms-2"></span></p>
+                    </div>
+
+                    <div class="alert alert-light border-2 mb-4">
+                        <h6 class="fw-bold mb-3">Fare Breakdown</h6>
+                        <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR <span
+                                    id="confirmedFare">0.00</span></span></p>
+                        <p class="mb-2"><strong>Discount:</strong> <span class="float-end">-PKR <span
+                                    id="confirmedDiscount">0.00</span></span></p>
+                        <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR <span
+                                    id="confirmedTax">0.00</span></span></p>
+                        <hr>
+                        <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR
+                                <span id="confirmedFinal">0.00</span></span></p>
+                    </div>
+
+                    <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2"
+                            id="paymentMethodDisplay">-</span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success btn-lg fw-bold w-100" data-bs-dismiss="modal"
+                        onclick="resetForm()">
+                        <i class="fas fa-check"></i> Done
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Assign Bus/Driver Modal -->
-<div class="modal fade" id="assignBusModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-bus"></i> Assign Bus & Driver
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-4">
-                <div id="assignBusModalBody"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-primary" id="confirmAssignBusBtn">
-                    <i class="fas fa-check"></i> Assign Bus & Driver
-                </button>
+    <!-- Booking Details Modal -->
+    <div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-receipt"></i> Booking Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div id="bookingDetailsModalBody"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Assign Bus/Driver Modal -->
+    <div class="modal fade" id="assignBusModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-bus"></i> Assign Bus & Driver
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div id="assignBusModalBody"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmAssignBusBtn">
+                        <i class="fas fa-check"></i> Assign Bus & Driver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection
 
 @section('scripts')
-<script>
-    // ========================================
-    // STATE MANAGEMENT
-    // ========================================
-    let appState = {
-        isAdmin: {{ auth()->user()->hasRole('admin') ? 'true' : 'false' }},
-        userTerminalId: {{ auth()->user()->terminal_id ?? 'null' }},
-        terminals: [],
-        routeStops: [],
-        timetableStops: [],
-        tripData: null,
-        seatMap: {},
-        selectedSeats: {},
-        passengerInfo: {},  // ← New: Store passenger details
-        pendingSeat: null,
-        tripLoaded: false,
-        fareData: null,
-        baseFare: 0,
-    };
+    <script>
+        // ========================================
+        // STATE MANAGEMENT
+        // ========================================
+        let appState = {
+            isAdmin: {{ auth()->user()->hasRole('admin') ? 'true' : 'false' }},
+            userTerminalId: {{ auth()->user()->terminal_id ?? 'null' }},
+            terminals: [],
+            routeStops: [],
+            timetableStops: [],
+            tripData: null,
+            seatMap: {},
+            selectedSeats: {},
+            passengerInfo: {}, // ← New: Store passenger details
+            pendingSeat: null,
+            tripLoaded: false,
+            fareData: null,
+            baseFare: 0,
+        };
 
-    // ========================================
-    // INITIALIZATION
-    // ========================================
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchTerminals();
-        setupWebSocket();
-        togglePaymentFields(); // Initialize payment fields visibility
-    });
-
-    // ========================================
-    // FETCH TERMINALS
-    // ========================================
-    function fetchTerminals() {
-        $.ajax({
-            url: '/admin/bookings/console/terminals',
-            type: 'GET',
-            success: function(response) {
-                appState.terminals = response.terminals;
-                const fromSelect = document.getElementById('fromTerminal');
-                
-                fromSelect.innerHTML = '<option value="">Select Terminal</option>';
-                response.terminals.forEach(t => {
-                    fromSelect.innerHTML += `<option value="${t.id}">${t.name} (${t.code})</option>`;
-                });
-                
-                // Employee: Set their terminal and disable
-                if (!appState.isAdmin && appState.userTerminalId) {
-                    fromSelect.value = appState.userTerminalId;
-                    fromSelect.disabled = true;
-                    onFromTerminalChange();
-                } else {
-                    fromSelect.disabled = false;
-                }
-            },
-            error: function() {
-                alert('Failed to load terminals');
-            }
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTerminals();
+            setupWebSocket();
+            togglePaymentFields(); // Initialize payment fields visibility
         });
-    }
 
-    // ========================================
-    // ON FROM TERMINAL CHANGE
-    // ========================================
-    document.getElementById('fromTerminal')?.addEventListener('change', onFromTerminalChange);
+        // ========================================
+        // FETCH TERMINALS
+        // ========================================
+        function fetchTerminals() {
+            $.ajax({
+                url: "{{ route('admin.bookings.terminals') }}",
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    appState.terminals = response.terminals;
+                    const fromSelect = document.getElementById('fromTerminal');
 
-    function onFromTerminalChange() {
-        const fromTerminalId = document.getElementById('fromTerminal').value;
-        document.getElementById('toTerminal').value = '';
-        document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
-        document.getElementById('toTerminal').disabled = true;
-        document.getElementById('departureTime').disabled = true;
-        
-        if (fromTerminalId) {
-            fetchToTerminals(fromTerminalId);
-            fetchFare(fromTerminalId); // Fetch fare when from terminal changes
-        }
-    }
+                    fromSelect.innerHTML = '<option value="">Select Terminal</option>';
+                    response.terminals.forEach(t => {
+                        fromSelect.innerHTML +=
+                            `<option value="${t.id}">${t.name} (${t.code})</option>`;
+                    });
 
-    // ========================================
-    // FETCH TO TERMINALS (Route Stops)
-    // ========================================
-    function fetchToTerminals(fromTerminalId) {
-        $.ajax({
-            url: '/admin/bookings/console/route-stops',
-            type: 'GET',
-            data: { from_terminal_id: fromTerminalId },
-            success: function(response) {
-                appState.routeStops = response.route_stops;
-                const toSelect = document.getElementById('toTerminal');
-                
-                toSelect.innerHTML = '<option value="">Select Destination</option>';
-                response.route_stops.forEach(stop => {
-                    toSelect.innerHTML += `<option value="${stop.id}">${stop.terminal.name}</option>`;
-                });
-                
-                toSelect.disabled = false;
-            },
-            error: function() {
-                alert('Failed to load destination terminals');
-            }
-        });
-    }
-
-    // ========================================
-    // FETCH FARE FOR SEGMENT
-    // ========================================
-    function fetchFare(fromTerminalId, toTerminalId) {
-        if (!fromTerminalId || !toTerminalId) {
-            resetFareDisplay();
-            return;
-        }
-
-        $.ajax({
-            url: '/admin/bookings/console/fare',
-            type: 'GET',
-            data: {
-                from_terminal_id: fromTerminalId,
-                to_terminal_id: toTerminalId
-            },
-            success: function(response) {
-                if (response.success) {
-                    appState.fareData = response.fare;
-                    appState.baseFare = response.fare.final_fare;
-                    
-                    // Update UI with fare info
-                    document.getElementById('baseFare').value = parseFloat(response.fare.final_fare).toFixed(2);
-                    
-                    // Display discount info
-                    if (response.fare.discount_type === 'flat') {
-                        document.getElementById('discountInfo').value = `Flat: PKR ${parseFloat(response.fare.discount_value).toFixed(2)}`;
-                    } else if (response.fare.discount_type === 'percent') {
-                        document.getElementById('discountInfo').value = `${parseFloat(response.fare.discount_value).toFixed(0)}% Discount`;
+                    // Employee: Set their terminal and disable
+                    if (!appState.isAdmin && appState.userTerminalId) {
+                        fromSelect.value = appState.userTerminalId;
+                        fromSelect.disabled = true;
+                        onFromTerminalChange();
                     } else {
-                        document.getElementById('discountInfo').value = 'None';
+                        fromSelect.disabled = false;
                     }
-                    
-                    calculateTotalFare();
-                } else {
-                    alert('No fare found for this route segment');
+                },
+                error: function() {
+                    alert('Failed to load terminals');
+                }
+            });
+        }
+
+        // ========================================
+        // ON FROM TERMINAL CHANGE
+        // ========================================
+        document.getElementById('fromTerminal')?.addEventListener('change', onFromTerminalChange);
+
+        function onFromTerminalChange() {
+            const fromTerminalId = document.getElementById('fromTerminal').value;
+            document.getElementById('toTerminal').value = '';
+            document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+            document.getElementById('toTerminal').disabled = true;
+            document.getElementById('departureTime').disabled = true;
+
+            if (fromTerminalId) {
+                fetchToTerminals(fromTerminalId);
+                fetchFare(fromTerminalId); // Fetch fare when from terminal changes
+            }
+        }
+
+        // ========================================
+        // FETCH TO TERMINALS (Route Stops)
+        // ========================================
+        function fetchToTerminals(fromTerminalId) {
+            $.ajax({
+                url: "{{ route('admin.bookings.route-stops') }}",
+                type: 'GET',
+                data: {
+                    from_terminal_id: fromTerminalId
+                },
+                success: function(response) {
+                    appState.routeStops = response.route_stops;
+                    const toSelect = document.getElementById('toTerminal');
+
+                    toSelect.innerHTML = '<option value="">Select Destination</option>';
+                    response.route_stops.forEach(stop => {
+                        toSelect.innerHTML +=
+                            `<option value="${stop.id}">${stop.terminal.name} (${stop.terminal.code})</option>`;
+                    });
+
+                    toSelect.disabled = false;
+                },
+                error: function() {
+                    alert('Failed to load destination terminals');
+                }
+            });
+        }
+
+        // ========================================
+        // FETCH FARE FOR SEGMENT
+        // ========================================
+        function fetchFare(fromTerminalId, toTerminalId) {
+            if (!fromTerminalId || !toTerminalId) {
+                resetFareDisplay();
+                return;
+            }
+
+            $.ajax({
+                url: '/admin/bookings/console/fare',
+                type: 'GET',
+                data: {
+                    from_terminal_id: fromTerminalId,
+                    to_terminal_id: toTerminalId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        appState.fareData = response.fare;
+                        appState.baseFare = response.fare.final_fare;
+
+                        // Update UI with fare info
+                        document.getElementById('baseFare').value = parseFloat(response.fare.final_fare)
+                            .toFixed(2);
+
+                        // Display discount info
+                        if (response.fare.discount_type === 'flat') {
+                            document.getElementById('discountInfo').value =
+                                `Flat: PKR ${parseFloat(response.fare.discount_value).toFixed(2)}`;
+                        } else if (response.fare.discount_type === 'percent') {
+                            document.getElementById('discountInfo').value =
+                                `${parseFloat(response.fare.discount_value).toFixed(0)}% Discount`;
+                        } else {
+                            document.getElementById('discountInfo').value = 'None';
+                        }
+
+                        calculateTotalFare();
+                    } else {
+                        alert('No fare found for this route segment');
+                        resetFareDisplay();
+                    }
+                },
+                error: function(error) {
+                    const message = error.responseJSON?.error || 'Failed to load fare';
+                    alert(message);
                     resetFareDisplay();
                 }
-            },
-            error: function(error) {
-                const message = error.responseJSON?.error || 'Failed to load fare';
-                alert(message);
-                resetFareDisplay();
-            }
-        });
-    }
-
-    // ========================================
-    // RESET FARE DISPLAY
-    // ========================================
-    function resetFareDisplay() {
-        appState.fareData = null;
-        appState.baseFare = 0;
-        document.getElementById('baseFare').value = '';
-        document.getElementById('discountInfo').value = '';
-        document.getElementById('totalFare').value = '';
-        calculateFinal();
-    }
-
-    // ========================================
-    // ON TO TERMINAL CHANGE
-    // ========================================
-    document.getElementById('toTerminal')?.addEventListener('change', onToTerminalChange);
-
-    function onToTerminalChange() {
-        const fromTerminalId = document.getElementById('fromTerminal').value;
-        const toTerminalId = document.getElementById('toTerminal').value;
-        const date = document.getElementById('travelDate').value;
-        
-        document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
-        document.getElementById('departureTime').disabled = true;
-        
-        if (fromTerminalId && toTerminalId && date) {
-            fetchDepartureTimes(fromTerminalId, toTerminalId, date);
-            fetchFare(fromTerminalId, toTerminalId);
+            });
         }
-    }
 
-    // ========================================
-    // FETCH DEPARTURE TIMES (Timetable Stops)
-    // ========================================
-    function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
-        $.ajax({
-            url: '/admin/bookings/console/departure-times',
-            type: 'GET',
-            data: {
-                from_terminal_id: fromTerminalId,
-                to_terminal_id: toTerminalId,
-                date: date
-            },
-            success: function(response) {
-                appState.timetableStops = response.timetable_stops;
-                const timeSelect = document.getElementById('departureTime');
-                
-                timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
-                response.timetable_stops.forEach(stop => {
-                    const time = new Date(stop.departure_at).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+        // ========================================
+        // RESET FARE DISPLAY
+        // ========================================
+        function resetFareDisplay() {
+            appState.fareData = null;
+            appState.baseFare = 0;
+            document.getElementById('baseFare').value = '';
+            document.getElementById('discountInfo').value = '';
+            document.getElementById('totalFare').value = '';
+            calculateFinal();
+        }
+
+        // ========================================
+        // ON TO TERMINAL CHANGE
+        // ========================================
+        document.getElementById('toTerminal')?.addEventListener('change', onToTerminalChange);
+
+        function onToTerminalChange() {
+            const fromTerminalId = document.getElementById('fromTerminal').value;
+            const toTerminalId = document.getElementById('toTerminal').value;
+            const date = document.getElementById('travelDate').value;
+
+            document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+            document.getElementById('departureTime').disabled = true;
+
+            if (fromTerminalId && toTerminalId && date) {
+                fetchDepartureTimes(fromTerminalId, toTerminalId, date);
+                fetchFare(fromTerminalId, toTerminalId);
+            }
+        }
+
+        // ========================================
+        // FETCH DEPARTURE TIMES (Timetable Stops)
+        // ========================================
+        function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
+            $.ajax({
+                url: '/admin/bookings/console/departure-times',
+                type: 'GET',
+                data: {
+                    from_terminal_id: fromTerminalId,
+                    to_terminal_id: toTerminalId,
+                    date: date
+                },
+                success: function(response) {
+                    appState.timetableStops = response.timetable_stops;
+                    const timeSelect = document.getElementById('departureTime');
+
+                    timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
+                    response.timetable_stops.forEach(stop => {
+                        const time = new Date(stop.departure_at).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        timeSelect.innerHTML += `<option value="${stop.id}">${time}</option>`;
                     });
-                    timeSelect.innerHTML += `<option value="${stop.id}">${time}</option>`;
-                });
-                
-                timeSelect.disabled = false;
-            },
-            error: function() {
-                alert('No trips available for this route and date');
+
+                    timeSelect.disabled = false;
+                },
+                error: function() {
+                    alert('No trips available for this route and date');
+                }
+            });
+        }
+
+        // ========================================
+        // ON TRAVEL DATE CHANGE
+        // ========================================
+        document.getElementById('travelDate')?.addEventListener('change', function() {
+            const fromTerminalId = document.getElementById('fromTerminal').value;
+            const toTerminalId = document.getElementById('toTerminal').value;
+
+            if (fromTerminalId && toTerminalId) {
+                fetchDepartureTimes(fromTerminalId, toTerminalId, this.value);
             }
         });
-    }
 
-    // ========================================
-    // ON TRAVEL DATE CHANGE
-    // ========================================
-    document.getElementById('travelDate')?.addEventListener('change', function() {
-        const fromTerminalId = document.getElementById('fromTerminal').value;
-        const toTerminalId = document.getElementById('toTerminal').value;
-        
-        if (fromTerminalId && toTerminalId) {
-            fetchDepartureTimes(fromTerminalId, toTerminalId, this.value);
-        }
-    });
+        // ========================================
+        // LOAD TRIP
+        // ========================================
+        function loadTrip() {
+            const fromTerminalId = document.getElementById('fromTerminal').value;
+            const toTerminalId = document.getElementById('toTerminal').value;
+            const departureTimeId = document.getElementById('departureTime').value;
+            const date = document.getElementById('travelDate').value;
 
-    // ========================================
-    // LOAD TRIP
-    // ========================================
-    function loadTrip() {
-        const fromTerminalId = document.getElementById('fromTerminal').value;
-        const toTerminalId = document.getElementById('toTerminal').value;
-        const departureTimeId = document.getElementById('departureTime').value;
-        const date = document.getElementById('travelDate').value;
-
-        if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
-            alert('Please fill all fields');
-            return;
-        }
-
-        document.getElementById('loadTripBtn').disabled = true;
-        
-        $.ajax({
-            url: '/admin/bookings/console/load-trip',
-            type: 'POST',
-            data: {
-                from_terminal_id: fromTerminalId,
-                to_terminal_id: toTerminalId,
-                timetable_stop_id: departureTimeId,
-                date: date,
-                _token: document.querySelector('meta[name="csrf-token"]').content
-            },
-            success: function(response) {
-                appState.tripData = response;
-                appState.seatMap = response.seat_map;
-                appState.tripLoaded = true;
-                
-                // Update trip info display
-                document.getElementById('tripRoute').textContent = response.route.name;
-                document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime).toLocaleDateString();
-                document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime).toLocaleTimeString();
-                
-                // Update bus & driver section
-                renderBusDriverSection(response.trip);
-                renderSeatMap();
-                document.getElementById('tripContent').style.display = 'block';
-                document.getElementById('tripContent').scrollIntoView({ behavior: 'smooth' });
-                loadTripPassengers(response.trip.id);
-            },
-            error: function(error) {
-                const message = error.responseJSON?.error || 'Failed to load trip';
-                alert(message);
-            },
-            complete: function() {
-                document.getElementById('loadTripBtn').disabled = false;
-            }
-        });
-    }
-
-    // ========================================
-    // RENDER SEAT MAP
-    // ========================================
-    function renderSeatMap() {
-        const grid = document.getElementById('seatGrid');
-        grid.innerHTML = '';
-
-        // Create container for seat rows
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.alignItems = 'center';
-        container.style.gap = '0.25rem';
-        container.style.width = '100%';
-
-        for (let row = 0; row < 11; row++) {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'seat-row';
-            rowDiv.style.display = 'flex';
-            rowDiv.style.gap = '0.25rem';
-            rowDiv.style.justifyContent = 'center';
-            rowDiv.style.width = 'fit-content';
-
-            for (let col = 0; col < 4; col++) {
-                const seatNumber = row * 4 + col + 1;
-                const seat = appState.seatMap[seatNumber];
-
-                const button = document.createElement('button');
-                button.className = 'btn btn-sm';
-                button.style.width = '32px';
-                button.style.height = '32px';
-                button.style.fontSize = '0.65rem';
-                button.style.padding = '1px';
-                button.style.lineHeight = '1';
-                button.style.flexShrink = '0';
-                button.textContent = seatNumber;
-                button.title = `Seat ${seatNumber} - ${seat.status}`;
-
-                // Set color
-                if (appState.selectedSeats[seatNumber]) {
-                    button.className += ' bg-info text-white';
-                } else if (seat.status === 'booked') {
-                    button.className += ' bg-danger text-white';
-                } else if (seat.status === 'held') {
-                    button.className += ' bg-warning text-dark';
-                } else {
-                    button.className += ' bg-success text-white';
-                }
-
-                // Disable if not available
-                if (seat.status === 'booked' || seat.status === 'held') {
-                    button.disabled = true;
-                }
-
-                button.onclick = () => handleSeatClick(seatNumber);
-                rowDiv.appendChild(button);
+            if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
+                alert('Please fill all fields');
+                return;
             }
 
-            container.appendChild(rowDiv);
+            document.getElementById('loadTripBtn').disabled = true;
+
+            $.ajax({
+                url: '/admin/bookings/console/load-trip',
+                type: 'POST',
+                data: {
+                    from_terminal_id: fromTerminalId,
+                    to_terminal_id: toTerminalId,
+                    timetable_stop_id: departureTimeId,
+                    date: date,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                },
+                success: function(response) {
+                    appState.tripData = response;
+                    appState.seatMap = response.seat_map;
+                    appState.tripLoaded = true;
+
+                    // Update trip info display
+                    document.getElementById('tripRoute').textContent = response.route.name;
+                    document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime)
+                        .toLocaleDateString();
+                    document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime)
+                        .toLocaleTimeString();
+
+                    // Update bus & driver section
+                    renderBusDriverSection(response.trip);
+                    renderSeatMap();
+                    document.getElementById('tripContent').style.display = 'block';
+                    document.getElementById('tripContent').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    loadTripPassengers(response.trip.id);
+                },
+                error: function(error) {
+                    const message = error.responseJSON?.error || 'Failed to load trip';
+                    alert(message);
+                },
+                complete: function() {
+                    document.getElementById('loadTripBtn').disabled = false;
+                }
+            });
         }
 
-        grid.appendChild(container);
-    }
+        // ========================================
+        // RENDER SEAT MAP
+        // ========================================
+        function renderSeatMap() {
+            const grid = document.getElementById('seatGrid');
+            grid.innerHTML = '';
 
-    // ========================================
-    // HANDLE SEAT CLICK
-    // ========================================
-    function handleSeatClick(seatNumber) {
-        if (appState.selectedSeats[seatNumber]) {
-            delete appState.selectedSeats[seatNumber];
-        } else {
-            appState.pendingSeat = seatNumber;
-            document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
-            new bootstrap.Modal(document.getElementById('genderModal')).show();
+            // Create container for seat rows
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.gap = '0.25rem';
+            container.style.width = '100%';
+
+            for (let row = 0; row < 11; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+                rowDiv.style.display = 'flex';
+                rowDiv.style.gap = '0.25rem';
+                rowDiv.style.justifyContent = 'center';
+                rowDiv.style.width = 'fit-content';
+
+                for (let col = 0; col < 4; col++) {
+                    const seatNumber = row * 4 + col + 1;
+                    const seat = appState.seatMap[seatNumber];
+
+                    const button = document.createElement('button');
+                    button.className = 'btn btn-sm';
+                    button.style.width = '32px';
+                    button.style.height = '32px';
+                    button.style.fontSize = '0.65rem';
+                    button.style.padding = '1px';
+                    button.style.lineHeight = '1';
+                    button.style.flexShrink = '0';
+                    button.textContent = seatNumber;
+                    button.title = `Seat ${seatNumber} - ${seat.status}`;
+
+                    // Set color
+                    if (appState.selectedSeats[seatNumber]) {
+                        button.className += ' bg-info text-white';
+                    } else if (seat.status === 'booked') {
+                        button.className += ' bg-danger text-white';
+                    } else if (seat.status === 'held') {
+                        button.className += ' bg-warning text-dark';
+                    } else {
+                        button.className += ' bg-success text-white';
+                    }
+
+                    // Disable if not available
+                    if (seat.status === 'booked' || seat.status === 'held') {
+                        button.disabled = true;
+                    }
+
+                    button.onclick = () => handleSeatClick(seatNumber);
+                    rowDiv.appendChild(button);
+                }
+
+                container.appendChild(rowDiv);
+            }
+
+            grid.appendChild(container);
         }
-    }
 
-    // ========================================
-    // SELECT GENDER
-    // ========================================
-    function selectGender(gender) {
-        if (appState.pendingSeat) {
-            appState.selectedSeats[appState.pendingSeat] = gender;
-            appState.pendingSeat = null;
+        // ========================================
+        // HANDLE SEAT CLICK
+        // ========================================
+        function handleSeatClick(seatNumber) {
+            if (appState.selectedSeats[seatNumber]) {
+                delete appState.selectedSeats[seatNumber];
+            } else {
+                appState.pendingSeat = seatNumber;
+                document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
+                new bootstrap.Modal(document.getElementById('genderModal')).show();
+            }
         }
-        bootstrap.Modal.getInstance(document.getElementById('genderModal')).hide();
-        updateSeatsList();
-        renderSeatMap();
-    }
 
-    // ========================================
-    // UPDATE SEATS LIST
-    // ========================================
-    function updateSeatsList() {
-        const list = document.getElementById('selectedSeatsList');
-        const count = Object.keys(appState.selectedSeats).length;
-        document.getElementById('seatCount').textContent = `(${count})`;
+        // ========================================
+        // SELECT GENDER
+        // ========================================
+        function selectGender(gender) {
+            if (appState.pendingSeat) {
+                appState.selectedSeats[appState.pendingSeat] = gender;
+                appState.pendingSeat = null;
+            }
+            bootstrap.Modal.getInstance(document.getElementById('genderModal')).hide();
+            updateSeatsList();
+            renderSeatMap();
+        }
 
-        if (count === 0) {
-            list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
-            updatePassengerForms(); // ← Clear passenger forms
+        // ========================================
+        // UPDATE SEATS LIST
+        // ========================================
+        function updateSeatsList() {
+            const list = document.getElementById('selectedSeatsList');
+            const count = Object.keys(appState.selectedSeats).length;
+            document.getElementById('seatCount').textContent = `(${count})`;
+
+            if (count === 0) {
+                list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
+                updatePassengerForms(); // ← Clear passenger forms
+                calculateTotalFare();
+                return;
+            }
+
+            let html = '';
+            Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
+                const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
+                html +=
+                    `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
+            });
+            list.innerHTML = html;
+            updatePassengerForms(); // ← Update passenger forms based on seats
             calculateTotalFare();
-            return;
         }
 
-        let html = '';
-        Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
-            const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
-            html += `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
-        });
-        list.innerHTML = html;
-        updatePassengerForms(); // ← Update passenger forms based on seats
-        calculateTotalFare();
-    }
+        // ========================================
+        // UPDATE PASSENGER FORMS
+        // ========================================
+        function updatePassengerForms() {
+            const container = document.getElementById('passengerInfoContainer');
+            const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
 
-    // ========================================
-    // UPDATE PASSENGER FORMS
-    // ========================================
-    function updatePassengerForms() {
-        const container = document.getElementById('passengerInfoContainer');
-        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
-        
-        if (selectedSeats.length === 0) {
-            container.innerHTML = '';
-            document.getElementById('addPassengerBtn').style.display = 'none';
-            appState.passengerInfo = {};
-            return;
-        }
-
-        // Initialize passengerInfo for new seats (mandatory)
-        selectedSeats.forEach(seat => {
-            if (!appState.passengerInfo[seat]) {
-                appState.passengerInfo[seat] = {
-                    type: 'mandatory',
-                    seat_number: parseInt(seat),
-                    name: '',
-                    age: '',
-                    gender: appState.selectedSeats[seat],
-                    cnic: '',
-                    phone: '',
-                    email: ''
-                };
+            if (selectedSeats.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('addPassengerBtn').style.display = 'none';
+                appState.passengerInfo = {};
+                return;
             }
-        });
 
-        // Remove passengerInfo for deselected seats
-        Object.keys(appState.passengerInfo).forEach(key => {
-            if (appState.passengerInfo[key].type === 'mandatory' && !selectedSeats.includes(key)) {
-                delete appState.passengerInfo[key];
-            }
-        });
+            // Initialize passengerInfo for new seats (mandatory)
+            selectedSeats.forEach(seat => {
+                if (!appState.passengerInfo[seat]) {
+                    appState.passengerInfo[seat] = {
+                        type: 'mandatory',
+                        seat_number: parseInt(seat),
+                        name: '',
+                        age: '',
+                        gender: appState.selectedSeats[seat],
+                        cnic: '',
+                        phone: '',
+                        email: ''
+                    };
+                }
+            });
 
-        // Generate forms - Mandatory passengers first
-        let html = '';
-        
-        // Render mandatory passengers
-        selectedSeats.forEach(seat => {
-            const info = appState.passengerInfo[seat];
-            const icon = info.gender === 'male' ? '👨' : '👩';
-            
-            html += `
+            // Remove passengerInfo for deselected seats
+            Object.keys(appState.passengerInfo).forEach(key => {
+                if (appState.passengerInfo[key].type === 'mandatory' && !selectedSeats.includes(key)) {
+                    delete appState.passengerInfo[key];
+                }
+            });
+
+            // Generate forms - Mandatory passengers first
+            let html = '';
+
+            // Render mandatory passengers
+            selectedSeats.forEach(seat => {
+                const info = appState.passengerInfo[seat];
+                const icon = info.gender === 'male' ? '👨' : '👩';
+
+                html += `
                 <div class="card mb-3 border-2" style="border-color: #e9ecef;">
                     <div class="card-header" style="background-color: #f8f9fa;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -967,17 +1005,17 @@
                     </div>
                 </div>
             `;
-        });
+            });
 
-        // Render extra passengers (optional, with remove button)
-        const extraPassengers = Object.keys(appState.passengerInfo).filter(
-            key => appState.passengerInfo[key].type === 'extra'
-        );
+            // Render extra passengers (optional, with remove button)
+            const extraPassengers = Object.keys(appState.passengerInfo).filter(
+                key => appState.passengerInfo[key].type === 'extra'
+            );
 
-        extraPassengers.forEach((passengerId, index) => {
-            const info = appState.passengerInfo[passengerId];
-            
-            html += `
+            extraPassengers.forEach((passengerId, index) => {
+                const info = appState.passengerInfo[passengerId];
+
+                html += `
                 <div class="card mb-3 border-2 border-warning" style="border-color: #ffc107;">
                     <div class="card-header" style="background-color: #fff3cd;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -1038,330 +1076,338 @@
                     </div>
                 </div>
             `;
-        });
-
-        container.innerHTML = html;
-        document.getElementById('addPassengerBtn').style.display = selectedSeats.length > 0 ? 'inline-block' : 'none';
-    }
-
-    // ========================================
-    // UPDATE PASSENGER FIELD
-    // ========================================
-    function updatePassengerField(key, field, value) {
-        if (appState.passengerInfo[key]) {
-            appState.passengerInfo[key][field] = value;
-        }
-    }
-
-    // ========================================
-    // REMOVE EXTRA PASSENGER
-    // ========================================
-    function removeExtraPassenger(passengerId) {
-        delete appState.passengerInfo[passengerId];
-        updatePassengerForms();
-    }
-
-    // ========================================
-    // ADD PASSENGER FORM (Legacy - now calls addExtraPassenger)
-    // ========================================
-    function addPassengerForm() {
-        addExtraPassenger();
-    }
-
-    // ========================================
-    // VALIDATE PASSENGER INFORMATION
-    // ========================================
-    function validatePassengerInfo() {
-        const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
-        
-        // Validate mandatory passengers
-        for (let seat of selectedSeats) {
-            const info = appState.passengerInfo[seat];
-            if (!info || !info.name || info.name.trim() === '') {
-                alert(`Please enter passenger name for Seat ${seat}`);
-                return false;
-            }
-        }
-
-        // Validate extra passengers if any
-        const extraPassengers = Object.keys(appState.passengerInfo).filter(
-            key => appState.passengerInfo[key].type === 'extra'
-        );
-
-        for (let passengerId of extraPassengers) {
-            const info = appState.passengerInfo[passengerId];
-            if (!info.name || info.name.trim() === '') {
-                alert(`Extra Passenger: Please enter name`);
-                return false;
-            }
-            if (!info.gender || info.gender === '') {
-                alert(`Extra Passenger: Please select gender`);
-                return false;
-            }
-        }
-        
-        return true;
-    }
-
-    // ========================================
-    // CALCULATE TOTAL FARE (based on seat count)
-    // ========================================
-    function calculateTotalFare() {
-        const seatCount = Object.keys(appState.selectedSeats).length;
-        const baseFare = appState.baseFare || 0;
-        const totalFare = baseFare * seatCount;
-        
-        document.getElementById('totalFare').value = totalFare.toFixed(2);
-        calculateFinal();
-    }
-
-    // ========================================
-    // CALCULATE FINAL AMOUNT
-    // ========================================
-    function calculateFinal() {
-        const fare = parseFloat(document.getElementById('totalFare').value) || 0;
-        const tax = parseFloat(document.getElementById('tax').value) || 0;
-        const final = fare + tax;
-        document.getElementById('finalAmount').textContent = final.toFixed(2);
-        calculateReturn();
-    }
-
-    // ========================================
-    // CALCULATE RETURN
-    // ========================================
-    function calculateReturn() {
-        const final = parseFloat(document.getElementById('finalAmount').textContent);
-        const received = parseFloat(document.getElementById('amountReceived').value) || 0;
-        const returnDiv = document.getElementById('returnDiv');
-        
-        if (received > 0) {
-            document.getElementById('returnAmount').textContent = Math.max(0, received - final).toFixed(2);
-            returnDiv.style.display = 'block';
-        } else {
-            returnDiv.style.display = 'none';
-        }
-    }
-
-    // ========================================
-    // TOGGLE TRANSACTION ID FIELD
-    // ========================================
-    function toggleTransactionIdField() {
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
-        const transactionIdField = document.getElementById('transactionIdField');
-        const transactionIdInput = document.getElementById('transactionId');
-        const amountReceivedField = document.getElementById('amountReceivedField');
-        const amountReceivedInput = document.getElementById('amountReceived');
-        
-        if (paymentMethod === 'cash') {
-            // Cash payment: show Amount Received, hide Transaction ID
-            if (transactionIdField) {
-                transactionIdField.style.display = 'none';
-                transactionIdInput.required = false;
-                transactionIdInput.value = '';
-            }
-            if (amountReceivedField) {
-                amountReceivedField.style.display = 'block';
-                amountReceivedInput.required = true;
-            }
-        } else {
-            // Non-cash payment: show Transaction ID, hide Amount Received
-            if (transactionIdField) {
-                transactionIdField.style.display = 'block';
-                transactionIdInput.required = true;
-            }
-            if (amountReceivedField) {
-                amountReceivedField.style.display = 'none';
-                amountReceivedInput.required = false;
-                amountReceivedInput.value = '0';
-            }
-        }
-    }
-
-    // ========================================
-    // TOGGLE PAYMENT FIELDS
-    // ========================================
-    function togglePaymentFields() {
-        const isCounter = document.getElementById('counterBooking').checked;
-        document.getElementById('paymentFields').style.display = isCounter ? 'block' : 'none';
-        
-        if (!isCounter) {
-            // Clear transaction ID if switching to phone booking
-            document.getElementById('transactionId').value = '';
-        }
-        
-        toggleTransactionIdField();
-    }
-
-    // ========================================
-    // CONFIRM BOOKING
-    // ========================================
-    function confirmBooking() {
-        const selectedSeats = Object.keys(appState.selectedSeats);
-        
-        if (selectedSeats.length === 0) {
-            alert('Please select at least one seat');
-            return;
-        }
-
-        // Validate passenger information
-        if (!validatePassengerInfo()) {
-            return;
-        }
-
-        if (!appState.baseFare || appState.baseFare <= 0) {
-            alert('Fare not loaded. Please select destination first.');
-            return;
-        }
-
-        const isCounter = document.getElementById('counterBooking').checked;
-        const final = parseFloat(document.getElementById('finalAmount').textContent);
-        const received = parseFloat(document.getElementById('amountReceived').value) || 0;
-        const paymentMethod = isCounter 
-            ? document.querySelector('input[name="paymentMethod"]:checked').value 
-            : 'cash';
-
-        if (isCounter && paymentMethod === 'cash' && received < final) {
-            alert('Insufficient amount received from customer');
-            return;
-        }
-
-        // Create passengers array with detailed information
-        const passengers = selectedSeats.map(seat => {
-            const info = appState.passengerInfo[seat];
-            return {
-                seat_number: parseInt(seat),
-                name: info.name || `Passenger - Seat ${seat}`,
-                age: info.age || null,
-                gender: info.gender,
-                cnic: info.cnic || null,
-                phone: info.phone || null,
-                email: info.email || null
-            };
-        });
-
-        // Add extra passengers to the array
-        const extraPassengers = Object.keys(appState.passengerInfo).filter(
-            key => appState.passengerInfo[key].type === 'extra'
-        );
-
-        extraPassengers.forEach(passengerId => {
-            const info = appState.passengerInfo[passengerId];
-            passengers.push({
-                passenger_id: info.passenger_id,
-                seat_number: null, // Extra passengers not tied to seats
-                name: info.name,
-                age: info.age || null,
-                gender: info.gender,
-                cnic: info.cnic || null,
-                phone: info.phone || null,
-                email: info.email || null
             });
-        });
 
-        const totalFare = parseFloat(document.getElementById('totalFare').value);
-        const tax = parseFloat(document.getElementById('tax').value) || 0;
-        const farePerSeat = selectedSeats.length > 0 ? totalFare / selectedSeats.length : 0;
+            container.innerHTML = html;
+            document.getElementById('addPassengerBtn').style.display = selectedSeats.length > 0 ? 'inline-block' : 'none';
+        }
 
-        document.getElementById('confirmBtn').disabled = true;
-
-        $.ajax({
-            url: '/admin/bookings',
-            type: 'POST',
-            data: {
-                trip_id: appState.tripData.trip.id,
-                from_terminal_id: document.getElementById('fromTerminal').value,
-                to_terminal_id: document.getElementById('toTerminal').value,
-                seat_numbers: selectedSeats.map(Number),
-                passengers: JSON.stringify(passengers),
-                channel: isCounter ? 'counter' : 'phone',
-                payment_method: paymentMethod,
-                amount_received: paymentMethod === 'cash' && isCounter ? received : null,
-                fare_per_seat: farePerSeat,
-                total_fare: totalFare,
-                discount_amount: 0,
-                tax_amount: tax,
-                final_amount: final,
-                notes: document.getElementById('notes').value,
-                transaction_id: paymentMethod !== 'cash' && isCounter ? document.getElementById('transactionId').value : null,
-                _token: document.querySelector('meta[name="csrf-token"]').content
-            },
-            success: function(response) {
-                const booking = response.booking;
-                document.getElementById('bookingNumber').textContent = booking.booking_number;
-                document.getElementById('bookedSeats').textContent = booking.seats.join(', ');
-                document.getElementById('bookingStatus').textContent = booking.status === 'hold' ? 'On Hold' : 'Confirmed';
-                document.getElementById('confirmedFare').textContent = parseFloat(booking.total_fare).toFixed(2);
-                document.getElementById('confirmedDiscount').textContent = '0.00';
-                document.getElementById('confirmedTax').textContent = parseFloat(booking.tax_amount).toFixed(2);
-                document.getElementById('confirmedFinal').textContent = parseFloat(booking.final_amount).toFixed(2);
-                document.getElementById('paymentMethodDisplay').textContent = booking.payment_method || 'N/A';
-
-                new bootstrap.Modal(document.getElementById('successModal')).show();
-            },
-            error: function(error) {
-                const message = error.responseJSON?.error || 'Failed to create booking';
-                alert(message);
-            },
-            complete: function() {
-                document.getElementById('confirmBtn').disabled = false;
+        // ========================================
+        // UPDATE PASSENGER FIELD
+        // ========================================
+        function updatePassengerField(key, field, value) {
+            if (appState.passengerInfo[key]) {
+                appState.passengerInfo[key][field] = value;
             }
-        });
-    }
+        }
 
-    // ========================================
-    // RESET FORM
-    // ========================================
-    function resetForm() {
-        appState.selectedSeats = {};
-        appState.passengerInfo = {};  // ← Clear passenger info
-        appState.tripLoaded = false;
-        appState.fareData = null;
-        appState.baseFare = 0;
-        document.getElementById('tripContent').style.display = 'none';
-        document.getElementById('baseFare').value = '';
-        document.getElementById('discountInfo').value = '';
-        document.getElementById('totalFare').value = '';
-        document.getElementById('tax').value = '0';
-        document.getElementById('amountReceived').value = '0';
-        document.getElementById('notes').value = '';
-        document.getElementById('finalAmount').textContent = '0.00';
-        document.getElementById('departureTime').value = '';
-        updateSeatsList();
-    }
+        // ========================================
+        // REMOVE EXTRA PASSENGER
+        // ========================================
+        function removeExtraPassenger(passengerId) {
+            delete appState.passengerInfo[passengerId];
+            updatePassengerForms();
+        }
 
-    // ========================================
-    // SETUP WEBSOCKET
-    // ========================================
-    function setupWebSocket() {
-        if (!window.Echo) return;
+        // ========================================
+        // ADD PASSENGER FORM (Legacy - now calls addExtraPassenger)
+        // ========================================
+        function addPassengerForm() {
+            addExtraPassenger();
+        }
 
-        window.Echo.connector.options.auth.headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').content;
-    }
+        // ========================================
+        // VALIDATE PASSENGER INFORMATION
+        // ========================================
+        function validatePassengerInfo() {
+            const selectedSeats = Object.keys(appState.selectedSeats).sort((a, b) => a - b);
 
-    // ========================================
-    // LOAD TRIP PASSENGERS
-    // ========================================
-    function loadTripPassengers(tripId) {
-        $.ajax({
-            url: `/admin/bookings/console/trip-passengers/${tripId}`,
-            type: 'GET',
-            success: function(response) {
-                const passengersList = document.getElementById('tripPassengersList');
-                passengersList.innerHTML = ''; // Clear previous content
-
-                if (response.length === 0) {
-                    passengersList.innerHTML = '<p class="text-muted text-center py-4"><i class="fas fa-inbox"></i><br>No passengers booked for this trip yet.</p>';
-                    return;
+            // Validate mandatory passengers
+            for (let seat of selectedSeats) {
+                const info = appState.passengerInfo[seat];
+                if (!info || !info.name || info.name.trim() === '') {
+                    alert(`Please enter passenger name for Seat ${seat}`);
+                    return false;
                 }
+            }
 
-                const table = document.createElement('table');
-                table.className = 'table table-striped table-bordered table-hover table-sm';
-                table.style.width = '100%';
-                table.style.fontSize = '0.88rem';
+            // Validate extra passengers if any
+            const extraPassengers = Object.keys(appState.passengerInfo).filter(
+                key => appState.passengerInfo[key].type === 'extra'
+            );
 
-                const headerRow = document.createElement('tr');
-                headerRow.className = '';
-                headerRow.innerHTML = `
+            for (let passengerId of extraPassengers) {
+                const info = appState.passengerInfo[passengerId];
+                if (!info.name || info.name.trim() === '') {
+                    alert(`Extra Passenger: Please enter name`);
+                    return false;
+                }
+                if (!info.gender || info.gender === '') {
+                    alert(`Extra Passenger: Please select gender`);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // ========================================
+        // CALCULATE TOTAL FARE (based on seat count)
+        // ========================================
+        function calculateTotalFare() {
+            const seatCount = Object.keys(appState.selectedSeats).length;
+            const baseFare = appState.baseFare || 0;
+            const totalFare = baseFare * seatCount;
+
+            document.getElementById('totalFare').value = totalFare.toFixed(2);
+            calculateFinal();
+        }
+
+        // ========================================
+        // CALCULATE FINAL AMOUNT
+        // ========================================
+        function calculateFinal() {
+            const fare = parseFloat(document.getElementById('totalFare').value) || 0;
+            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            const final = fare + tax;
+            document.getElementById('finalAmount').textContent = final.toFixed(2);
+            calculateReturn();
+        }
+
+        // ========================================
+        // CALCULATE RETURN
+        // ========================================
+        function calculateReturn() {
+            const final = parseFloat(document.getElementById('finalAmount').textContent);
+            const received = parseFloat(document.getElementById('amountReceived').value) || 0;
+            const returnDiv = document.getElementById('returnDiv');
+
+            if (received > 0) {
+                document.getElementById('returnAmount').textContent = Math.max(0, received - final).toFixed(2);
+                returnDiv.style.display = 'block';
+            } else {
+                returnDiv.style.display = 'none';
+            }
+        }
+
+        // ========================================
+        // TOGGLE TRANSACTION ID FIELD
+        // ========================================
+        function toggleTransactionIdField() {
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
+            const transactionIdField = document.getElementById('transactionIdField');
+            const transactionIdInput = document.getElementById('transactionId');
+            const amountReceivedField = document.getElementById('amountReceivedField');
+            const amountReceivedInput = document.getElementById('amountReceived');
+
+            if (paymentMethod === 'cash') {
+                // Cash payment: show Amount Received, hide Transaction ID
+                if (transactionIdField) {
+                    transactionIdField.style.display = 'none';
+                    transactionIdInput.required = false;
+                    transactionIdInput.value = '';
+                }
+                if (amountReceivedField) {
+                    amountReceivedField.style.display = 'block';
+                    amountReceivedInput.required = true;
+                }
+            } else {
+                // Non-cash payment: show Transaction ID, hide Amount Received
+                if (transactionIdField) {
+                    transactionIdField.style.display = 'block';
+                    transactionIdInput.required = true;
+                }
+                if (amountReceivedField) {
+                    amountReceivedField.style.display = 'none';
+                    amountReceivedInput.required = false;
+                    amountReceivedInput.value = '0';
+                }
+            }
+        }
+
+        // ========================================
+        // TOGGLE PAYMENT FIELDS
+        // ========================================
+        function togglePaymentFields() {
+            const isCounter = document.getElementById('counterBooking').checked;
+            document.getElementById('paymentFields').style.display = isCounter ? 'block' : 'none';
+
+            if (!isCounter) {
+                // Clear transaction ID if switching to phone booking
+                document.getElementById('transactionId').value = '';
+            }
+
+            toggleTransactionIdField();
+        }
+
+        // ========================================
+        // CONFIRM BOOKING
+        // ========================================
+        function confirmBooking() {
+            const selectedSeats = Object.keys(appState.selectedSeats);
+
+            if (selectedSeats.length === 0) {
+                alert('Please select at least one seat');
+                return;
+            }
+
+            // Validate passenger information
+            if (!validatePassengerInfo()) {
+                return;
+            }
+
+            if (!appState.baseFare || appState.baseFare <= 0) {
+                alert('Fare not loaded. Please select destination first.');
+                return;
+            }
+
+            const isCounter = document.getElementById('counterBooking').checked;
+            const final = parseFloat(document.getElementById('finalAmount').textContent);
+            const received = parseFloat(document.getElementById('amountReceived').value) || 0;
+            const paymentMethod = isCounter ?
+                document.querySelector('input[name="paymentMethod"]:checked').value :
+                'cash';
+
+            if (isCounter && paymentMethod === 'cash' && received < final) {
+                alert('Insufficient amount received from customer');
+                return;
+            }
+
+            // Create passengers array with detailed information
+            const passengers = selectedSeats.map(seat => {
+                const info = appState.passengerInfo[seat];
+                return {
+                    seat_number: parseInt(seat),
+                    name: info.name || `Passenger - Seat ${seat}`,
+                    age: info.age || null,
+                    gender: info.gender,
+                    cnic: info.cnic || null,
+                    phone: info.phone || null,
+                    email: info.email || null
+                };
+            });
+
+            // Add extra passengers to the array
+            const extraPassengers = Object.keys(appState.passengerInfo).filter(
+                key => appState.passengerInfo[key].type === 'extra'
+            );
+
+            extraPassengers.forEach(passengerId => {
+                const info = appState.passengerInfo[passengerId];
+                passengers.push({
+                    passenger_id: info.passenger_id,
+                    seat_number: null, // Extra passengers not tied to seats
+                    name: info.name,
+                    age: info.age || null,
+                    gender: info.gender,
+                    cnic: info.cnic || null,
+                    phone: info.phone || null,
+                    email: info.email || null
+                });
+            });
+
+            const totalFare = parseFloat(document.getElementById('totalFare').value);
+            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            const farePerSeat = selectedSeats.length > 0 ? totalFare / selectedSeats.length : 0;
+
+            document.getElementById('confirmBtn').disabled = true;
+
+            $.ajax({
+                url: '/admin/bookings',
+                type: 'POST',
+                data: {
+                    trip_id: appState.tripData.trip.id,
+                    from_terminal_id: document.getElementById('fromTerminal').value,
+                    to_terminal_id: document.getElementById('toTerminal').value,
+                    seat_numbers: selectedSeats.map(Number),
+                    passengers: JSON.stringify(passengers),
+                    channel: isCounter ? 'counter' : 'phone',
+                    payment_method: paymentMethod,
+                    amount_received: paymentMethod === 'cash' && isCounter ? received : null,
+                    fare_per_seat: farePerSeat,
+                    total_fare: totalFare,
+                    discount_amount: 0,
+                    tax_amount: tax,
+                    final_amount: final,
+                    notes: document.getElementById('notes').value,
+                    transaction_id: paymentMethod !== 'cash' && isCounter ? document.getElementById('transactionId')
+                        .value : null,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                },
+                success: function(response) {
+                    const booking = response.booking;
+                    document.getElementById('bookingNumber').textContent = booking.booking_number;
+                    document.getElementById('bookedSeats').textContent = booking.seats.join(', ');
+                    document.getElementById('bookingStatus').textContent = booking.status === 'hold' ?
+                        'On Hold' : 'Confirmed';
+                    document.getElementById('confirmedFare').textContent = parseFloat(booking.total_fare)
+                        .toFixed(2);
+                    document.getElementById('confirmedDiscount').textContent = '0.00';
+                    document.getElementById('confirmedTax').textContent = parseFloat(booking.tax_amount)
+                        .toFixed(2);
+                    document.getElementById('confirmedFinal').textContent = parseFloat(booking.final_amount)
+                        .toFixed(2);
+                    document.getElementById('paymentMethodDisplay').textContent = booking.payment_method ||
+                        'N/A';
+
+                    new bootstrap.Modal(document.getElementById('successModal')).show();
+                },
+                error: function(error) {
+                    const message = error.responseJSON?.error || 'Failed to create booking';
+                    alert(message);
+                },
+                complete: function() {
+                    document.getElementById('confirmBtn').disabled = false;
+                }
+            });
+        }
+
+        // ========================================
+        // RESET FORM
+        // ========================================
+        function resetForm() {
+            appState.selectedSeats = {};
+            appState.passengerInfo = {}; // ← Clear passenger info
+            appState.tripLoaded = false;
+            appState.fareData = null;
+            appState.baseFare = 0;
+            document.getElementById('tripContent').style.display = 'none';
+            document.getElementById('baseFare').value = '';
+            document.getElementById('discountInfo').value = '';
+            document.getElementById('totalFare').value = '';
+            document.getElementById('tax').value = '0';
+            document.getElementById('amountReceived').value = '0';
+            document.getElementById('notes').value = '';
+            document.getElementById('finalAmount').textContent = '0.00';
+            document.getElementById('departureTime').value = '';
+            updateSeatsList();
+        }
+
+        // ========================================
+        // SETUP WEBSOCKET
+        // ========================================
+        function setupWebSocket() {
+            if (!window.Echo) return;
+
+            window.Echo.connector.options.auth.headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')
+                .content;
+        }
+
+        // ========================================
+        // LOAD TRIP PASSENGERS
+        // ========================================
+        function loadTripPassengers(tripId) {
+            $.ajax({
+                url: `/admin/bookings/console/trip-passengers/${tripId}`,
+                type: 'GET',
+                success: function(response) {
+                    const passengersList = document.getElementById('tripPassengersList');
+                    passengersList.innerHTML = ''; // Clear previous content
+
+                    if (response.length === 0) {
+                        passengersList.innerHTML =
+                            '<p class="text-muted text-center py-4"><i class="fas fa-inbox"></i><br>No passengers booked for this trip yet.</p>';
+                        return;
+                    }
+
+                    const table = document.createElement('table');
+                    table.className = 'table table-striped table-bordered table-hover table-sm';
+                    table.style.width = '100%';
+                    table.style.fontSize = '0.88rem';
+
+                    const headerRow = document.createElement('tr');
+                    headerRow.className = '';
+                    headerRow.innerHTML = `
                     <th style="width: 8%;">Seat</th>
                     <th style="width: 18%;">Passenger</th>
                     <th style="width: 10%;">Route</th>
@@ -1371,20 +1417,21 @@
                     <th style="width: 8%;">Booking #</th>
                     <th style="width: 8%;">Status</th>
                 `;
-                table.appendChild(headerRow);
+                    table.appendChild(headerRow);
 
-                response.forEach(passenger => {
-                    const row = document.createElement('tr');
-                    const genderIcon = passenger.gender === 'male' ? 'Male' : passenger.gender === 'female' ? 'Female' : 'Unknown';
-                    const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' : 
-                                            passenger.status === 'hold' ? 'bg-warning' :
-                                            passenger.status === 'checked_in' ? 'bg-info' :
-                                            passenger.status === 'boarded' ? 'bg-primary' : 'bg-secondary';
-                    const channelIcon = passenger.channel === 'counter' ? '🏪' :
-                                       passenger.channel === 'phone' ? '📞' :
-                                       passenger.channel === 'online' ? '🌐' : '❓';
+                    response.forEach(passenger => {
+                        const row = document.createElement('tr');
+                        const genderIcon = passenger.gender === 'male' ? 'Male' : passenger.gender ===
+                            'female' ? 'Female' : 'Unknown';
+                        const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' :
+                            passenger.status === 'hold' ? 'bg-warning' :
+                            passenger.status === 'checked_in' ? 'bg-info' :
+                            passenger.status === 'boarded' ? 'bg-primary' : 'bg-secondary';
+                        const channelIcon = passenger.channel === 'counter' ? '🏪' :
+                            passenger.channel === 'phone' ? '📞' :
+                            passenger.channel === 'online' ? '🌐' : '❓';
 
-                    row.innerHTML = `
+                        row.innerHTML = `
                         <td class="text-center fw-bold"><span class="badge bg-info">${passenger.seat_number || 'N/A'}</span></td>
                         <td>
                             <div class="fw-bold">${passenger.name || 'N/A'}</div>
@@ -1407,49 +1454,49 @@
                             </button>
                         </td>
                     `;
-                    table.appendChild(row);
-                });
+                        table.appendChild(row);
+                    });
 
-                passengersList.appendChild(table);
-            },
-            error: function() {
-                alert('Failed to load trip passengers');
-            }
-        });
-    }
+                    passengersList.appendChild(table);
+                },
+                error: function() {
+                    alert('Failed to load trip passengers');
+                }
+            });
+        }
 
-    // ========================================
-    // VIEW PASSENGER BOOKING DETAILS
-    // ========================================
-    function viewPassengerBooking(bookingId, bookingNumber) {
-        $.ajax({
-            url: `/admin/bookings/console/booking-details/${bookingId}`,
-            type: 'GET',
-            success: function(response) {
-                const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
-                const modalBody = document.getElementById('bookingDetailsModalBody');
-                modalBody.innerHTML = ''; // Clear previous content
+        // ========================================
+        // VIEW PASSENGER BOOKING DETAILS
+        // ========================================
+        function viewPassengerBooking(bookingId, bookingNumber) {
+            $.ajax({
+                url: `/admin/bookings/console/booking-details/${bookingId}`,
+                type: 'GET',
+                success: function(response) {
+                    const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
+                    const modalBody = document.getElementById('bookingDetailsModalBody');
+                    modalBody.innerHTML = ''; // Clear previous content
 
-                if (response.success) {
-                    const booking = response.booking;
-                    const passengers = booking.passengers || [];
-                    const seats = booking.seats || [];
-                    
-                    // Convert to numbers to ensure toFixed() works
-                    const totalFare = parseFloat(booking.total_fare || 0);
-                    const discount = parseFloat(booking.discount_amount || 0);
-                    const tax = parseFloat(booking.tax_amount || 0);
-                    const finalAmount = parseFloat(booking.final_amount || 0);
-                    
-                    const paymentMethod = booking.payment_method;
-                    const notes = booking.notes;
-                    const transactionId = booking.transaction_id;
-                    const channel = booking.channel;
-                    const status = booking.status;
-                    const createdAt = booking.created_at;
-                    const updatedAt = booking.updated_at;
+                    if (response.success) {
+                        const booking = response.booking;
+                        const passengers = booking.passengers || [];
+                        const seats = booking.seats || [];
 
-                    modalBody.innerHTML = `
+                        // Convert to numbers to ensure toFixed() works
+                        const totalFare = parseFloat(booking.total_fare || 0);
+                        const discount = parseFloat(booking.discount_amount || 0);
+                        const tax = parseFloat(booking.tax_amount || 0);
+                        const finalAmount = parseFloat(booking.final_amount || 0);
+
+                        const paymentMethod = booking.payment_method;
+                        const notes = booking.notes;
+                        const transactionId = booking.transaction_id;
+                        const channel = booking.channel;
+                        const status = booking.status;
+                        const createdAt = booking.created_at;
+                        const updatedAt = booking.updated_at;
+
+                        modalBody.innerHTML = `
                         <div class="mb-3">
                             <h5 class="fw-bold">Booking #${bookingNumber}</h5>
                             <p class="text-muted">Status: <span class="badge ${status === 'hold' ? 'bg-warning' : status === 'confirmed' ? 'bg-success' : 'bg-info'}">${status}</span></p>
@@ -1480,58 +1527,58 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                        <tr>
-                                            <td>${p.seat_number || 'N/A'}</td>
-                                            <td>${p.name || 'N/A'}</td>
-                                            <td>${p.age || 'N/A'}</td>
-                                            <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                            <td>${p.cnic || 'N/A'}</td>
-                                            <td>${p.phone || 'N/A'}</td>
-                                            <td>${p.email || 'N/A'}</td>
-                                        </tr>
-                                    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                <tr>
+                                                    <td>${p.seat_number || 'N/A'}</td>
+                                                    <td>${p.name || 'N/A'}</td>
+                                                    <td>${p.age || 'N/A'}</td>
+                                                    <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                    <td>${p.cnic || 'N/A'}</td>
+                                                    <td>${p.phone || 'N/A'}</td>
+                                                    <td>${p.email || 'N/A'}</td>
+                                                </tr>
+                                            `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
                     `;
-                    modal.show();
-                } else {
-                    console.error('Failed to load booking details:', response);
-                    alert('Failed to load booking details: ' + (response.error || 'Unknown error'));
+                        modal.show();
+                    } else {
+                        console.error('Failed to load booking details:', response);
+                        alert('Failed to load booking details: ' + (response.error || 'Unknown error'));
+                    }
+                },
+                error: function(error) {
+                    console.error('AJAX Error:', error);
+                    alert('Failed to load booking details. Please try again.');
                 }
-            },
-            error: function(error) {
-                console.error('AJAX Error:', error);
-                alert('Failed to load booking details. Please try again.');
-            }
-        });
-    }
-
-    // ========================================
-    // RENDER BUS & DRIVER SECTION
-    // ========================================
-    function renderBusDriverSection(trip) {
-        const busDriverSection = document.getElementById('busDriverSection');
-        busDriverSection.innerHTML = ''; // Clear previous content
-
-        // Show/hide assign bus button in header
-        const assignBusBtn = document.getElementById('assignBusBtnHeader');
-        if (assignBusBtn) {
-            assignBusBtn.style.display = 'block';
-            assignBusBtn.textContent = trip.bus_id ? '🔄 Change Bus' : '🚌 Assign Bus';
+            });
         }
 
-        if (!trip.bus_id) {
-            busDriverSection.innerHTML = `
+        // ========================================
+        // RENDER BUS & DRIVER SECTION
+        // ========================================
+        function renderBusDriverSection(trip) {
+            const busDriverSection = document.getElementById('busDriverSection');
+            busDriverSection.innerHTML = ''; // Clear previous content
+
+            // Show/hide assign bus button in header
+            const assignBusBtn = document.getElementById('assignBusBtnHeader');
+            if (assignBusBtn) {
+                assignBusBtn.style.display = 'block';
+                assignBusBtn.textContent = trip.bus_id ? '🔄 Change Bus' : '🚌 Assign Bus';
+            }
+
+            if (!trip.bus_id) {
+                busDriverSection.innerHTML = `
                 <div class="alert alert-warning text-center py-2 mb-0 small">
                     <p class="mb-0"><i class="fas fa-info-circle"></i> Bus and Driver not assigned yet. Use the "Assign Bus" button in the search form.</p>
                 </div>
             `;
-            return;
-        }
+                return;
+            }
 
-        // Bus assigned - show details
-        busDriverSection.innerHTML = `
+            // Bus assigned - show details
+            busDriverSection.innerHTML = `
             <div class="row g-2">
                 <div class="col-md-6">
                     <div class="card border-left-primary shadow-sm h-100" style="font-size: 0.85rem;">
@@ -1573,26 +1620,27 @@
                 </div>
             </div>
         `;
-    }
+        }
 
-    // ========================================
-    // OPEN ASSIGN BUS MODAL
-    // ========================================
-    function openAssignBusModal(tripId) {
-        // Fetch list of available buses
-        $.ajax({
-            url: '/admin/bookings/console/list-buses',
-            type: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    const buses = response.buses;
-                    let busesHtml = '<option value="">-- Select a Bus --</option>';
-                    buses.forEach(bus => {
-                        busesHtml += `<option value="${bus.id}">${bus.name} (${bus.registration_number})</option>`;
-                    });
+        // ========================================
+        // OPEN ASSIGN BUS MODAL
+        // ========================================
+        function openAssignBusModal(tripId) {
+            // Fetch list of available buses
+            $.ajax({
+                url: '/admin/bookings/console/list-buses',
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const buses = response.buses;
+                        let busesHtml = '<option value="">-- Select a Bus --</option>';
+                        buses.forEach(bus => {
+                            busesHtml +=
+                                `<option value="${bus.id}">${bus.name} (${bus.registration_number})</option>`;
+                        });
 
-                    const modalBody = document.getElementById('assignBusModalBody');
-                    modalBody.innerHTML = `
+                        const modalBody = document.getElementById('assignBusModalBody');
+                        modalBody.innerHTML = `
                         <form id="assignBusForm">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
@@ -1638,81 +1686,82 @@
                         </form>
                     `;
 
-                    const modal = new bootstrap.Modal(document.getElementById('assignBusModal'));
-                    modal.show();
+                        const modal = new bootstrap.Modal(document.getElementById('assignBusModal'));
+                        modal.show();
 
-                    // Handle confirm button
-                    document.getElementById('confirmAssignBusBtn').onclick = () => {
-                        const busId = document.getElementById('busSelect').value;
-                        const driverName = document.getElementById('driverName').value;
-                        const driverPhone = document.getElementById('driverPhone').value;
-                        const driverCnic = document.getElementById('driverCnic').value;
-                        const driverLicense = document.getElementById('driverLicense').value;
-                        const driverAddress = document.getElementById('driverAddress').value;
+                        // Handle confirm button
+                        document.getElementById('confirmAssignBusBtn').onclick = () => {
+                            const busId = document.getElementById('busSelect').value;
+                            const driverName = document.getElementById('driverName').value;
+                            const driverPhone = document.getElementById('driverPhone').value;
+                            const driverCnic = document.getElementById('driverCnic').value;
+                            const driverLicense = document.getElementById('driverLicense').value;
+                            const driverAddress = document.getElementById('driverAddress').value;
 
-                        if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
-                            alert('Please fill all required fields!');
-                            return;
-                        }
-
-                        // Submit to backend
-                        $.ajax({
-                            url: `/admin/bookings/console/assign-bus-driver/${tripId}`,
-                            type: 'POST',
-                            data: {
-                                bus_id: busId,
-                                driver_name: driverName,
-                                driver_phone: driverPhone,
-                                driver_cnic: driverCnic,
-                                driver_license: driverLicense,
-                                driver_address: driverAddress,
-                                _token: document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    alert('Bus and Driver assigned successfully!');
-                                    modal.hide();
-                                    // Reload trip data
-                                    const tripId = appState.currentTrip.id;
-                                    loadTrip();
-                                } else {
-                                    alert('Error: ' + (response.error || 'Failed to assign'));
-                                }
-                            },
-                            error: function(error) {
-                                console.error('Error:', error);
-                                alert('Failed to assign bus and driver');
+                            if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
+                                alert('Please fill all required fields!');
+                                return;
                             }
-                        });
-                    };
-                } else {
-                    alert('Failed to load buses list');
+
+                            // Submit to backend
+                            $.ajax({
+                                url: `/admin/bookings/console/assign-bus-driver/${tripId}`,
+                                type: 'POST',
+                                data: {
+                                    bus_id: busId,
+                                    driver_name: driverName,
+                                    driver_phone: driverPhone,
+                                    driver_cnic: driverCnic,
+                                    driver_license: driverLicense,
+                                    driver_address: driverAddress,
+                                    _token: document.querySelector('meta[name="csrf-token"]')
+                                        .content
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        alert('Bus and Driver assigned successfully!');
+                                        modal.hide();
+                                        // Reload trip data
+                                        const tripId = appState.currentTrip.id;
+                                        loadTrip();
+                                    } else {
+                                        alert('Error: ' + (response.error ||
+                                            'Failed to assign'));
+                                    }
+                                },
+                                error: function(error) {
+                                    console.error('Error:', error);
+                                    alert('Failed to assign bus and driver');
+                                }
+                            });
+                        };
+                    } else {
+                        alert('Failed to load buses list');
+                    }
+                },
+                error: function() {
+                    alert('Failed to fetch buses');
                 }
-            },
-            error: function() {
-                alert('Failed to fetch buses');
-            }
-        });
-    }
-
-    // ========================================
-    // OPEN ASSIGN BUS MODAL FROM HEADER
-    // ========================================
-    function openAssignBusModalFromHeader() {
-        const tripId = appState.tripData ? appState.tripData.trip.id : null;
-        if (tripId) {
-            openAssignBusModal(tripId);
-        } else {
-            alert('No trip data loaded. Please load a trip first.');
+            });
         }
-    }
 
-    // ========================================
-    // ASSIGN DRIVER (OLD - DEPRECATED)
-    // ========================================
-    function assignDriver(tripId) {
-        // Now handled in assignBus modal
-    }
-</script>
+        // ========================================
+        // OPEN ASSIGN BUS MODAL FROM HEADER
+        // ========================================
+        function openAssignBusModalFromHeader() {
+            const tripId = appState.tripData ? appState.tripData.trip.id : null;
+            if (tripId) {
+                openAssignBusModal(tripId);
+            } else {
+                alert('No trip data loaded. Please load a trip first.');
+            }
+        }
+
+        // ========================================
+        // ASSIGN DRIVER (OLD - DEPRECATED)
+        // ========================================
+        function assignDriver(tripId) {
+            // Now handled in assignBus modal
+        }
+    </script>
 @endsection
-
