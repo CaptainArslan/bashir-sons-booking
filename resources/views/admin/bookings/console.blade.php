@@ -35,7 +35,7 @@
             border-radius: 12px;
             min-height: 500px;
         }
-        
+
         .seat-row-container {
             display: flex;
             justify-content: center;
@@ -43,12 +43,13 @@
             gap: 1rem;
             margin-bottom: 0.75rem;
         }
-        
-        .seat-pair-left, .seat-pair-right {
+
+        .seat-pair-left,
+        .seat-pair-right {
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .seat-aisle {
             width: 40px;
             height: 100%;
@@ -58,7 +59,7 @@
             color: #94a3b8;
             font-size: 0.7rem;
         }
-        
+
         .seat-grid {
             display: flex;
             flex-direction: column;
@@ -66,7 +67,7 @@
             width: 100%;
             padding: 0;
         }
-        
+
         /* Seat button styling - Clean Design */
         .seat-btn {
             min-width: 45px;
@@ -86,7 +87,7 @@
             cursor: pointer;
             position: relative;
         }
-        
+
         /* Gender badge styling - Top right corner */
         .seat-gender-badge {
             position: absolute;
@@ -104,51 +105,51 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             z-index: 10;
         }
-        
+
         .seat-gender-badge.male-badge {
             background: #3B82F6;
         }
-        
+
         .seat-gender-badge.female-badge {
             background: #EC4899;
         }
-        
+
         .seat-btn:hover:not(:disabled) {
             transform: scale(1.05);
             border-color: #94a3b8;
         }
-        
+
         .seat-btn:disabled {
             cursor: not-allowed;
             opacity: 0.9;
         }
-        
+
         /* Seat status colors - Matching Image */
         .seat-available {
             background: #E2E8F0;
             color: #334155;
             border-color: #cbd5e1;
         }
-        
+
         .seat-selected {
             background: #3B82F6;
             color: #ffffff;
             border-color: #2563eb;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
         }
-        
+
         .seat-booked-male {
             background: #22D3EE;
             color: #ffffff;
             border-color: #06b6d4;
         }
-        
+
         .seat-booked-female {
             background: #EC4899;
             color: #ffffff;
             border-color: #db2777;
         }
-        
+
         .seat-held {
             background: #fbbf24;
             color: #78350f;
@@ -239,8 +240,8 @@
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Travel Date</label>
                         <input type="date" class="form-control form-control-lg" id="travelDate"
-                            value="{{ now()->format('Y-m-d') }}" min="{{ now()->format('Y-m-d') }}"
-                            max="{{ now()->addDays(10)->format('Y-m-d') }}" />
+                            value="{{ $mindate->format('Y-m-d') }}" min="{{ $mindate->format('Y-m-d') }}"
+                            max="{{ $maxdate->format('Y-m-d') }}" />
                     </div>
 
                     <!-- From Terminal / Stop -->
@@ -289,7 +290,8 @@
         <!-- Trip Content (shown when trip loaded) -->
         <div id="tripContent" style="display: none;">
             <!-- Trip Details Card (Above all sections) -->
-            <div class="card mb-4 shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card mb-4 shadow-sm border-0"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <div class="card-body text-white p-4">
                     <div class="row g-4">
                         <div class="col-md-3">
@@ -298,7 +300,8 @@
                                     <i class="fas fa-route"></i>
                                 </div>
                                 <div>
-                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Route</small>
+                                    <small class="d-block opacity-75"
+                                        style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Route</small>
                                     <h5 class="mb-0 fw-bold" id="tripRoute">-</h5>
                                 </div>
                             </div>
@@ -309,7 +312,8 @@
                                     <i class="fas fa-calendar-alt"></i>
                                 </div>
                                 <div>
-                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Date</small>
+                                    <small class="d-block opacity-75"
+                                        style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Date</small>
                                     <h5 class="mb-0 fw-bold" id="tripDate">-</h5>
                                 </div>
                             </div>
@@ -320,7 +324,8 @@
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <div>
-                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Time</small>
+                                    <small class="d-block opacity-75"
+                                        style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Time</small>
                                     <h5 class="mb-0 fw-bold" id="tripTime">-</h5>
                                 </div>
                             </div>
@@ -336,13 +341,13 @@
                 <!-- Left Column: Seat Map (3 columns) -->
                 <div class="col-lg-3 col-md-6">
                     <div class="card shadow-sm h-100 border-0">
-                        <div class="card-header text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="card-header text-white"
+                            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                             <h6 class="mb-0 fw-bold">
                                 <i class="fas fa-chair"></i> Seat Map
                             </h6>
                         </div>
-                        <div class="card-body p-3"
-                            style="max-height: calc(100vh - 300px); overflow-y: auto;">
+                        <div class="card-body p-3" style="max-height: calc(100vh - 300px); overflow-y: auto;">
                             <!-- Summary Card (Matching Image Design) -->
                             <div class="mb-3 p-3 bg-white rounded-lg shadow-sm w-100 border border-gray-200">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -355,47 +360,60 @@
                                     <span class="small fw-bold" style="color: #3B82F6;" id="totalSummaryFare">Rs 0</span>
                                 </div>
                             </div>
-                            
+
                             <!-- Legend -->
                             <div class="mb-3 p-3 bg-white rounded-lg shadow-sm w-100 border border-gray-200">
                                 <div class="seat-legend">
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #E2E8F0; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #E2E8F0; border: 1px solid #cbd5e1; border-radius: 4px;">
+                                        </div>
                                         <span class="small text-dark">Available</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
-                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
+                                            <span
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
                                         </div>
                                         <span class="small text-dark">Selected (Male)</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
-                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
+                                            <span
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
                                         </div>
                                         <span class="small text-dark">Selected (Female)</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px; position: relative;">
-                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px; position: relative;">
+                                            <span
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
                                         </div>
                                         <span class="small text-dark">Male Booked</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px; position: relative;">
-                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px; position: relative;">
+                                            <span
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
                                         </div>
                                         <span class="small text-dark">Female Booked</span>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #fbbf24; border: 1px solid #f59e0b; border-radius: 4px;"></div>
+                                        <div class="me-2"
+                                            style="width: 16px; height: 16px; background: #fbbf24; border: 1px solid #f59e0b; border-radius: 4px;">
+                                        </div>
                                         <span class="small text-dark">Held</span>
                                     </div>
                                 </div>
                             </div>
                             <!-- Seat Grid -->
                             <div class="seat-map-container">
-                                <h6 class="text-center mb-3" style="color: #334155; font-weight: 600; font-size: 1rem;">Select Your Seat</h6>
+                                <h6 class="text-center mb-3" style="color: #334155; font-weight: 600; font-size: 1rem;">
+                                    Select Your Seat</h6>
                                 <div class="seat-grid" id="seatGrid"></div>
                             </div>
                         </div>
@@ -417,7 +435,8 @@
                                     <i class="fas fa-list"></i> Selected Seats
                                     <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
                                 </label>
-                                <div id="selectedSeatsList" class="d-flex flex-wrap gap-2 mb-0" style="min-height: 40px;">
+                                <div id="selectedSeatsList" class="d-flex flex-wrap gap-2 mb-0"
+                                    style="min-height: 40px;">
                                     <span class="text-muted small">No seats selected yet</span>
                                 </div>
                             </div>
@@ -451,7 +470,8 @@
                                     </div>
                                 </div>
                                 <div class="alert alert-primary border-1 mb-0 p-2 small text-center">
-                                    <strong class="d-block mb-0">Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
+                                    <strong class="d-block mb-0">Final: PKR <span id="finalAmount"
+                                            class="text-success">0.00</span></strong>
                                 </div>
                             </div>
 
@@ -1118,7 +1138,7 @@
 
             // Determine seat status and apply appropriate class, also add gender icon
             let genderIcon = '';
-            
+
             if (appState.selectedSeats[seatNumber]) {
                 // Selected seat - same color for all
                 button.className += ' seat-selected';
@@ -1163,7 +1183,7 @@
 
             // Add seat number to button
             button.appendChild(seatNumberSpan);
-            
+
             // Add gender badge in top-right corner if gender is available
             if (genderIcon) {
                 const badge = document.createElement('span');
@@ -1265,28 +1285,29 @@
 
             // Clear previous content
             list.innerHTML = '';
-            
+
             // Create compact badges for each selected seat
             Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
                 const gender = appState.selectedSeats[seat];
                 const genderIcon = gender === 'male' ? '👨' : '👩';
-                
+
                 const badge = document.createElement('span');
                 badge.className = 'badge p-2';
-                badge.style.cssText = 'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
-                
+                badge.style.cssText =
+                'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
+
                 if (gender === 'male') {
                     badge.classList.add('bg-primary');
                 } else {
                     badge.classList.add('bg-danger');
                 }
-                
+
                 badge.innerHTML = `<span>${genderIcon}</span> <strong>Seat ${seat}</strong>`;
                 badge.title = `Seat ${seat} - ${gender === 'male' ? 'Male' : 'Female'}`;
-                
+
                 list.appendChild(badge);
             });
-            
+
             updatePassengerForms(); // ← Update passenger forms based on seats
             calculateTotalFare();
         }
@@ -1332,8 +1353,8 @@
                                 ${isMandatory ? '<i class="fas fa-user"></i> Passenger 1 <span class="badge bg-danger ms-2">Required</span>' : `<i class="fas fa-user-plus"></i> Passenger ${passengerNumber}`}
                             </h6>
                             ${!isMandatory ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
-                                        <i class="fas fa-trash"></i> Remove
-                                    </button>` : ''}
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
@@ -1950,22 +1971,24 @@
 
                     response.forEach(passenger => {
                         const row = document.createElement('tr');
-                        const genderIcon = passenger.gender === 'male' ? '👨 Male' : passenger.gender ===
+                        const genderIcon = passenger.gender === 'male' ? '👨 Male' : passenger
+                            .gender ===
                             'female' ? '👩 Female' : 'Unknown';
                         const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' :
                             passenger.status === 'hold' ? 'bg-warning' :
                             passenger.status === 'checked_in' ? 'bg-info' :
                             passenger.status === 'boarded' ? 'bg-primary' :
                             passenger.status === 'cancelled' ? 'bg-danger' : 'bg-secondary';
-                        
+
                         const channelLabel = passenger.channel === 'counter' ? '🏪 Counter' :
                             passenger.channel === 'phone' ? '📞 Phone' :
                             passenger.channel === 'online' ? '🌐 Online' : passenger.channel || 'N/A';
-                        
+
                         const paymentMethodLabel = passenger.payment_method === 'cash' ? '💰 Cash' :
                             passenger.payment_method === 'card' ? '💳 Card' :
                             passenger.payment_method === 'mobile_wallet' ? '📱 Mobile' :
-                            passenger.payment_method === 'bank_transfer' ? '🏦 Transfer' : passenger.payment_method || 'N/A';
+                            passenger.payment_method === 'bank_transfer' ? '🏦 Transfer' : passenger
+                            .payment_method || 'N/A';
 
                         row.innerHTML = `
                         <td class="text-center">
@@ -2031,10 +2054,10 @@
             // Show/hide assign bus card in right column based on bus assignment status
             const assignBusCard = document.getElementById('assignBusCard');
             const assignBusBtn = document.getElementById('assignBusBtnCard');
-            
+
             // Check if bus is assigned from database
             const isBusAssigned = trip.bus_id && trip.bus_id !== null && trip.bus_id !== undefined;
-            
+
             if (assignBusCard && assignBusBtn) {
                 if (isBusAssigned) {
                     // Hide the assign bus card if bus is already assigned
@@ -2195,12 +2218,17 @@
                                         // Reload trip data from database to get updated bus assignment status
                                         if (appState.tripData && appState.tripData.trip.id) {
                                             // Get current form values to reload trip
-                                            const fromTerminalId = document.getElementById('fromTerminal').value;
-                                            const toTerminalId = document.getElementById('toTerminal').value;
-                                            const departureTimeId = document.getElementById('departureTime').value;
-                                            const date = document.getElementById('travelDate').value;
-                                            
-                                            if (fromTerminalId && toTerminalId && departureTimeId && date) {
+                                            const fromTerminalId = document.getElementById(
+                                                'fromTerminal').value;
+                                            const toTerminalId = document.getElementById(
+                                                'toTerminal').value;
+                                            const departureTimeId = document.getElementById(
+                                                'departureTime').value;
+                                            const date = document.getElementById('travelDate')
+                                                .value;
+
+                                            if (fromTerminalId && toTerminalId &&
+                                                departureTimeId && date) {
                                                 // Reload trip to get fresh data from database
                                                 $.ajax({
                                                     url: "{{ route('admin.bookings.load-trip') }}",
@@ -2210,15 +2238,20 @@
                                                         to_terminal_id: toTerminalId,
                                                         timetable_id: departureTimeId,
                                                         date: date,
-                                                        _token: document.querySelector('meta[name="csrf-token"]').content
+                                                        _token: document.querySelector(
+                                                            'meta[name="csrf-token"]'
+                                                            ).content
                                                     },
                                                     success: function(reloadResponse) {
                                                         // Update app state with fresh data
-                                                        appState.tripData = reloadResponse;
-                                                        appState.seatMap = reloadResponse.seat_map;
-                                                        
+                                                        appState.tripData =
+                                                            reloadResponse;
+                                                        appState.seatMap =
+                                                            reloadResponse.seat_map;
+
                                                         // Re-render bus driver section with updated data
-                                                        renderBusDriverSection(reloadResponse.trip);
+                                                        renderBusDriverSection(
+                                                            reloadResponse.trip);
                                                     },
                                                     error: function() {
                                                         // If reload fails, just try to refresh manually

@@ -42,7 +42,7 @@ class BookingController extends Controller
         $maxdate = $mindate;
 
         if ($generalSettings->advance_booking_enable) {
-            $maxdate = Carbon::today()->addDays($generalSettings->advance_booking_days);
+            $maxdate = Carbon::today()->addDays($generalSettings->advance_booking_days ?? 7);
         }
         $paymentMethods = PaymentMethodEnum::options();
 
