@@ -6,10 +6,10 @@
 function loadTrip() {
     const fromTerminalId = document.getElementById('fromTerminal').value;
     const toTerminalId = document.getElementById('toTerminal').value;
-    const departureTimeId = document.getElementById('departureTime').value;
+    const timetableId = document.getElementById('departureTime').value;
     const date = document.getElementById('travelDate').value;
 
-    if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
+    if (!fromTerminalId || !toTerminalId || !timetableId || !date) {
         Swal.fire({
             icon: 'warning',
             title: 'Missing Information',
@@ -20,14 +20,14 @@ function loadTrip() {
     }
 
     document.getElementById('loadTripBtn').disabled = true;
-
+    showLoader(true, 'Loading trip...');
     $.ajax({
         url: "{{ route('admin.bookings.load-trip') }}",
         type: 'POST',
         data: {
             from_terminal_id: fromTerminalId,
             to_terminal_id: toTerminalId,
-            timetable_stop_id: departureTimeId,
+            timetable_id: timetableId,
             date: date,
             _token: document.querySelector('meta[name="csrf-token"]').content
         },
@@ -65,6 +65,7 @@ function loadTrip() {
         },
         complete: function() {
             document.getElementById('loadTripBtn').disabled = false;
+            showLoader(false);
         }
     });
 }
@@ -82,80 +83,161 @@ function fetchArrivalTime() {
     // Set input value
     const arrivalInput = document.getElementById('arrivalTime');
     arrivalInput.value = arrivalTime;
-    arrivalInput.disabled = false;
 }
 
 // ========================================
-// RENDER SEAT MAP
+// RENDER SEAT MAP - 2-2-2 Layout with Aisle
 // ========================================
 function renderSeatMap() {
     const grid = document.getElementById('seatGrid');
     grid.innerHTML = '';
 
-    // Create container for seat rows
-    const container = document.createElement('div');
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.alignItems = 'center';
-    container.style.gap = '0.25rem';
-    container.style.width = '100%';
+    // Seat arrangement: 2-2-2 pattern (2 left, aisle, 2 right) for rows 1-10, last row (41-45) is 5 seats
+    const totalSeats = 45;
+    const lastRowStart = 41;
+    let currentSeat = 1;
 
-    for (let row = 0; row < 11; row++) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'seat-row';
-        rowDiv.style.display = 'flex';
-        rowDiv.style.gap = '0.25rem';
-        rowDiv.style.justifyContent = 'center';
-        rowDiv.style.width = 'fit-content';
+    // Rows 1-10: 2-2-2 pattern (4 seats per row)
+    for (let row = 0; row < 10; row++) {
+        const rowContainer = document.createElement('div');
+        rowContainer.className = 'seat-row-container';
 
-        for (let col = 0; col < 4; col++) {
-            const seatNumber = row * 4 + col + 1;
+        // Left pair (2 seats)
+        const leftPair = document.createElement('div');
+        leftPair.className = 'seat-pair-left';
+
+        for (let i = 0; i < 2; i++) {
+            const seatNumber = currentSeat++;
             const seat = appState.seatMap[seatNumber];
-
-            const button = document.createElement('button');
-            button.className = 'btn btn-sm';
-            button.style.width = '32px';
-            button.style.height = '32px';
-            button.style.fontSize = '0.65rem';
-            button.style.padding = '1px';
-            button.style.lineHeight = '1';
-            button.style.flexShrink = '0';
-            button.textContent = seatNumber;
-            button.title = `Seat ${seatNumber} - ${seat.status}`;
-
-            // Set color and status
-            if (appState.selectedSeats[seatNumber]) {
-                // User's own selected seat
-                button.className += ' bg-info text-white';
-            } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-                // Locked by another user - show as held
-                button.className += ' bg-warning text-dark';
-                button.disabled = true;
-                button.title = `Seat ${seatNumber} - Locked by another user`;
-            } else if (seat.status === 'booked') {
-                button.className += ' bg-danger text-white';
-                button.disabled = true;
-            } else if (seat.status === 'held') {
-                button.className += ' bg-warning text-dark';
-                button.disabled = true;
-            } else {
-                button.className += ' bg-success text-white';
-            }
-
-            // Disable if not available or locked by another user
-            if (seat.status === 'booked' || seat.status === 'held' ||
-                (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
-                button.disabled = true;
-            }
-
-            button.onclick = () => handleSeatClick(seatNumber);
-            rowDiv.appendChild(button);
+            const button = createSeatButton(seatNumber, seat);
+            leftPair.appendChild(button);
         }
 
-        container.appendChild(rowDiv);
+        // Aisle
+        const aisle = document.createElement('div');
+        aisle.className = 'seat-aisle';
+        aisle.textContent = '│';
+
+        // Right pair (2 seats)
+        const rightPair = document.createElement('div');
+        rightPair.className = 'seat-pair-right';
+
+        for (let i = 0; i < 2; i++) {
+            const seatNumber = currentSeat++;
+            const seat = appState.seatMap[seatNumber];
+            const button = createSeatButton(seatNumber, seat);
+            rightPair.appendChild(button);
+        }
+
+        rowContainer.appendChild(leftPair);
+        rowContainer.appendChild(aisle);
+        rowContainer.appendChild(rightPair);
+        grid.appendChild(rowContainer);
     }
 
-    grid.appendChild(container);
+    // Last row: 5 seats in a row (seats 41-45)
+    const lastRow = document.createElement('div');
+    lastRow.className = 'seat-row-container';
+    lastRow.style.gap = '0.5rem';
+
+    for (let i = 0; i < 5; i++) {
+        const seatNumber = lastRowStart + i;
+        const seat = appState.seatMap[seatNumber];
+        const button = createSeatButton(seatNumber, seat);
+        lastRow.appendChild(button);
+    }
+
+    grid.appendChild(lastRow);
+}
+
+// ========================================
+// CREATE SEAT BUTTON
+// ========================================
+function createSeatButton(seatNumber, seat) {
+    const button = document.createElement('button');
+    button.className = 'seat-btn';
+    button.type = 'button';
+
+    // Create seat content with number
+    const seatNumberSpan = document.createElement('span');
+    seatNumberSpan.textContent = seatNumber;
+    seatNumberSpan.style.fontSize = '0.85rem';
+    seatNumberSpan.style.fontWeight = '600';
+    seatNumberSpan.style.lineHeight = '1';
+
+    // Determine seat status and apply appropriate class, also add gender icon
+    let genderIcon = '';
+
+    if (appState.selectedSeats[seatNumber]) {
+        // Selected seat - same color for all
+        button.className += ' seat-selected';
+        const selectedGender = appState.selectedSeats[seatNumber];
+        if (selectedGender === 'male') {
+            genderIcon = '👨';
+            button.title = `Seat ${seatNumber} - Selected (Male)`;
+        } else if (selectedGender === 'female') {
+            genderIcon = '👩';
+            button.title = `Seat ${seatNumber} - Selected (Female)`;
+        } else {
+            button.title = `Seat ${seatNumber} - Selected`;
+        }
+    } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+        button.className += ' seat-held';
+        button.disabled = true;
+        button.title = `Seat ${seatNumber} - Locked by another user`;
+    } else if (seat?.status === 'booked') {
+        // Check gender for booked seats - normalize to lowercase for comparison
+        const seatGender = seat?.gender ? String(seat.gender).toLowerCase() : null;
+
+        if (seatGender === 'male') {
+            button.className += ' seat-booked-male';
+            genderIcon = '👨';
+            button.title = `Seat ${seatNumber} - Booked (Male)`;
+        } else if (seatGender === 'female') {
+            button.className += ' seat-booked-female';
+            genderIcon = '👩';
+            button.title = `Seat ${seatNumber} - Booked (Female)`;
+        } else {
+            // Fallback for booked seats without gender - show without icon
+            button.className += ' seat-booked-male'; // Use default booked color
+            button.title = `Seat ${seatNumber} - Booked`;
+            // No gender icon for seats without gender info
+        }
+        button.disabled = true;
+    } else if (seat?.status === 'held') {
+        button.className += ' seat-held';
+        button.disabled = true;
+        button.title = `Seat ${seatNumber} - Held`;
+    } else {
+        button.className += ' seat-available';
+        button.title = `Seat ${seatNumber} - Available`;
+    }
+
+    // Add seat number to button
+    button.appendChild(seatNumberSpan);
+
+    // Add gender badge in top-right corner if gender is available
+    if (genderIcon) {
+        const badge = document.createElement('span');
+        badge.className = 'seat-gender-badge';
+        badge.textContent = genderIcon;
+        // Add badge color class
+        if (genderIcon === '👨') {
+            badge.classList.add('male-badge');
+        } else if (genderIcon === '👩') {
+            badge.classList.add('female-badge');
+        }
+        button.appendChild(badge);
+    }
+
+    // Additional safety check for disabled state
+    if (seat?.status === 'booked' || seat?.status === 'held' ||
+        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
+        button.disabled = true;
+    }
+
+    button.onclick = () => handleSeatClick(seatNumber);
+    return button;
 }
 
 // ========================================
@@ -226,20 +308,37 @@ function updateSeatsList() {
     document.getElementById('seatCount').textContent = `(${count})`;
 
     if (count === 0) {
-        list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
+        list.innerHTML = '<span class="text-muted small">No seats selected yet</span>';
         updatePassengerForms(); // ← Clear passenger forms
         calculateTotalFare();
         return;
     }
 
-    let html = '';
+    // Clear previous content
+    list.innerHTML = '';
+
+    // Create compact badges for each selected seat
     Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
-        const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
-        html +=
-            `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
+        const gender = appState.selectedSeats[seat];
+        const genderIcon = gender === 'male' ? '👨' : '👩';
+
+        const badge = document.createElement('span');
+        badge.className = 'badge p-2';
+        badge.style.cssText =
+            'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
+
+        if (gender === 'male') {
+            badge.classList.add('bg-primary');
+        } else {
+            badge.classList.add('bg-danger');
+        }
+
+        badge.innerHTML = `<span>${genderIcon}</span> <strong>Seat ${seat}</strong>`;
+        badge.title = `Seat ${seat} - ${gender === 'male' ? 'Male' : 'Female'}`;
+
+        list.appendChild(badge);
     });
-    list.innerHTML = html;
+
     updatePassengerForms(); // ← Update passenger forms based on seats
     calculateTotalFare();
 }
-

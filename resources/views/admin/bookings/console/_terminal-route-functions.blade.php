@@ -4,6 +4,7 @@
 // FETCH TERMINALS
 // ========================================
 function fetchTerminals() {
+    showLoader(true, 'Loading terminals...');
     $.ajax({
         url: "{{ route('admin.bookings.terminals') }}",
         type: 'GET',
@@ -33,6 +34,9 @@ function fetchTerminals() {
                 text: 'Unable to fetch terminals. Please check your connection and try again.',
                 confirmButtonColor: '#d33'
             });
+        },
+        complete: function() {
+            showLoader(false);
         }
     });
 }
@@ -100,9 +104,6 @@ function onToTerminalChange() {
 
     document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
     document.getElementById('departureTime').disabled = true;
-    // Reset arrival time when destination changes
-    document.getElementById('arrivalTime').value = '';
-    document.getElementById('arrivalTime').disabled = true;
 
     if (fromTerminalId && toTerminalId && date) {
         fetchFare(fromTerminalId, toTerminalId);
@@ -114,6 +115,7 @@ function onToTerminalChange() {
 // FETCH DEPARTURE TIMES (Timetable Stops)
 // ========================================
 function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
+    showLoader(true, 'Loading departure times...');
     $.ajax({
         url: "{{ route('admin.bookings.departure-times') }}",
         type: 'GET',
@@ -128,11 +130,9 @@ function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
 
             timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
             response.timetable_stops.forEach(stop => {
-                // Store arrival_at as data attribute
-                const arrivalTime = stop.arrival_at ? formatTimeForInput(stop.arrival_at) : '';
-                timeSelect.innerHTML += `<option value="${stop.id}" data-arrival="${arrivalTime}">${stop.departure_at}</option>`;
+                timeSelect.innerHTML +=
+                    `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at ?? 'N/A'}">${stop.departure_at}</option>`;
             });
-
             timeSelect.disabled = false;
         },
         error: function() {
@@ -142,37 +142,12 @@ function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
                 text: 'No trips are available for the selected route and date. Please try a different date or route.',
                 confirmButtonColor: '#3085d6'
             });
+        },
+        complete: function() {
+            showLoader(false);
         }
     });
 }
-
-// ========================================
-// FORMAT TIME FOR INPUT (HH:MM)
-// ========================================
-function formatTimeForInput(dateTimeString) {
-    if (!dateTimeString) return '';
-    const date = new Date(dateTimeString);
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-}
-
-// ========================================
-// ON DEPARTURE TIME CHANGE
-// ========================================
-document.getElementById('departureTime')?.addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const arrivalTime = selectedOption.getAttribute('data-arrival');
-    const arrivalTimeInput = document.getElementById('arrivalTime');
-
-    if (arrivalTime && arrivalTime.trim() !== '') {
-        arrivalTimeInput.value = arrivalTime;
-        arrivalTimeInput.disabled = false;
-    } else {
-        arrivalTimeInput.value = '';
-        arrivalTimeInput.disabled = true;
-    }
-});
 
 // ========================================
 // ON TRAVEL DATE CHANGE
@@ -183,9 +158,5 @@ document.getElementById('travelDate')?.addEventListener('change', function() {
 
     if (fromTerminalId && toTerminalId) {
         fetchDepartureTimes(fromTerminalId, toTerminalId, this.value);
-        // Reset arrival time when date changes
-        document.getElementById('arrivalTime').value = '';
-        document.getElementById('arrivalTime').disabled = true;
     }
 });
-

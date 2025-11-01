@@ -8,6 +8,7 @@ function fetchFare(fromTerminalId, toTerminalId) {
         resetFareDisplay();
         return;
     }
+    showLoader(true, 'Loading fare...');
 
     $.ajax({
         url: "{{ route('admin.bookings.fare') }}",
@@ -19,10 +20,10 @@ function fetchFare(fromTerminalId, toTerminalId) {
         success: function(response) {
             if (response.success) {
                 appState.fareData = response.fare;
-                appState.baseFare = response.fare.final_fare;
+                appState.baseFare = response.fare.base_fare; // Use base fare before discount
 
-                // Update UI with fare info
-                document.getElementById('baseFare').value = parseFloat(response.fare.final_fare)
+                // Update UI with fare info - show base fare
+                document.getElementById('baseFare').value = parseFloat(response.fare.base_fare)
                     .toFixed(2);
 
                 // Display discount info
@@ -56,6 +57,9 @@ function fetchFare(fromTerminalId, toTerminalId) {
                 confirmButtonColor: '#d33'
             });
             resetFareDisplay();
+        },
+        complete: function() {
+            showLoader(false);
         }
     });
 }
@@ -69,54 +73,78 @@ function resetFareDisplay() {
     document.getElementById('baseFare').value = '';
     document.getElementById('discountInfo').value = '';
     document.getElementById('totalFare').value = '';
-    updateSummaryCard();
     calculateFinal();
 }
 
 // ========================================
-// CALCULATE TOTAL FARE (based on seat count)
+// CALCULATE TOTAL FARE (based on seat count with discount)
 // ========================================
 function calculateTotalFare() {
     const seatCount = Object.keys(appState.selectedSeats).length;
     const baseFare = appState.baseFare || 0;
-    const totalFare = baseFare * seatCount;
+
+    // Calculate total base fare
+    let totalBaseFare = baseFare * seatCount;
+
+    // Apply discount if available
+    let discountAmount = 0;
+    if (appState.fareData && appState.fareData.discount_type && appState.fareData.discount_value) {
+        if (appState.fareData.discount_type === 'flat') {
+            // Flat discount per seat
+            discountAmount = parseFloat(appState.fareData.discount_value) * seatCount;
+        } else if (appState.fareData.discount_type === 'percent') {
+            // Percentage discount on total
+            discountAmount = totalBaseFare * (parseFloat(appState.fareData.discount_value) / 100);
+        }
+    }
+
+    // Total fare after discount
+    const totalFare = Math.max(0, totalBaseFare - discountAmount);
 
     document.getElementById('totalFare').value = totalFare.toFixed(2);
-    updateSummaryCard();
+
+    // Store discount amount for later use
+    appState.discountAmount = discountAmount;
+
     calculateFinal();
 }
 
 // ========================================
-// CALCULATE FINAL AMOUNT
+// CALCULATE FINAL AMOUNT (with mobile wallet tax)
 // ========================================
 function calculateFinal() {
     const fare = parseFloat(document.getElementById('totalFare').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    let tax = parseFloat(document.getElementById('tax').value) || 0;
+    const taxInput = document.getElementById('tax');
+    const taxLabel = document.getElementById('taxLabel');
+
+    // Check if payment method is mobile_wallet - add 40 automatically
+    const paymentMethod = document.getElementById('paymentMethod')?.value || 'cash';
+    if (paymentMethod === 'mobile_wallet') {
+        // Mobile wallet automatically adds 40 as tax
+        tax = 40;
+        taxInput.value = '40';
+        taxInput.readOnly = true;
+        taxInput.style.backgroundColor = '#f0f0f0';
+        if (taxLabel) {
+            taxLabel.textContent = '(Auto: PKR 40 for Mobile Wallet)';
+            taxLabel.classList.remove('text-muted');
+            taxLabel.classList.add('text-info', 'fw-bold');
+        }
+    } else {
+        // Allow manual tax entry for other payment methods
+        taxInput.readOnly = false;
+        taxInput.style.backgroundColor = '';
+        if (taxLabel) {
+            taxLabel.textContent = '(Auto: PKR 40 for Mobile Wallet)';
+            taxLabel.classList.add('text-muted');
+            taxLabel.classList.remove('text-info', 'fw-bold');
+        }
+    }
+
     const final = fare + tax;
     document.getElementById('finalAmount').textContent = final.toFixed(2);
-    updateSummaryCard();
     calculateReturn();
-}
-
-// ========================================
-// UPDATE SUMMARY CARD (Matching Image Design)
-// ========================================
-function updateSummaryCard() {
-    const totalFare = parseFloat(document.getElementById('totalFare').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
-    const final = totalFare + tax;
-    
-    // Update outbound fare (base fare)
-    const outboundFareEl = document.getElementById('outboundFare');
-    if (outboundFareEl) {
-        outboundFareEl.textContent = `Rs ${totalFare.toFixed(0)}`;
-    }
-    
-    // Update total fare (final amount)
-    const totalSummaryFareEl = document.getElementById('totalSummaryFare');
-    if (totalSummaryFareEl) {
-        totalSummaryFareEl.textContent = `Rs ${final.toFixed(0)}`;
-    }
 }
 
 // ========================================
@@ -134,4 +162,3 @@ function calculateReturn() {
         returnDiv.style.display = 'none';
     }
 }
-
