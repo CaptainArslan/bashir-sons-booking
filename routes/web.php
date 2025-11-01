@@ -40,6 +40,10 @@ Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
 Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
 
+// Frontend AJAX Routes
+Route::get('/api/route-stops', [DashboardController::class, 'getRouteStops'])->name('frontend.route-stops');
+Route::get('/api/departure-times', [DashboardController::class, 'getDepartureTimes'])->name('frontend.departure-times');
+
 // Frontend Routes
 
 Route::middleware(['guest', '2fa.pending'])->group(function () {
