@@ -69,6 +69,7 @@ function resetFareDisplay() {
     document.getElementById('baseFare').value = '';
     document.getElementById('discountInfo').value = '';
     document.getElementById('totalFare').value = '';
+    updateSummaryCard();
     calculateFinal();
 }
 
@@ -81,6 +82,7 @@ function calculateTotalFare() {
     const totalFare = baseFare * seatCount;
 
     document.getElementById('totalFare').value = totalFare.toFixed(2);
+    updateSummaryCard();
     calculateFinal();
 }
 
@@ -92,7 +94,29 @@ function calculateFinal() {
     const tax = parseFloat(document.getElementById('tax').value) || 0;
     const final = fare + tax;
     document.getElementById('finalAmount').textContent = final.toFixed(2);
+    updateSummaryCard();
     calculateReturn();
+}
+
+// ========================================
+// UPDATE SUMMARY CARD (Matching Image Design)
+// ========================================
+function updateSummaryCard() {
+    const totalFare = parseFloat(document.getElementById('totalFare').value) || 0;
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const final = totalFare + tax;
+    
+    // Update outbound fare (base fare)
+    const outboundFareEl = document.getElementById('outboundFare');
+    if (outboundFareEl) {
+        outboundFareEl.textContent = `Rs ${totalFare.toFixed(0)}`;
+    }
+    
+    // Update total fare (final amount)
+    const totalSummaryFareEl = document.getElementById('totalSummaryFare');
+    if (totalSummaryFareEl) {
+        totalSummaryFareEl.textContent = `Rs ${final.toFixed(0)}`;
+    }
 }
 
 // ========================================

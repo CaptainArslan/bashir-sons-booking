@@ -28,76 +28,104 @@
             }
         }
 
-        /* Seat map styling - Mature and Eye-Catching */
-        .seat-row {
-            justify-content: center;
-            width: 100%;
+        /* Seat map styling - Clean Modern Design like Image */
+        .seat-map-container {
+            background: #F8FAFC;
+            padding: 1.5rem;
+            border-radius: 12px;
+            min-height: 500px;
         }
-
+        
+        .seat-row-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .seat-pair-left, .seat-pair-right {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .seat-aisle {
+            width: 40px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+        
         .seat-grid {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            padding: 1rem;
-            min-height: 450px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 8px;
+            padding: 0;
         }
         
-        /* Seat button styling - Professional Design */
+        /* Seat button styling - Clean Design */
         .seat-btn {
-            min-width: 50px;
-            min-height: 50px;
-            width: 50px;
-            height: 50px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 0.375rem;
-            line-height: 1.2;
+            min-width: 45px;
+            min-height: 45px;
+            width: 45px;
+            height: 45px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0;
+            line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #dee2e6;
+            border: 1.5px solid #cbd5e1;
             border-radius: 6px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
         
         .seat-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+            border-color: #94a3b8;
         }
         
-        .seat-btn:active:not(:disabled) {
-            transform: translateY(0);
+        .seat-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
         }
         
-        /* Seat status colors - Professional */
+        /* Seat status colors - Matching Image */
         .seat-available {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: #ffffff;
-            border-color: #1e7e34;
-        }
-        
-        .seat-booked {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: #ffffff;
-            border-color: #bd2130;
-            opacity: 0.85;
-        }
-        
-        .seat-held {
-            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
-            color: #212529;
-            border-color: #d39e00;
+            background: #E2E8F0;
+            color: #334155;
+            border-color: #cbd5e1;
         }
         
         .seat-selected {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            background: #3B82F6;
             color: #ffffff;
-            border-color: #004085;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+        
+        .seat-booked-male {
+            background: #22D3EE;
+            color: #ffffff;
+            border-color: #06b6d4;
+        }
+        
+        .seat-booked-female {
+            background: #EC4899;
+            color: #ffffff;
+            border-color: #db2777;
+        }
+        
+        .seat-held {
+            background: #fbbf24;
+            color: #78350f;
+            border-color: #f59e0b;
         }
 
         /* Card body compact padding */
@@ -287,27 +315,50 @@
                             </h6>
                         </div>
                         <div class="card-body p-3"
-                            style="max-height: calc(100vh - 300px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
+                            style="max-height: calc(100vh - 300px); overflow-y: auto;">
+                            <!-- Summary Card (Matching Image Design) -->
+                            <div class="mb-3 p-3 bg-white rounded-lg shadow-sm w-100 border border-gray-200">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small text-dark">Outbound</span>
+                                    <span class="small text-dark" id="outboundFare">Rs 0</span>
+                                </div>
+                                <hr class="my-2" style="border-color: #e2e8f0; margin: 0.5rem 0;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-dark fw-semibold">Total</span>
+                                    <span class="small fw-bold" style="color: #3B82F6;" id="totalSummaryFare">Rs 0</span>
+                                </div>
+                            </div>
+                            
                             <!-- Legend -->
-                            <div class="mb-3 p-3 bg-light rounded-3 shadow-sm w-100 border">
-                                <h6 class="fw-bold mb-2 small text-center">Legend</h6>
+                            <div class="mb-3 p-3 bg-white rounded-lg shadow-sm w-100 border border-gray-200">
                                 <div class="seat-legend">
-                                    <span class="badge bg-success px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
-                                        <i class="fas fa-circle"></i> Available
-                                    </span>
-                                    <span class="badge bg-danger px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
-                                        <i class="fas fa-circle"></i> Booked
-                                    </span>
-                                    <span class="badge bg-warning text-dark px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
-                                        <i class="fas fa-circle"></i> Held
-                                    </span>
-                                    <span class="badge bg-info px-3 py-2 mb-2" style="font-size: 0.75rem;">
-                                        <i class="fas fa-circle"></i> Selected
-                                    </span>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #E2E8F0; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                                        <span class="small text-dark">Available</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px;"></div>
+                                        <span class="small text-dark">Selected</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px;"></div>
+                                        <span class="small text-dark">Male Booked</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px;"></div>
+                                        <span class="small text-dark">Female Booked</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #fbbf24; border: 1px solid #f59e0b; border-radius: 4px;"></div>
+                                        <span class="small text-dark">Held</span>
+                                    </div>
                                 </div>
                             </div>
                             <!-- Seat Grid -->
-                            <div class="seat-grid" id="seatGrid" style="width: auto; max-width: 100%;"></div>
+                            <div class="seat-map-container">
+                                <h6 class="text-center mb-3" style="color: #334155; font-weight: 600; font-size: 1rem;">Select Your Seat</h6>
+                                <div class="seat-grid" id="seatGrid"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -963,68 +1014,118 @@
 
 
         // ========================================
-        // RENDER SEAT MAP
+        // RENDER SEAT MAP - 2-2-2 Layout with Aisle
         // ========================================
         function renderSeatMap() {
             const grid = document.getElementById('seatGrid');
             grid.innerHTML = '';
 
-            // Create container for seat rows
-            const container = document.createElement('div');
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.gap = '0.5rem';
-            container.style.width = '100%';
+            // Seat arrangement: 2-2-2 pattern (2 left, aisle, 2 right) for rows 1-10, last row (41-45) is 5 seats
+            const totalSeats = 45;
+            const lastRowStart = 41;
+            let currentSeat = 1;
 
-            for (let row = 0; row < 11; row++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'seat-row';
-                rowDiv.style.display = 'flex';
-                rowDiv.style.gap = '0.5rem';
-                rowDiv.style.justifyContent = 'center';
-                rowDiv.style.width = 'fit-content';
+            // Rows 1-10: 2-2-2 pattern (4 seats per row)
+            for (let row = 0; row < 10; row++) {
+                const rowContainer = document.createElement('div');
+                rowContainer.className = 'seat-row-container';
 
-                for (let col = 0; col < 4; col++) {
-                    const seatNumber = row * 4 + col + 1;
+                // Left pair (2 seats)
+                const leftPair = document.createElement('div');
+                leftPair.className = 'seat-pair-left';
+
+                for (let i = 0; i < 2; i++) {
+                    const seatNumber = currentSeat++;
                     const seat = appState.seatMap[seatNumber];
-
-                    const button = document.createElement('button');
-                    button.className = 'seat-btn';
-                    button.textContent = seatNumber;
-                    button.title = `Seat ${seatNumber} - ${seat?.status || 'unknown'}`;
-
-                    // Set color and status using new CSS classes
-                    if (appState.selectedSeats[seatNumber]) {
-                        button.className += ' seat-selected';
-                    } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-                        button.className += ' seat-held';
-                        button.disabled = true;
-                        button.title = `Seat ${seatNumber} - Locked by another user`;
-                    } else if (seat?.status === 'booked') {
-                        button.className += ' seat-booked';
-                        button.disabled = true;
-                    } else if (seat?.status === 'held') {
-                        button.className += ' seat-held';
-                        button.disabled = true;
-                    } else {
-                        button.className += ' seat-available';
-                    }
-
-                    // Disable if not available or locked by another user
-                    if (seat?.status === 'booked' || seat?.status === 'held' ||
-                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
-                        button.disabled = true;
-                    }
-
-                    button.onclick = () => handleSeatClick(seatNumber);
-                    rowDiv.appendChild(button);
+                    const button = createSeatButton(seatNumber, seat);
+                    leftPair.appendChild(button);
                 }
 
-                container.appendChild(rowDiv);
+                // Aisle
+                const aisle = document.createElement('div');
+                aisle.className = 'seat-aisle';
+                aisle.textContent = '│';
+
+                // Right pair (2 seats)
+                const rightPair = document.createElement('div');
+                rightPair.className = 'seat-pair-right';
+
+                for (let i = 0; i < 2; i++) {
+                    const seatNumber = currentSeat++;
+                    const seat = appState.seatMap[seatNumber];
+                    const button = createSeatButton(seatNumber, seat);
+                    rightPair.appendChild(button);
+                }
+
+                rowContainer.appendChild(leftPair);
+                rowContainer.appendChild(aisle);
+                rowContainer.appendChild(rightPair);
+                grid.appendChild(rowContainer);
             }
 
-            grid.appendChild(container);
+            // Last row: 5 seats in a row (seats 41-45)
+            const lastRow = document.createElement('div');
+            lastRow.className = 'seat-row-container';
+            lastRow.style.gap = '0.5rem';
+
+            for (let i = 0; i < 5; i++) {
+                const seatNumber = lastRowStart + i;
+                const seat = appState.seatMap[seatNumber];
+                const button = createSeatButton(seatNumber, seat);
+                lastRow.appendChild(button);
+            }
+
+            grid.appendChild(lastRow);
+        }
+
+        // ========================================
+        // CREATE SEAT BUTTON
+        // ========================================
+        function createSeatButton(seatNumber, seat) {
+            const button = document.createElement('button');
+            button.className = 'seat-btn';
+            button.textContent = seatNumber;
+            button.type = 'button';
+
+            // Determine seat status and apply appropriate class
+            if (appState.selectedSeats[seatNumber]) {
+                button.className += ' seat-selected';
+                button.title = `Seat ${seatNumber} - Selected`;
+            } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+                button.className += ' seat-held';
+                button.disabled = true;
+                button.title = `Seat ${seatNumber} - Locked by another user`;
+            } else if (seat?.status === 'booked') {
+                // Check gender for booked seats
+                if (seat?.gender === 'male') {
+                    button.className += ' seat-booked-male';
+                    button.title = `Seat ${seatNumber} - Booked (Male)`;
+                } else if (seat?.gender === 'female') {
+                    button.className += ' seat-booked-female';
+                    button.title = `Seat ${seatNumber} - Booked (Female)`;
+                } else {
+                    // Fallback for booked seats without gender
+                    button.className += ' seat-booked-male';
+                    button.title = `Seat ${seatNumber} - Booked`;
+                }
+                button.disabled = true;
+            } else if (seat?.status === 'held') {
+                button.className += ' seat-held';
+                button.disabled = true;
+                button.title = `Seat ${seatNumber} - Held`;
+            } else {
+                button.className += ' seat-available';
+                button.title = `Seat ${seatNumber} - Available`;
+            }
+
+            // Additional safety check for disabled state
+            if (seat?.status === 'booked' || seat?.status === 'held' ||
+                (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
+                button.disabled = true;
+            }
+
+            button.onclick = () => handleSeatClick(seatNumber);
+            return button;
         }
 
 
