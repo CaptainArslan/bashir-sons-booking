@@ -834,11 +834,11 @@
         // FETCH FARE FOR SEGMENT
         // ========================================
         function fetchFare(fromTerminalId, toTerminalId) {
-            showLoader(true, 'Loading fare...');
             if (!fromTerminalId || !toTerminalId) {
                 resetFareDisplay();
                 return;
             }
+            showLoader(true, 'Loading fare...');
 
             $.ajax({
                 url: "{{ route('admin.bookings.fare') }}",
@@ -1363,8 +1363,8 @@
                                 ${isMandatory ? '<i class="fas fa-user"></i> Passenger 1 <span class="badge bg-danger ms-2">Required</span>' : `<i class="fas fa-user-plus"></i> Passenger ${passengerNumber}`}
                             </h6>
                             ${!isMandatory ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
-                                                        <i class="fas fa-trash"></i> Remove
-                                                    </button>` : ''}
+                                                            <i class="fas fa-trash"></i> Remove
+                                                        </button>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
