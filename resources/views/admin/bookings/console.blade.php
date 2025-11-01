@@ -649,25 +649,6 @@
         </div>
     </div>
 
-    <!-- Booking Details Modal -->
-    <div class="modal fade" id="bookingDetailsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content shadow-lg">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title fw-bold">
-                        <i class="fas fa-receipt"></i> Booking Details
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body py-4">
-                    <div id="bookingDetailsModalBody"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Assign Bus/Driver Modal -->
     <div class="modal fade" id="assignBusModal" tabindex="-1">
@@ -1955,50 +1936,72 @@
                     const headerRow = document.createElement('tr');
                     headerRow.className = '';
                     headerRow.innerHTML = `
-                    <th style="width: 8%;">Seat</th>
-                    <th style="width: 18%;">Passenger</th>
+                    <th style="width: 8%;">Seats</th>
+                    <th style="width: 15%;">Passenger</th>
                     <th style="width: 10%;">Route</th>
-                    <th style="width: 12%;">From</th>
-                    <th style="width: 12%;">To</th>
-                    <th style="width: 8%;">Gender</th>
-                    <th style="width: 8%;">Booking #</th>
+                    <th style="width: 10%;">From</th>
+                    <th style="width: 10%;">To</th>
+                    <th style="width: 7%;">Gender</th>
+                    <th style="width: 8%;">Booking Details</th>
                     <th style="width: 8%;">Status</th>
+                    <th style="width: 8%;">Action</th>
                 `;
                     table.appendChild(headerRow);
 
                     response.forEach(passenger => {
                         const row = document.createElement('tr');
-                        const genderIcon = passenger.gender === 'male' ? 'Male' : passenger.gender ===
-                            'female' ? 'Female' : 'Unknown';
+                        const genderIcon = passenger.gender === 'male' ? '👨 Male' : passenger.gender ===
+                            'female' ? '👩 Female' : 'Unknown';
                         const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' :
                             passenger.status === 'hold' ? 'bg-warning' :
                             passenger.status === 'checked_in' ? 'bg-info' :
-                            passenger.status === 'boarded' ? 'bg-primary' : 'bg-secondary';
-                        const channelIcon = passenger.channel === 'counter' ? '🏪' :
-                            passenger.channel === 'phone' ? '📞' :
-                            passenger.channel === 'online' ? '🌐' : '❓';
+                            passenger.status === 'boarded' ? 'bg-primary' :
+                            passenger.status === 'cancelled' ? 'bg-danger' : 'bg-secondary';
+                        
+                        const channelLabel = passenger.channel === 'counter' ? '🏪 Counter' :
+                            passenger.channel === 'phone' ? '📞 Phone' :
+                            passenger.channel === 'online' ? '🌐 Online' : passenger.channel || 'N/A';
+                        
+                        const paymentMethodLabel = passenger.payment_method === 'cash' ? '💰 Cash' :
+                            passenger.payment_method === 'card' ? '💳 Card' :
+                            passenger.payment_method === 'mobile_wallet' ? '📱 Mobile' :
+                            passenger.payment_method === 'bank_transfer' ? '🏦 Transfer' : passenger.payment_method || 'N/A';
 
                         row.innerHTML = `
-                        <td class="text-center fw-bold"><span class="badge bg-info">${passenger.seat_number || 'N/A'}</span></td>
-                        <td>
-                            <div class="fw-bold">${passenger.name || 'N/A'}</div>
-                            <small class="text-muted">${passenger.phone || 'No phone'}</small>
+                        <td class="text-center">
+                            <span class="badge bg-info">${passenger.seats_display || 'N/A'}</span>
                         </td>
-                        <td class="text-center"><span class="badge bg-secondary">${passenger.from_code} → ${passenger.to_code}</span></td>
+                        <td>
+                            <div class="fw-bold small">${passenger.name || 'N/A'}</div>
+                            <small class="text-muted d-block">${passenger.phone || 'No phone'}</small>
+                            ${passenger.email ? `<small class="text-muted d-block">${passenger.email}</small>` : ''}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary small">${passenger.from_code} → ${passenger.to_code}</span>
+                        </td>
                         <td>
                             <small><strong>${passenger.from_stop}</strong></small>
                         </td>
                         <td>
                             <small><strong>${passenger.to_stop}</strong></small>
                         </td>
-                        <td class="text-center">${genderIcon}</td>
-                        <td class="text-center"><small class="badge bg-light text-dark">#${passenger.booking_number}</small></td>
                         <td class="text-center">
-                            <span class="badge ${statusBadgeClass}">${passenger.status}</span>
-                            <br>
-                            <button class="btn btn-link btn-sm text-primary p-0 mt-1" onclick="viewPassengerBooking(${passenger.booking_id}, '${passenger.booking_number}')">
+                            <small>${genderIcon}</small>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-1">
+                                <small class="badge bg-light text-dark">#${passenger.booking_number}</small>
+                            </div>
+                            <small class="text-muted d-block">${channelLabel}</small>
+                            <small class="text-muted d-block">${paymentMethodLabel}</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge ${statusBadgeClass} small">${passenger.status || 'N/A'}</span>
+                        </td>
+                        <td class="text-center">
+                            <a href="/admin/bookings/${passenger.booking_id}/edit" target="_blank" class="btn btn-primary btn-sm">
                                 <i class="fas fa-eye"></i> View
-                            </button>
+                            </a>
                         </td>
                     `;
                         table.appendChild(row);
@@ -2017,107 +2020,6 @@
             });
         }
 
-        // ========================================
-        // VIEW PASSENGER BOOKING DETAILS
-        // ========================================
-        function viewPassengerBooking(bookingId, bookingNumber) {
-            $.ajax({
-                url: `/admin/bookings/console/booking-details/${bookingId}`,
-                type: 'GET',
-                success: function(response) {
-                    const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
-                    const modalBody = document.getElementById('bookingDetailsModalBody');
-                    modalBody.innerHTML = ''; // Clear previous content
-
-                    if (response.success) {
-                        const booking = response.booking;
-                        const passengers = booking.passengers || [];
-                        const seats = booking.seats || [];
-
-                        // Convert to numbers to ensure toFixed() works
-                        const totalFare = parseFloat(booking.total_fare || 0);
-                        const discount = parseFloat(booking.discount_amount || 0);
-                        const tax = parseFloat(booking.tax_amount || 0);
-                        const finalAmount = parseFloat(booking.final_amount || 0);
-
-                        const paymentMethod = booking.payment_method;
-                        const notes = booking.notes;
-                        const transactionId = booking.transaction_id;
-                        const channel = booking.channel;
-                        const status = booking.status;
-                        const createdAt = booking.created_at;
-                        const updatedAt = booking.updated_at;
-
-                        modalBody.innerHTML = `
-                        <div class="mb-3">
-                            <h5 class="fw-bold">Booking #${bookingNumber}</h5>
-                            <p class="text-muted">Status: <span class="badge ${status === 'hold' ? 'bg-warning' : status === 'confirmed' ? 'bg-success' : 'bg-info'}">${status}</span></p>
-                            <p class="text-muted">Channel: <span class="badge ${channel === 'counter' ? 'bg-primary' : channel === 'phone' ? 'bg-info' : 'bg-secondary'}">${channel}</span></p>
-                            <p class="text-muted">Payment Method: <span class="badge ${paymentMethod === 'cash' ? 'bg-success' : 'bg-warning'}">${paymentMethod}</span></p>
-                            <p class="text-muted">Total Fare: PKR <span class="fw-bold text-success">${totalFare.toFixed(2)}</span></p>
-                            <p class="text-muted">Discount: PKR <span class="text-danger">-${discount.toFixed(2)}</span></p>
-                            <p class="text-muted">Tax/Charge: PKR <span class="text-success">+${tax.toFixed(2)}</span></p>
-                            <p class="text-muted">Final Amount: PKR <span class="fw-bold text-success">${finalAmount.toFixed(2)}</span></p>
-                            <p class="text-muted">Notes: ${notes || 'N/A'}</p>
-                            <p class="text-muted">Transaction ID: ${transactionId || 'N/A'}</p>
-                            <p class="text-muted">Created At: ${new Date(createdAt).toLocaleString()}</p>
-                            <p class="text-muted">Updated At: ${new Date(updatedAt).toLocaleString()}</p>
-                        </div>
-                        <h6 class="fw-bold mb-2">Passengers:</h6>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Seat</th>
-                                        <th>Name</th>
-                                        <th>Age</th>
-                                        <th>Gender</th>
-                                        <th>CNIC</th>
-                                        <th>Phone</th>
-                                        <th>Email</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${passengers.length > 0 ? passengers.map(p => `
-                                            <tr>
-                                                <td>${p.seat_number || 'N/A'}</td>
-                                                <td>${p.name || 'N/A'}</td>
-                                                <td>${p.age || 'N/A'}</td>
-                                                <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                <td>${p.cnic || 'N/A'}</td>
-                                                <td>${p.phone || 'N/A'}</td>
-                                                <td>${p.email || 'N/A'}</td>
-                                            </tr>
-                                        `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                        modal.show();
-                    } else {
-                        console.error('Failed to load booking details:', response);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Load Booking Details',
-                            text: response.error ||
-                                'Unable to fetch booking information. Please try again.',
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                },
-                error: function(error) {
-                    console.error('AJAX Error:', error);
-                    const errorMessage = error.responseJSON?.error || error.responseJSON?.message ||
-                        'Unable to load booking details. Please check your connection and try again.';
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Failed to Load Booking Details',
-                        text: errorMessage,
-                        confirmButtonColor: '#d33'
-                    });
-                }
-            });
-        }
 
         // ========================================
         // RENDER BUS & DRIVER SECTION

@@ -245,10 +245,11 @@ class BookingController extends Controller
             $passengers = [];
 
             foreach ($bookings as $booking) {
-                foreach ($booking->passengers as $passenger) {
-                    // Find the seat number for this passenger
-                    $seatNumber = $booking->seats->first()?->seat_number;
+                // Get all seat numbers for this booking
+                $seatNumbers = $booking->seats->pluck('seat_number')->toArray();
+                $seatsDisplay = implode(', ', $seatNumbers);
 
+                foreach ($booking->passengers as $passenger) {
                     $passengers[] = [
                         'id' => $passenger->id,
                         'booking_id' => $booking->id,
@@ -258,13 +259,15 @@ class BookingController extends Controller
                         'cnic' => $passenger->cnic,
                         'phone' => $passenger->phone,
                         'email' => $passenger->email,
-                        'seat_number' => $seatNumber,
+                        'seat_numbers' => $seatNumbers,
+                        'seats_display' => $seatsDisplay,
                         'from_stop' => $booking->fromStop?->terminal?->name ?? 'N/A',
                         'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
                         'to_stop' => $booking->toStop?->terminal?->name ?? 'N/A',
                         'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
                         'status' => $booking->status,
                         'payment_status' => $booking->payment_status,
+                        'payment_method' => $booking->payment_method,
                         'booking_number' => $booking->booking_number,
                         'channel' => $booking->channel,
                     ];
