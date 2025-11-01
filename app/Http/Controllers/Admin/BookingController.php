@@ -635,7 +635,7 @@ class BookingController extends Controller
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
             return response()->json([
-                'trip' => $trip->only(['id', 'departure_datetime', 'estimated_arrival_datetime']),
+                'trip' => $trip->load('bus'),
                 'route' => $route->only(['id', 'name', 'code']),
                 'from_stop' => $tripFromStop->only(['id', 'terminal_id', 'departure_at', 'sequence']),
                 'to_stop' => $tripToStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
@@ -896,7 +896,7 @@ class BookingController extends Controller
         }
     }
 
-    public function assignBusDriver(Request $request, int $tripId): JsonResponse
+    public function assignBusDriver(Request $request, $tripId): JsonResponse
     {
         try {
             $validated = $request->validate([

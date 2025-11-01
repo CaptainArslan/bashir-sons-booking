@@ -168,10 +168,6 @@
                         <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" id="loadTripBtn" onclick="loadTrip()">
                             <i class="fas fa-play"></i> Load
                         </button>
-                        <button class="btn btn-warning btn-lg fw-bold" id="assignBusBtnHeader"
-                            onclick="openAssignBusModalFromHeader()" style="display: none;">
-                            <i class="fas fa-bus"></i> Assign Bus
-                        </button>
                     </div>
                 </div>
             </div>
@@ -280,45 +276,37 @@
                                 </div>
                             </div>
 
-                            <!-- Booking Type -->
+                            <!-- Booking Type & Payment -->
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type</h6>
-                                <div class="form-check form-check-sm">
-                                    <input class="form-check-input" type="radio" name="bookingType"
-                                        id="counterBooking" value="counter" checked onchange="togglePaymentFields()">
-                                    <label class="form-check-label small" for="counterBooking">
-                                        🏪 Counter
-                                    </label>
-                                </div>
-                                <div class="form-check form-check-sm">
-                                    <input class="form-check-input" type="radio" name="bookingType" id="phoneBooking"
-                                        value="phone" onchange="togglePaymentFields()">
-                                    <label class="form-check-label small" for="phoneBooking">
-                                        📞 Phone (Hold 15 mins)
-                                    </label>
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type & Payment</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-bold">Booking Type</label>
+                                        <select class="form-select form-select-sm" id="bookingType" name="bookingType"
+                                            onchange="togglePaymentFields()">
+                                            <option value="counter" selected>🏪 Counter</option>
+                                            <option value="phone">📞 Phone (Hold till before 60 mins of departure)
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-2" id="paymentMethodSelect" style="display: block;">
+                                        <label class="form-label small fw-bold">Payment Method</label>
+                                        <select class="form-select form-select-sm" id="paymentMethod"
+                                            name="paymentMethod" onchange="toggleTransactionIdField()">
+                                            @foreach ($paymentMethods as $method)
+                                                <option value="{{ $method['value'] }}"
+                                                    {{ $loop->first ? 'selected' : '' }}>
+                                                    {{ $method['label'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Payment Fields (Counter Only) -->
                             <div id="paymentFields" class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment</h6>
-                                <div class="mb-2">
-                                    <label class="form-label fw-bold small">Method</label>
-                                    <div>
-                                        @foreach ($paymentMethods as $method)
-                                            <div class="form-check form-check-sm">
-                                                <input class="form-check-input" type="radio" name="paymentMethod"
-                                                    id="payment_{{ $method['value'] }}" value="{{ $method['value'] }}"
-                                                    {{ $loop->first ? 'checked' : '' }}
-                                                    onchange="toggleTransactionIdField()">
-                                                <label class="form-check-label small"
-                                                    for="payment_{{ $method['value'] }}">
-                                                    <i class="{{ $method['icon'] }}"></i> {{ $method['label'] }}
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details</h6>
 
                                 <!-- Transaction ID Field (for non-cash payments) -->
                                 <div class="mb-2" id="transactionIdField" style="display: none;">
@@ -351,8 +339,8 @@
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
-                                    <button type="button" class="btn btn-outline-primary btn-sm"
-                                        id="addPassengerBtn" onclick="addExtraPassenger()">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="addPassengerBtn"
+                                        onclick="addExtraPassenger()">
                                         <i class="fas fa-plus-circle"></i> Add Passenger
                                     </button>
                                 </div>
@@ -370,8 +358,27 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Trip Passengers List (4 columns) -->
+                <!-- Right Column: Assign Bus & Trip Passengers List (4 columns) -->
                 <div class="col-lg-4 col-md-12">
+                    <!-- Assign Bus Card -->
+                    <div class="card shadow-sm mb-3" id="assignBusCard" style="display: none;">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0 small">
+                                <i class="fas fa-bus"></i> Bus Assignment
+                            </h6>
+                        </div>
+                        <div class="card-body p-2">
+                            <div id="assignBusCardContent">
+                                <p class="text-muted small mb-2">Assign a bus and driver for this trip.</p>
+                                <button class="btn btn-primary btn-sm w-100 fw-bold" id="assignBusBtnCard"
+                                    onclick="openAssignBusModalFromHeader()">
+                                    <i class="fas fa-bus"></i> Assign Bus & Driver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-warning text-dark">
                             <h6 class="mb-0 small">
@@ -1025,7 +1032,7 @@
         // ========================================
         function updatePassengerForms() {
             const container = document.getElementById('passengerInfoContainer');
-            
+
             // Ensure at least 1 mandatory passenger exists
             if (!appState.passengerInfo['passenger_1']) {
                 appState.passengerInfo['passenger_1'] = {
@@ -1061,8 +1068,8 @@
                                 ${isMandatory ? '<i class="fas fa-user"></i> Passenger 1 <span class="badge bg-danger ms-2">Required</span>' : `<i class="fas fa-user-plus"></i> Passenger ${passengerNumber}`}
                             </h6>
                             ${!isMandatory ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>` : ''}
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
@@ -1136,7 +1143,7 @@
             // Generate unique ID for new passenger
             const timestamp = Date.now();
             const passengerId = `passenger_extra_${timestamp}`;
-            
+
             appState.passengerInfo[passengerId] = {
                 type: 'extra',
                 name: '',
@@ -1146,9 +1153,9 @@
                 phone: '',
                 email: ''
             };
-            
+
             updatePassengerForms();
-            
+
             // Scroll to the newly added passenger form
             setTimeout(() => {
                 const container = document.getElementById('passengerInfoContainer');
@@ -1170,7 +1177,7 @@
                 });
                 return;
             }
-            
+
             delete appState.passengerInfo[passengerId];
             updatePassengerForms();
         }
@@ -1180,7 +1187,7 @@
         // ========================================
         function validatePassengerInfo() {
             const passengers = Object.keys(appState.passengerInfo);
-            
+
             if (passengers.length === 0) {
                 Swal.fire({
                     icon: 'warning',
@@ -1194,7 +1201,7 @@
             // Validate all passengers
             for (let passengerId of passengers) {
                 const info = appState.passengerInfo[passengerId];
-                
+
                 if (!info.name || info.name.trim() === '') {
                     const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
                     Swal.fire({
@@ -1205,7 +1212,7 @@
                     });
                     return false;
                 }
-                
+
                 if (!info.gender || info.gender === '') {
                     const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
                     Swal.fire({
@@ -1264,7 +1271,7 @@
         // TOGGLE TRANSACTION ID FIELD
         // ========================================
         function toggleTransactionIdField() {
-            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
+            const paymentMethod = document.getElementById('paymentMethod')?.value || 'cash';
             const transactionIdField = document.getElementById('transactionIdField');
             const transactionIdInput = document.getElementById('transactionId');
             const amountReceivedField = document.getElementById('amountReceivedField');
@@ -1299,8 +1306,10 @@
         // TOGGLE PAYMENT FIELDS
         // ========================================
         function togglePaymentFields() {
-            const isCounter = document.getElementById('counterBooking').checked;
+            const bookingType = document.getElementById('bookingType')?.value || 'counter';
+            const isCounter = bookingType === 'counter';
             document.getElementById('paymentFields').style.display = isCounter ? 'block' : 'none';
+            document.getElementById('paymentMethodSelect').style.display = isCounter ? 'block' : 'none';
 
             if (!isCounter) {
                 // Clear transaction ID if switching to phone booking
@@ -1341,11 +1350,12 @@
                 return;
             }
 
-            const isCounter = document.getElementById('counterBooking').checked;
+            const bookingType = document.getElementById('bookingType')?.value || 'counter';
+            const isCounter = bookingType === 'counter';
             const final = parseFloat(document.getElementById('finalAmount').textContent);
             const received = parseFloat(document.getElementById('amountReceived').value) || 0;
             const paymentMethod = isCounter ?
-                document.querySelector('input[name="paymentMethod"]:checked').value :
+                (document.getElementById('paymentMethod')?.value || 'cash') :
                 'cash';
 
             if (isCounter && paymentMethod === 'cash' && received < final) {
@@ -1371,7 +1381,7 @@
             passengerIds.forEach((passengerId, index) => {
                 const info = appState.passengerInfo[passengerId];
                 const seatNumber = index < selectedSeats.length ? parseInt(selectedSeats[index]) : null;
-                
+
                 passengers.push({
                     seat_number: seatNumber,
                     name: info.name,
@@ -1475,6 +1485,11 @@
             appState.fareData = null;
             appState.baseFare = 0;
             document.getElementById('tripContent').style.display = 'none';
+            // Hide assign bus card
+            const assignBusCard = document.getElementById('assignBusCard');
+            if (assignBusCard) {
+                assignBusCard.style.display = 'none';
+            }
             document.getElementById('baseFare').value = '';
             document.getElementById('discountInfo').value = '';
             document.getElementById('totalFare').value = '';
@@ -1776,16 +1791,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                                                                                                                    <tr>
-                                                                                                                                                                        <td>${p.seat_number || 'N/A'}</td>
-                                                                                                                                                                        <td>${p.name || 'N/A'}</td>
-                                                                                                                                                                        <td>${p.age || 'N/A'}</td>
-                                                                                                                                                                        <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                                                                                                                        <td>${p.cnic || 'N/A'}</td>
-                                                                                                                                                                        <td>${p.phone || 'N/A'}</td>
-                                                                                                                                                                        <td>${p.email || 'N/A'}</td>
-                                                                                                                                                                    </tr>
-                                                                                                                                                                `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                            <tr>
+                                                <td>${p.seat_number || 'N/A'}</td>
+                                                <td>${p.name || 'N/A'}</td>
+                                                <td>${p.age || 'N/A'}</td>
+                                                <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                <td>${p.cnic || 'N/A'}</td>
+                                                <td>${p.phone || 'N/A'}</td>
+                                                <td>${p.email || 'N/A'}</td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -1823,17 +1838,28 @@
             const busDriverSection = document.getElementById('busDriverSection');
             busDriverSection.innerHTML = ''; // Clear previous content
 
-            // Show/hide assign bus button in header
-            const assignBusBtn = document.getElementById('assignBusBtnHeader');
-            if (assignBusBtn) {
-                assignBusBtn.style.display = 'block';
-                assignBusBtn.textContent = trip.bus_id ? '🔄 Change Bus' : '🚌 Assign Bus';
+            // Show/hide assign bus card in right column based on bus assignment status
+            const assignBusCard = document.getElementById('assignBusCard');
+            const assignBusBtn = document.getElementById('assignBusBtnCard');
+            
+            // Check if bus is assigned from database
+            const isBusAssigned = trip.bus_id && trip.bus_id !== null && trip.bus_id !== undefined;
+            
+            if (assignBusCard && assignBusBtn) {
+                if (isBusAssigned) {
+                    // Hide the assign bus card if bus is already assigned
+                    assignBusCard.style.display = 'none';
+                } else {
+                    // Show the assign bus card if bus is not assigned
+                    assignBusCard.style.display = 'block';
+                    assignBusBtn.textContent = '🚌 Assign Bus & Driver';
+                }
             }
 
-            if (!trip.bus_id) {
+            if (!isBusAssigned) {
                 busDriverSection.innerHTML = `
                 <div class="alert alert-warning text-center py-2 mb-0 small">
-                    <p class="mb-0"><i class="fas fa-info-circle"></i> Bus and Driver not assigned yet. Use the "Assign Bus" button in the search form.</p>
+                    <p class="mb-0"><i class="fas fa-info-circle"></i> Bus and Driver not assigned yet. Use the "Assign Bus" button in the right column.</p>
                 </div>
             `;
                 return;
@@ -1972,7 +1998,8 @@
 
                             // Submit to backend
                             $.ajax({
-                                url: "{{ route('admin.bookings.assign-bus-driver', ['tripId' => ':tripId']) }}",
+                                url: "{{ route('admin.bookings.assign-bus-driver', ['tripId' => ':tripId']) }}"
+                                    .replace(':tripId', tripId),
                                 type: 'POST',
                                 data: {
                                     bus_id: busId,
@@ -1995,11 +2022,40 @@
                                             timerProgressBar: true
                                         });
                                         modal.hide();
-                                        // Reload trip data
-                                        const tripId = appState.tripData ? appState.tripData
-                                            .trip.id : null;
-                                        if (tripId) {
-                                            loadTrip();
+                                        // Reload trip data from database to get updated bus assignment status
+                                        if (appState.tripData && appState.tripData.trip.id) {
+                                            // Get current form values to reload trip
+                                            const fromTerminalId = document.getElementById('fromTerminal').value;
+                                            const toTerminalId = document.getElementById('toTerminal').value;
+                                            const departureTimeId = document.getElementById('departureTime').value;
+                                            const date = document.getElementById('travelDate').value;
+                                            
+                                            if (fromTerminalId && toTerminalId && departureTimeId && date) {
+                                                // Reload trip to get fresh data from database
+                                                $.ajax({
+                                                    url: "{{ route('admin.bookings.load-trip') }}",
+                                                    type: 'POST',
+                                                    data: {
+                                                        from_terminal_id: fromTerminalId,
+                                                        to_terminal_id: toTerminalId,
+                                                        timetable_id: departureTimeId,
+                                                        date: date,
+                                                        _token: document.querySelector('meta[name="csrf-token"]').content
+                                                    },
+                                                    success: function(reloadResponse) {
+                                                        // Update app state with fresh data
+                                                        appState.tripData = reloadResponse;
+                                                        appState.seatMap = reloadResponse.seat_map;
+                                                        
+                                                        // Re-render bus driver section with updated data
+                                                        renderBusDriverSection(reloadResponse.trip);
+                                                    },
+                                                    error: function() {
+                                                        // If reload fails, just try to refresh manually
+                                                        loadTrip();
+                                                    }
+                                                });
+                                            }
                                         }
                                     } else {
                                         Swal.fire({
@@ -2060,13 +2116,6 @@
                     confirmButtonColor: '#ffc107'
                 });
             }
-        }
-
-        // ========================================
-        // ASSIGN DRIVER (OLD - DEPRECATED)
-        // ========================================
-        function assignDriver(tripId) {
-            // Now handled in assignBus modal
         }
     </script>
 @endsection
