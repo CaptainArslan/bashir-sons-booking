@@ -33,6 +33,7 @@ class GeneralSetting extends Model
         'support_phone',
         'business_hours',
         'advance_booking_enable',
+        'advance_booking_days',
         'is_active',
     ];
 
@@ -40,6 +41,7 @@ class GeneralSetting extends Model
     {
         return [
             'advance_booking_enable' => 'boolean',
+            'advance_booking_days' => 'integer',
             'is_active' => 'boolean',
         ];
     }

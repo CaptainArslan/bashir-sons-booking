@@ -67,6 +67,10 @@ return [
 
     'timezone' =>  env('APP_TIMEZONE', 'UTC'),
 
+    // my custom key for reserved seats timeout
+    'reserved_seats_timeout' => env('RESERVED_SEATS_TIMEOUT', 30),
+    'advance_booking_days' => env('ADVANCE_BOOKING_DAYS', 7),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

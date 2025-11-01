@@ -59,7 +59,8 @@ class BookingService
             $status = $channel === 'phone' ? 'hold' : 'confirmed';
             $paymentStatus = $channel === 'counter' ? 'paid' : 'unpaid';
             $method = $channel === 'counter' ? 'cash' : ($channel === 'online' ? 'gateway' : 'none');
-            $reservedUntil = $channel === 'phone' ? $from->departure_at->copy()->subMinutes(15) : null;
+            $reservedSeatsTimeout = config('app.reserved_seats_timeout', 30);
+            $reservedUntil = $channel === 'phone' ? $from->departure_at->copy()->subMinutes($reservedSeatsTimeout) : null;
 
             $booking = Booking::create([
                 'booking_number' => $this->pnr(),

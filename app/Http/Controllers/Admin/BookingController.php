@@ -16,6 +16,7 @@ use App\Events\SeatUnlocked;
 use Illuminate\Http\Request;
 use App\Events\SeatConfirmed;
 use App\Models\TimetableStop;
+use App\Models\GeneralSetting;
 use App\Enums\PaymentMethodEnum;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
@@ -36,9 +37,16 @@ class BookingController extends Controller
 
     public function consoleIndex(): View
     {
-        return view('admin.bookings.console', [
-            'paymentMethods' => PaymentMethodEnum::options(),
-        ]);
+        $generalSettings = GeneralSetting::first();
+        $mindate = Carbon::today();
+        $maxdate = $mindate;
+
+        if ($generalSettings->advance_booking_enable) {
+            $maxdate = Carbon::today()->addDays($generalSettings->advance_booking_days);
+        }
+        $paymentMethods = PaymentMethodEnum::options();
+
+        return view('admin.bookings.console', compact('paymentMethods', 'mindate', 'maxdate'));
     }
 
     public function index(): View
