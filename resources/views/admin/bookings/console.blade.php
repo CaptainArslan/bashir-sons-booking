@@ -28,7 +28,7 @@
             }
         }
 
-        /* Seat map styling */
+        /* Seat map styling - Mature and Eye-Catching */
         .seat-row {
             justify-content: center;
             width: 100%;
@@ -39,7 +39,65 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            padding: 0.5rem;
+            padding: 1rem;
+            min-height: 450px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 8px;
+        }
+        
+        /* Seat button styling - Professional Design */
+        .seat-btn {
+            min-width: 50px;
+            min-height: 50px;
+            width: 50px;
+            height: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.375rem;
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .seat-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .seat-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        /* Seat status colors - Professional */
+        .seat-available {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #ffffff;
+            border-color: #1e7e34;
+        }
+        
+        .seat-booked {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: #ffffff;
+            border-color: #bd2130;
+            opacity: 0.85;
+        }
+        
+        .seat-held {
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+            color: #212529;
+            border-color: #d39e00;
+        }
+        
+        .seat-selected {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: #ffffff;
+            border-color: #004085;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
         /* Card body compact padding */
@@ -175,24 +233,77 @@
 
         <!-- Trip Content (shown when trip loaded) -->
         <div id="tripContent" style="display: none;">
+            <!-- Trip Details Card (Above all sections) -->
+            <div class="card mb-4 shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-4">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2.5rem;">
+                                    <i class="fas fa-route"></i>
+                                </div>
+                                <div>
+                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Route</small>
+                                    <h5 class="mb-0 fw-bold" id="tripRoute">-</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2.5rem;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div>
+                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Date</small>
+                                    <h5 class="mb-0 fw-bold" id="tripDate">-</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" style="font-size: 2.5rem;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Time</small>
+                                    <h5 class="mb-0 fw-bold" id="tripTime">-</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div id="busDriverSection"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row g-3">
                 <!-- Left Column: Seat Map (3 columns) -->
                 <div class="col-lg-3 col-md-6">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
+                    <div class="card shadow-sm h-100 border-0">
+                        <div class="card-header text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <h6 class="mb-0 fw-bold">
                                 <i class="fas fa-chair"></i> Seat Map
                             </h6>
                         </div>
-                        <div class="card-body p-2"
-                            style="max-height: calc(100vh - 250px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
+                        <div class="card-body p-3"
+                            style="max-height: calc(100vh - 300px); overflow-y: auto; display: flex; flex-direction: column; align-items: center;">
                             <!-- Legend -->
-                            <div class="mb-2 p-2 bg-light rounded border border-success-subtle w-100">
+                            <div class="mb-3 p-3 bg-light rounded-3 shadow-sm w-100 border">
+                                <h6 class="fw-bold mb-2 small text-center">Legend</h6>
                                 <div class="seat-legend">
-                                    <span class="badge bg-success small p-1" title="Available">🟩 Available</span>
-                                    <span class="badge bg-danger small p-1" title="Booked">🟥 Booked</span>
-                                    <span class="badge bg-warning text-dark small p-1" title="Held">🟨 Held</span>
-                                    <span class="badge bg-info small p-1" title="Selected">🟦 Selected</span>
+                                    <span class="badge bg-success px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
+                                        <i class="fas fa-circle"></i> Available
+                                    </span>
+                                    <span class="badge bg-danger px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
+                                        <i class="fas fa-circle"></i> Booked
+                                    </span>
+                                    <span class="badge bg-warning text-dark px-3 py-2 me-2 mb-2" style="font-size: 0.75rem;">
+                                        <i class="fas fa-circle"></i> Held
+                                    </span>
+                                    <span class="badge bg-info px-3 py-2 mb-2" style="font-size: 0.75rem;">
+                                        <i class="fas fa-circle"></i> Selected
+                                    </span>
                                 </div>
                             </div>
                             <!-- Seat Grid -->
@@ -209,32 +320,7 @@
                                 <i class="fas fa-clipboard-list"></i> Booking Summary
                             </h6>
                         </div>
-                        <div class="card-body" style="max-height: calc(100vh - 250px); overflow-y: auto; padding: 1rem;">
-                            <!-- Trip Info Section -->
-                            <div class="mb-3 p-2 bg-light rounded border-start border-4 border-info small">
-                                <h6 class="fw-bold mb-2 small">📍 Trip Details</h6>
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <small class="text-muted d-block">Route</small>
-                                        <p class="mb-1 fw-bold small"><span id="tripRoute">-</span></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <small class="text-muted d-block">Date</small>
-                                        <p class="mb-1 fw-bold small"><span id="tripDate">-</span></p>
-                                    </div>
-                                    <div class="col-12">
-                                        <small class="text-muted d-block">Time</small>
-                                        <p class="mb-0 fw-bold small"><span id="tripTime">-</span></p>
-                                    </div>
-                                </div>
-
-                                <!-- Bus & Driver Section -->
-                                <div class="mt-2 pt-2 border-top small">
-                                    <h6 class="fw-bold mb-2 small">🚌 Bus & Driver</h6>
-                                    <div id="busDriverSection"></div>
-                                </div>
-                            </div>
-
+                        <div class="card-body" style="max-height: calc(100vh - 300px); overflow-y: auto; padding: 1rem;">
                             <!-- Selected Seats -->
                             <div class="mb-2">
                                 <label class="form-label fw-bold small mb-1">
@@ -880,65 +966,65 @@
         // RENDER SEAT MAP
         // ========================================
         function renderSeatMap() {
-            let html = `
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem; width:100%;">
-                `;
+            const grid = document.getElementById('seatGrid');
+            grid.innerHTML = '';
+
+            // Create container for seat rows
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.gap = '0.5rem';
+            container.style.width = '100%';
 
             for (let row = 0; row < 11; row++) {
-                html += `<div class="seat-row" style="display:flex; gap:0.25rem; justify-content:center;">`;
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+                rowDiv.style.display = 'flex';
+                rowDiv.style.gap = '0.5rem';
+                rowDiv.style.justifyContent = 'center';
+                rowDiv.style.width = 'fit-content';
 
                 for (let col = 0; col < 4; col++) {
                     const seatNumber = row * 4 + col + 1;
                     const seat = appState.seatMap[seatNumber];
 
-                    let classes = "btn btn-sm";
-                    let disabled = "";
-                    let title = `Seat ${seatNumber} - ${seat.status}`;
+                    const button = document.createElement('button');
+                    button.className = 'seat-btn';
+                    button.textContent = seatNumber;
+                    button.title = `Seat ${seatNumber} - ${seat?.status || 'unknown'}`;
 
-                    // ✅ Seat logic
+                    // Set color and status using new CSS classes
                     if (appState.selectedSeats[seatNumber]) {
-                        classes += " bg-info text-white";
+                        button.className += ' seat-selected';
                     } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-                        classes += " bg-warning text-dark";
-                        disabled = "disabled";
-                        title = `Seat ${seatNumber} - Locked by another user`;
-                    } else if (seat.status === "booked") {
-                        classes += " bg-danger text-white";
-                        disabled = "disabled";
-                    } else if (seat.status === "held") {
-                        classes += " bg-warning text-dark";
-                        disabled = "disabled";
+                        button.className += ' seat-held';
+                        button.disabled = true;
+                        button.title = `Seat ${seatNumber} - Locked by another user`;
+                    } else if (seat?.status === 'booked') {
+                        button.className += ' seat-booked';
+                        button.disabled = true;
+                    } else if (seat?.status === 'held') {
+                        button.className += ' seat-held';
+                        button.disabled = true;
                     } else {
-                        classes += " bg-success text-white";
+                        button.className += ' seat-available';
                     }
 
-                    // ✅ Another safety condition
-                    if (seat.status === "booked" || seat.status === "held" ||
-                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)
-                    ) {
-                        disabled = "disabled";
+                    // Disable if not available or locked by another user
+                    if (seat?.status === 'booked' || seat?.status === 'held' ||
+                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
+                        button.disabled = true;
                     }
 
-                    // ✅ Add seat button using template literal
-                    html += `
-                <button 
-                    class="${classes}" 
-                    style="width:32px; height:32px; font-size:0.65rem; padding:1px;" 
-                    title="${title}" 
-                    ${disabled}
-                    onclick="handleSeatClick(${seatNumber})"
-                >
-                    ${seatNumber}
-                </button>
-            `;
+                    button.onclick = () => handleSeatClick(seatNumber);
+                    rowDiv.appendChild(button);
                 }
 
-                html += `</div>`; // close row
+                container.appendChild(rowDiv);
             }
 
-            html += `</div>`; // close container
-
-            document.getElementById('seatGrid').innerHTML = html;
+            grid.appendChild(container);
         }
 
 
@@ -1858,56 +1944,36 @@
 
             if (!isBusAssigned) {
                 busDriverSection.innerHTML = `
-                <div class="alert alert-warning text-center py-2 mb-0 small">
-                    <p class="mb-0"><i class="fas fa-info-circle"></i> Bus and Driver not assigned yet. Use the "Assign Bus" button in the right column.</p>
-                </div>
-            `;
+                    <div class="d-flex align-items-center">
+                        <div class="me-3" style="font-size: 2.5rem; opacity: 0.7;">
+                            <i class="fas fa-bus"></i>
+                        </div>
+                        <div>
+                            <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
+                            <p class="mb-0 fw-bold">Not Assigned</p>
+                            <small class="opacity-75" style="font-size: 0.7rem;">Use button in right column</small>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
-            // Bus assigned - show details
+            // Bus assigned - show details in trip details card (compact format)
             busDriverSection.innerHTML = `
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <div class="card border-left-primary shadow-sm h-100" style="font-size: 0.85rem;">
-                        <div class="card-body p-2">
-                            <h6 class="fw-bold mb-2 small"><i class="fas fa-bus text-primary"></i> Bus</h6>
-                            <p class="mb-1">
-                                <small class="text-muted d-block">Bus Name</small>
-                                <strong>${trip.bus?.name || 'N/A'}</strong>
-                            </p>
-                            <p class="mb-1">
-                                <small class="text-muted d-block">Reg #</small>
-                                <strong>${trip.bus?.registration_number || 'N/A'}</strong>
-                            </p>
-                            <p class="mb-0">
-                                <small class="text-muted d-block">Model</small>
-                                <strong>${trip.bus?.model || 'N/A'}</strong>
-                            </p>
-                        </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3" style="font-size: 2.5rem;">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div>
+                        <small class="d-block opacity-75" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
+                        <h6 class="mb-1 fw-bold">${trip.bus?.name || 'N/A'}</h6>
+                        <small class="opacity-75" style="font-size: 0.7rem;">
+                            <i class="fas fa-user-tie"></i> ${trip.driver_name || 'N/A'} | 
+                            <i class="fas fa-phone"></i> ${trip.driver_phone || 'N/A'}
+                        </small>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card border-left-success shadow-sm h-100" style="font-size: 0.85rem;">
-                        <div class="card-body p-2">
-                            <h6 class="fw-bold mb-2 small"><i class="fas fa-user-tie text-success"></i> Driver</h6>
-                            <p class="mb-1">
-                                <small class="text-muted d-block">Name</small>
-                                <strong>${trip.driver_name || 'N/A'}</strong>
-                            </p>
-                            <p class="mb-1">
-                                <small class="text-muted d-block">Phone</small>
-                                <strong>${trip.driver_phone || 'N/A'}</strong>
-                            </p>
-                            <p class="mb-0">
-                                <small class="text-muted d-block">CNIC</small>
-                                <strong>${trip.driver_cnic || 'N/A'}</strong>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+            `;
         }
 
         // ========================================
