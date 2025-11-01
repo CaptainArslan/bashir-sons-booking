@@ -84,6 +84,33 @@
             border-radius: 6px;
             transition: all 0.2s ease;
             cursor: pointer;
+            position: relative;
+        }
+        
+        /* Gender badge styling - Top right corner */
+        .seat-gender-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            line-height: 1;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+        
+        .seat-gender-badge.male-badge {
+            background: #3B82F6;
+        }
+        
+        .seat-gender-badge.female-badge {
+            background: #EC4899;
         }
         
         .seat-btn:hover:not(:disabled) {
@@ -337,15 +364,27 @@
                                         <span class="small text-dark">Available</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px;"></div>
-                                        <span class="small text-dark">Selected</span>
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
+                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
+                                        </div>
+                                        <span class="small text-dark">Selected (Male)</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px;"></div>
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
+                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
+                                        </div>
+                                        <span class="small text-dark">Selected (Female)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px; position: relative;">
+                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
+                                        </div>
                                         <span class="small text-dark">Male Booked</span>
                                     </div>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2" style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px;"></div>
+                                        <div class="me-2" style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px; position: relative;">
+                                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
+                                        </div>
                                         <span class="small text-dark">Female Booked</span>
                                     </div>
                                     <div class="d-flex align-items-center">
@@ -387,29 +426,33 @@
                             <!-- Fare Calculation -->
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
                                 <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare</h6>
-                                <div class="mb-2">
-                                    <label class="form-label small">Base Fare (PKR)</label>
-                                    <input type="number" class="form-control form-control-sm" id="baseFare"
-                                        min="0" step="0.01" placeholder="0.00" readonly>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Base Fare</label>
+                                        <input type="number" class="form-control form-control-sm" id="baseFare"
+                                            min="0" step="0.01" placeholder="0.00" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Discount</label>
+                                        <input type="text" class="form-control form-control-sm" id="discountInfo"
+                                            placeholder="None" readonly>
+                                    </div>
                                 </div>
-                                <div class="mb-2">
-                                    <label class="form-label small">Discount</label>
-                                    <input type="text" class="form-control form-control-sm" id="discountInfo"
-                                        placeholder="None" readonly>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Total Fare</label>
+                                        <input type="number" class="form-control form-control-sm fw-bold text-success"
+                                            id="totalFare" min="0" step="0.01" placeholder="0.00" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Tax/Charge</label>
+                                        <input type="number" class="form-control form-control-sm" id="tax"
+                                            min="0" step="0.01" value="0" placeholder="0.00"
+                                            onchange="calculateFinal()">
+                                    </div>
                                 </div>
-                                <div class="mb-2">
-                                    <label class="form-label small">Total Fare (PKR)</label>
-                                    <input type="number" class="form-control form-control-sm fw-bold text-success"
-                                        id="totalFare" min="0" step="0.01" placeholder="0.00" readonly>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label small">Tax/Charge (PKR)</label>
-                                    <input type="number" class="form-control form-control-sm" id="tax"
-                                        min="0" step="0.01" value="0" placeholder="0.00"
-                                        onchange="calculateFinal()">
-                                </div>
-                                <div class="alert alert-primary border-1 mb-0 p-2 small">
-                                    <strong>Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
+                                <div class="alert alert-primary border-1 mb-0 p-2 small text-center">
+                                    <strong class="d-block mb-0">Final: PKR <span id="finalAmount" class="text-success">0.00</span></strong>
                                 </div>
                             </div>
 
@@ -1084,13 +1127,31 @@
         function createSeatButton(seatNumber, seat) {
             const button = document.createElement('button');
             button.className = 'seat-btn';
-            button.textContent = seatNumber;
             button.type = 'button';
 
-            // Determine seat status and apply appropriate class
+            // Create seat content with number
+            const seatNumberSpan = document.createElement('span');
+            seatNumberSpan.textContent = seatNumber;
+            seatNumberSpan.style.fontSize = '0.85rem';
+            seatNumberSpan.style.fontWeight = '600';
+            seatNumberSpan.style.lineHeight = '1';
+
+            // Determine seat status and apply appropriate class, also add gender icon
+            let genderIcon = '';
+            
             if (appState.selectedSeats[seatNumber]) {
+                // Selected seat - same color for all
                 button.className += ' seat-selected';
-                button.title = `Seat ${seatNumber} - Selected`;
+                const selectedGender = appState.selectedSeats[seatNumber];
+                if (selectedGender === 'male') {
+                    genderIcon = '👨';
+                    button.title = `Seat ${seatNumber} - Selected (Male)`;
+                } else if (selectedGender === 'female') {
+                    genderIcon = '👩';
+                    button.title = `Seat ${seatNumber} - Selected (Female)`;
+                } else {
+                    button.title = `Seat ${seatNumber} - Selected`;
+                }
             } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
                 button.className += ' seat-held';
                 button.disabled = true;
@@ -1099,9 +1160,11 @@
                 // Check gender for booked seats
                 if (seat?.gender === 'male') {
                     button.className += ' seat-booked-male';
+                    genderIcon = '👨';
                     button.title = `Seat ${seatNumber} - Booked (Male)`;
                 } else if (seat?.gender === 'female') {
                     button.className += ' seat-booked-female';
+                    genderIcon = '👩';
                     button.title = `Seat ${seatNumber} - Booked (Female)`;
                 } else {
                     // Fallback for booked seats without gender
@@ -1116,6 +1179,23 @@
             } else {
                 button.className += ' seat-available';
                 button.title = `Seat ${seatNumber} - Available`;
+            }
+
+            // Add seat number to button
+            button.appendChild(seatNumberSpan);
+            
+            // Add gender badge in top-right corner if gender is available
+            if (genderIcon) {
+                const badge = document.createElement('span');
+                badge.className = 'seat-gender-badge';
+                badge.textContent = genderIcon;
+                // Add badge color class
+                if (genderIcon === '👨') {
+                    badge.classList.add('male-badge');
+                } else if (genderIcon === '👩') {
+                    badge.classList.add('female-badge');
+                }
+                button.appendChild(badge);
             }
 
             // Additional safety check for disabled state
