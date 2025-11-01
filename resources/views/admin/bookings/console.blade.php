@@ -874,8 +874,8 @@
         // ========================================
         function renderSeatMap() {
             let html = `
-        <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem; width:100%;">
-    `;
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem; width:100%;">
+                `;
 
             for (let row = 0; row < 11; row++) {
                 html += `<div class="seat-row" style="display:flex; gap:0.25rem; justify-content:center;">`;
