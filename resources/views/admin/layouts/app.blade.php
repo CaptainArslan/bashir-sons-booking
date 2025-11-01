@@ -117,7 +117,7 @@
         }
 
         /* Compact DataTables */
-        .dataTables_wrapper .dataTables_length,
+        /* .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter,
         .dataTables_wrapper .dataTables_info,
         .dataTables_wrapper .dataTables_paginate {
@@ -129,7 +129,7 @@
         .dataTables_wrapper .dataTables_filter input {
             font-size: 0.875rem;
             padding: 0.25rem 0.5rem;
-        }
+        } */
 
         /* Compact Dropdowns */
         .dropdown-menu {
@@ -318,6 +318,22 @@
     @yield('scripts')
     <!--app JS-->
     <script src="{{ asset('admin/assets/js/app.js') }}"></script>
+    <script>
+        function showLoader(show = true, message = "Please wait...") {
+            if (show) {
+                Swal.fire({
+                    title: message,
+                    allowEscapeKey: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            } else {
+                Swal.close();
+            }
+        }
+    </script>
     {{-- <script>
         new PerfectScrollbar(".app-container");
     </script> --}}

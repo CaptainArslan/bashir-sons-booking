@@ -61,16 +61,14 @@ class Timetable extends Model
     protected function startDepartureTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => Carbon::parse($value)->format('H:i'),
-            set: fn ($value) => Carbon::parse($value)->format('H:i'),
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 
     protected function endArrivalTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $value ? Carbon::parse($value)->format('H:i') : null,
-            set: fn ($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 

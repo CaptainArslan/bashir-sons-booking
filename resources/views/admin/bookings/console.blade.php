@@ -141,7 +141,8 @@
                     <!-- To Terminal / Stop -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">To Terminal</label>
-                        <select class="form-select form-select-lg select2" id="toTerminal" disabled>
+                        <select class="form-select form-select-lg select2" id="toTerminal" disabled
+                            onchange="fetchArrivalTime()">
                             <option value="">Select Destination</option>
                         </select>
                     </div>
@@ -850,7 +851,7 @@
             // Set input value
             const arrivalInput = document.getElementById('arrivalTime');
             arrivalInput.value = arrivalTime;
-            arrivalInput.disabled = false;
+            // arrivalInput.disabled = false;
         }
 
 
@@ -1821,16 +1822,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                                                                                            <tr>
-                                                                                                                                                <td>${p.seat_number || 'N/A'}</td>
-                                                                                                                                                <td>${p.name || 'N/A'}</td>
-                                                                                                                                                <td>${p.age || 'N/A'}</td>
-                                                                                                                                                <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                                                                                                <td>${p.cnic || 'N/A'}</td>
-                                                                                                                                                <td>${p.phone || 'N/A'}</td>
-                                                                                                                                                <td>${p.email || 'N/A'}</td>
-                                                                                                                                            </tr>
-                                                                                                                                        `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${p.seat_number || 'N/A'}</td>
+                                                                                                                                                    <td>${p.name || 'N/A'}</td>
+                                                                                                                                                    <td>${p.age || 'N/A'}</td>
+                                                                                                                                                    <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                                                                                                    <td>${p.cnic || 'N/A'}</td>
+                                                                                                                                                    <td>${p.phone || 'N/A'}</td>
+                                                                                                                                                    <td>${p.email || 'N/A'}</td>
+                                                                                                                                                </tr>
+                                                                                                                                            `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>

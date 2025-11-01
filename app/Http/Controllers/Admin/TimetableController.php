@@ -41,8 +41,8 @@ class TimetableController extends Controller
                         return [
                             'id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
-                            'arrival_time' => $stop->arrival_time ? Carbon::parse($stop->arrival_time)->format('h:i A') : null,
-                            'departure_time' => $stop->departure_time ? Carbon::parse($stop->departure_time)->format('H:i A') : null,
+                            'arrival_time' => $stop->arrival_time ?? null,
+                            'departure_time' => $stop->departure_time ?? null,
                             'sequence' => $stop->sequence,
                         ];
                     });
