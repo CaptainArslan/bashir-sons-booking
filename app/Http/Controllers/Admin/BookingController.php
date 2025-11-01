@@ -2,27 +2,28 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\PaymentMethodEnum;
-use App\Events\SeatConfirmed;
+use Carbon\Carbon;
+use App\Models\Fare;
+use App\Models\Trip;
+use App\Models\Route;
+use App\Models\Booking;
+use App\Models\Terminal;
+use App\Models\TripStop;
+use App\Models\RouteStop;
+use App\Models\Timetable;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
-use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\Fare;
-use App\Models\Route;
-use App\Models\RouteStop;
-use App\Models\Terminal;
-use App\Models\Timetable;
-use App\Models\TimetableStop;
-use App\Models\Trip;
-use App\Models\TripStop;
-use App\Services\AvailabilityService;
-use App\Services\BookingService;
-use App\Services\TripFactoryService;
-use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Events\SeatConfirmed;
+use App\Models\TimetableStop;
+use App\Enums\PaymentMethodEnum;
+use App\Services\BookingService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\View\View;
+use App\Http\Controllers\Controller;
+use App\Services\TripFactoryService;
 use Illuminate\Support\Facades\Auth;
+use App\Services\AvailabilityService;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -73,13 +74,13 @@ class BookingController extends Controller
 
         // Filter by booking number
         if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+            $query->where('booking_number', 'like', '%' . $request->booking_number . '%');
         }
 
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
-                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
+                return '<span class="badge bg-primary">#' . $booking->booking_number . '</span>';
             })
             ->addColumn('created_at', function (Booking $booking) {
                 return $booking->created_at->format('d M Y, H:i');
@@ -88,18 +89,18 @@ class BookingController extends Controller
                 $from = $booking->fromStop?->terminal?->code ?? 'N/A';
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
-                return '<strong>'.$from.' → '.$to.'</strong>';
+                return '<strong>' . $from . ' → ' . $to . '</strong>';
             })
             ->addColumn('seats', function (Booking $booking) {
                 $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
 
-                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
+                return '<span class="badge bg-info">' . $seatNumbers . '</span>';
             })
             ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
+                return '<span class="badge bg-secondary">' . $booking->passengers->count() . ' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
+                return '<strong>PKR ' . number_format($booking->final_amount, 2) . '</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
                 $icons = [
@@ -120,7 +121,7 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->status) . '</span>';
             })
             ->addColumn('payment_status', function (Booking $booking) {
                 $badgeClass = match ($booking->payment_status) {
@@ -130,18 +131,18 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->payment_status) . '</span>';
             })
             ->addColumn('actions', function (Booking $booking) {
                 return '
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails(' . $booking->id . ')">
                             <i class="fas fa-eye"></i> View
                         </button>
-                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
+                        <a href="' . route('admin.bookings.edit', $booking->id) . '" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking(' . $booking->id . ')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -165,16 +166,29 @@ class BookingController extends Controller
 
     public function edit(Booking $booking): View
     {
-        return view('admin.bookings.edit', compact('booking'));
+        $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
+
+        return view('admin.bookings.edit', [
+            'booking' => $booking,
+            'paymentMethods' => PaymentMethodEnum::options(),
+        ]);
     }
 
     public function update(Request $request, Booking $booking)
     {
+        // Check if departure time has passed - prevent status update if it has
+        $departureTime = $booking->trip?->departure_datetime;
+        $departurePassed = $departureTime && $departureTime->isPast();
+
         $validated = $request->validate([
-            'status' => 'required|in:confirmed,hold,checked_in,boarded,cancelled',
+            'status' => 'required|in:' . implode(',', array_merge(
+                array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
+                ['checked_in', 'boarded']
+            )),
             'payment_status' => 'required|in:paid,unpaid,partial',
             'payment_method' => 'nullable|in:cash,card,mobile_wallet,bank_transfer',
             'online_transaction_id' => 'nullable|string|max:100',
+            'amount_received' => 'nullable|numeric|min:0',
             'reserved_until' => 'nullable|date_format:Y-m-d\TH:i',
             'notes' => 'nullable|string|max:500',
             'passengers' => 'nullable|array',
@@ -187,15 +201,39 @@ class BookingController extends Controller
         ]);
 
         try {
+            // If departure has passed, keep the original status
+            $statusToUpdate = $departurePassed ? $booking->status : $validated['status'];
+
+            // Validate transaction ID for non-cash payments
+            $paymentMethod = $validated['payment_method'] ?? $booking->payment_method ?? 'cash';
+            if ($paymentMethod !== 'cash' && empty($validated['online_transaction_id'])) {
+                throw new \Exception('Transaction ID is required for non-cash payments');
+            }
+
+            // Calculate return amount for cash payments
+            $amountReceived = $validated['amount_received'] ?? 0;
+            $returnAmount = 0;
+            if ($paymentMethod === 'cash' && $amountReceived > 0) {
+                $returnAmount = max(0, $amountReceived - $booking->final_amount);
+            }
+
             // Update basic booking information
-            $booking->update([
-                'status' => $validated['status'],
+            $updateData = [
+                'status' => $statusToUpdate,
                 'payment_status' => $validated['payment_status'],
-                'payment_method' => $validated['payment_method'] ?? 'cash',
-                'online_transaction_id' => $validated['online_transaction_id'] ?? null,
+                'payment_method' => $paymentMethod,
+                'online_transaction_id' => $validated['online_transaction_id'] ?? ($paymentMethod === 'cash' ? null : $booking->online_transaction_id),
                 'reserved_until' => $validated['status'] === 'hold' ? ($validated['reserved_until'] ?? now()->addMinutes(15)) : null,
                 'notes' => $validated['notes'] ?? null,
-            ]);
+            ];
+
+            // Add payment received and return amount if cash payment
+            if ($paymentMethod === 'cash') {
+                $updateData['payment_received_from_customer'] = $amountReceived;
+                $updateData['return_after_deduction_from_customer'] = $returnAmount;
+            }
+
+            $booking->update($updateData);
 
             // Update passengers if provided
             if ($validated['passengers'] ?? false) {
@@ -307,7 +345,7 @@ class BookingController extends Controller
                     'updated_at' => $booking->updated_at,
                     'from_stop' => $booking->fromStop?->terminal?->name,
                     'to_stop' => $booking->toStop?->terminal?->name,
-                    'passengers' => $booking->passengers->map(fn ($p) => [
+                    'passengers' => $booking->passengers->map(fn($p) => [
                         'name' => $p->name,
                         'age' => $p->age,
                         'gender' => $p->gender,
@@ -316,7 +354,7 @@ class BookingController extends Controller
                         'email' => $p->email,
                         'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
                     ])->toArray(),
-                    'seats' => $booking->seats->map(fn ($s) => [
+                    'seats' => $booking->seats->map(fn($s) => [
                         'seat_number' => $s->seat_number,
                         'gender' => $s->gender,
                         'fare' => $s->fare,
@@ -351,7 +389,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -427,7 +465,7 @@ class BookingController extends Controller
                 $routes = $user->routes->where('status', 'active');
             } else {
                 $routes = Route::query()
-                    ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                    ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
                     ->where('status', 'active')
                     ->get();
             }
@@ -443,7 +481,7 @@ class BookingController extends Controller
 
                 // Remove user's own stop
                 $filteredStops = $stops->filter(
-                    fn ($stop) => $stop->terminal_id != $validated['from_terminal_id']
+                    fn($stop) => $stop->terminal_id != $validated['from_terminal_id']
                 );
 
                 // Merge into collection
@@ -503,6 +541,76 @@ class BookingController extends Controller
         }
     }
 
+    // public function getDepartureTimes(Request $request): JsonResponse
+    // {
+    //     $validated = $request->validate([
+    //         'from_terminal_id' => 'required|exists:terminals,id',
+    //         'to_terminal_id' => 'required|exists:terminals,id',
+    //         'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+    //     ]);
+
+    //     try {
+    //         // Validate terminals are different
+    //         if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
+    //             throw new \Exception('From and To terminals must be different');
+    //         }
+
+    //         // Get timetable stops for the FROM terminal only on the given date
+    //         $timetableStops = [];
+
+    //         $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
+    //             ->where('is_active', true)
+    //             ->with('timetable.route')
+    //             ->get();
+
+    //         foreach ($timetableStopsQuery as $ts) {
+    //             // Verify timetable and route exist
+    //             if (! $ts->timetable || ! $ts->timetable->route) {
+    //                 continue;
+    //             }
+
+    //             // Check if route has the to_terminal in forward sequence
+    //             $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
+    //                 ->orderBy('sequence')
+    //                 ->get();
+
+    //             $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+    //             $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+
+    //             // Skip if destination is not in forward sequence or doesn't exist
+    //             if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+    //                 continue;
+    //             }
+
+    //             // Combine date with departure_time to create full datetime
+    //             if ($ts->departure_time) {
+    //                 // Only include times that are in future
+    //                 if (strtotime($ts->departure_time) >= time()) {
+    //                     $timetableStops[] = [
+    //                         'id' => $ts->id,
+    //                         'departure_at' => $ts->departure_time,
+    //                         'arrival_at' => $ts->arrival_time,
+    //                         'terminal_id' => $ts->terminal_id,
+    //                         'timetable_id' => $ts->timetable_id,
+    //                         'route_id' => $ts->timetable->route->id,
+    //                         'route_name' => $ts->timetable->route->name,
+    //                     ];
+    //                 }
+    //             }
+    //         }
+
+    //         // Remove duplicates and sort by departure time
+    //         $timetableStops = collect($timetableStops)
+    //             ->unique('departure_at')
+    //             ->sortBy('departure_at')
+    //             ->values();
+
+    //         return response()->json(['timetable_stops' => $timetableStops]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 400);
+    //     }
+    // }
+
     public function getDepartureTimes(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -512,12 +620,13 @@ class BookingController extends Controller
         ]);
 
         try {
-            // Validate terminals are different
             if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
                 throw new \Exception('From and To terminals must be different');
             }
 
-            // Get timetable stops for the FROM terminal only on the given date
+            $selectedDate = $validated['date'];
+            $now = now(); // current datetime
+
             $timetableStops = [];
 
             $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
@@ -526,28 +635,31 @@ class BookingController extends Controller
                 ->get();
 
             foreach ($timetableStopsQuery as $ts) {
-                // Verify timetable and route exist
+
                 if (! $ts->timetable || ! $ts->timetable->route) {
                     continue;
                 }
 
-                // Check if route has the to_terminal in forward sequence
                 $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
                     ->orderBy('sequence')
                     ->get();
 
                 $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
-                $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+                $toStop   = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
 
-                // Skip if destination is not in forward sequence or doesn't exist
                 if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
                     continue;
                 }
 
-                // Combine date with departure_time to create full datetime
                 if ($ts->departure_time) {
-                    // Only include times that are in future
-                    if (strtotime($ts->departure_time) >= time()) {
+
+                    // ✅ Combine selected date WITH departure time
+                    $fullDeparture = Carbon::parse(
+                        $selectedDate . ' ' . $ts->departure_time
+                    );
+
+                    // ✅ Only allow future trips
+                    if ($fullDeparture->greaterThanOrEqualTo($now)) {
                         $timetableStops[] = [
                             'id' => $ts->id,
                             'departure_at' => $ts->departure_time,
@@ -556,15 +668,14 @@ class BookingController extends Controller
                             'timetable_id' => $ts->timetable_id,
                             'route_id' => $ts->timetable->route->id,
                             'route_name' => $ts->timetable->route->name,
+                            'full_departure' => $fullDeparture->toDateTimeString(),
                         ];
                     }
                 }
             }
 
-            // Remove duplicates and sort by departure time
             $timetableStops = collect($timetableStops)
-                ->unique('departure_at')
-                ->sortBy('departure_at')
+                ->sortBy('full_departure')
                 ->values();
 
             return response()->json(['timetable_stops' => $timetableStops]);

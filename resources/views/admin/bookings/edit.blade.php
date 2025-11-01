@@ -3,12 +3,23 @@
 @section('title', 'Edit Booking')
 
 @section('content')
+@php
+    $departureTime = $booking->trip?->departure_datetime;
+    $departurePassed = $departureTime && $departureTime->isPast();
+    $formDisabled = $departurePassed ? 'disabled' : '';
+@endphp
+
 <div class="container-fluid p-4">
     <!-- Header Section -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
                 <i class="fas fa-edit"></i> Edit Booking #{{ $booking->booking_number }}
+                @if($departurePassed)
+                    <span class="badge bg-warning ms-2">
+                        <i class="fas fa-lock"></i> Trip Departed - Read Only
+                    </span>
+                @endif
             </h5>
         </div>
         <div class="card-body bg-light">
@@ -69,7 +80,7 @@
                             </div>
                             <div class="col-md-12 mb-0">
                                 <label class="form-label fw-bold">Notes</label>
-                                <textarea class="form-control" name="notes" rows="3" maxlength="500" placeholder="Add any special notes...">{{ $booking->notes }}</textarea>
+                                <textarea class="form-control" name="notes" rows="3" maxlength="500" placeholder="Add any special notes..." {{ $formDisabled }}>{{ $booking->notes }}</textarea>
                                 <small class="form-text text-muted">Max 500 characters</small>
                             </div>
                         </div>
@@ -142,11 +153,11 @@
                                         <div class="card-body">
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Name</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][name]" value="{{ $passenger->name }}" required>
+                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][name]" value="{{ $passenger->name }}" required {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Gender</label>
-                                                <select class="form-select form-select-sm" name="passengers[{{ $index }}][gender]">
+                                                <select class="form-select form-select-sm" name="passengers[{{ $index }}][gender]" {{ $formDisabled }}>
                                                     <option value="">Select Gender</option>
                                                     <option value="male" {{ $passenger->gender === 'male' ? 'selected' : '' }}>👨 Male</option>
                                                     <option value="female" {{ $passenger->gender === 'female' ? 'selected' : '' }}>👩 Female</option>
@@ -154,19 +165,19 @@
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Age</label>
-                                                <input type="number" class="form-control form-control-sm" name="passengers[{{ $index }}][age]" value="{{ $passenger->age }}" min="1" max="120">
+                                                <input type="number" class="form-control form-control-sm" name="passengers[{{ $index }}][age]" value="{{ $passenger->age }}" min="1" max="120" {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">CNIC</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][cnic]" value="{{ $passenger->cnic }}" maxlength="20">
+                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][cnic]" value="{{ $passenger->cnic }}" maxlength="20" {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Phone</label>
-                                                <input type="tel" class="form-control form-control-sm" name="passengers[{{ $index }}][phone]" value="{{ $passenger->phone }}" maxlength="20">
+                                                <input type="tel" class="form-control form-control-sm" name="passengers[{{ $index }}][phone]" value="{{ $passenger->phone }}" maxlength="20" {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-0">
                                                 <label class="form-label small fw-bold">Email</label>
-                                                <input type="email" class="form-control form-control-sm" name="passengers[{{ $index }}][email]" value="{{ $passenger->email }}" maxlength="100">
+                                                <input type="email" class="form-control form-control-sm" name="passengers[{{ $index }}][email]" value="{{ $passenger->email }}" maxlength="100" {{ $formDisabled }}>
                                             </div>
                                         </div>
                                     </div>
@@ -189,21 +200,34 @@
                         <h6 class="mb-0"><i class="fas fa-info-circle"></i> Booking Status</h6>
                     </div>
                     <div class="card-body">
+                        @if($departurePassed)
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>Departure time has passed.</strong> This booking is read-only and cannot be modified.
+                            </div>
+                        @endif
+                        
                         <div class="mb-3">
                             <label class="form-label fw-bold">Status</label>
-                            <select class="form-select" name="status" required>
+                            <select class="form-select" name="status" required {{ $formDisabled }}>
                                 <option value="">Select Status</option>
-                                <option value="confirmed" {{ $booking->status === 'confirmed' ? 'selected' : '' }}>✅ Confirmed</option>
-                                <option value="hold" {{ $booking->status === 'hold' ? 'selected' : '' }}>⏱️ On Hold</option>
+                                @foreach(\App\Enums\BookingStatusEnum::cases() as $status)
+                                    <option value="{{ $status->value }}" {{ $booking->status === $status->value ? 'selected' : '' }}>
+                                        {{ $status->getLabel() }}
+                                    </option>
+                                @endforeach
+                                {{-- Additional statuses not in enum but used in system --}}
                                 <option value="checked_in" {{ $booking->status === 'checked_in' ? 'selected' : '' }}>🔵 Checked In</option>
                                 <option value="boarded" {{ $booking->status === 'boarded' ? 'selected' : '' }}>🛫 Boarded</option>
-                                <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
                             </select>
+                            @if($formDisabled)
+                                <input type="hidden" name="status" value="{{ $booking->status }}">
+                            @endif
                         </div>
-                        @if($booking->status === 'hold')
+                        @if($booking->status === 'hold' && !$departurePassed)
                             <div class="mb-0">
                                 <label class="form-label fw-bold">Reserved Until</label>
-                                <input type="datetime-local" class="form-control" name="reserved_until" value="{{ $booking->reserved_until?->format('Y-m-d\TH:i') }}">
+                                <input type="datetime-local" class="form-control" name="reserved_until" value="{{ $booking->reserved_until?->format('Y-m-d\TH:i') }}" {{ $formDisabled }}>
                             </div>
                         @endif
                     </div>
@@ -217,28 +241,61 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Payment Status</label>
-                            <select class="form-select" name="payment_status" required>
+                            <select class="form-select" name="payment_status" required {{ $formDisabled }}>
                                 <option value="">Select Status</option>
                                 <option value="paid" {{ $booking->payment_status === 'paid' ? 'selected' : '' }}>✅ Paid</option>
                                 <option value="unpaid" {{ $booking->payment_status === 'unpaid' ? 'selected' : '' }}>❌ Unpaid</option>
                                 <option value="partial" {{ $booking->payment_status === 'partial' ? 'selected' : '' }}>⚠️ Partial</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Payment Method</label>
-                            <select class="form-select" name="payment_method">
-                                <option value="">Select Method</option>
-                                <option value="cash" {{ $booking->payment_method === 'cash' ? 'selected' : '' }}>💵 Cash</option>
-                                <option value="card" {{ $booking->payment_method === 'card' ? 'selected' : '' }}>💳 Card</option>
-                                <option value="mobile_wallet" {{ $booking->payment_method === 'mobile_wallet' ? 'selected' : '' }}>📱 Mobile Wallet</option>
-                                <option value="bank_transfer" {{ $booking->payment_method === 'bank_transfer' ? 'selected' : '' }}>🏦 Bank Transfer</option>
-                            </select>
-                        </div>
-                        @if($booking->online_transaction_id)
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Transaction ID</label>
-                                <input type="text" class="form-control" name="online_transaction_id" value="{{ $booking->online_transaction_id }}" maxlength="100">
+                        
+                        {{-- Show payment method options for phone bookings or when payment method needs to be updated --}}
+                        @if($booking->channel === 'phone' || $booking->payment_method)
+                            <div class="mb-3" id="paymentMethodField">
+                                <label class="form-label fw-bold">Payment Method</label>
+                                <select class="form-select" name="payment_method" id="paymentMethodSelect" onchange="toggleTransactionIdField()" {{ $formDisabled }}>
+                                    <option value="">Select Method</option>
+                                    @foreach($paymentMethods as $method)
+                                        @if($method['value'] !== 'other')
+                                            <option value="{{ $method['value'] }}" {{ $booking->payment_method === $method['value'] ? 'selected' : '' }}>
+                                                {{ $method['label'] }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                @if($booking->channel === 'phone' && !$departurePassed)
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle"></i> Customer can pay via any method when they arrive.
+                                    </small>
+                                @endif
                             </div>
+                            
+                            {{-- Transaction ID field (for non-cash payments) --}}
+                            <div class="mb-3" id="transactionIdField" style="display: {{ ($booking->payment_method && $booking->payment_method !== 'cash') ? 'block' : 'none' }};">
+                                <label class="form-label fw-bold">Transaction ID</label>
+                                <input type="text" class="form-control" name="online_transaction_id" id="transactionIdInput" 
+                                    value="{{ $booking->online_transaction_id }}" maxlength="100" 
+                                    placeholder="Enter transaction ID" {{ $formDisabled }}>
+                            </div>
+                            
+                            {{-- Amount Received field (for cash payments) --}}
+                            <div class="mb-3" id="amountReceivedField" style="display: {{ ($booking->payment_method === 'cash') ? 'block' : 'none' }};">
+                                <label class="form-label fw-bold">Amount Received (PKR)</label>
+                                <input type="number" class="form-control" name="amount_received" id="amountReceivedInput" 
+                                    value="{{ $booking->payment_received_from_customer ?? 0 }}" 
+                                    min="0" step="0.01" placeholder="0.00"
+                                    onchange="calculateReturnAmount()" {{ $formDisabled }}>
+                            </div>
+                            
+                            {{-- Return Amount display --}}
+                            <div id="returnAmountDiv" style="display: {{ ($booking->payment_received_from_customer ?? 0) > $booking->final_amount ? 'block' : 'none' }};">
+                                <div class="alert alert-success mb-0">
+                                    <strong>Return: PKR <span id="returnAmountDisplay">{{ number_format(max(0, ($booking->payment_received_from_customer ?? 0) - $booking->final_amount), 2) }}</span></strong>
+                                </div>
+                            </div>
+                        @else
+                            {{-- Hide payment method if not phone booking and no payment method set --}}
+                            <input type="hidden" name="payment_method" value="{{ $booking->payment_method ?? 'cash' }}">
                         @endif
                     </div>
                 </div>
@@ -296,16 +353,30 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="card shadow-sm">
-                    <div class="card-body d-flex gap-2">
-                        <button type="submit" class="btn btn-success flex-grow-1">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
-                        <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary flex-grow-1">
-                            <i class="fas fa-arrow-left"></i> Cancel
-                        </a>
+                @if(!$departurePassed)
+                    <div class="card shadow-sm">
+                        <div class="card-body d-flex gap-2">
+                            <button type="submit" class="btn btn-success flex-grow-1">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>This booking cannot be modified</strong> as the trip has already departed. 
+                                <a href="{{ route('admin.bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fas fa-arrow-left"></i> Back to Bookings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </form>
@@ -317,15 +388,32 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('bookingEditForm');
-        const statusSelect = form.querySelector('name="status"');
+        const departurePassed = {{ $departurePassed ? 'true' : 'false' }};
+        
+        // Prevent form submission if departure has passed
+        if (departurePassed) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Cannot Update Booking',
+                    text: 'This booking cannot be modified as the trip has already departed.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return false;
+            });
+            return; // Don't set up other event listeners
+        }
+        
+        const statusSelect = form.querySelector('select[name="status"]');
 
         if (statusSelect) {
             statusSelect.addEventListener('change', function() {
-                const reservedUntilField = form.querySelector('name="reserved_until"')?.parentElement;
-                if (this.value === 'hold' && reservedUntilField) {
-                    reservedUntilField.style.display = 'block';
-                } else if (reservedUntilField) {
-                    reservedUntilField.style.display = 'none';
+                const reservedUntilDiv = form.querySelector('input[name="reserved_until"]')?.parentElement;
+                if (this.value === 'hold' && reservedUntilDiv) {
+                    reservedUntilDiv.style.display = 'block';
+                } else if (reservedUntilDiv) {
+                    reservedUntilDiv.style.display = 'none';
                 }
             });
         }
@@ -348,14 +436,27 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 success: function(response) {
-                    alert('Booking updated successfully!');
-                    window.location.href = '{{ route("admin.bookings.index") }}';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Booking updated successfully!',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        window.location.href = '{{ route("admin.bookings.index") }}';
+                    });
                 },
                 error: function(error) {
                     button.disabled = false;
                     button.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-                    const message = error.responseJSON?.message || 'Failed to update booking';
-                    alert(message);
+                    const message = error.responseJSON?.message || error.responseJSON?.error || 'Failed to update booking';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: message,
+                        confirmButtonColor: '#d33'
+                    });
 
                     if (error.responseJSON?.errors) {
                         console.log('Validation Errors:', error.responseJSON.errors);
@@ -364,5 +465,72 @@
             });
         });
     });
+
+    // ========================================
+    // TOGGLE TRANSACTION ID FIELD
+    // ========================================
+    function toggleTransactionIdField() {
+        const paymentMethod = document.getElementById('paymentMethodSelect')?.value || 'cash';
+        const transactionIdField = document.getElementById('transactionIdField');
+        const transactionIdInput = document.getElementById('transactionIdInput');
+        const amountReceivedField = document.getElementById('amountReceivedField');
+        const amountReceivedInput = document.getElementById('amountReceivedInput');
+        const returnAmountDiv = document.getElementById('returnAmountDiv');
+
+        if (paymentMethod === 'cash') {
+            // Cash payment: show Amount Received, hide Transaction ID
+            if (transactionIdField) {
+                transactionIdField.style.display = 'none';
+                if (transactionIdInput) {
+                    transactionIdInput.required = false;
+                    transactionIdInput.value = '';
+                }
+            }
+            if (amountReceivedField) {
+                amountReceivedField.style.display = 'block';
+                if (amountReceivedInput) {
+                    amountReceivedInput.required = false;
+                }
+            }
+        } else {
+            // Non-cash payment: show Transaction ID, hide Amount Received
+            if (transactionIdField) {
+                transactionIdField.style.display = 'block';
+                if (transactionIdInput) {
+                    transactionIdInput.required = true;
+                }
+            }
+            if (amountReceivedField) {
+                amountReceivedField.style.display = 'none';
+                if (amountReceivedInput) {
+                    amountReceivedInput.required = false;
+                    amountReceivedInput.value = '0';
+                }
+            }
+            if (returnAmountDiv) {
+                returnAmountDiv.style.display = 'none';
+            }
+        }
+    }
+
+    // ========================================
+    // CALCULATE RETURN AMOUNT
+    // ========================================
+    function calculateReturnAmount() {
+        const amountReceived = parseFloat(document.getElementById('amountReceivedInput')?.value || 0);
+        const finalAmount = {{ $booking->final_amount }};
+        const returnAmount = Math.max(0, amountReceived - finalAmount);
+        const returnAmountDiv = document.getElementById('returnAmountDiv');
+        const returnAmountDisplay = document.getElementById('returnAmountDisplay');
+
+        if (returnAmountDiv && returnAmountDisplay) {
+            if (returnAmount > 0) {
+                returnAmountDisplay.textContent = returnAmount.toFixed(2);
+                returnAmountDiv.style.display = 'block';
+            } else {
+                returnAmountDiv.style.display = 'none';
+            }
+        }
+    }
 </script>
 @endsection
