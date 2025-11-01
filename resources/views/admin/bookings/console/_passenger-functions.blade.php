@@ -1,39 +1,40 @@
-{{-- Passenger Management Functions --}}
+<script>
+    {{-- Passenger Management Functions --}}
 
-// ========================================
-// UPDATE PASSENGER FORMS
-// ========================================
-function updatePassengerForms() {
-    const container = document.getElementById('passengerInfoContainer');
+    // ========================================
+    // UPDATE PASSENGER FORMS
+    // ========================================
+    function updatePassengerForms() {
+        const container = document.getElementById('passengerInfoContainer');
 
-    // Ensure at least 1 mandatory passenger exists
-    if (!appState.passengerInfo['passenger_1']) {
-        appState.passengerInfo['passenger_1'] = {
-            type: 'mandatory',
-            name: '',
-            age: '',
-            gender: '',
-            cnic: '',
-            phone: '',
-            email: ''
-        };
-    }
+        // Ensure at least 1 mandatory passenger exists
+        if (!appState.passengerInfo['passenger_1']) {
+            appState.passengerInfo['passenger_1'] = {
+                type: 'mandatory',
+                name: '',
+                age: '',
+                gender: '',
+                cnic: '',
+                phone: '',
+                email: ''
+            };
+        }
 
-    // Generate forms
-    let html = '';
-    const passengers = Object.keys(appState.passengerInfo).sort((a, b) => {
-        // Mandatory first, then extras
-        if (appState.passengerInfo[a].type === 'mandatory') return -1;
-        if (appState.passengerInfo[b].type === 'mandatory') return 1;
-        return a.localeCompare(b);
-    });
+        // Generate forms
+        let html = '';
+        const passengers = Object.keys(appState.passengerInfo).sort((a, b) => {
+            // Mandatory first, then extras
+            if (appState.passengerInfo[a].type === 'mandatory') return -1;
+            if (appState.passengerInfo[b].type === 'mandatory') return 1;
+            return a.localeCompare(b);
+        });
 
-    passengers.forEach((passengerId, index) => {
-        const info = appState.passengerInfo[passengerId];
-        const isMandatory = info.type === 'mandatory';
-        const passengerNumber = index + 1;
+        passengers.forEach((passengerId, index) => {
+            const info = appState.passengerInfo[passengerId];
+            const isMandatory = info.type === 'mandatory';
+            const passengerNumber = index + 1;
 
-        html += `
+            html += `
                 <div class="card mb-3 border-2 ${isMandatory ? '' : 'border-warning'}" style="border-color: ${isMandatory ? '#e9ecef' : '#ffc107'};">
                     <div class="card-header" style="background-color: ${isMandatory ? '#f8f9fa' : '#fff3cd'};">
                         <div class="d-flex justify-content-between align-items-center">
@@ -94,110 +95,110 @@ function updatePassengerForms() {
                     </div>
                 </div>
             `;
-    });
-
-    container.innerHTML = html;
-    document.getElementById('addPassengerBtn').style.display = 'inline-block';
-}
-
-// ========================================
-// UPDATE PASSENGER FIELD
-// ========================================
-function updatePassengerField(key, field, value) {
-    if (appState.passengerInfo[key]) {
-        appState.passengerInfo[key][field] = value;
-    }
-}
-
-// ========================================
-// ADD EXTRA PASSENGER
-// ========================================
-function addExtraPassenger() {
-    // Generate unique ID for new passenger
-    const timestamp = Date.now();
-    const passengerId = `passenger_extra_${timestamp}`;
-
-    appState.passengerInfo[passengerId] = {
-        type: 'extra',
-        name: '',
-        age: '',
-        gender: '',
-        cnic: '',
-        phone: '',
-        email: ''
-    };
-
-    updatePassengerForms();
-
-    // Scroll to the newly added passenger form
-    setTimeout(() => {
-        const container = document.getElementById('passengerInfoContainer');
-        container.scrollTop = container.scrollHeight;
-    }, 100);
-}
-
-// ========================================
-// REMOVE EXTRA PASSENGER
-// ========================================
-function removeExtraPassenger(passengerId) {
-    // Don't allow removing the mandatory passenger
-    if (appState.passengerInfo[passengerId]?.type === 'mandatory') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cannot Remove',
-            text: 'At least one passenger information is required.',
-            confirmButtonColor: '#ffc107'
         });
-        return;
+
+        container.innerHTML = html;
+        document.getElementById('addPassengerBtn').style.display = 'inline-block';
     }
 
-    delete appState.passengerInfo[passengerId];
-    updatePassengerForms();
-}
-
-// ========================================
-// VALIDATE PASSENGER INFORMATION
-// ========================================
-function validatePassengerInfo() {
-    const passengers = Object.keys(appState.passengerInfo);
-
-    if (passengers.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Passenger Information',
-            text: 'At least one passenger information is required.',
-            confirmButtonColor: '#ffc107'
-        });
-        return false;
+    // ========================================
+    // UPDATE PASSENGER FIELD
+    // ========================================
+    function updatePassengerField(key, field, value) {
+        if (appState.passengerInfo[key]) {
+            appState.passengerInfo[key][field] = value;
+        }
     }
 
-    // Validate all passengers
-    for (let passengerId of passengers) {
-        const info = appState.passengerInfo[passengerId];
+    // ========================================
+    // ADD EXTRA PASSENGER
+    // ========================================
+    function addExtraPassenger() {
+        // Generate unique ID for new passenger
+        const timestamp = Date.now();
+        const passengerId = `passenger_extra_${timestamp}`;
 
-        if (!info.name || info.name.trim() === '') {
-            const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
+        appState.passengerInfo[passengerId] = {
+            type: 'extra',
+            name: '',
+            age: '',
+            gender: '',
+            cnic: '',
+            phone: '',
+            email: ''
+        };
+
+        updatePassengerForms();
+
+        // Scroll to the newly added passenger form
+        setTimeout(() => {
+            const container = document.getElementById('passengerInfoContainer');
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+
+    // ========================================
+    // REMOVE EXTRA PASSENGER
+    // ========================================
+    function removeExtraPassenger(passengerId) {
+        // Don't allow removing the mandatory passenger
+        if (appState.passengerInfo[passengerId]?.type === 'mandatory') {
             Swal.fire({
                 icon: 'warning',
-                title: 'Missing Information',
-                text: `Passenger ${passengerNum}: Please enter passenger name`,
+                title: 'Cannot Remove',
+                text: 'At least one passenger information is required.',
+                confirmButtonColor: '#ffc107'
+            });
+            return;
+        }
+
+        delete appState.passengerInfo[passengerId];
+        updatePassengerForms();
+    }
+
+    // ========================================
+    // VALIDATE PASSENGER INFORMATION
+    // ========================================
+    function validatePassengerInfo() {
+        const passengers = Object.keys(appState.passengerInfo);
+
+        if (passengers.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Passenger Information',
+                text: 'At least one passenger information is required.',
                 confirmButtonColor: '#ffc107'
             });
             return false;
         }
 
-        if (!info.gender || info.gender === '') {
-            const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
-            Swal.fire({
-                icon: 'warning',
-                title: 'Missing Information',
-                text: `Passenger ${passengerNum}: Please select gender`,
-                confirmButtonColor: '#ffc107'
-            });
-            return false;
+        // Validate all passengers
+        for (let passengerId of passengers) {
+            const info = appState.passengerInfo[passengerId];
+
+            if (!info.name || info.name.trim() === '') {
+                const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: `Passenger ${passengerNum}: Please enter passenger name`,
+                    confirmButtonColor: '#ffc107'
+                });
+                return false;
+            }
+
+            if (!info.gender || info.gender === '') {
+                const passengerNum = info.type === 'mandatory' ? '1' : 'extra';
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: `Passenger ${passengerNum}: Please select gender`,
+                    confirmButtonColor: '#ffc107'
+                });
+                return false;
+            }
         }
+
+        return true;
     }
-
-    return true;
-}
-
+</script>

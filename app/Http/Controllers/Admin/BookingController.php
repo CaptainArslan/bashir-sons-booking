@@ -85,13 +85,13 @@ class BookingController extends Controller
 
         // Filter by booking number
         if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+            $query->where('booking_number', 'like', '%' . $request->booking_number . '%');
         }
 
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
-                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
+                return '<span class="badge bg-primary">#' . $booking->booking_number . '</span>';
             })
             ->addColumn('created_at', function (Booking $booking) {
                 return $booking->created_at->format('d M Y, H:i');
@@ -100,18 +100,18 @@ class BookingController extends Controller
                 $from = $booking->fromStop?->terminal?->code ?? 'N/A';
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
-                return '<strong>'.$from.' → '.$to.'</strong>';
+                return '<strong>' . $from . ' → ' . $to . '</strong>';
             })
             ->addColumn('seats', function (Booking $booking) {
                 $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
 
-                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
+                return '<span class="badge bg-info">' . $seatNumbers . '</span>';
             })
             ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
+                return '<span class="badge bg-secondary">' . $booking->passengers->count() . ' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
+                return '<strong>PKR ' . number_format($booking->final_amount, 2) . '</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
                 $icons = [
@@ -132,7 +132,7 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->status) . '</span>';
             })
             ->addColumn('payment_status', function (Booking $booking) {
                 $badgeClass = match ($booking->payment_status) {
@@ -142,18 +142,18 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->payment_status) . '</span>';
             })
             ->addColumn('actions', function (Booking $booking) {
                 return '
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails(' . $booking->id . ')">
                             <i class="fas fa-eye"></i> View
                         </button>
-                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
+                        <a href="' . route('admin.bookings.edit', $booking->id) . '" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking(' . $booking->id . ')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -207,7 +207,7 @@ class BookingController extends Controller
         $departurePassed = $departureTime && $departureTime->isPast();
 
         $validated = $request->validate([
-            'status' => 'required|in:'.implode(',', array_merge(
+            'status' => 'required|in:' . implode(',', array_merge(
                 array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
                 ['checked_in', 'boarded']
             )),
@@ -390,7 +390,7 @@ class BookingController extends Controller
                     'updated_at' => $booking->updated_at,
                     'from_stop' => $booking->fromStop?->terminal?->name,
                     'to_stop' => $booking->toStop?->terminal?->name,
-                    'passengers' => $booking->passengers->map(fn ($p) => [
+                    'passengers' => $booking->passengers->map(fn($p) => [
                         'name' => $p->name,
                         'age' => $p->age,
                         'gender' => $p->gender,
@@ -399,7 +399,7 @@ class BookingController extends Controller
                         'email' => $p->email,
                         'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
                     ])->toArray(),
-                    'seats' => $booking->seats->map(fn ($s) => [
+                    'seats' => $booking->seats->map(fn($s) => [
                         'seat_number' => $s->seat_number,
                         'gender' => $s->gender,
                         'fare' => $s->fare,
@@ -434,7 +434,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -505,17 +505,22 @@ class BookingController extends Controller
         ]);
 
         try {
+            $fromTerminalId = $validated['from_terminal_id'];
             $user = Auth::user();
+
+            // ✅ If user is restricted to routes
             if ($user->routes()->exists()) {
-                $routes = $user->routes->where('status', 'active');
+                $routes = $user->routes()->where('status', 'active')->get();
             } else {
-                $routes = Route::query()
-                    ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                // ✅ Otherwise: get routes that include this terminal
+                $routes = Route::whereHas('routeStops', function ($q) use ($fromTerminalId) {
+                    $q->where('terminal_id', $fromTerminalId);
+                })
                     ->where('status', 'active')
                     ->get();
             }
 
-            $routeStops = collect();
+            $terminals = collect();
 
             foreach ($routes as $route) {
 
@@ -524,33 +529,44 @@ class BookingController extends Controller
                     ->orderBy('sequence')
                     ->get();
 
-                // Remove user's own stop
-                $filteredStops = $stops->filter(
-                    fn ($stop) => $stop->terminal_id != $validated['from_terminal_id']
-                );
+                // ✅ Get the origin stop (starting point)
+                $origin = $stops->firstWhere('terminal_id', $fromTerminalId);
 
-                // Merge into collection
-                $routeStops = $routeStops->merge($filteredStops);
+                if (!$origin) continue;
+
+                // ✅ Only include stops AFTER the origin
+                $filtered = $stops->filter(function ($stop) use ($origin) {
+                    return $stop->sequence > $origin->sequence;
+                });
+
+                // ✅ Push only TERMINAL INFO (not routeStop IDs)
+                foreach ($filtered as $stop) {
+                    $terminals->push([
+                        'terminal_id' => $stop->terminal_id,
+                        'name'        => $stop->terminal->name,
+                        'code'        => $stop->terminal->code,
+                        'sequence'    => $stop->sequence,
+                        'route_id'    => $route->id,
+                    ]);
+                }
             }
 
-            // ✅ DISTINCT: remove duplicates using terminal_id
-            $uniqueStops = $routeStops
-                ->unique('terminal_id')
-                ->values()
-                ->all();
+            // ✅ DISTINCT BY terminal_id
+            $unique = $terminals->unique('terminal_id')->values();
 
-            return response()->json(['route_stops' => $uniqueStops]);
+            return response()->json(['route_stops' => $unique]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
+
 
     public function getFare(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'from_terminal_id' => 'required|exists:terminals,id',
             'to_terminal_id' => 'required|exists:terminals,id|different:from_terminal_id',
-        ],[
+        ], [
             'from_terminal_id.required' => 'From terminal is required',
             'from_terminal_id.exists' => 'From terminal is invalid',
             'to_terminal_id.required' => 'To terminal is required',
@@ -706,7 +722,7 @@ class BookingController extends Controller
 
                     // ✅ Combine selected date WITH departure time
                     $fullDeparture = Carbon::parse(
-                        $selectedDate.' '.$ts->departure_time
+                        $selectedDate . ' ' . $ts->departure_time
                     );
 
                     // ✅ Only allow future trips
@@ -1136,7 +1152,7 @@ class BookingController extends Controller
                 'driver_license' => 'required|string|max:100',
                 'driver_address' => 'nullable|string|max:500',
                 'expenses' => 'nullable|array',
-                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.expense_type' => 'required|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
                 'expenses.*.amount' => 'required|numeric|min:0',
                 'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
                 'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
@@ -1200,7 +1216,7 @@ class BookingController extends Controller
         try {
             $validated = $request->validate([
                 'expenses' => 'required|array|min:1',
-                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.expense_type' => 'required|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
                 'expenses.*.amount' => 'required|numeric|min:0',
                 'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
                 'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',

@@ -470,13 +470,15 @@
                     <h5 class="modal-title fw-bold">
                         <i class="fas fa-bus"></i> Assign Bus & Driver
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" id="assignBusModalCloseBtn" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" id="assignBusModalCloseBtn"
+                        data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body py-4">
                     <div id="assignBusModalBody"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="assignBusModalCancelBtn" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" id="assignBusModalCancelBtn"
+                        data-bs-dismiss="modal">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                     <button type="button" class="btn btn-primary" id="confirmAssignBusBtn">
@@ -490,15 +492,13 @@
 @endsection
 
 @section('scripts')
-    <script>
-        @include('admin.bookings.console._state-init')
-        @include('admin.bookings.console._terminal-route-functions')
-        @include('admin.bookings.console._fare-functions')
-        @include('admin.bookings.console._trip-seat-functions')
-        @include('admin.bookings.console._passenger-functions')
-        @include('admin.bookings.console._booking-payment-functions')
-        @include('admin.bookings.console._websocket-functions')
-        @include('admin.bookings.console._bus-assignment-functions')
-        @include('admin.bookings.console._utility-functions')
-    </script>
+    @include('admin.bookings.console._state-init')
+    @include('admin.bookings.console._terminal-route-functions')
+    @include('admin.bookings.console._fare-functions')
+    @include('admin.bookings.console._trip-seat-functions')
+    @include('admin.bookings.console._passenger-functions')
+    @include('admin.bookings.console._booking-payment-functions')
+    @include('admin.bookings.console._websocket-functions')
+    @include('admin.bookings.console._bus-assignment-functions')
+    @include('admin.bookings.console._utility-functions')
 @endsection
