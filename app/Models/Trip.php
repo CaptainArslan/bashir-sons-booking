@@ -75,4 +75,9 @@ class Trip extends Model
     {
         return $this->hasOne(TripStop::class)->where('is_destination', true)->orderBy('sequence');
     }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class)->orderBy('expense_date')->orderBy('created_at');
+    }
 }

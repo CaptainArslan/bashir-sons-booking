@@ -463,7 +463,10 @@
                                             id="totalFare" min="0" step="0.01" placeholder="0.00" readonly>
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label small mb-1">Tax/Charge</label>
+                                        <label class="form-label small mb-1">Tax/Charge
+                                            <small class="text-muted" id="taxLabel">(Auto: PKR 40 for Mobile
+                                                Wallet)</small>
+                                        </label>
                                         <input type="number" class="form-control form-control-sm" id="tax"
                                             min="0" step="0.01" value="0" placeholder="0.00"
                                             onchange="calculateFinal()">
@@ -720,6 +723,7 @@
             tripLoaded: false,
             fareData: null,
             baseFare: 0,
+            discountAmount: 0, // Store discount amount for booking
             lockedSeats: {}, // Track locked seats: {seatNumber: userId}
             echoChannel: null, // Echo channel for this trip
         };
@@ -846,10 +850,10 @@
                 success: function(response) {
                     if (response.success) {
                         appState.fareData = response.fare;
-                        appState.baseFare = response.fare.final_fare;
+                        appState.baseFare = response.fare.base_fare; // Use base fare before discount
 
-                        // Update UI with fare info
-                        document.getElementById('baseFare').value = parseFloat(response.fare.final_fare)
+                        // Update UI with fare info - show base fare
+                        document.getElementById('baseFare').value = parseFloat(response.fare.base_fare)
                             .toFixed(2);
 
                         // Display discount info
@@ -1359,8 +1363,8 @@
                                 ${isMandatory ? '<i class="fas fa-user"></i> Passenger 1 <span class="badge bg-danger ms-2">Required</span>' : `<i class="fas fa-user-plus"></i> Passenger ${passengerNumber}`}
                             </h6>
                             ${!isMandatory ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
-                                                <i class="fas fa-trash"></i> Remove
-                                            </button>` : ''}
+                                                        <i class="fas fa-trash"></i> Remove
+                                                    </button>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
@@ -1520,23 +1524,71 @@
         }
 
         // ========================================
-        // CALCULATE TOTAL FARE (based on seat count)
+        // CALCULATE TOTAL FARE (based on seat count with discount)
         // ========================================
         function calculateTotalFare() {
             const seatCount = Object.keys(appState.selectedSeats).length;
             const baseFare = appState.baseFare || 0;
-            const totalFare = baseFare * seatCount;
+
+            // Calculate total base fare
+            let totalBaseFare = baseFare * seatCount;
+
+            // Apply discount if available
+            let discountAmount = 0;
+            if (appState.fareData && appState.fareData.discount_type && appState.fareData.discount_value) {
+                if (appState.fareData.discount_type === 'flat') {
+                    // Flat discount per seat
+                    discountAmount = parseFloat(appState.fareData.discount_value) * seatCount;
+                } else if (appState.fareData.discount_type === 'percent') {
+                    // Percentage discount on total
+                    discountAmount = totalBaseFare * (parseFloat(appState.fareData.discount_value) / 100);
+                }
+            }
+
+            // Total fare after discount
+            const totalFare = Math.max(0, totalBaseFare - discountAmount);
 
             document.getElementById('totalFare').value = totalFare.toFixed(2);
+
+            // Store discount amount for later use
+            appState.discountAmount = discountAmount;
+
             calculateFinal();
         }
 
         // ========================================
-        // CALCULATE FINAL AMOUNT
+        // CALCULATE FINAL AMOUNT (with mobile wallet tax)
         // ========================================
         function calculateFinal() {
             const fare = parseFloat(document.getElementById('totalFare').value) || 0;
-            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            let tax = parseFloat(document.getElementById('tax').value) || 0;
+            const taxInput = document.getElementById('tax');
+            const taxLabel = document.getElementById('taxLabel');
+
+            // Check if payment method is mobile_wallet - add 40 automatically
+            const paymentMethod = document.getElementById('paymentMethod')?.value || 'cash';
+            if (paymentMethod === 'mobile_wallet') {
+                // Mobile wallet automatically adds 40 as tax
+                tax = 40;
+                taxInput.value = '40';
+                taxInput.readOnly = true;
+                taxInput.style.backgroundColor = '#f0f0f0';
+                if (taxLabel) {
+                    taxLabel.textContent = '(Auto: PKR 40 for Mobile Wallet)';
+                    taxLabel.classList.remove('text-muted');
+                    taxLabel.classList.add('text-info', 'fw-bold');
+                }
+            } else {
+                // Allow manual tax entry for other payment methods
+                taxInput.readOnly = false;
+                taxInput.style.backgroundColor = '';
+                if (taxLabel) {
+                    taxLabel.textContent = '(Auto: PKR 40 for Mobile Wallet)';
+                    taxLabel.classList.add('text-muted');
+                    taxLabel.classList.remove('text-info', 'fw-bold');
+                }
+            }
+
             const final = fare + tax;
             document.getElementById('finalAmount').textContent = final.toFixed(2);
             calculateReturn();
@@ -1591,6 +1643,9 @@
                     amountReceivedInput.value = '0';
                 }
             }
+
+            // Recalculate final amount to apply mobile wallet tax
+            calculateFinal();
         }
 
         // ========================================
@@ -1689,7 +1744,14 @@
             }));
 
             const totalFare = parseFloat(document.getElementById('totalFare').value);
-            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            let tax = parseFloat(document.getElementById('tax').value) || 0;
+
+            // Apply mobile wallet tax if payment method is mobile_wallet
+            if (paymentMethod === 'mobile_wallet') {
+                tax = 40;
+            }
+
+            const discountAmount = appState.discountAmount || 0;
             const farePerSeat = selectedSeats.length > 0 ? totalFare / selectedSeats.length : 0;
 
             document.getElementById('confirmBtn').disabled = true;
@@ -1709,7 +1771,7 @@
                     amount_received: paymentMethod === 'cash' && isCounter ? received : null,
                     fare_per_seat: farePerSeat,
                     total_fare: totalFare,
-                    discount_amount: 0,
+                    discount_amount: discountAmount, // Discount amount from fare
                     tax_amount: tax,
                     final_amount: final,
                     notes: document.getElementById('notes').value,
@@ -1725,7 +1787,9 @@
                         'On Hold' : 'Confirmed';
                     document.getElementById('confirmedFare').textContent = parseFloat(booking.total_fare)
                         .toFixed(2);
-                    document.getElementById('confirmedDiscount').textContent = '0.00';
+                    document.getElementById('confirmedDiscount').textContent = parseFloat(booking
+                            .discount_amount || 0)
+                        .toFixed(2);
                     document.getElementById('confirmedTax').textContent = parseFloat(booking.tax_amount)
                         .toFixed(2);
                     document.getElementById('confirmedFinal').textContent = parseFloat(booking.final_amount)
@@ -2167,24 +2231,149 @@
         }
 
         // ========================================
+        // ADD EXPENSE ROW
+        // ========================================
+        let expenseRowCounter = 0;
+
+        function addExpenseRow() {
+            const container = document.getElementById('expensesContainer');
+            if (!container || !window.expenseTypes) return;
+
+            const rowId = `expense_row_${expenseRowCounter++}`;
+            const expenseTypes = window.expenseTypes;
+            const terminals = appState.terminals || [];
+            const fromTerminalId = document.getElementById('fromTerminalId')?.value || '';
+            const toTerminalId = document.getElementById('toTerminalId')?.value || '';
+
+            let expenseTypesHtml = '<option value="">-- Select Type --</option>';
+            expenseTypes.forEach(type => {
+                expenseTypesHtml += `<option value="${type.value}">${type.label}</option>`;
+            });
+
+            let terminalsFromHtml = '<option value="">-- Select Terminal --</option>';
+            let terminalsToHtml = '<option value="">-- Select Terminal --</option>';
+            terminals.forEach(terminal => {
+                const selectedFrom = terminal.id == fromTerminalId ? 'selected' : '';
+                const selectedTo = terminal.id == toTerminalId ? 'selected' : '';
+                terminalsFromHtml +=
+                    `<option value="${terminal.id}" ${selectedFrom}>${terminal.name} (${terminal.code})</option>`;
+                terminalsToHtml +=
+                    `<option value="${terminal.id}" ${selectedTo}>${terminal.name} (${terminal.code})</option>`;
+            });
+
+            const row = document.createElement('div');
+            row.className = 'card mb-2 expense-row';
+            row.id = rowId;
+            row.innerHTML = `
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 text-muted">Expense #${expenseRowCounter}</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExpenseRow('${rowId}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label small">Expense Type <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm expense-type" required>
+                                ${expenseTypesHtml}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Amount (PKR) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control form-control-sm expense-amount" 
+                                min="0" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">From Terminal</label>
+                            <select class="form-select form-select-sm expense-from-terminal">
+                                ${terminalsFromHtml}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">To Terminal</label>
+                            <select class="form-select form-select-sm expense-to-terminal">
+                                ${terminalsToHtml}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">&nbsp;</label>
+                            <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeExpenseRow('${rowId}')" title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="form-label small">Description</label>
+                            <textarea class="form-control form-control-sm expense-description" rows="1" 
+                                placeholder="Optional description"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(row);
+        }
+
+        // ========================================
+        // REMOVE EXPENSE ROW
+        // ========================================
+        function removeExpenseRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+            }
+        }
+
+        // ========================================
         // OPEN ASSIGN BUS MODAL
         // ========================================
         function openAssignBusModal(tripId) {
-            // Fetch list of available buses
-            $.ajax({
-                url: "{{ route('admin.bookings.list-buses') }}",
-                type: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        const buses = response.buses;
-                        let busesHtml = '<option value="">-- Select a Bus --</option>';
-                        buses.forEach(bus => {
-                            busesHtml +=
-                                `<option value="${bus.id}">${bus.name} (${bus.registration_number})</option>`;
-                        });
+            // Reset expense row counter
+            expenseRowCounter = 0;
 
-                        const modalBody = document.getElementById('assignBusModalBody');
-                        modalBody.innerHTML = `
+            // Fetch list of available buses and expense types
+            Promise.all([
+                $.ajax({
+                    url: "{{ route('admin.bookings.list-buses') }}",
+                    type: 'GET'
+                }),
+                $.ajax({
+                    url: "{{ route('admin.bookings.expense-types') }}",
+                    type: 'GET'
+                })
+            ]).then(function([busesResponse, expenseTypesResponse]) {
+                if (!busesResponse.success || !expenseTypesResponse.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Load Data',
+                        text: 'Unable to fetch required data. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                    return;
+                }
+
+                const buses = busesResponse.buses;
+                const expenseTypes = expenseTypesResponse.expense_types;
+                const tripData = appState.tripData;
+                const fromTerminalId = tripData?.from_stop?.terminal_id || null;
+                const toTerminalId = tripData?.to_stop?.terminal_id || null;
+
+                let busesHtml = '<option value="">-- Select a Bus --</option>';
+                buses.forEach(bus => {
+                    busesHtml +=
+                        `<option value="${bus.id}">${bus.name} (${bus.registration_number})</option>`;
+                });
+
+                let expenseTypesHtml = '<option value="">-- Select Expense Type --</option>';
+                expenseTypes.forEach(type => {
+                    expenseTypesHtml +=
+                        `<option value="${type.value}" data-icon="${type.icon}">${type.label}</option>`;
+                });
+
+                const modalBody = document.getElementById('assignBusModalBody');
+                modalBody.innerHTML = `
                         <form id="assignBusForm">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
@@ -2226,144 +2415,180 @@
                                 <textarea id="driverAddress" class="form-control" rows="2" placeholder="Enter driver address"></textarea>
                             </div>
 
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0"><i class="fas fa-money-bill-wave"></i> Trip Expenses</h6>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addExpenseRow()">
+                                    <i class="fas fa-plus"></i> Add Expense
+                                </button>
+                            </div>
+
+                            <div id="expensesContainer" class="mb-3">
+                                <!-- Expense rows will be added here -->
+                            </div>
+
                             <input type="hidden" id="tripIdInput" value="${tripId}">
+                            <input type="hidden" id="fromTerminalId" value="${fromTerminalId || ''}">
+                            <input type="hidden" id="toTerminalId" value="${toTerminalId || ''}">
                         </form>
                     `;
 
-                        const modal = new bootstrap.Modal(document.getElementById('assignBusModal'));
-                        modal.show();
+                // Store expense types for use in addExpenseRow
+                window.expenseTypes = expenseTypes;
 
-                        // Handle confirm button
-                        document.getElementById('confirmAssignBusBtn').onclick = () => {
-                            const busId = document.getElementById('busSelect').value;
-                            const driverName = document.getElementById('driverName').value;
-                            const driverPhone = document.getElementById('driverPhone').value;
-                            const driverCnic = document.getElementById('driverCnic').value;
-                            const driverLicense = document.getElementById('driverLicense').value;
-                            const driverAddress = document.getElementById('driverAddress').value;
+                const modal = new bootstrap.Modal(document.getElementById('assignBusModal'));
+                modal.show();
 
-                            if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
+                // Add first expense row
+                addExpenseRow();
+
+                // Handle confirm button
+                document.getElementById('confirmAssignBusBtn').onclick = () => {
+                    const busId = document.getElementById('busSelect').value;
+                    const driverName = document.getElementById('driverName').value;
+                    const driverPhone = document.getElementById('driverPhone').value;
+                    const driverCnic = document.getElementById('driverCnic').value;
+                    const driverLicense = document.getElementById('driverLicense').value;
+                    const driverAddress = document.getElementById('driverAddress').value;
+
+                    if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Information',
+                            text: 'Please fill all required fields: Bus, Driver Name, Phone, CNIC, and License.',
+                            confirmButtonColor: '#ffc107'
+                        });
+                        return;
+                    }
+
+                    // Collect expense data
+                    const expenses = [];
+                    const expenseRows = document.querySelectorAll('.expense-row');
+                    expenseRows.forEach(row => {
+                        const expenseType = row.querySelector('.expense-type')?.value;
+                        const amount = row.querySelector('.expense-amount')?.value;
+                        const fromTerminal = row.querySelector('.expense-from-terminal')?.value;
+                        const toTerminal = row.querySelector('.expense-to-terminal')?.value;
+                        const description = row.querySelector('.expense-description')?.value;
+
+                        // Only add if expense type and amount are provided
+                        if (expenseType && amount && parseFloat(amount) > 0) {
+                            expenses.push({
+                                expense_type: expenseType,
+                                amount: parseFloat(amount),
+                                from_terminal_id: fromTerminal || null,
+                                to_terminal_id: toTerminal || null,
+                                description: description || null,
+                            });
+                        }
+                    });
+
+                    // Submit to backend
+                    $.ajax({
+                        url: "{{ route('admin.bookings.assign-bus-driver', ['tripId' => ':tripId']) }}"
+                            .replace(':tripId', tripId),
+                        type: 'POST',
+                        data: {
+                            bus_id: busId,
+                            driver_name: driverName,
+                            driver_phone: driverPhone,
+                            driver_cnic: driverCnic,
+                            driver_license: driverLicense,
+                            driver_address: driverAddress,
+                            expenses: expenses.length > 0 ? expenses : null,
+                            _token: document.querySelector('meta[name="csrf-token"]')
+                                .content
+                        },
+                        success: function(response) {
+                            if (response.success) {
                                 Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Missing Information',
-                                    text: 'Please fill all required fields: Bus, Driver Name, Phone, CNIC, and License.',
-                                    confirmButtonColor: '#ffc107'
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Bus, Driver' + (expenses.length > 0 ?
+                                            `, and ${expenses.length} expense(s)` : '') +
+                                        ' assigned successfully!',
+                                    confirmButtonColor: '#28a745',
+                                    timer: 2000,
+                                    timerProgressBar: true
                                 });
-                                return;
-                            }
+                                modal.hide();
+                                // Reload trip data from database to get updated bus assignment status
+                                if (appState.tripData && appState.tripData.trip.id) {
+                                    // Get current form values to reload trip
+                                    const fromTerminalId = document.getElementById(
+                                        'fromTerminal').value;
+                                    const toTerminalId = document.getElementById(
+                                        'toTerminal').value;
+                                    const departureTimeId = document.getElementById(
+                                        'departureTime').value;
+                                    const date = document.getElementById('travelDate')
+                                        .value;
 
-                            // Submit to backend
-                            $.ajax({
-                                url: "{{ route('admin.bookings.assign-bus-driver', ['tripId' => ':tripId']) }}"
-                                    .replace(':tripId', tripId),
-                                type: 'POST',
-                                data: {
-                                    bus_id: busId,
-                                    driver_name: driverName,
-                                    driver_phone: driverPhone,
-                                    driver_cnic: driverCnic,
-                                    driver_license: driverLicense,
-                                    driver_address: driverAddress,
-                                    _token: document.querySelector('meta[name="csrf-token"]')
-                                        .content
-                                },
-                                success: function(response) {
-                                    if (response.success) {
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Success!',
-                                            text: 'Bus and Driver assigned successfully!',
-                                            confirmButtonColor: '#28a745',
-                                            timer: 2000,
-                                            timerProgressBar: true
-                                        });
-                                        modal.hide();
-                                        // Reload trip data from database to get updated bus assignment status
-                                        if (appState.tripData && appState.tripData.trip.id) {
-                                            // Get current form values to reload trip
-                                            const fromTerminalId = document.getElementById(
-                                                'fromTerminal').value;
-                                            const toTerminalId = document.getElementById(
-                                                'toTerminal').value;
-                                            const departureTimeId = document.getElementById(
-                                                'departureTime').value;
-                                            const date = document.getElementById('travelDate')
-                                                .value;
+                                    if (fromTerminalId && toTerminalId &&
+                                        departureTimeId && date) {
+                                        // Reload trip to get fresh data from database
+                                        $.ajax({
+                                            url: "{{ route('admin.bookings.load-trip') }}",
+                                            type: 'POST',
+                                            data: {
+                                                from_terminal_id: fromTerminalId,
+                                                to_terminal_id: toTerminalId,
+                                                timetable_id: departureTimeId,
+                                                date: date,
+                                                _token: document.querySelector(
+                                                    'meta[name="csrf-token"]'
+                                                ).content
+                                            },
+                                            success: function(reloadResponse) {
+                                                // Update app state with fresh data
+                                                appState.tripData =
+                                                    reloadResponse;
+                                                appState.seatMap =
+                                                    reloadResponse.seat_map;
 
-                                            if (fromTerminalId && toTerminalId &&
-                                                departureTimeId && date) {
-                                                // Reload trip to get fresh data from database
-                                                $.ajax({
-                                                    url: "{{ route('admin.bookings.load-trip') }}",
-                                                    type: 'POST',
-                                                    data: {
-                                                        from_terminal_id: fromTerminalId,
-                                                        to_terminal_id: toTerminalId,
-                                                        timetable_id: departureTimeId,
-                                                        date: date,
-                                                        _token: document.querySelector(
-                                                            'meta[name="csrf-token"]'
-                                                        ).content
-                                                    },
-                                                    success: function(reloadResponse) {
-                                                        // Update app state with fresh data
-                                                        appState.tripData =
-                                                            reloadResponse;
-                                                        appState.seatMap =
-                                                            reloadResponse.seat_map;
-
-                                                        // Re-render bus driver section with updated data
-                                                        renderBusDriverSection(
-                                                            reloadResponse.trip);
-                                                    },
-                                                    error: function() {
-                                                        // If reload fails, just try to refresh manually
-                                                        loadTrip();
-                                                    }
-                                                });
+                                                // Re-render bus driver section with updated data
+                                                renderBusDriverSection(
+                                                    reloadResponse.trip);
+                                            },
+                                            error: function() {
+                                                // If reload fails, just try to refresh manually
+                                                loadTrip();
                                             }
-                                        }
-                                    } else {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Assignment Failed',
-                                            text: response.error || response.message ||
-                                                'Unable to assign bus and driver. Please check all information and try again.',
-                                            confirmButtonColor: '#d33'
                                         });
                                     }
-                                },
-                                error: function(error) {
-                                    console.error('Error:', error);
-                                    const errorMessage = error.responseJSON?.error || error
-                                        .responseJSON?.message ||
-                                        'Unable to assign bus and driver. Please check your connection and try again.';
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Failed to Assign Bus & Driver',
-                                        text: errorMessage,
-                                        confirmButtonColor: '#d33'
-                                    });
                                 }
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Assignment Failed',
+                                    text: response.error || response.message ||
+                                        'Unable to assign bus and driver. Please check all information and try again.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error:', error);
+                            const errorMessage = error.responseJSON?.error || error
+                                .responseJSON?.message ||
+                                'Unable to assign bus and driver. Please check your connection and try again.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Failed to Assign Bus & Driver',
+                                text: errorMessage,
+                                confirmButtonColor: '#d33'
                             });
-                        };
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Load Buses',
-                            text: 'Unable to fetch available buses. Please try again.',
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Failed to Fetch Buses',
-                        text: 'Unable to load bus list. Please check your connection and try again.',
-                        confirmButtonColor: '#d33'
+                        }
                     });
-                }
+                };
+            }).catch(function(error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Fetch Buses',
+                    text: 'Unable to load bus list. Please check your connection and try again.',
+                    confirmButtonColor: '#d33'
+                });
             });
         }
 

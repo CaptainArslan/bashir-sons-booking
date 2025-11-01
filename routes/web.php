@@ -245,6 +245,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/console/trip-passengers/{tripId}', [BookingController::class, 'getTripPassengers'])->can('view bookings')->name('bookings.trip-passengers');
         Route::get('/bookings/console/booking-details/{bookingId}', [BookingController::class, 'getBookingDetailsForConsole'])->can('view bookings')->name('bookings.console-details');
         Route::get('/bookings/console/list-buses', [BookingController::class, 'listBuses'])->can('view bookings')->name('bookings.list-buses');
+        Route::get('/bookings/console/expense-types', [BookingController::class, 'getExpenseTypes'])->can('view bookings')->name('bookings.expense-types');
         Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
 
         // Announcements Routes
@@ -265,6 +266,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/advance-booking', [AdvanceBookingController::class, 'update'])->can('edit general settings')->name('advance-booking.update');
         Route::patch('/advance-booking/toggle-status', [AdvanceBookingController::class, 'toggleStatus'])->can('edit general settings')->name('advance-booking.toggle-status');
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
+
+        // Terminal Reports Routes
+        Route::get('/terminal-reports', [\App\Http\Controllers\Admin\TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
+        Route::get('/terminal-reports/data', [\App\Http\Controllers\Admin\TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
 
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');

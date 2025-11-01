@@ -292,6 +292,11 @@
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                   style="font-size: 0.7rem;"></i>All Bookings</a></li>
                   @endcan
+                  @can('view bookings')
+                      <li> <a href="{{ route('admin.terminal-reports.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i>📊 Terminal Reports</a></li>
+                  @endcan
               </ul>
           </li>
 

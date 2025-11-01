@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ExpenseTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Expense;
 use App\Models\Fare;
 use App\Models\GeneralSetting;
 use App\Models\Route;
@@ -25,6 +27,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -1008,7 +1011,7 @@ class BookingController extends Controller
                 foreach ($booking->seats as $seat) {
                     // Get gender from seat first (primary source), fallback to passenger if seat doesn't have it
                     $gender = null;
-                    
+
                     // Check if seat has gender (it's stored as enum)
                     if ($seat->gender) {
                         // Gender is stored as enum, get its string value
@@ -1018,7 +1021,7 @@ class BookingController extends Controller
                             $gender = $seat->gender;
                         }
                     }
-                    
+
                     // Fallback to first passenger's gender if seat doesn't have gender
                     if (! $gender && $booking->passengers->isNotEmpty()) {
                         $passenger = $booking->passengers->first();
@@ -1063,6 +1066,14 @@ class BookingController extends Controller
         }
     }
 
+    public function getExpenseTypes(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'expense_types' => ExpenseTypeEnum::options(),
+        ]);
+    }
+
     public function assignBusDriver(Request $request, $tripId): JsonResponse
     {
         try {
@@ -1073,26 +1084,51 @@ class BookingController extends Controller
                 'driver_cnic' => 'required|string|max:50',
                 'driver_license' => 'required|string|max:100',
                 'driver_address' => 'nullable|string|max:500',
+                'expenses' => 'nullable|array',
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.amount' => 'required|numeric|min:0',
+                'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.description' => 'nullable|string|max:500',
+                'expenses.*.expense_date' => 'nullable|date',
             ]);
 
             $trip = Trip::findOrFail($tripId);
 
-            // Update trip with bus and driver information
-            $trip->update([
-                'bus_id' => $validated['bus_id'],
-                'driver_name' => $validated['driver_name'],
-                'driver_phone' => $validated['driver_phone'],
-                'driver_cnic' => $validated['driver_cnic'],
-                'driver_license' => $validated['driver_license'],
-                'driver_address' => $validated['driver_address'] ?? null,
-            ]);
+            DB::transaction(function () use ($trip, $validated) {
+                // Update trip with bus and driver information
+                $trip->update([
+                    'bus_id' => $validated['bus_id'],
+                    'driver_name' => $validated['driver_name'],
+                    'driver_phone' => $validated['driver_phone'],
+                    'driver_cnic' => $validated['driver_cnic'],
+                    'driver_license' => $validated['driver_license'],
+                    'driver_address' => $validated['driver_address'] ?? null,
+                ]);
 
-            // Load bus relationship
-            $trip->load('bus');
+                // Create expenses if provided
+                if (! empty($validated['expenses'])) {
+                    foreach ($validated['expenses'] as $expenseData) {
+                        Expense::create([
+                            'trip_id' => $trip->id,
+                            'user_id' => Auth::id(),
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'from_terminal_id' => $expenseData['from_terminal_id'] ?? null,
+                            'to_terminal_id' => $expenseData['to_terminal_id'] ?? null,
+                            'description' => $expenseData['description'] ?? null,
+                            'expense_date' => $expenseData['expense_date'] ?? $trip->departure_date,
+                        ]);
+                    }
+                }
+            });
+
+            // Load relationships
+            $trip->load(['bus', 'expenses.fromTerminal', 'expenses.toTerminal']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bus and driver assigned successfully!',
+                'message' => 'Bus, driver, and expenses assigned successfully!',
                 'trip' => $trip,
             ]);
         } catch (ValidationException $e) {
