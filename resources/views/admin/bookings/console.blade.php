@@ -659,9 +659,12 @@
                     <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2"
                             id="paymentMethodDisplay">-</span></p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success btn-lg fw-bold w-100" data-bs-dismiss="modal"
-                        onclick="resetForm()">
+                <div class="modal-footer d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill" id="printTicketBtn">
+                        <i class="fas fa-print"></i> Print Ticket (80mm)
+                    </button>
+                    <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal"
+                        onclick="reloadPage()">
                         <i class="fas fa-check"></i> Done
                     </button>
                 </div>
@@ -1157,19 +1160,22 @@
                 button.disabled = true;
                 button.title = `Seat ${seatNumber} - Locked by another user`;
             } else if (seat?.status === 'booked') {
-                // Check gender for booked seats
-                if (seat?.gender === 'male') {
+                // Check gender for booked seats - normalize to lowercase for comparison
+                const seatGender = seat?.gender ? String(seat.gender).toLowerCase() : null;
+                
+                if (seatGender === 'male') {
                     button.className += ' seat-booked-male';
                     genderIcon = '👨';
                     button.title = `Seat ${seatNumber} - Booked (Male)`;
-                } else if (seat?.gender === 'female') {
+                } else if (seatGender === 'female') {
                     button.className += ' seat-booked-female';
                     genderIcon = '👩';
                     button.title = `Seat ${seatNumber} - Booked (Female)`;
                 } else {
-                    // Fallback for booked seats without gender
-                    button.className += ' seat-booked-male';
+                    // Fallback for booked seats without gender - show without icon
+                    button.className += ' seat-booked-male'; // Use default booked color
                     button.title = `Seat ${seatNumber} - Booked`;
+                    // No gender icon for seats without gender info
                 }
                 button.disabled = true;
             } else if (seat?.status === 'held') {
@@ -1731,7 +1737,19 @@
                     const bookedSeats = booking.seats.map(Number);
                     unlockSeats(bookedSeats);
 
-                    new bootstrap.Modal(document.getElementById('successModal')).show();
+                    // Store booking ID for print functionality
+                    window.lastBookingId = booking.id;
+
+                    // Show success modal
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+
+                    // Setup print button
+                    document.getElementById('printTicketBtn').onclick = function() {
+                        if (window.lastBookingId) {
+                            window.open('/admin/bookings/' + window.lastBookingId + '/print', '_blank');
+                        }
+                    };
                 },
                 error: function(error) {
                     const message = error.responseJSON?.error || error.responseJSON?.message ||
@@ -1750,47 +1768,18 @@
         }
 
         // ========================================
-        // RESET FORM
+        // RELOAD PAGE (Refresh all data)
+        // ========================================
+        function reloadPage() {
+            // Refresh the entire page to clear all data and reload fresh
+            window.location.reload();
+        }
+
+        // ========================================
+        // RESET FORM (Legacy - now redirects to reload)
         // ========================================
         function resetForm() {
-            // Unlock all seats before resetting
-            const lockedSeats = Object.keys(appState.lockedSeats).filter(
-                seat => appState.lockedSeats[seat] === appState.userId
-            );
-            if (lockedSeats.length > 0 && appState.tripLoaded) {
-                unlockSeats(lockedSeats.map(Number));
-            }
-
-            // Leave WebSocket channel
-            if (appState.echoChannel && appState.tripData?.trip?.id) {
-                window.Echo.leave(`trip.${appState.tripData.trip.id}`);
-                appState.echoChannel = null;
-            }
-
-            appState.selectedSeats = {};
-            appState.passengerInfo = {}; // ← Clear passenger info
-            appState.lockedSeats = {};
-            updatePassengerForms(); // Reinitialize with 1 mandatory passenger
-            appState.tripLoaded = false;
-            appState.fareData = null;
-            appState.baseFare = 0;
-            document.getElementById('tripContent').style.display = 'none';
-            // Hide assign bus card
-            const assignBusCard = document.getElementById('assignBusCard');
-            if (assignBusCard) {
-                assignBusCard.style.display = 'none';
-            }
-            document.getElementById('baseFare').value = '';
-            document.getElementById('discountInfo').value = '';
-            document.getElementById('totalFare').value = '';
-            document.getElementById('tax').value = '0';
-            document.getElementById('amountReceived').value = '0';
-            document.getElementById('notes').value = '';
-            document.getElementById('finalAmount').textContent = '0.00';
-            document.getElementById('departureTime').value = '';
-            document.getElementById('arrivalTime').value = '';
-            document.getElementById('arrivalTime').disabled = true;
-            updateSeatsList();
+            reloadPage();
         }
 
         // ========================================

@@ -229,6 +229,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->can('edit bookings')->name('bookings.edit');
         Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
+        Route::get('/bookings/{booking}/print', [BookingController::class, 'printTicket'])->can('view bookings')->name('bookings.print');
 
         // Booking Console Routes (Live Seat Map)
         Route::get('/bookings/console/load', [BookingController::class, 'consoleIndex'])->can('create bookings')->name('bookings.console');

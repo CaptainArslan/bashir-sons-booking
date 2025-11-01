@@ -2,29 +2,29 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Carbon\Carbon;
-use App\Models\Fare;
-use App\Models\Trip;
-use App\Models\Route;
-use App\Models\Booking;
-use App\Models\Terminal;
-use App\Models\TripStop;
-use App\Models\RouteStop;
-use App\Models\Timetable;
+use App\Enums\PaymentMethodEnum;
+use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
-use Illuminate\Http\Request;
-use App\Events\SeatConfirmed;
-use App\Models\TimetableStop;
-use App\Models\GeneralSetting;
-use App\Enums\PaymentMethodEnum;
-use App\Services\BookingService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Contracts\View\View;
 use App\Http\Controllers\Controller;
-use App\Services\TripFactoryService;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Booking;
+use App\Models\Fare;
+use App\Models\GeneralSetting;
+use App\Models\Route;
+use App\Models\RouteStop;
+use App\Models\Terminal;
+use App\Models\Timetable;
+use App\Models\TimetableStop;
+use App\Models\Trip;
+use App\Models\TripStop;
 use App\Services\AvailabilityService;
+use App\Services\BookingService;
+use App\Services\TripFactoryService;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -82,13 +82,13 @@ class BookingController extends Controller
 
         // Filter by booking number
         if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%' . $request->booking_number . '%');
+            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
         }
 
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
-                return '<span class="badge bg-primary">#' . $booking->booking_number . '</span>';
+                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
             })
             ->addColumn('created_at', function (Booking $booking) {
                 return $booking->created_at->format('d M Y, H:i');
@@ -97,18 +97,18 @@ class BookingController extends Controller
                 $from = $booking->fromStop?->terminal?->code ?? 'N/A';
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
-                return '<strong>' . $from . ' → ' . $to . '</strong>';
+                return '<strong>'.$from.' → '.$to.'</strong>';
             })
             ->addColumn('seats', function (Booking $booking) {
                 $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
 
-                return '<span class="badge bg-info">' . $seatNumbers . '</span>';
+                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
             })
             ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">' . $booking->passengers->count() . ' passengers</span>';
+                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR ' . number_format($booking->final_amount, 2) . '</strong>';
+                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
                 $icons = [
@@ -129,7 +129,7 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->status) . '</span>';
+                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status).'</span>';
             })
             ->addColumn('payment_status', function (Booking $booking) {
                 $badgeClass = match ($booking->payment_status) {
@@ -139,18 +139,18 @@ class BookingController extends Controller
                     default => 'bg-secondary',
                 };
 
-                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->payment_status) . '</span>';
+                return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
             })
             ->addColumn('actions', function (Booking $booking) {
                 return '
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails(' . $booking->id . ')">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
                             <i class="fas fa-eye"></i> View
                         </button>
-                        <a href="' . route('admin.bookings.edit', $booking->id) . '" class="btn btn-outline-warning">
+                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
                             <i class="fas fa-edit"></i> Edit
                         </a>
-                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking(' . $booking->id . ')">
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -172,6 +172,21 @@ class BookingController extends Controller
         return view('admin.bookings.show', compact('booking'));
     }
 
+    public function printTicket(Booking $booking): View
+    {
+        $booking->load([
+            'trip.route',
+            'trip.bus',
+            'fromStop.terminal.city',
+            'toStop.terminal.city',
+            'seats',
+            'passengers',
+            'user',
+        ]);
+
+        return view('admin.bookings.print-ticket', compact('booking'));
+    }
+
     public function edit(Booking $booking): View
     {
         $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
@@ -189,7 +204,7 @@ class BookingController extends Controller
         $departurePassed = $departureTime && $departureTime->isPast();
 
         $validated = $request->validate([
-            'status' => 'required|in:' . implode(',', array_merge(
+            'status' => 'required|in:'.implode(',', array_merge(
                 array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
                 ['checked_in', 'boarded']
             )),
@@ -353,7 +368,7 @@ class BookingController extends Controller
                     'updated_at' => $booking->updated_at,
                     'from_stop' => $booking->fromStop?->terminal?->name,
                     'to_stop' => $booking->toStop?->terminal?->name,
-                    'passengers' => $booking->passengers->map(fn($p) => [
+                    'passengers' => $booking->passengers->map(fn ($p) => [
                         'name' => $p->name,
                         'age' => $p->age,
                         'gender' => $p->gender,
@@ -362,7 +377,7 @@ class BookingController extends Controller
                         'email' => $p->email,
                         'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
                     ])->toArray(),
-                    'seats' => $booking->seats->map(fn($s) => [
+                    'seats' => $booking->seats->map(fn ($s) => [
                         'seat_number' => $s->seat_number,
                         'gender' => $s->gender,
                         'fare' => $s->fare,
@@ -397,7 +412,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -473,7 +488,7 @@ class BookingController extends Controller
                 $routes = $user->routes->where('status', 'active');
             } else {
                 $routes = Route::query()
-                    ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                    ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
                     ->where('status', 'active')
                     ->get();
             }
@@ -489,7 +504,7 @@ class BookingController extends Controller
 
                 // Remove user's own stop
                 $filteredStops = $stops->filter(
-                    fn($stop) => $stop->terminal_id != $validated['from_terminal_id']
+                    fn ($stop) => $stop->terminal_id != $validated['from_terminal_id']
                 );
 
                 // Merge into collection
@@ -653,7 +668,7 @@ class BookingController extends Controller
                     ->get();
 
                 $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
-                $toStop   = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+                $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
 
                 if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
                     continue;
@@ -663,7 +678,7 @@ class BookingController extends Controller
 
                     // ✅ Combine selected date WITH departure time
                     $fullDeparture = Carbon::parse(
-                        $selectedDate . ' ' . $ts->departure_time
+                        $selectedDate.' '.$ts->departure_time
                     );
 
                     // ✅ Only allow future trips
@@ -991,15 +1006,35 @@ class BookingController extends Controller
 
             if ($bookingFrom < $queryTo && $queryFrom < $bookingTo) {
                 foreach ($booking->seats as $seat) {
-                    // Find matching passenger for this seat
-                    $passenger = $booking->passengers->first(function ($p) use ($seat) {
-                        return $p->booking_id === $seat->booking_id;
-                    });
+                    // Get gender from seat first (primary source), fallback to passenger if seat doesn't have it
+                    $gender = null;
+                    
+                    // Check if seat has gender (it's stored as enum)
+                    if ($seat->gender) {
+                        // Gender is stored as enum, get its string value
+                        if ($seat->gender instanceof \App\Enums\GenderEnum) {
+                            $gender = $seat->gender->value;
+                        } elseif (is_string($seat->gender)) {
+                            $gender = $seat->gender;
+                        }
+                    }
+                    
+                    // Fallback to first passenger's gender if seat doesn't have gender
+                    if (! $gender && $booking->passengers->isNotEmpty()) {
+                        $passenger = $booking->passengers->first();
+                        if ($passenger && $passenger->gender) {
+                            if ($passenger->gender instanceof \App\Enums\GenderEnum) {
+                                $gender = $passenger->gender->value;
+                            } elseif (is_string($passenger->gender)) {
+                                $gender = $passenger->gender;
+                            }
+                        }
+                    }
 
                     $bookedSeats[$seat->seat_number] = [
                         'status' => $booking->status === 'hold' ? 'held' : 'booked',
                         'booking_id' => $booking->id,
-                        'gender' => $passenger?->gender ?? $seat->gender ?? null,
+                        'gender' => $gender, // This will be 'male', 'female', or null
                     ];
                 }
             }
