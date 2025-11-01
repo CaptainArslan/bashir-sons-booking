@@ -1162,7 +1162,7 @@
             } else if (seat?.status === 'booked') {
                 // Check gender for booked seats - normalize to lowercase for comparison
                 const seatGender = seat?.gender ? String(seat.gender).toLowerCase() : null;
-                
+
                 if (seatGender === 'male') {
                     button.className += ' seat-booked-male';
                     genderIcon = '👨';
@@ -1300,7 +1300,7 @@
                 const badge = document.createElement('span');
                 badge.className = 'badge p-2';
                 badge.style.cssText =
-                'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
+                    'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
 
                 if (gender === 'male') {
                     badge.classList.add('bg-primary');
@@ -1359,8 +1359,8 @@
                                 ${isMandatory ? '<i class="fas fa-user"></i> Passenger 1 <span class="badge bg-danger ms-2">Required</span>' : `<i class="fas fa-user-plus"></i> Passenger ${passengerNumber}`}
                             </h6>
                             ${!isMandatory ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtraPassenger('${passengerId}')">
-                                            <i class="fas fa-trash"></i> Remove
-                                        </button>` : ''}
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
@@ -1928,99 +1928,172 @@
                 url: "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId',
                     tripId),
                 type: 'GET',
+
                 success: function(response) {
                     const passengersList = document.getElementById('tripPassengersList');
-                    passengersList.innerHTML = ''; // Clear previous content
 
+                    // ✅ If no passengers found
                     if (response.length === 0) {
-                        passengersList.innerHTML =
-                            '<p class="text-muted text-center py-4"><i class="fas fa-inbox"></i><br>No passengers booked for this trip yet.</p>';
+                        passengersList.innerHTML = `
+                                <div class="text-center py-5">
+                                    <div class="mb-3" style="font-size: 3rem; opacity: 0.3;">
+                                        <i class="fas fa-users-slash"></i>
+                                    </div>
+                                    <p class="text-muted mb-0">No passengers booked for this trip yet.</p>
+                                    <small class="text-muted">Passengers will appear here once bookings are made</small>
+                                </div>
+                            `;
                         return;
                     }
 
-                    const table = document.createElement('table');
-                    table.className = 'table table-striped table-bordered table-hover table-sm';
-                    table.style.width = '100%';
-                    table.style.fontSize = '0.88rem';
+                    // ✅ Build all HTML at once
+                    let html = ``;
 
-                    const headerRow = document.createElement('tr');
-                    headerRow.className = '';
-                    headerRow.innerHTML = `
-                    <th style="width: 8%;">Seats</th>
-                    <th style="width: 15%;">Passenger</th>
-                    <th style="width: 10%;">Route</th>
-                    <th style="width: 10%;">From</th>
-                    <th style="width: 10%;">To</th>
-                    <th style="width: 7%;">Gender</th>
-                    <th style="width: 8%;">Booking Details</th>
-                    <th style="width: 8%;">Status</th>
-                    <th style="width: 8%;">Action</th>
-                `;
-                    table.appendChild(headerRow);
+                    // ✅ Add summary header
+                    const totalSeats = response.reduce((sum, p) => {
+                        const seatCount = p.seats_display ? p.seats_display.split(',').length : 0;
+                        return sum + seatCount;
+                    }, 0);
 
+                    html += `
+                            <div class="alert alert-info mb-2 p-2">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <i class="fas fa-users"></i> <strong>Total Passengers:</strong>
+                                        <span class="badge bg-primary">${response.length}</span>
+                                    </div>
+                                    <div>
+                                        <strong>Total Seats Booked:</strong>
+                                        <span class="badge bg-info">${totalSeats}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2" style="max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 5px;">
+                        `;
+
+                    // ✅ Render each passenger as a card
                     response.forEach(passenger => {
-                        const row = document.createElement('tr');
-                        const genderIcon = passenger.gender === 'male' ? '👨 Male' : passenger
-                            .gender ===
-                            'female' ? '👩 Female' : 'Unknown';
-                        const statusBadgeClass = passenger.status === 'confirmed' ? 'bg-success' :
+                        const gender = passenger.gender ? String(passenger.gender).toLowerCase() : null;
+                        const genderIcon = gender === 'male' ? '👨' : gender === 'female' ? '👩' : '❓';
+                        const genderLabel = gender === 'male' ? 'Male' : gender === 'female' ?
+                            'Female' : 'Unknown';
+                        const genderBadge = gender === 'male' ? 'bg-primary' : gender === 'female' ?
+                            'bg-danger' : 'bg-secondary';
+                        const leftBorder = gender === 'male' ? '#3B82F6' : gender === 'female' ?
+                            '#EC4899' : '#94a3b8';
+
+                        const statusBadge =
+                            passenger.status === 'confirmed' ? 'bg-success' :
                             passenger.status === 'hold' ? 'bg-warning' :
                             passenger.status === 'checked_in' ? 'bg-info' :
                             passenger.status === 'boarded' ? 'bg-primary' :
                             passenger.status === 'cancelled' ? 'bg-danger' : 'bg-secondary';
 
-                        const channelLabel = passenger.channel === 'counter' ? '🏪 Counter' :
+                        const channelBadge =
+                            passenger.channel === 'counter' ? 'bg-info' :
+                            passenger.channel === 'phone' ? 'bg-warning' :
+                            passenger.channel === 'online' ? 'bg-success' : 'bg-secondary';
+
+                        const channelLabel =
+                            passenger.channel === 'counter' ? '🏪 Counter' :
                             passenger.channel === 'phone' ? '📞 Phone' :
                             passenger.channel === 'online' ? '🌐 Online' : passenger.channel || 'N/A';
 
-                        const paymentMethodLabel = passenger.payment_method === 'cash' ? '💰 Cash' :
-                            passenger.payment_method === 'card' ? '💳 Card' :
-                            passenger.payment_method === 'mobile_wallet' ? '📱 Mobile' :
-                            passenger.payment_method === 'bank_transfer' ? '🏦 Transfer' : passenger
-                            .payment_method || 'N/A';
+                        const paymentBadge =
+                            passenger.payment_method === 'cash' ? 'bg-success' :
+                            passenger.payment_method === 'card' ? 'bg-info' :
+                            passenger.payment_method === 'mobile_wallet' ? 'bg-primary' :
+                            passenger.payment_method === 'bank_transfer' ? 'bg-secondary' :
+                            'bg-secondary';
 
-                        row.innerHTML = `
-                        <td class="text-center">
-                            <span class="badge bg-info">${passenger.seats_display || 'N/A'}</span>
-                        </td>
-                        <td>
-                            <div class="fw-bold small">${passenger.name || 'N/A'}</div>
-                            <small class="text-muted d-block">${passenger.phone || 'No phone'}</small>
-                            ${passenger.email ? `<small class="text-muted d-block">${passenger.email}</small>` : ''}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-secondary small">${passenger.from_code} → ${passenger.to_code}</span>
-                        </td>
-                        <td>
-                            <small><strong>${passenger.from_stop}</strong></small>
-                        </td>
-                        <td>
-                            <small><strong>${passenger.to_stop}</strong></small>
-                        </td>
-                        <td class="text-center">
-                            <small>${genderIcon}</small>
-                        </td>
-                        <td class="text-center">
-                            <div class="mb-1">
-                                <small class="badge bg-light text-dark">#${passenger.booking_number}</small>
+                        const paymentLabel =
+                            passenger.payment_method === 'cash' ? '💰 Cash' :
+                            passenger.payment_method === 'card' ? '💳 Card' :
+                            passenger.payment_method === 'mobile_wallet' ? '📱 Mobile Wallet' :
+                            passenger.payment_method === 'bank_transfer' ? '🏦 Bank Transfer' :
+                            passenger.payment_method || 'N/A';
+
+                        html += `
+                            <div class="col-12">
+                                <div class="card shadow-sm mb-2 border-start border-4"
+                                    style="border-left-color:${leftBorder}; transition: transform 0.2s, box-shadow 0.2s;"
+                                    onmouseover="this.style.transform='translateX(2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'"
+                                    onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'"
+                                >
+                                    <div class="card-body p-3">
+                                        <div class="row g-3 align-items-start">
+
+                                            <!-- Passenger Info -->
+                                            <div class="col-12 col-lg-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <div class="me-2" style="font-size:1.5rem;">${genderIcon}</div>
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <h6 class="mb-0 fw-bold text-dark text-truncate">${passenger.name || 'N/A'}</h6>
+                                                        <small class="text-muted d-block">
+                                                            ${passenger.phone ? `<i class="fas fa-phone-alt"></i> ${passenger.phone}` : 'No phone'}
+                                                        </small>
+                                                        ${passenger.email ? `<small class="text-muted d-block"><i class="fas fa-envelope"></i> ${passenger.email}</small>` : ''}
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex gap-1 flex-wrap">
+                                                    <span class="badge ${genderBadge} small">${genderLabel}</span>
+                                                    <span class="badge bg-info small"><i class="fas fa-chair"></i> ${passenger.seats_display}</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Route Info -->
+                                            <div class="col-12 col-lg-3">
+                                                <small class="text-muted"><i class="fas fa-route"></i> Route</small>
+                                                <div><strong>${passenger.from_code} → ${passenger.to_code}</strong></div>
+
+                                                <small class="text-muted d-block mt-1">From:</small>
+                                                <div class="fw-semibold">${passenger.from_stop}</div>
+
+                                                <small class="text-muted d-block mt-1">To:</small>
+                                                <div class="fw-semibold">${passenger.to_stop}</div>
+                                            </div>
+
+                                            <!-- Booking + Status -->
+                                            <div class="col-12 col-lg-3">
+                                                <small class="text-muted d-block"><i class="fas fa-ticket-alt"></i> Booking #</small>
+                                                <span class="badge bg-dark">${passenger.booking_number}</span>
+
+                                                <div class="d-flex gap-1 flex-wrap mt-2">
+                                                    <span class="badge ${channelBadge} small">${channelLabel}</span>
+                                                    <span class="badge ${paymentBadge} small">${paymentLabel}</span>
+                                                </div>
+
+                                                <div class="mt-2">
+                                                    <span class="badge ${statusBadge} small">
+                                                        <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+                                                        ${passenger.status ? passenger.status.charAt(0).toUpperCase() + passenger.status.slice(1) : 'N/A'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Action -->
+                                            <div class="col-12 col-lg-2">
+                                                <a href="/admin/bookings/${passenger.booking_id}/edit"
+                                                    target="_blank"
+                                                    class="btn btn-primary btn-sm fw-bold w-100">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <small class="text-muted d-block">${channelLabel}</small>
-                            <small class="text-muted d-block">${paymentMethodLabel}</small>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge ${statusBadgeClass} small">${passenger.status || 'N/A'}</span>
-                        </td>
-                        <td class="text-center">
-                            <a href="/admin/bookings/${passenger.booking_id}/edit" target="_blank" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                        </td>
-                    `;
-                        table.appendChild(row);
+                        `;
                     });
 
-                    passengersList.appendChild(table);
+                    html += `</div>`; // close row
+
+                    // ✅ Render final HTML
+                    passengersList.innerHTML = html;
                 },
+
                 error: function() {
                     Swal.fire({
                         icon: 'error',
@@ -2031,6 +2104,7 @@
                 }
             });
         }
+
 
 
         // ========================================
@@ -2229,7 +2303,7 @@
                                                         date: date,
                                                         _token: document.querySelector(
                                                             'meta[name="csrf-token"]'
-                                                            ).content
+                                                        ).content
                                                     },
                                                     success: function(reloadResponse) {
                                                         // Update app state with fresh data
