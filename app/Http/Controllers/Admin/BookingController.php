@@ -549,7 +549,13 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'from_terminal_id' => 'required|exists:terminals,id',
-            'to_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id|different:from_terminal_id',
+        ],[
+            'from_terminal_id.required' => 'From terminal is required',
+            'from_terminal_id.exists' => 'From terminal is invalid',
+            'to_terminal_id.required' => 'To terminal is required',
+            'to_terminal_id.exists' => 'To terminal is invalid',
+            'to_terminal_id.different' => 'To terminal must be different from from terminal',
         ]);
 
         try {
@@ -791,6 +797,11 @@ class BookingController extends Controller
 
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
+            // Load bus assignments with relationships
+            $busAssignments = $trip->busAssignments()
+                ->with(['fromTripStop.terminal', 'toTripStop.terminal', 'bus', 'assignedBy'])
+                ->get();
+
             return response()->json([
                 'trip' => $trip->load('bus'),
                 'route' => $route->only(['id', 'name', 'code']),
@@ -798,6 +809,27 @@ class BookingController extends Controller
                 'to_stop' => $tripToStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
+                'bus_assignments' => $busAssignments->map(function ($assignment) {
+                    return [
+                        'id' => $assignment->id,
+                        'from_trip_stop_id' => $assignment->from_trip_stop_id,
+                        'to_trip_stop_id' => $assignment->to_trip_stop_id,
+                        'from_terminal' => $assignment->fromTripStop->terminal->name ?? 'N/A',
+                        'from_code' => $assignment->fromTripStop->terminal->code ?? 'N/A',
+                        'to_terminal' => $assignment->toTripStop->terminal->name ?? 'N/A',
+                        'to_code' => $assignment->toTripStop->terminal->code ?? 'N/A',
+                        'segment_label' => $assignment->segment_label,
+                        'bus' => $assignment->bus ? [
+                            'id' => $assignment->bus->id,
+                            'name' => $assignment->bus->name,
+                            'registration_number' => $assignment->bus->registration_number,
+                        ] : null,
+                        'driver_name' => $assignment->driver_name,
+                        'driver_phone' => $assignment->driver_phone,
+                        'host_name' => $assignment->host_name,
+                        'host_phone' => $assignment->host_phone,
+                    ];
+                }),
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -1149,6 +1181,55 @@ class BookingController extends Controller
                 'success' => true,
                 'message' => 'Bus, driver, and expenses assigned successfully!',
                 'trip' => $trip,
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function addTripExpenses(Request $request, $tripId): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'expenses' => 'required|array|min:1',
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.amount' => 'required|numeric|min:0',
+                'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.description' => 'nullable|string|max:500',
+                'expenses.*.expense_date' => 'nullable|date',
+            ]);
+
+            $trip = Trip::findOrFail($tripId);
+
+            DB::transaction(function () use ($trip, $validated) {
+                // Create expenses
+                foreach ($validated['expenses'] as $expenseData) {
+                    Expense::create([
+                        'trip_id' => $trip->id,
+                        'user_id' => Auth::id(),
+                        'expense_type' => $expenseData['expense_type'],
+                        'amount' => $expenseData['amount'],
+                        'from_terminal_id' => $expenseData['from_terminal_id'] ?? null,
+                        'to_terminal_id' => $expenseData['to_terminal_id'] ?? null,
+                        'description' => $expenseData['description'] ?? null,
+                        'expense_date' => $expenseData['expense_date'] ?? $trip->departure_date,
+                    ]);
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Expenses added successfully!',
+                'expenses_count' => count($validated['expenses']),
             ]);
         } catch (ValidationException $e) {
             return response()->json([

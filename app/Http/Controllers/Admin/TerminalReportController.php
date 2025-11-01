@@ -139,11 +139,10 @@ class TerminalReportController extends Controller
 
     private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate)
     {
+        // ✅ Only get bookings that START from this terminal (from_terminal_id)
+        // This matches the passenger filtering logic - terminal staff sees bookings from their terminal
         return Booking::query()
             ->whereHas('fromStop', function ($query) use ($terminalId) {
-                $query->where('terminal_id', $terminalId);
-            })
-            ->orWhereHas('toStop', function ($query) use ($terminalId) {
                 $query->where('terminal_id', $terminalId);
             })
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -173,14 +172,14 @@ class TerminalReportController extends Controller
 
     private function getExpensesForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate)
     {
+        // ✅ Get expenses where FROM terminal matches (terminal-wise expense tracking)
+        // This ensures expenses are tracked terminal-wise as requested
         return Expense::query()
-            ->where(function ($query) use ($terminalId) {
-                $query->where('from_terminal_id', $terminalId)
-                    ->orWhere('to_terminal_id', $terminalId);
-            })
+            ->where('from_terminal_id', $terminalId)
             ->whereBetween('expense_date', [$startDate, $endDate])
             ->with(['fromTerminal', 'toTerminal', 'trip', 'user'])
             ->orderBy('expense_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 

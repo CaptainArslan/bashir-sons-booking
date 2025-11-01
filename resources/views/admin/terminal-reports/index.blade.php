@@ -64,7 +64,7 @@
                         <button class="btn btn-primary flex-grow-1" onclick="loadReport()">
                             <i class="fas fa-search"></i> Generate Report
                         </button>
-                        <button class="btn btn-secondary" onclick="printReport()" id="printBtn" disabled>
+                        <button class="btn btn-secondary no-print" onclick="printReport()" id="printBtn" disabled>
                             <i class="fas fa-print"></i> Print
                         </button>
                     </div>
@@ -228,31 +228,74 @@
                 </div>
             </div>
 
+            <!-- Detailed Terminal Report Summary -->
+            <div class="card shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-file-invoice-dollar"></i> Terminal Financial Summary
+                        </h6>
+                        <div id="reportTerminalInfo" class="text-white-50 small"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded border">
+                                <small class="text-muted d-block mb-1">Total Sales (Bookings)</small>
+                                <h4 class="mb-0 text-success fw-bold" id="summaryTotalSales">PKR 0.00</h4>
+                                <small class="text-muted" id="summaryBookingsCount">0 bookings</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded border">
+                                <small class="text-muted d-block mb-1">Total Expenses</small>
+                                <h4 class="mb-0 text-danger fw-bold" id="summaryTotalExpenses">PKR 0.00</h4>
+                                <small class="text-muted" id="summaryExpensesCount">0 expenses</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded border border-primary border-3">
+                                <small class="text-muted d-block mb-1">Net Amount (Remaining)</small>
+                                <h4 class="mb-0 text-primary fw-bold" id="summaryNetAmount">PKR 0.00</h4>
+                                <small class="text-muted" id="summaryProfitMargin">0% margin</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Bookings Table -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h6 class="mb-0">
-                        <i class="fas fa-list"></i> Bookings List
+                        <i class="fas fa-list"></i> Bookings from This Terminal
+                        <span class="badge bg-light text-dark ms-2" id="bookingsTableCount">0</span>
                     </h6>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table table-hover table-striped">
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-hover table-striped table-sm mb-0" id="bookingsTable">
                             <thead class="table-dark sticky-top">
                                 <tr>
-                                    <th>Booking #</th>
-                                    <th>Date</th>
-                                    <th>From → To</th>
-                                    <th>Channel</th>
-                                    <th>Status</th>
-                                    <th>Payment</th>
-                                    <th>Amount</th>
-                                    <th>User</th>
+                                    <th style="width: 100px;">Booking #</th>
+                                    <th style="width: 120px;">Date & Time</th>
+                                    <th style="width: 150px;">From → To</th>
+                                    <th style="width: 80px;">Channel</th>
+                                    <th style="width: 90px;">Status</th>
+                                    <th style="width: 100px;">Payment Method</th>
+                                    <th style="width: 100px;">Payment Status</th>
+                                    <th style="width: 110px;" class="text-end">Fare</th>
+                                    <th style="width: 110px;" class="text-end">Discount</th>
+                                    <th style="width: 100px;" class="text-end">Tax</th>
+                                    <th style="width: 120px;" class="text-end">Final Amount</th>
+                                    <th style="width: 100px;">Passengers</th>
+                                    <th style="width: 120px;">Booked By</th>
                                 </tr>
                             </thead>
                             <tbody id="bookingsTableBody">
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-3">
+                                    <td colspan="13" class="text-center text-muted py-3">
                                         No data available. Please generate a report.
                                     </td>
                                 </tr>
@@ -266,29 +309,39 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-warning text-dark">
                     <h6 class="mb-0">
-                        <i class="fas fa-receipt"></i> Expenses List
+                        <i class="fas fa-receipt"></i> Expenses for This Terminal
+                        <span class="badge bg-dark ms-2" id="expensesTableCount">0</span>
                     </h6>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table table-hover table-striped">
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-hover table-striped table-sm mb-0" id="expensesTable">
                             <thead class="table-dark sticky-top">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>From → To</th>
-                                    <th>Amount</th>
-                                    <th>Description</th>
-                                    <th>User</th>
+                                    <th style="width: 110px;">Date</th>
+                                    <th style="width: 120px;">Expense Type</th>
+                                    <th style="width: 150px;">From → To Terminal</th>
+                                    <th style="width: 120px;" class="text-end">Amount (PKR)</th>
+                                    <th style="width: 200px;">Description</th>
+                                    <th style="width: 150px;">Trip</th>
+                                    <th style="width: 120px;">Added By</th>
+                                    <th style="width: 130px;">Created At</th>
                                 </tr>
                             </thead>
                             <tbody id="expensesTableBody">
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">
+                                    <td colspan="8" class="text-center text-muted py-3">
                                         No data available. Please generate a report.
                                     </td>
                                 </tr>
                             </tbody>
+                            <tfoot class="table-secondary fw-bold">
+                                <tr>
+                                    <td colspan="3" class="text-end">Total Expenses:</td>
+                                    <td class="text-end text-danger" id="expensesTableTotal">PKR 0.00</td>
+                                    <td colspan="4"></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -344,6 +397,58 @@
 
         .bg-gradient-info {
             background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                font-size: 12px;
+            }
+
+            .card {
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+
+            .table {
+                font-size: 11px;
+            }
+
+            .table th,
+            .table td {
+                padding: 4px 8px;
+            }
+
+            .bg-primary,
+            .bg-success,
+            .bg-warning,
+            .bg-info,
+            .bg-dark {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            @page {
+                margin: 1cm;
+                size: A4 landscape;
+            }
+        }
+
+        /* Table enhancements */
+        .table-sm th,
+        .table-sm td {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
     </style>
 @endsection
@@ -420,17 +525,47 @@
         function renderReport(data) {
             const stats = data.stats;
 
-            // Update summary cards
-            document.getElementById('totalRevenue').textContent = 'PKR ' + parseFloat(stats.revenue.total_revenue).toLocaleString('en-US', {
+            // Update terminal info
+            if (data.terminal) {
+                document.getElementById('reportTerminalInfo').textContent = 
+                    `${data.terminal.name} (${data.terminal.code}) | ${data.date_range.start} to ${data.date_range.end}`;
+            }
+
+            // Update financial summary section
+            const totalSales = parseFloat(stats.revenue.total_revenue) || 0;
+            const totalExpenses = parseFloat(stats.expenses.total_expenses) || 0;
+            const netAmount = totalSales - totalExpenses;
+            const profitMargin = totalSales > 0 ? ((netAmount / totalSales) * 100).toFixed(2) : 0;
+
+            document.getElementById('summaryTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            document.getElementById('summaryBookingsCount').textContent = `${stats.bookings.total} bookings`;
+
+            document.getElementById('summaryTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            document.getElementById('summaryExpensesCount').textContent = `${data.expenses.length} expenses`;
+
+            document.getElementById('summaryNetAmount').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            document.getElementById('summaryProfitMargin').textContent = `${profitMargin}% margin`;
+
+            // Update summary cards (existing)
+            document.getElementById('totalRevenue').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
             document.getElementById('totalBookings').textContent = stats.bookings.total;
-            document.getElementById('totalExpenses').textContent = 'PKR ' + parseFloat(stats.expenses.total_expenses).toLocaleString('en-US', {
+            document.getElementById('totalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
-            document.getElementById('netProfit').textContent = 'PKR ' + parseFloat(stats.profit.total_profit).toLocaleString('en-US', {
+            document.getElementById('netProfit').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
@@ -461,16 +596,19 @@
                 maximumFractionDigits: 2
             });
 
-            // Render bookings table
+            // Render bookings table (detailed)
             const bookingsBody = document.getElementById('bookingsTableBody');
+            document.getElementById('bookingsTableCount').textContent = data.bookings.length;
+            
             if (data.bookings.length === 0) {
                 bookingsBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-3">No bookings found for this period.</td>
+                        <td colspan="13" class="text-center text-muted py-3">No bookings found for this period.</td>
                     </tr>
                 `;
             } else {
                 let bookingsHtml = '';
+                let totalSalesCalc = 0;
                 data.bookings.forEach(booking => {
                     const statusBadge = booking.status === 'confirmed' ? 'bg-success' :
                         booking.status === 'hold' ? 'bg-warning' :
@@ -481,6 +619,9 @@
                     const channelBadge = booking.channel === 'counter' ? 'bg-info' :
                         booking.channel === 'phone' ? 'bg-warning' :
                         booking.channel === 'online' ? 'bg-success' : 'bg-secondary';
+                    
+                    const finalAmount = parseFloat(booking.final_amount) || 0;
+                    totalSalesCalc += finalAmount;
 
                     bookingsHtml += `
                         <tr>
@@ -489,38 +630,65 @@
                             <td><strong>${booking.from_terminal} → ${booking.to_terminal}</strong></td>
                             <td><span class="badge ${channelBadge}">${booking.channel}</span></td>
                             <td><span class="badge ${statusBadge}">${booking.status}</span></td>
+                            <td><small>${booking.payment_method || 'N/A'}</small></td>
                             <td><span class="badge ${paymentBadge}">${booking.payment_status}</span></td>
-                            <td><strong>PKR ${parseFloat(booking.final_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
-                            <td><small>${booking.user}</small></td>
+                            <td class="text-end">${(parseFloat(booking.total_fare) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="text-end text-danger">-${(parseFloat(booking.discount_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="text-end text-info">+${(parseFloat(booking.tax_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="text-end fw-bold text-success">PKR ${finalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td><span class="badge bg-info">${booking.passengers_count || 0} pax</span></td>
+                            <td><small>${booking.user || 'N/A'}</small></td>
                         </tr>
                     `;
                 });
+                // Add totals row
+                bookingsHtml += `
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="7" class="text-end">Total Sales:</td>
+                        <td class="text-end">${stats.revenue.total_fare.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-end text-danger">-${stats.revenue.total_discount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-end text-info">+${stats.revenue.total_tax.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-end text-success">PKR ${totalSalesCalc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                `;
                 bookingsBody.innerHTML = bookingsHtml;
             }
 
-            // Render expenses table
+            // Render expenses table (detailed)
             const expensesBody = document.getElementById('expensesTableBody');
+            document.getElementById('expensesTableCount').textContent = data.expenses.length;
+            
             if (data.expenses.length === 0) {
                 expensesBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-3">No expenses found for this period.</td>
+                        <td colspan="8" class="text-center text-muted py-3">No expenses found for this period.</td>
                     </tr>
                 `;
+                document.getElementById('expensesTableTotal').textContent = 'PKR 0.00';
             } else {
                 let expensesHtml = '';
+                let totalExpensesCalc = 0;
                 data.expenses.forEach(expense => {
+                    const amount = parseFloat(expense.amount) || 0;
+                    totalExpensesCalc += amount;
+                    
                     expensesHtml += `
                         <tr>
                             <td><small>${expense.expense_date}</small></td>
                             <td><span class="badge bg-info">${expense.expense_type}</span></td>
                             <td><strong>${expense.from_terminal} → ${expense.to_terminal}</strong></td>
-                            <td><strong class="text-danger">PKR ${parseFloat(expense.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                            <td class="text-end text-danger fw-bold">PKR ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             <td><small>${expense.description || '-'}</small></td>
-                            <td><small>${expense.user}</small></td>
+                            <td><small>${expense.trip_id ? 'Trip #' + expense.trip_id : 'N/A'}</small></td>
+                            <td><small>${expense.user || 'N/A'}</small></td>
+                            <td><small>${expense.created_at || '-'}</small></td>
                         </tr>
                     `;
                 });
                 expensesBody.innerHTML = expensesHtml;
+                document.getElementById('expensesTableTotal').textContent = 
+                    'PKR ' + totalExpensesCalc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             }
 
             // Render payment methods breakdown

@@ -80,4 +80,9 @@ class Trip extends Model
     {
         return $this->hasMany(Expense::class)->orderBy('expense_date')->orderBy('created_at');
     }
+
+    public function busAssignments(): HasMany
+    {
+        return $this->hasMany(BusAssignment::class)->orderBy('from_trip_stop_id');
+    }
 }

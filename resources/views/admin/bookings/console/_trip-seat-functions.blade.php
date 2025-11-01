@@ -43,7 +43,7 @@ function loadTrip() {
             document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime)
                 .toLocaleTimeString();
 
-            // Update bus & driver section
+            // Update bus & driver section (with segment assignments)
             renderBusDriverSection(response.trip);
             renderSeatMap();
             document.getElementById('tripContent').style.display = 'block';
