@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\Booking;
+use App\Models\BookingPassenger;
+use App\Models\BookingSeat;
 use App\Models\Trip;
 use App\Models\TripStop;
-use App\Models\Booking;
-use App\Models\BookingSeat;
-use App\Models\BookingPassenger;
 use App\Models\User;
-use RuntimeException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class BookingService
 {
@@ -20,7 +20,7 @@ class BookingService
             $trip = Trip::lockForUpdate()->with(['bus', 'route'])->findOrFail($data['trip_id']);
 
             $from = TripStop::whereKey($data['from_stop_id'])->where('trip_id', $trip->id)->firstOrFail();
-            $to   = TripStop::whereKey($data['to_stop_id'])->where('trip_id', $trip->id)->firstOrFail();
+            $to = TripStop::whereKey($data['to_stop_id'])->where('trip_id', $trip->id)->firstOrFail();
 
             // Late booking block
             if (now()->gte($from->departure_at)) {
@@ -33,7 +33,7 @@ class BookingService
             }
 
             // Resolve seats (recheck inside lock)
-            $need = max(1, (int)($data['total_passengers'] ?? count($data['passengers'] ?? [])));
+            $need = max(1, count($data['seat_numbers'] ?? $data['seats_data'] ?? []));
             $availSvc = app(AvailabilityService::class);
 
             $requested = $data['seat_numbers'] ?? [];
@@ -41,7 +41,7 @@ class BookingService
                 $free = $availSvc->availableSeats($trip->id, $from->id, $to->id);
                 $freeSet = array_flip($free);
                 foreach ($requested as $sn) {
-                    if (!isset($freeSet[$sn])) {
+                    if (! isset($freeSet[$sn])) {
                         throw ValidationException::withMessages(['seats' => "Seat $sn not available for this segment."]);
                     }
                 }
@@ -53,6 +53,7 @@ class BookingService
                 }
             }
 
+
             // Statuses by channel
             $channel = $data['channel']; // counter|phone|online
             $status = $channel === 'phone' ? 'hold' : 'confirmed';
@@ -62,31 +63,41 @@ class BookingService
 
             $booking = Booking::create([
                 'booking_number' => $this->pnr(),
-                'trip_id'        => $trip->id,
+                'trip_id' => $trip->id,
                 'created_by_type' => $actor?->role ?? 'employee',
-                'user_id'        => $data['user_id'] ?? null,
+                'user_id' => $data['user_id'] ?? null,
                 'booked_by_user_id' => $actor?->id,
-                'terminal_id'    => $data['terminal_id'] ?? null, // source terminal
-                'from_stop_id'   => $from->id,
-                'to_stop_id'     => $to->id,
-                'channel'        => $channel,
-                'status'         => $status,
+                'terminal_id' => $data['terminal_id'] ?? null, // source terminal
+                'from_stop_id' => $from->id,
+                'to_stop_id' => $to->id,
+                'channel' => $channel,
+                'status' => $status,
                 'reserved_until' => $reservedUntil,
                 'payment_status' => $paymentStatus,
                 'payment_method' => $method,
                 'online_transaction_id' => $data['online_transaction_id'] ?? null,
-                'total_fare'     => $data['total_fare'] ?? 0,
+                'total_fare' => $data['total_fare'] ?? 0,
                 'discount_amount' => $data['discount_amount'] ?? 0,
-                'tax_amount'     => $data['tax_amount'] ?? 0,
-                'final_amount'   => $data['final_amount'] ?? 0,
-                'currency'       => $data['currency'] ?? ($trip->route->base_currency ?? 'PKR'),
+                'tax_amount' => $data['tax_amount'] ?? 0,
+                'final_amount' => $data['final_amount'] ?? 0,
+                'currency' => $data['currency'] ?? ($trip->route->base_currency ?? 'PKR'),
                 'total_passengers' => $need,
-                'notes'          => $data['notes'] ?? null,
+                'notes' => $data['notes'] ?? null,
                 'payment_received_from_customer' => $data['payment_received_from_customer'] ?? null,
                 'return_after_deduction_from_customer' => $data['return_after_deduction_from_customer'] ?? null,
-                'confirmed_at'   => $status === 'confirmed' ? now() : null,
+                'confirmed_at' => $status === 'confirmed' ? now() : null,
             ]);
 
+            // Create a map of seat_number => gender from seats_data
+            $seatGenderMap = [];
+            if (! empty($data['seats_data']) && is_array($data['seats_data'])) {
+                foreach ($data['seats_data'] as $seatData) {
+                    if (isset($seatData['seat_number']) && isset($seatData['gender'])) {
+                        $seatGenderMap[$seatData['seat_number']] = $seatData['gender'];
+                    }
+                }
+            }
+            
             foreach ($seatNumbers as $sn) {
                 // Calculate per-seat fare and amounts
                 $seatCount = count($seatNumbers);
@@ -94,21 +105,15 @@ class BookingService
                 $taxPerSeat = $seatCount > 0 ? ($data['tax_amount'] ?? 0) / $seatCount : 0;
                 $finalPerSeat = $farePerSeat + $taxPerSeat;
 
-                // Find gender for this seat from passengers array
-                $passengerGender = null;
-                foreach ($data['passengers'] as $passenger) {
-                    if (isset($passenger['seat_number']) && $passenger['seat_number'] == $sn) {
-                        $passengerGender = $passenger['gender'] ?? null;
-                        break;
-                    }
-                }
+                // Get gender for this seat from seats_data map, default to 'male' if not found
+                $seatGender = $seatGenderMap[$sn] ?? 'male';
 
                 BookingSeat::create([
                     'booking_id' => $booking->id,
                     'from_stop_id' => $from->id,
                     'to_stop_id' => $to->id,
-                    'seat_number' => $sn,
-                    'gender' => $passengerGender,
+                    'seat_number' => (string) $sn,
+                    'gender' => $seatGender,
                     'fare' => $farePerSeat,
                     'tax_amount' => $taxPerSeat,
                     'final_amount' => $finalPerSeat,

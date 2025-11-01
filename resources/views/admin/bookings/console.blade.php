@@ -417,9 +417,8 @@
                                     <i class="fas fa-list"></i> Selected Seats
                                     <span class="badge bg-primary ms-2" id="seatCount">(0)</span>
                                 </label>
-                                <div class="alert alert-info border-1 p-2 mb-0 small" id="selectedSeatsList"
-                                    style="min-height: 60px; font-size: 0.85rem;">
-                                    <p class="text-muted mb-0">No seats selected yet</p>
+                                <div id="selectedSeatsList" class="d-flex flex-wrap gap-2 mb-0" style="min-height: 40px;">
+                                    <span class="text-muted small">No seats selected yet</span>
                                 </div>
                             </div>
 
@@ -1277,19 +1276,36 @@
             document.getElementById('seatCount').textContent = `(${count})`;
 
             if (count === 0) {
-                list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
+                list.innerHTML = '<span class="text-muted small">No seats selected yet</span>';
                 updatePassengerForms(); // ← Clear passenger forms
                 calculateTotalFare();
                 return;
             }
 
-            let html = '';
+            // Clear previous content
+            list.innerHTML = '';
+            
+            // Create compact badges for each selected seat
             Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
-                const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
-                html +=
-                    `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
+                const gender = appState.selectedSeats[seat];
+                const genderIcon = gender === 'male' ? '👨' : '👩';
+                
+                const badge = document.createElement('span');
+                badge.className = 'badge p-2';
+                badge.style.cssText = 'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
+                
+                if (gender === 'male') {
+                    badge.classList.add('bg-primary');
+                } else {
+                    badge.classList.add('bg-danger');
+                }
+                
+                badge.innerHTML = `<span>${genderIcon}</span> <strong>Seat ${seat}</strong>`;
+                badge.title = `Seat ${seat} - ${gender === 'male' ? 'Male' : 'Female'}`;
+                
+                list.appendChild(badge);
             });
-            list.innerHTML = html;
+            
             updatePassengerForms(); // ← Update passenger forms based on seats
             calculateTotalFare();
         }
@@ -1635,7 +1651,7 @@
                 return;
             }
 
-            // Create passengers array - assign seats to passengers in order
+            // Create passengers array (without seat_number - passengers and seats are separate)
             const passengers = [];
             const passengerIds = Object.keys(appState.passengerInfo).sort((a, b) => {
                 // Mandatory first, then extras
@@ -1644,13 +1660,10 @@
                 return a.localeCompare(b);
             });
 
-            // Assign passengers to seats
-            passengerIds.forEach((passengerId, index) => {
+            // Create passengers array - just passenger information, no seat mapping
+            passengerIds.forEach((passengerId) => {
                 const info = appState.passengerInfo[passengerId];
-                const seatNumber = index < selectedSeats.length ? parseInt(selectedSeats[index]) : null;
-
                 passengers.push({
-                    seat_number: seatNumber,
                     name: info.name,
                     age: info.age || null,
                     gender: info.gender,
@@ -1659,6 +1672,13 @@
                     email: info.email || null
                 });
             });
+
+            // Create seats data with genders from appState.selectedSeats
+            // appState.selectedSeats contains: {seatNumber: 'male'|'female'}
+            const seatsData = selectedSeats.map(seatNum => ({
+                seat_number: parseInt(seatNum),
+                gender: appState.selectedSeats[seatNum] || 'male' // default to male if not set
+            }));
 
             const totalFare = parseFloat(document.getElementById('totalFare').value);
             const tax = parseFloat(document.getElementById('tax').value) || 0;
@@ -1674,7 +1694,8 @@
                     from_terminal_id: document.getElementById('fromTerminal').value,
                     to_terminal_id: document.getElementById('toTerminal').value,
                     seat_numbers: selectedSeats.map(Number),
-                    passengers: JSON.stringify(passengers),
+                    seats_data: JSON.stringify(seatsData), // Send seats with genders separately
+                    passengers: JSON.stringify(passengers), // Passengers without seat_number
                     channel: isCounter ? 'counter' : 'phone',
                     payment_method: paymentMethod,
                     amount_received: paymentMethod === 'cash' && isCounter ? received : null,
