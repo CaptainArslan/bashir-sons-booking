@@ -126,7 +126,8 @@
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Travel Date</label>
                         <input type="date" class="form-control form-control-lg" id="travelDate"
-                            min="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}" />
+                            value="{{ now()->format('Y-m-d') }}" min="{{ now()->format('Y-m-d') }}"
+                            max="{{ now()->addDays(10)->format('Y-m-d') }}" />
                     </div>
 
                     <!-- From Terminal / Stop -->
@@ -547,6 +548,7 @@
         // FETCH TERMINALS
         // ========================================
         function fetchTerminals() {
+            showLoader(true, 'Loading terminals...');
             $.ajax({
                 url: "{{ route('admin.bookings.terminals') }}",
                 type: 'GET',
@@ -576,6 +578,9 @@
                         text: 'Unable to fetch terminals. Please check your connection and try again.',
                         confirmButtonColor: '#d33'
                     });
+                },
+                complete: function() {
+                    showLoader(false);
                 }
             });
         }
@@ -635,6 +640,7 @@
         // FETCH FARE FOR SEGMENT
         // ========================================
         function fetchFare(fromTerminalId, toTerminalId) {
+            showLoader(true, 'Loading fare...');
             if (!fromTerminalId || !toTerminalId) {
                 resetFareDisplay();
                 return;
@@ -687,6 +693,9 @@
                         confirmButtonColor: '#d33'
                     });
                     resetFareDisplay();
+                },
+                complete: function() {
+                    showLoader(false);
                 }
             });
         }
@@ -726,6 +735,7 @@
         // FETCH DEPARTURE TIMES (Timetable Stops)
         // ========================================
         function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
+            showLoader(true, 'Loading departure times...');
             $.ajax({
                 url: "{{ route('admin.bookings.departure-times') }}",
                 type: 'GET',
@@ -753,6 +763,9 @@
                         text: 'No trips are available for the selected route and date. Please try a different date or route.',
                         confirmButtonColor: '#3085d6'
                     });
+                },
+                complete: function() {
+                    showLoader(false);
                 }
             });
         }
@@ -789,7 +802,7 @@
             }
 
             document.getElementById('loadTripBtn').disabled = true;
-
+            showLoader(true, 'Loading trip...');
             $.ajax({
                 url: "{{ route('admin.bookings.load-trip') }}",
                 type: 'POST',
@@ -834,6 +847,7 @@
                 },
                 complete: function() {
                     document.getElementById('loadTripBtn').disabled = false;
+                    showLoader(false);
                 }
             });
         }
@@ -859,74 +873,67 @@
         // RENDER SEAT MAP
         // ========================================
         function renderSeatMap() {
-            const grid = document.getElementById('seatGrid');
-            grid.innerHTML = '';
-
-            // Create container for seat rows
-            const container = document.createElement('div');
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.gap = '0.25rem';
-            container.style.width = '100%';
+            let html = `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:0.25rem; width:100%;">
+    `;
 
             for (let row = 0; row < 11; row++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'seat-row';
-                rowDiv.style.display = 'flex';
-                rowDiv.style.gap = '0.25rem';
-                rowDiv.style.justifyContent = 'center';
-                rowDiv.style.width = 'fit-content';
+                html += `<div class="seat-row" style="display:flex; gap:0.25rem; justify-content:center;">`;
 
                 for (let col = 0; col < 4; col++) {
                     const seatNumber = row * 4 + col + 1;
                     const seat = appState.seatMap[seatNumber];
 
-                    const button = document.createElement('button');
-                    button.className = 'btn btn-sm';
-                    button.style.width = '32px';
-                    button.style.height = '32px';
-                    button.style.fontSize = '0.65rem';
-                    button.style.padding = '1px';
-                    button.style.lineHeight = '1';
-                    button.style.flexShrink = '0';
-                    button.textContent = seatNumber;
-                    button.title = `Seat ${seatNumber} - ${seat.status}`;
+                    let classes = "btn btn-sm";
+                    let disabled = "";
+                    let title = `Seat ${seatNumber} - ${seat.status}`;
 
-                    // Set color and status
+                    // ✅ Seat logic
                     if (appState.selectedSeats[seatNumber]) {
-                        // User's own selected seat
-                        button.className += ' bg-info text-white';
+                        classes += " bg-info text-white";
                     } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-                        // Locked by another user - show as held
-                        button.className += ' bg-warning text-dark';
-                        button.disabled = true;
-                        button.title = `Seat ${seatNumber} - Locked by another user`;
-                    } else if (seat.status === 'booked') {
-                        button.className += ' bg-danger text-white';
-                        button.disabled = true;
-                    } else if (seat.status === 'held') {
-                        button.className += ' bg-warning text-dark';
-                        button.disabled = true;
+                        classes += " bg-warning text-dark";
+                        disabled = "disabled";
+                        title = `Seat ${seatNumber} - Locked by another user`;
+                    } else if (seat.status === "booked") {
+                        classes += " bg-danger text-white";
+                        disabled = "disabled";
+                    } else if (seat.status === "held") {
+                        classes += " bg-warning text-dark";
+                        disabled = "disabled";
                     } else {
-                        button.className += ' bg-success text-white';
+                        classes += " bg-success text-white";
                     }
 
-                    // Disable if not available or locked by another user
-                    if (seat.status === 'booked' || seat.status === 'held' ||
-                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
-                        button.disabled = true;
+                    // ✅ Another safety condition
+                    if (seat.status === "booked" || seat.status === "held" ||
+                        (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)
+                    ) {
+                        disabled = "disabled";
                     }
 
-                    button.onclick = () => handleSeatClick(seatNumber);
-                    rowDiv.appendChild(button);
+                    // ✅ Add seat button using template literal
+                    html += `
+                <button 
+                    class="${classes}" 
+                    style="width:32px; height:32px; font-size:0.65rem; padding:1px;" 
+                    title="${title}" 
+                    ${disabled}
+                    onclick="handleSeatClick(${seatNumber})"
+                >
+                    ${seatNumber}
+                </button>
+            `;
                 }
 
-                container.appendChild(rowDiv);
+                html += `</div>`; // close row
             }
 
-            grid.appendChild(container);
+            html += `</div>`; // close container
+
+            document.getElementById('seatGrid').innerHTML = html;
         }
+
 
         // ========================================
         // HANDLE SEAT CLICK
@@ -1822,16 +1829,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                                                                                                <tr>
-                                                                                                                                                    <td>${p.seat_number || 'N/A'}</td>
-                                                                                                                                                    <td>${p.name || 'N/A'}</td>
-                                                                                                                                                    <td>${p.age || 'N/A'}</td>
-                                                                                                                                                    <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                                                                                                    <td>${p.cnic || 'N/A'}</td>
-                                                                                                                                                    <td>${p.phone || 'N/A'}</td>
-                                                                                                                                                    <td>${p.email || 'N/A'}</td>
-                                                                                                                                                </tr>
-                                                                                                                                            `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                                                                                                                    <tr>
+                                                                                                                                                                        <td>${p.seat_number || 'N/A'}</td>
+                                                                                                                                                                        <td>${p.name || 'N/A'}</td>
+                                                                                                                                                                        <td>${p.age || 'N/A'}</td>
+                                                                                                                                                                        <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                                                                                                                        <td>${p.cnic || 'N/A'}</td>
+                                                                                                                                                                        <td>${p.phone || 'N/A'}</td>
+                                                                                                                                                                        <td>${p.email || 'N/A'}</td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
