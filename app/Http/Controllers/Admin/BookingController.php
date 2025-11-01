@@ -300,11 +300,30 @@ class BookingController extends Controller
     public function getTripPassengers(int $tripId): JsonResponse
     {
         try {
-            $bookings = Booking::query()
+            $user = Auth::user();
+
+            // Build base query
+            $bookingsQuery = Booking::query()
                 ->where('trip_id', $tripId)
                 ->where('status', '!=', 'cancelled')
-                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal'])
-                ->get();
+                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal']);
+
+            // ✅ TERMINAL-BASED FILTERING LOGIC
+            // Admin can see all passengers
+            if (! $user->hasRole('admin')) {
+                // Terminal staff filtering
+                if ($user->terminal_id) {
+                    // Only show passengers whose booking starts from staff's terminal
+                    $bookingsQuery->whereHas('fromStop', function ($query) use ($user) {
+                        $query->where('terminal_id', $user->terminal_id);
+                    });
+                } else {
+                    // Terminal staff with no assigned terminal sees nothing
+                    return response()->json([]);
+                }
+            }
+
+            $bookings = $bookingsQuery->get();
 
             $passengers = [];
 
