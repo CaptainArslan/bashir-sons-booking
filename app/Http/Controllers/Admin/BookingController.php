@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Models\Terminal;
 use App\Models\TripStop;
 use App\Models\RouteStop;
+use App\Models\Timetable;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
 use Illuminate\Http\Request;
@@ -544,14 +545,12 @@ class BookingController extends Controller
 
                 // Combine date with departure_time to create full datetime
                 if ($ts->departure_time) {
-                    $departureDateTime = $validated['date'] . ' ' . $ts->departure_time;
-
                     // Only include times that are in future
-                    if (strtotime($departureDateTime) >= time()) {
+                    if (strtotime($ts->departure_time) >= time()) {
                         $timetableStops[] = [
                             'id' => $ts->id,
-                            'departure_at' => Carbon::parse($departureDateTime)->format('h:i A'),
-                            'arrival_at' => Carbon::parse($ts->arrival_time)->format('h:i A'),
+                            'departure_at' => $ts->departure_time,
+                            'arrival_at' => $ts->arrival_time,
                             'terminal_id' => $ts->terminal_id,
                             'timetable_id' => $ts->timetable_id,
                             'route_id' => $ts->timetable->route->id,
@@ -578,19 +577,13 @@ class BookingController extends Controller
         $validated = $request->validate([
             'from_terminal_id' => 'required|exists:terminals,id',
             'to_terminal_id' => 'required|exists:terminals,id',
-            'timetable_stop_id' => 'required|exists:timetable_stops,id',
+            'timetable_id' => 'required|exists:timetables,id',
             'date' => 'required|date_format:Y-m-d|after_or_equal:today',
         ]);
 
         try {
             // Get the timetable stop
-            $timetableStop = TimetableStop::findOrFail($validated['timetable_stop_id']);
-            $timetable = $timetableStop->timetable;
-
-            if (! $timetable) {
-                throw new \Exception('Timetable not found for selected stop');
-            }
-
+            $timetable = Timetable::findOrFail($validated['timetable_id']);
             $route = $timetable->route;
 
             if (! $route) {

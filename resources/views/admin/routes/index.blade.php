@@ -47,49 +47,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             overflow: hidden;
         }
-        
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            margin-bottom: 1rem;
-        }
-        
-        .dataTables_wrapper .dataTables_length label,
-        .dataTables_wrapper .dataTables_filter label {
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .dataTables_wrapper .dataTables_length select,
-        .dataTables_wrapper .dataTables_filter input {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-        }
-        
-        .dataTables_wrapper .dataTables_info {
-            font-size: 0.875rem;
-            color: #6c757d;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            margin: 0 2px;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border: none;
-            color: white;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-            background: linear-gradient(45deg, #0056b3, #004085);
-            border: none;
-            color: white;
-        }
     </style>
 @endsection
 

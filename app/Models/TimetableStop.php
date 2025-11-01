@@ -51,16 +51,14 @@ class TimetableStop extends Model
     protected function arrivalTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => Carbon::parse($value)->format('H:i:s'),
-            set: fn ($value) => Carbon::parse($value)->format('H:i:s'),
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 
     protected function departureTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
-            set: fn ($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 
@@ -98,6 +96,9 @@ class TimetableStop extends Model
             ->first();
     }
 
+    // =============================
+    // Scopes
+    // =============================
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

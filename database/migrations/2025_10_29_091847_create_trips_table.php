@@ -15,9 +15,8 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('timetable_id')
-                ->nullable()
                 ->constrained('timetables')
-                ->nullOnDelete();
+                ->cascadeOnDelete();
 
             $table->foreignId('route_id')
                 ->constrained('routes')

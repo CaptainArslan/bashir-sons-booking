@@ -740,7 +740,7 @@
                     timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
                     response.timetable_stops.forEach(stop => {
                         timeSelect.innerHTML +=
-                            `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at}">${stop.departure_at}</option>`;
+                            `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at ?? 'N/A'}">${stop.departure_at}</option>`;
                     });
                     // console.log(timeSelect.innerHTML);
                     timeSelect.disabled = false;
@@ -774,10 +774,10 @@
         function loadTrip() {
             const fromTerminalId = document.getElementById('fromTerminal').value;
             const toTerminalId = document.getElementById('toTerminal').value;
-            const departureTimeId = document.getElementById('departureTime').value;
+            const timetableId = document.getElementById('departureTime').value;
             const date = document.getElementById('travelDate').value;
 
-            if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
+            if (!fromTerminalId || !toTerminalId || !timetableId || !date) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Missing Information',
@@ -795,7 +795,7 @@
                 data: {
                     from_terminal_id: fromTerminalId,
                     to_terminal_id: toTerminalId,
-                    timetable_stop_id: departureTimeId,
+                    timetable_id: timetableId,
                     date: date,
                     _token: document.querySelector('meta[name="csrf-token"]').content
                 },
@@ -1821,16 +1821,16 @@
                                 </thead>
                                 <tbody>
                                     ${passengers.length > 0 ? passengers.map(p => `
-                                                                                                                                    <tr>
-                                                                                                                                        <td>${p.seat_number || 'N/A'}</td>
-                                                                                                                                        <td>${p.name || 'N/A'}</td>
-                                                                                                                                        <td>${p.age || 'N/A'}</td>
-                                                                                                                                        <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
-                                                                                                                                        <td>${p.cnic || 'N/A'}</td>
-                                                                                                                                        <td>${p.phone || 'N/A'}</td>
-                                                                                                                                        <td>${p.email || 'N/A'}</td>
-                                                                                                                                    </tr>
-                                                                                                                                `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
+                                                                                                                                            <tr>
+                                                                                                                                                <td>${p.seat_number || 'N/A'}</td>
+                                                                                                                                                <td>${p.name || 'N/A'}</td>
+                                                                                                                                                <td>${p.age || 'N/A'}</td>
+                                                                                                                                                <td>${p.gender === 'male' ? '👨 Male' : p.gender === 'female' ? '👩 Female' : 'N/A'}</td>
+                                                                                                                                                <td>${p.cnic || 'N/A'}</td>
+                                                                                                                                                <td>${p.phone || 'N/A'}</td>
+                                                                                                                                                <td>${p.email || 'N/A'}</td>
+                                                                                                                                            </tr>
+                                                                                                                                        `).join('') : '<tr><td colspan="7" class="text-center text-muted">No passengers</td></tr>'}
                                 </tbody>
                             </table>
                         </div>

@@ -33,16 +33,15 @@ class DatabaseSeeder extends Seeder
             DefaultTerminalSeeder::class,
             DefaultRouteSeeder::class,
             FareSeeder::class,
+            BusSeeder::class,
+            GeneralSettingSeeder::class,
             // AnnouncementSeeder::class,
             // DiscountSeeder::class,
             // TerminalSeeder::class,
             // RouteSeeder::class,
             // TimetableSeeder::class,
             // TimetableStopSeeder::class,
-            // FareSeeder::class,
-            // BusSeeder::class,
             // BannerSeeder::class,
-            // GeneralSettingSeeder::class,
         ]);
     }
 }

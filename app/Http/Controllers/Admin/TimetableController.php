@@ -8,12 +8,11 @@ use App\Http\Requests\UpdateTimetableRequest;
 use App\Models\Timetable;
 use App\Models\TimetableStop;
 use App\Models\Route;
-use App\Models\Terminal;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class TimetableController extends Controller
@@ -97,6 +96,8 @@ class TimetableController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+
     public function store(StoreTimetableRequest $request): RedirectResponse
     {
         $route = Route::with(['routeStops.terminal'])->findOrFail($request->route_id);
@@ -106,50 +107,47 @@ class TimetableController extends Controller
             return redirect()->back()->withErrors(['error' => 'Selected route has no stops configured.']);
         }
 
-        // Process each timetable from the form
-        foreach ($request->timetables as $timetableIndex => $timetableData) {
-            // Get the first stop's departure time to set as start_departure_time
-            $firstStopData = $timetableData['stops'][0];
-            $startDepartureTime = $firstStopData['departure_time'] ?? null;
-            
-            if (!$startDepartureTime) {
-                return redirect()->back()->withErrors(['error' => 'First stop must have a departure time.']);
-            }
+        // dd($request->all());
+        DB::beginTransaction();
 
-            $timetable = Timetable::create([
-                'route_id' => $route->id,
-                'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
-                'start_departure_time' => $startDepartureTime,
-                'is_active' => true,
-            ]);
+        try {
+            foreach ($request->timetables as $timetableIndex => $timetableData) {
 
-            // Create timetable stops with user-provided times
-            foreach ($timetableData['stops'] as $stopIndex => $stopData) {
-                $isFirstStop = $stopIndex === 0;
-                $isLastStop = $stopIndex === count($timetableData['stops']) - 1;
-                
-                $arrivalTime = null;
-                $departureTime = null;
+                $firstStopData = $timetableData['stops'][0];
+                $startDepartureTime = $firstStopData['departure_time'] ?? null;
 
-                // Set arrival time (not for first stop)
-                if (!$isFirstStop && isset($stopData['arrival_time'])) {
-                    $arrivalTime = $stopData['arrival_time'];
+                if (!$startDepartureTime) {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors(['error' => 'First stop must have a departure time.']);
                 }
 
-                // Set departure time (not for last stop)
-                if (!$isLastStop && isset($stopData['departure_time'])) {
-                    $departureTime = $stopData['departure_time'];
-                }
-
-                TimetableStop::create([
-                    'timetable_id' => $timetable->id,
-                    'terminal_id' => $stopData['stop_id'],
-                    'sequence' => $stopData['sequence'],
-                    'arrival_time' => $arrivalTime,
-                    'departure_time' => $departureTime,
+                $timetable = Timetable::create([
+                    'route_id' => $route->id,
+                    'name' => $route->name . ' - Trip ' . ($timetableIndex + 1),
+                    'start_departure_time' => $startDepartureTime,
                     'is_active' => true,
                 ]);
+
+                foreach ($timetableData['stops'] as $stopIndex => $stopData) {
+
+                    TimetableStop::create([
+                        'timetable_id' => $timetable->id,
+                        'terminal_id' => $stopData['stop_id'],
+                        'sequence' => $stopData['sequence'],
+                        'arrival_time' => $stopData['arrival_time'] ?? null,
+                        'departure_time' => $stopData['departure_time'] ?? null,
+                        'is_active' => true,
+                    ]);
+                }
             }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors([
+                'error' => 'Something went wrong while saving timetables.',
+                'details' => $e->getMessage(), // Remove in production
+            ]);
         }
 
         return redirect()->route('admin.timetables.index')
@@ -163,7 +161,7 @@ class TimetableController extends Controller
     {
         $timetable->load(['route', 'timetableStops.terminal']);
         $timetableStops = $timetable->timetableStops()->orderBy('sequence')->get();
-        
+
         return view('admin.timetables.show', compact('timetable', 'timetableStops'));
     }
 
@@ -174,7 +172,7 @@ class TimetableController extends Controller
     {
         $timetable->load(['route', 'timetableStops.terminal']);
         $timetableStops = $timetable->timetableStops()->orderBy('sequence')->get();
-        
+
         return view('admin.timetables.edit', compact('timetable', 'timetableStops'));
     }
 
@@ -213,18 +211,18 @@ class TimetableController extends Controller
     {
         try {
             $newStatus = $request->input('status');
-            
+
             if (!in_array($newStatus, ['active', 'inactive'])) {
                 return response()->json(['success' => false, 'message' => 'Invalid status provided.'], 400);
             }
-            
+
             $timetable->update([
                 'is_active' => $newStatus === 'active'
             ]);
-            
+
             $action = $newStatus === 'active' ? 'activated' : 'deactivated';
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => "Timetable {$action} successfully!"
             ]);
         } catch (\Exception $e) {
