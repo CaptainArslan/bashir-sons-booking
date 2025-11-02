@@ -18,10 +18,15 @@ class Citycontroller extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax()) {
+            $user = auth()->user();
+            $hasEditPermission = $user->can('edit cities');
+            $hasDeletePermission = $user->can('delete cities');
+            $hasAnyActionPermission = $hasEditPermission || $hasDeletePermission;
+
             $cities = City::query()
                 ->select('id', 'name', 'status', 'created_at');
 
-            return DataTables::eloquent($cities)
+            $dataTable = DataTables::eloquent($cities)
                 ->addColumn('formatted_name', function ($city) {
                     return '<span class="fw-bold text-primary">' . e($city->name) . '</span>';
                 })
@@ -31,8 +36,11 @@ class Citycontroller extends Controller
                     $statusColor = CityEnum::getStatusColor($statusValue);
 
                     return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
-                })
-                ->addColumn('actions', function ($city) {
+                });
+
+            // Only add actions column if user has at least one action permission
+            if ($hasAnyActionPermission) {
+                $dataTable->addColumn('actions', function ($city) use ($hasEditPermission, $hasDeletePermission) {
                     $actions = '<div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                                 type="button" 
@@ -42,7 +50,7 @@ class Citycontroller extends Controller
                         </button>
                         <ul class="dropdown-menu">';
 
-                    if (auth()->user()->can('edit cities')) {
+                    if ($hasEditPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
                                href="' . route('admin.cities.edit', $city->id) . '">
@@ -51,9 +59,11 @@ class Citycontroller extends Controller
                         </li>';
                     }
 
-                    if (auth()->user()->can('delete cities')) {
-                        $actions .= '<li><hr class="dropdown-divider"></li>
-                        <li>
+                    if ($hasDeletePermission) {
+                        if ($hasEditPermission) {
+                            $actions .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $actions .= '<li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
                                onclick="deleteCity(' . $city->id . ')">
@@ -65,10 +75,16 @@ class Citycontroller extends Controller
                     $actions .= '</ul></div>';
 
                     return $actions;
-                })
+                });
+            }
+
+            return $dataTable
                 ->editColumn('created_at', fn($city) => $city->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['formatted_name', 'status_badge', 'actions'])
+                ->rawColumns($hasAnyActionPermission 
+                    ? ['formatted_name', 'status_badge', 'actions']
+                    : ['formatted_name', 'status_badge']
+                )
                 ->make(true);
         }
     }

@@ -80,7 +80,9 @@
                             <th>City Name</th>
                             <th>Status</th>
                             <th>Created Date</th>
-                            <th>Actions</th>
+                            @if(auth()->user()->can('edit cities') || auth()->user()->can('delete cities'))
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                 </table>
@@ -115,13 +117,15 @@
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
+                    }
+                    @if(auth()->user()->can('edit cities') || auth()->user()->can('delete cities'))
+                    ,{
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
                     }
+                    @endif
                 ],
             });
         });
