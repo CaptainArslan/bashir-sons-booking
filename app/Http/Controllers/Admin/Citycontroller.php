@@ -23,14 +23,14 @@ class Citycontroller extends Controller
 
             return DataTables::eloquent($cities)
                 ->addColumn('formatted_name', function ($city) {
-                    return '<span class="fw-bold text-primary">'.e($city->name).'</span>';
+                    return '<span class="fw-bold text-primary">' . e($city->name) . '</span>';
                 })
                 ->addColumn('status_badge', function ($city) {
                     $statusValue = $city->status instanceof CityEnum ? $city->status->value : $city->status;
                     $statusName = CityEnum::getStatusName($statusValue);
                     $statusColor = CityEnum::getStatusColor($statusValue);
 
-                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
+                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
                 })
                 ->addColumn('actions', function ($city) {
                     $actions = '<div class="dropdown">
@@ -45,7 +45,7 @@ class Citycontroller extends Controller
                     if (auth()->user()->can('edit cities')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="'.route('admin.cities.edit', $city->id).'">
+                               href="' . route('admin.cities.edit', $city->id) . '">
                                 <i class="bx bx-edit me-2"></i>Edit City
                             </a>
                         </li>';
@@ -56,7 +56,7 @@ class Citycontroller extends Controller
                         <li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteCity('.$city->id.')">
+                               onclick="deleteCity(' . $city->id . ')">
                                 <i class="bx bx-trash me-2"></i>Delete City
                             </a>
                         </li>';
@@ -66,7 +66,7 @@ class Citycontroller extends Controller
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn ($city) => $city->created_at->format('d M Y'))
+                ->editColumn('created_at', fn($city) => $city->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
                 ->rawColumns(['formatted_name', 'status_badge', 'actions'])
                 ->make(true);
@@ -83,12 +83,13 @@ class Citycontroller extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
+            'name' => 'required|string|max:255|unique:cities,name',
+            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
             'name.max' => 'City name must be less than 255 characters',
+            'name.unique' => 'City name must be unique',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -113,8 +114,8 @@ class Citycontroller extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
+            'name' => 'required|string|max:255|unique:cities,name,' . $id,
+            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
@@ -136,6 +137,10 @@ class Citycontroller extends Controller
     public function destroy($id)
     {
         $city = City::findOrFail($id);
+
+        if ($city->terminals->count() > 0) {
+            return redirect()->route('admin.cities.index')->with('error', 'City has associated terminals. Please delete the terminals first.');
+        }
         $city->delete();
 
         return redirect()->route('admin.cities.index')->with('success', 'City deleted successfully');
