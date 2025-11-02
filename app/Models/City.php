@@ -36,8 +36,8 @@ class City extends Model
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => ucfirst($value),
-            set: fn($value) => strtolower($value),
+            set: fn($value) => strtolower(str_replace(' ', '_', $value)),
+            get: fn($value) => ucwords(str_replace('_', ' ', $value)),
         );
     }
 }

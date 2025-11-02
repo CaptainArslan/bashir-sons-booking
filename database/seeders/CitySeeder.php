@@ -136,11 +136,11 @@ class CitySeeder extends Seeder
             "Zafarwal",
         ];
 
-        foreach ($cities as $city) {
-            City::create([
-                'name' => $city,
-                'status' => CityEnum::ACTIVE->value,
-            ]);
+        foreach ($cities as $name) {
+            City::updateOrCreate(
+                ['name' => $name],
+                ['status' => CityEnum::ACTIVE->value]
+            );
         }
     }
 }

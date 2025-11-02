@@ -5,12 +5,11 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\City;
 use App\Models\Terminal;
+use App\Enums\CityEnum;
+use App\Enums\TerminalEnum;
 
 class DefaultTerminalSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $terminals = [
@@ -23,13 +22,17 @@ class DefaultTerminalSeeder extends Seeder
         ];
 
         foreach ($terminals as $data) {
-            // Create or get the city
-            $city = City::firstOrCreate(
-                ['name' => $data['name']],
-                ['status' => 'active']
+
+            // ✅ Normalize city name to match City model mutator (lowercase with underscores)
+            $normalizedCityName = strtolower(str_replace(' ', '_', $data['name']));
+
+            // ✅ City safe seed - use normalized name for search/create
+            $city = City::updateOrCreate(
+                ['name' => $normalizedCityName],
+                ['status' => CityEnum::ACTIVE->value]
             );
 
-            // Create or update terminal
+            // ✅ Terminal safe seed
             Terminal::updateOrCreate(
                 ['code' => $data['code']],
                 [
@@ -41,7 +44,7 @@ class DefaultTerminalSeeder extends Seeder
                     'landmark' => 'Near City Center',
                     'latitude' => null,
                     'longitude' => null,
-                    'status' => 'active',
+                    'status' => TerminalEnum::ACTIVE->value,
                 ]
             );
         }
