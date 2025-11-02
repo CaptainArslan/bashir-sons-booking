@@ -375,6 +375,17 @@ function displayTimetables(timetables) {
                                                 <i class="bx bx-edit me-2"></i>Edit Timetable
                                             </a>
                                         </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-success" href="#" onclick="toggleAllStops(${timetable.id}, 'active')">
+                                                <i class="bx bx-check-circle me-2"></i>Activate All Stops
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-warning" href="#" onclick="toggleAllStops(${timetable.id}, 'inactive')">
+                                                <i class="bx bx-pause-circle me-2"></i>Deactivate All Stops
+                                            </a>
+                                        </li>
                                         ` : ''}
                                         ${timetable.can_delete ? `
                                         <li><hr class="dropdown-divider"></li>
@@ -396,16 +407,18 @@ function displayTimetables(timetables) {
                     <table class="stops-table">
                         <thead>
                             <tr>
-                                <th width="8%">#</th>
-                                <th width="30%">Stop Name</th>
-                                <th width="15%">Type</th>
-                                <th width="15%">Arrival Time</th>
-                                <th width="15%">Departure Time</th>
-                                <th width="17%">Sequence</th>
+                                <th width="6%">#</th>
+                                <th width="25%">Stop Name</th>
+                                <th width="12%">Type</th>
+                                <th width="12%">Arrival Time</th>
+                                <th width="12%">Departure Time</th>
+                                <th width="10%">Sequence</th>
+                                <th width="13%">Status</th>
+                                <th width="10%">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${generateStopsTableRows(timetable.stops)}
+                            ${generateStopsTableRows(timetable.stops, timetable.id)}
                         </tbody>
                     </table>
                 </div>
@@ -416,9 +429,9 @@ function displayTimetables(timetables) {
     $('#timetables-list').html(html);
 }
 
-function generateStopsTableRows(stops) {
+function generateStopsTableRows(stops, timetableId) {
     if (!stops || stops.length === 0) {
-        return '<tr><td colspan="6" class="text-center text-muted py-3">No stops data available</td></tr>';
+        return '<tr><td colspan="8" class="text-center text-muted py-3">No stops data available</td></tr>';
     }
     
     let html = '';
@@ -426,9 +439,12 @@ function generateStopsTableRows(stops) {
         const isStartStop = index === 0;
         const isEndStop = index === stops.length - 1;
         const stopType = isStartStop ? 'Starting Point' : (isEndStop ? 'Final Destination' : 'Intermediate Stop');
+        const canToggle = !isStartStop && !isEndStop;
+        const statusClass = stop.is_active ? 'bg-success' : 'bg-danger';
+        const statusText = stop.is_active ? 'Active' : 'Inactive';
         
         html += `
-            <tr>
+            <tr id="stop-row-${timetableId}-${stop.id}" class="${!stop.is_active ? 'table-secondary opacity-75' : ''}">
                 <td class="stop-sequence">${index + 1}</td>
                 <td>
                     <div><strong>${stop.name}</strong></div>
@@ -447,6 +463,26 @@ function generateStopsTableRows(stops) {
                 </td>
                 <td>
                     <span class="badge bg-secondary">${stop.sequence || index + 1}</span>
+                </td>
+                <td>
+                    <span class="badge ${statusClass}">${statusText}</span>
+                </td>
+                <td>
+                    ${canToggle ? `
+                        <button type="button" 
+                                class="btn btn-sm ${stop.is_active ? 'btn-warning' : 'btn-success'} toggle-stop-btn" 
+                                data-timetable-id="${timetableId}"
+                                data-stop-id="${stop.id}"
+                                data-stop-name="${stop.name}"
+                                data-is-active="${stop.is_active ? '1' : '0'}"
+                                title="${stop.is_active ? 'Disable Stop' : 'Enable Stop'}">
+                            <i class="bx ${stop.is_active ? 'bx-pause' : 'bx-play'}"></i>
+                        </button>
+                    ` : `
+                        <span class="text-muted" title="First and last stops cannot be disabled">
+                            <i class="bx bx-lock"></i>
+                        </span>
+                    `}
                 </td>
             </tr>
         `;
@@ -605,6 +641,169 @@ function deleteTimetable(timetableId) {
                     );
                 }
             });
+        }
+    });
+}
+
+// Toggle timetable stop status from index page
+$(document).on('click', '.toggle-stop-btn', function() {
+    const btn = $(this);
+    const timetableId = btn.data('timetable-id');
+    const stopId = btn.data('stop-id');
+    const stopName = btn.data('stop-name');
+    const isActive = btn.data('is-active') === '1';
+    const action = isActive ? 'disable' : 'enable';
+    
+    Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Stop?`,
+        text: `Are you sure you want to ${action} "${stopName}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: `Yes, ${action} it!`,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: isActive ? '#dc3545' : '#28a745',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const url = `/admin/timetables/${timetableId}/stops/${stopId}/toggle-status`;
+            return fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    _method: 'PATCH'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to update stop status');
+                    });
+                }
+                return response.json();
+            })
+            .catch(error => {
+                Swal.showValidationMessage(`Request failed: ${error.message}`);
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const data = result.value;
+            if (data.success) {
+                // Update button state
+                const newIsActive = data.is_active;
+                btn.data('is-active', newIsActive ? '1' : '0');
+                
+                // Update button appearance
+                if (newIsActive) {
+                    btn.removeClass('btn-success').addClass('btn-warning');
+                    btn.find('i').removeClass('bx-play').addClass('bx-pause');
+                    btn.attr('title', 'Disable Stop');
+                } else {
+                    btn.removeClass('btn-warning').addClass('btn-success');
+                    btn.find('i').removeClass('bx-pause').addClass('bx-play');
+                    btn.attr('title', 'Enable Stop');
+                }
+                
+                // Update row appearance
+                const row = $(`#stop-row-${timetableId}-${stopId}`);
+                if (newIsActive) {
+                    row.removeClass('table-secondary opacity-75');
+                } else {
+                    row.addClass('table-secondary opacity-75');
+                }
+                
+                // Update status badge
+                const statusBadge = row.find('td:nth-child(7) .badge');
+                if (newIsActive) {
+                    statusBadge.removeClass('bg-danger').addClass('bg-success').text('Active');
+                } else {
+                    statusBadge.removeClass('bg-success').addClass('bg-danger').text('Inactive');
+                }
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to update stop status'
+                });
+            }
+        }
+    });
+});
+
+// Toggle all stops for a timetable
+function toggleAllStops(timetableId, status) {
+    const action = status === 'active' ? 'activate' : 'deactivate';
+    const actionText = status === 'active' ? 'activate' : 'deactivate';
+    
+    Swal.fire({
+        title: `Are you sure?`,
+        text: `You want to ${actionText} all intermediate stops in this timetable? (First and last stops will remain active)`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: `Yes, ${actionText} all!`,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: status === 'active' ? '#28a745' : '#ffc107',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const url = `/admin/timetables/${timetableId}/stops/toggle-all`;
+            return fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: status,
+                    _method: 'PATCH'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to update stops');
+                    });
+                }
+                return response.json();
+            })
+            .catch(error => {
+                Swal.showValidationMessage(`Request failed: ${error.message}`);
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const data = result.value;
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Reload timetables to reflect changes
+                    loadTimetables();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to update stops'
+                });
+            }
         }
     });
 }

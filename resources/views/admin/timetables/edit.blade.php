@@ -363,16 +363,20 @@
                             <thead>
                                 <tr>
                                     <th width="10%">#</th>
-                                    <th width="30%">Terminal</th>
-                                    <th width="30%">Arrival Time</th>
-                                    <th width="30%">Departure Time</th>
+                                    <th width="25%">Terminal</th>
+                                    <th width="25%">Arrival Time</th>
+                                    <th width="25%">Departure Time</th>
+                                    <th width="15%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($timetableStops as $index => $stop)
-                                <tr>
+                                <tr id="stop-row-{{ $stop->id }}" class="{{ !$stop->is_active ? 'table-secondary opacity-75' : '' }}">
                                     <td>
                                         <span class="sequence-badge">{{ $stop->sequence }}</span>
+                                        @if(!$stop->is_active)
+                                            <span class="badge bg-danger ms-1" title="Disabled">OFF</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="stop-name">{{ $stop->terminal->name }}</div>
@@ -400,7 +404,8 @@
                                                    name="stops[{{ $index }}][arrival_time]" 
                                                    class="form-control stop-arrival-time" 
                                                    data-stop-index="{{ $index }}"
-                                                   value="{{ old('stops.' . $index . '.arrival_time', $arrivalTimeFormatted) }}">
+                                                   value="{{ old('stops.' . $index . '.arrival_time', $arrivalTimeFormatted) }}"
+                                                   {{ !$stop->is_active ? 'disabled' : '' }}>
                                         @endif
                                     </td>
                                     <td>
@@ -424,8 +429,32 @@
                                                    name="stops[{{ $index }}][departure_time]" 
                                                    class="form-control stop-departure-time" 
                                                    data-stop-index="{{ $index }}"
-                                                   value="{{ old('stops.' . $index . '.departure_time', $departureTimeFormatted) }}">
+                                                   value="{{ old('stops.' . $index . '.departure_time', $departureTimeFormatted) }}"
+                                                   {{ !$stop->is_active ? 'disabled' : '' }}>
                                         @endif
+                                    </td>
+                                    <td>
+                                        @can('edit timetables')
+                                            @php
+                                                $isFirstStop = $index === 0;
+                                                $isLastStop = $index === $timetableStops->count() - 1;
+                                                $canToggle = !$isFirstStop && !$isLastStop;
+                                            @endphp
+                                            @if($canToggle)
+                                                <button type="button" 
+                                                        class="btn btn-sm {{ $stop->is_active ? 'btn-warning' : 'btn-success' }} toggle-stop-btn" 
+                                                        data-stop-id="{{ $stop->id }}"
+                                                        data-stop-name="{{ $stop->terminal->name }}"
+                                                        data-is-active="{{ $stop->is_active ? '1' : '0' }}"
+                                                        title="{{ $stop->is_active ? 'Disable Stop' : 'Enable Stop' }}">
+                                                    <i class="bx {{ $stop->is_active ? 'bx-pause' : 'bx-play' }}"></i>
+                                                </button>
+                                            @else
+                                                <span class="text-muted" title="First and last stops cannot be disabled">
+                                                    <i class="bx bx-lock"></i>
+                                                </span>
+                                            @endif
+                                        @endcan
                                     </td>
                                 </tr>
                                 @endforeach
@@ -532,6 +561,99 @@ $(document).ready(function() {
         if (time) {
             $(this).removeClass('is-invalid');
         }
+    });
+    
+    // Toggle timetable stop status
+    $(document).on('click', '.toggle-stop-btn', function() {
+        const btn = $(this);
+        const stopId = btn.data('stop-id');
+        const stopName = btn.data('stop-name');
+        const isActive = btn.data('is-active') === '1';
+        const action = isActive ? 'disable' : 'enable';
+        const timetableId = {{ $timetable->id }};
+        
+        Swal.fire({
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Stop?`,
+            text: `Are you sure you want to ${action} "${stopName}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: `Yes, ${action} it!`,
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: isActive ? '#dc3545' : '#28a745',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                const url = `/admin/timetables/{{ $timetable->id }}/stops/${stopId}/toggle-status`;
+                return fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        _method: 'PATCH'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || 'Failed to update stop status');
+                        });
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    Swal.showValidationMessage(`Request failed: ${error.message}`);
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const data = result.value;
+                if (data.success) {
+                    // Update button state
+                    const newIsActive = data.is_active;
+                    btn.data('is-active', newIsActive ? '1' : '0');
+                    
+                    // Update button appearance
+                    if (newIsActive) {
+                        btn.removeClass('btn-success').addClass('btn-warning');
+                        btn.find('i').removeClass('bx-play').addClass('bx-pause');
+                        btn.attr('title', 'Disable Stop');
+                    } else {
+                        btn.removeClass('btn-warning').addClass('btn-success');
+                        btn.find('i').removeClass('bx-pause').addClass('bx-play');
+                        btn.attr('title', 'Enable Stop');
+                    }
+                    
+                    // Update row appearance
+                    const row = $(`#stop-row-${stopId}`);
+                    if (newIsActive) {
+                        row.removeClass('table-secondary opacity-75');
+                        row.find('.badge.bg-danger').remove();
+                        row.find('input[type="time"]').not(':disabled').prop('disabled', false);
+                    } else {
+                        row.addClass('table-secondary opacity-75');
+                        row.find('td:first').append('<span class="badge bg-danger ms-1" title="Disabled">OFF</span>');
+                        row.find('input[type="time"]').not(':disabled').prop('disabled', true);
+                    }
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to update stop status'
+                    });
+                }
+            }
+        });
     });
 });
 </script>

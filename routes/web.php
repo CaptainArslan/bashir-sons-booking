@@ -229,6 +229,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/timetables/{timetable}/edit', [TimetableController::class, 'edit'])->can('edit timetables')->name('timetables.edit');
         Route::put('/timetables/{timetable}', [TimetableController::class, 'update'])->can('edit timetables')->name('timetables.update');
         Route::patch('/timetables/{timetable}/toggle-status', [TimetableController::class, 'toggleStatus'])->can('edit timetables')->name('timetables.toggle-status');
+        Route::patch('/timetables/{timetable}/stops/{timetableStop}/toggle-status', [TimetableController::class, 'toggleStopStatus'])->can('edit timetables')->name('timetables.stops.toggle-status');
+        Route::patch('/timetables/{timetable}/stops/toggle-all', [TimetableController::class, 'toggleAllStops'])->can('edit timetables')->name('timetables.stops.toggle-all');
         Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy'])->can('delete timetables')->name('timetables.destroy');
         Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
 

@@ -44,11 +44,13 @@ class TimetableController extends Controller
                     ->get()
                     ->map(function ($stop) {
                         return [
-                            'id' => $stop->terminal_id,
+                            'id' => $stop->id, // TimetableStop ID for toggle functionality
+                            'terminal_id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
                             'arrival_time' => $stop->arrival_time ?? null,
                             'departure_time' => $stop->departure_time ?? null,
                             'sequence' => $stop->sequence,
+                            'is_active' => $stop->is_active,
                         ];
                     });
 
@@ -327,6 +329,106 @@ class TimetableController extends Controller
             return response()->json(['success' => false, 'message' => 'You do not have permission to delete timetables.'], 403);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error deleting timetable: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Toggle timetable stop status (active/inactive)
+     */
+    public function toggleStopStatus(Request $request, Timetable $timetable, TimetableStop $timetableStop): JsonResponse
+    {
+        try {
+            $this->authorize('edit timetables');
+
+            // Verify the stop belongs to this timetable
+            if ($timetableStop->timetable_id !== $timetable->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Timetable stop does not belong to this timetable.',
+                ], 400);
+            }
+
+            // Prevent disabling first or last stop
+            $firstStop = $timetable->timetableStops()->orderBy('sequence')->first();
+            $lastStop = $timetable->timetableStops()->orderByDesc('sequence')->first();
+
+            if (($timetableStop->id === $firstStop->id || $timetableStop->id === $lastStop->id) && $timetableStop->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot disable the first or last stop of a timetable.',
+                ], 400);
+            }
+
+            $timetableStop->update([
+                'is_active' => ! $timetableStop->is_active,
+            ]);
+
+            $action = $timetableStop->is_active ? 'activated' : 'deactivated';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Timetable stop {$action} successfully!",
+                'is_active' => $timetableStop->is_active,
+            ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to edit timetables.',
+            ], 403);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating timetable stop status: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle all timetable stops status (activate/deactivate all)
+     */
+    public function toggleAllStops(Request $request, Timetable $timetable): JsonResponse
+    {
+        try {
+            $this->authorize('edit timetables');
+
+            $status = $request->input('status'); // 'active' or 'inactive'
+            $isActive = $status === 'active';
+
+            if (! in_array($status, ['active', 'inactive'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid status provided. Use "active" or "inactive".',
+                ], 400);
+            }
+
+            // Get all stops except first and last (which must remain active)
+            $firstStop = $timetable->timetableStops()->orderBy('sequence')->first();
+            $lastStop = $timetable->timetableStops()->orderByDesc('sequence')->first();
+
+            // Update all intermediate stops
+            $updatedCount = TimetableStop::where('timetable_id', $timetable->id)
+                ->where('id', '!=', $firstStop->id)
+                ->where('id', '!=', $lastStop->id)
+                ->update(['is_active' => $isActive]);
+
+            $action = $isActive ? 'activated' : 'deactivated';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully {$action} {$updatedCount} stops! (First and last stops are always active)",
+                'updated_count' => $updatedCount,
+                'status' => $status,
+            ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to edit timetables.',
+            ], 403);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating timetable stops: '.$e->getMessage(),
+            ], 500);
         }
     }
 
