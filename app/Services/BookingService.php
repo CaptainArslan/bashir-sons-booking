@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\BookingSeat;
+use App\Models\RouteStop;
 use App\Models\Trip;
 use App\Models\TripStop;
 use App\Models\User;
@@ -19,26 +20,50 @@ class BookingService
         return DB::transaction(function () use ($data, $actor) {
             $trip = Trip::lockForUpdate()->with(['bus', 'route'])->findOrFail($data['trip_id']);
 
-            $from = TripStop::whereKey($data['from_stop_id'])->where('trip_id', $trip->id)->firstOrFail();
-            $to = TripStop::whereKey($data['to_stop_id'])->where('trip_id', $trip->id)->firstOrFail();
+            // Get RouteStop IDs (these are stored in the booking)
+            $fromRouteStop = RouteStop::findOrFail($data['from_stop_id']);
+            $toRouteStop = RouteStop::findOrFail($data['to_stop_id']);
+
+            // Get TripStop IDs (for availability checking and validation)
+            $fromTripStopId = $data['from_trip_stop_id'] ?? null;
+            $toTripStopId = $data['to_trip_stop_id'] ?? null;
+
+            if (! $fromTripStopId || ! $toTripStopId) {
+                // Fallback: find TripStops by terminal_id and sequence
+                $fromTripStop = TripStop::where('trip_id', $trip->id)
+                    ->where('terminal_id', $fromRouteStop->terminal_id)
+                    ->where('sequence', $fromRouteStop->sequence)
+                    ->firstOrFail();
+
+                $toTripStop = TripStop::where('trip_id', $trip->id)
+                    ->where('terminal_id', $toRouteStop->terminal_id)
+                    ->where('sequence', $toRouteStop->sequence)
+                    ->firstOrFail();
+
+                $fromTripStopId = $fromTripStop->id;
+                $toTripStopId = $toTripStop->id;
+            } else {
+                $fromTripStop = TripStop::findOrFail($fromTripStopId);
+                $toTripStop = TripStop::findOrFail($toTripStopId);
+            }
 
             // Late booking block
-            if (now()->gte($from->departure_at)) {
+            if (now()->gte($fromTripStop->departure_at)) {
                 throw ValidationException::withMessages(['time' => 'Departure already passed for the origin stop.']);
             }
 
             // Forward-only segment
-            if ($from->sequence >= $to->sequence) {
+            if ($fromTripStop->sequence >= $toTripStop->sequence) {
                 throw ValidationException::withMessages(['segment' => 'Invalid segment direction.']);
             }
 
-            // Resolve seats (recheck inside lock)
+            // Resolve seats (recheck inside lock) - use TripStop IDs for availability
             $need = max(1, count($data['seat_numbers'] ?? $data['seats_data'] ?? []));
             $availSvc = app(AvailabilityService::class);
 
             $requested = $data['seat_numbers'] ?? [];
             if ($requested) {
-                $free = $availSvc->availableSeats($trip->id, $from->id, $to->id);
+                $free = $availSvc->availableSeats($trip->id, $fromTripStopId, $toTripStopId);
                 $freeSet = array_flip($free);
                 foreach ($requested as $sn) {
                     if (! isset($freeSet[$sn])) {
@@ -47,12 +72,11 @@ class BookingService
                 }
                 $seatNumbers = array_slice($requested, 0, $need);
             } else {
-                $seatNumbers = $availSvc->availableSeats($trip->id, $from->id, $to->id, $need);
+                $seatNumbers = $availSvc->availableSeats($trip->id, $fromTripStopId, $toTripStopId, $need);
                 if (count($seatNumbers) < $need) {
                     throw ValidationException::withMessages(['seats' => 'Not enough seats available.']);
                 }
             }
-
 
             // Statuses by channel
             $channel = $data['channel']; // counter|phone|online
@@ -60,7 +84,7 @@ class BookingService
             $paymentStatus = $channel === 'counter' ? 'paid' : 'unpaid';
             $method = $channel === 'counter' ? 'cash' : ($channel === 'online' ? 'gateway' : 'none');
             $reservedSeatsTimeout = config('app.reserved_seats_timeout', 30);
-            $reservedUntil = $channel === 'phone' ? $from->departure_at->copy()->subMinutes($reservedSeatsTimeout) : null;
+            $reservedUntil = $channel === 'phone' ? $fromTripStop->departure_at->copy()->subMinutes($reservedSeatsTimeout) : null;
 
             $booking = Booking::create([
                 'booking_number' => $this->pnr(),
@@ -69,8 +93,8 @@ class BookingService
                 'user_id' => $data['user_id'] ?? null,
                 'booked_by_user_id' => $actor?->id,
                 'terminal_id' => $data['terminal_id'] ?? null, // source terminal
-                'from_stop_id' => $from->id,
-                'to_stop_id' => $to->id,
+                'from_stop_id' => $fromRouteStop->id, // RouteStop ID
+                'to_stop_id' => $toRouteStop->id, // RouteStop ID
                 'channel' => $channel,
                 'status' => $status,
                 'reserved_until' => $reservedUntil,
@@ -98,7 +122,7 @@ class BookingService
                     }
                 }
             }
-            
+
             foreach ($seatNumbers as $sn) {
                 // Calculate per-seat fare and amounts
                 $seatCount = count($seatNumbers);
@@ -111,8 +135,8 @@ class BookingService
 
                 BookingSeat::create([
                     'booking_id' => $booking->id,
-                    'from_stop_id' => $from->id,
-                    'to_stop_id' => $to->id,
+                    'from_stop_id' => $fromRouteStop->id, // RouteStop ID
+                    'to_stop_id' => $toRouteStop->id, // RouteStop ID
                     'seat_number' => (string) $sn,
                     'gender' => $seatGender,
                     'fare' => $farePerSeat,
@@ -152,6 +176,6 @@ class BookingService
 
     private function pnr(): string
     {
-        return 'B' . strtoupper(bin2hex(random_bytes(3)));
+        return 'B'.strtoupper(bin2hex(random_bytes(3)));
     }
 }

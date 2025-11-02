@@ -1,245 +1,346 @@
-{{-- Trip Loading and Seat Management Functions --}}
+<script>
+    {{-- Trip Loading and Seat Management Functions --}}
 
-// ========================================
-// LOAD TRIP
-// ========================================
-function loadTrip() {
-    const fromTerminalId = document.getElementById('fromTerminal').value;
-    const toTerminalId = document.getElementById('toTerminal').value;
-    const departureTimeId = document.getElementById('departureTime').value;
-    const date = document.getElementById('travelDate').value;
+    // ========================================
+    // LOAD TRIP
+    // ========================================
+    function loadTrip() {
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        const toTerminalId = document.getElementById('toTerminal').value;
+        const timetableId = document.getElementById('departureTime').value;
+        const date = document.getElementById('travelDate').value;
 
-    if (!fromTerminalId || !toTerminalId || !departureTimeId || !date) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Information',
-            text: 'Please fill all required fields: From Terminal, To Terminal, Departure Time, and Travel Date.',
-            confirmButtonColor: '#ffc107'
-        });
-        return;
-    }
-
-    document.getElementById('loadTripBtn').disabled = true;
-
-    $.ajax({
-        url: "{{ route('admin.bookings.load-trip') }}",
-        type: 'POST',
-        data: {
-            from_terminal_id: fromTerminalId,
-            to_terminal_id: toTerminalId,
-            timetable_stop_id: departureTimeId,
-            date: date,
-            _token: document.querySelector('meta[name="csrf-token"]').content
-        },
-        success: function(response) {
-            appState.tripData = response;
-            appState.seatMap = response.seat_map;
-            appState.tripLoaded = true;
-
-            // Update trip info display
-            document.getElementById('tripRoute').textContent = response.route.name;
-            document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime)
-                .toLocaleDateString();
-            document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime)
-                .toLocaleTimeString();
-
-            // Update bus & driver section
-            renderBusDriverSection(response.trip);
-            renderSeatMap();
-            document.getElementById('tripContent').style.display = 'block';
-            document.getElementById('tripContent').scrollIntoView({
-                behavior: 'smooth'
-            });
-            loadTripPassengers(response.trip.id);
-            setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
-        },
-        error: function(error) {
-            const message = error.responseJSON?.error ||
-                'Unable to load trip information. Please check all selections and try again.';
+        if (!fromTerminalId || !toTerminalId || !timetableId || !date) {
             Swal.fire({
-                icon: 'error',
-                title: 'Failed to Load Trip',
-                text: message,
-                confirmButtonColor: '#d33'
+                icon: 'warning',
+                title: 'Missing Information',
+                text: 'Please fill all required fields: From Terminal, To Terminal, Departure Time, and Travel Date.',
+                confirmButtonColor: '#ffc107'
             });
-        },
-        complete: function() {
-            document.getElementById('loadTripBtn').disabled = false;
-        }
-    });
-}
-
-// ========================================
-// FETCH ARRIVAL TIME
-// ========================================
-function fetchArrivalTime() {
-    const select = document.getElementById('departureTime');
-    const selectedOption = select.options[select.selectedIndex];
-
-    // Read data-arrival attribute
-    const arrivalTime = selectedOption.getAttribute('data-arrival');
-
-    // Set input value
-    const arrivalInput = document.getElementById('arrivalTime');
-    arrivalInput.value = arrivalTime;
-    arrivalInput.disabled = false;
-}
-
-// ========================================
-// RENDER SEAT MAP
-// ========================================
-function renderSeatMap() {
-    const grid = document.getElementById('seatGrid');
-    grid.innerHTML = '';
-
-    // Create container for seat rows
-    const container = document.createElement('div');
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.alignItems = 'center';
-    container.style.gap = '0.25rem';
-    container.style.width = '100%';
-
-    for (let row = 0; row < 11; row++) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'seat-row';
-        rowDiv.style.display = 'flex';
-        rowDiv.style.gap = '0.25rem';
-        rowDiv.style.justifyContent = 'center';
-        rowDiv.style.width = 'fit-content';
-
-        for (let col = 0; col < 4; col++) {
-            const seatNumber = row * 4 + col + 1;
-            const seat = appState.seatMap[seatNumber];
-
-            const button = document.createElement('button');
-            button.className = 'btn btn-sm';
-            button.style.width = '32px';
-            button.style.height = '32px';
-            button.style.fontSize = '0.65rem';
-            button.style.padding = '1px';
-            button.style.lineHeight = '1';
-            button.style.flexShrink = '0';
-            button.textContent = seatNumber;
-            button.title = `Seat ${seatNumber} - ${seat.status}`;
-
-            // Set color and status
-            if (appState.selectedSeats[seatNumber]) {
-                // User's own selected seat
-                button.className += ' bg-info text-white';
-            } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-                // Locked by another user - show as held
-                button.className += ' bg-warning text-dark';
-                button.disabled = true;
-                button.title = `Seat ${seatNumber} - Locked by another user`;
-            } else if (seat.status === 'booked') {
-                button.className += ' bg-danger text-white';
-                button.disabled = true;
-            } else if (seat.status === 'held') {
-                button.className += ' bg-warning text-dark';
-                button.disabled = true;
-            } else {
-                button.className += ' bg-success text-white';
-            }
-
-            // Disable if not available or locked by another user
-            if (seat.status === 'booked' || seat.status === 'held' ||
-                (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
-                button.disabled = true;
-            }
-
-            button.onclick = () => handleSeatClick(seatNumber);
-            rowDiv.appendChild(button);
+            return;
         }
 
-        container.appendChild(rowDiv);
+        document.getElementById('loadTripBtn').disabled = true;
+        showLoader(true, 'Loading trip...');
+        $.ajax({
+            url: "{{ route('admin.bookings.load-trip') }}",
+            type: 'POST',
+            data: {
+                from_terminal_id: fromTerminalId,
+                to_terminal_id: toTerminalId,
+                timetable_id: timetableId,
+                date: date,
+                _token: document.querySelector('meta[name="csrf-token"]').content
+            },
+            success: function(response) {
+                appState.tripData = response;
+                appState.seatMap = response.seat_map;
+                appState.tripLoaded = true;
+
+                // Update trip info display
+                document.getElementById('tripRoute').textContent = response.route.name;
+                document.getElementById('tripDate').textContent = new Date(response.trip.departure_datetime)
+                    .toLocaleDateString();
+                document.getElementById('tripTime').textContent = new Date(response.trip.departure_datetime)
+                    .toLocaleTimeString();
+
+                // Update bus & driver section (with segment assignments)
+                renderBusDriverSection(response.trip);
+                renderSeatMap();
+                document.getElementById('tripContent').style.display = 'block';
+                document.getElementById('tripContent').scrollIntoView({
+                    behavior: 'smooth'
+                });
+                loadTripPassengers(response.trip.id);
+                setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
+            },
+            error: function(error) {
+                const message = error.responseJSON?.error ||
+                    'Unable to load trip information. Please check all selections and try again.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Load Trip',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
+            },
+            complete: function() {
+                document.getElementById('loadTripBtn').disabled = false;
+                showLoader(false);
+            }
+        });
     }
 
-    grid.appendChild(container);
-}
+    // ========================================
+    // FETCH ARRIVAL TIME
+    // ========================================
+    function fetchArrivalTime() {
+        const select = document.getElementById('departureTime');
+        const selectedOption = select.options[select.selectedIndex];
 
-// ========================================
-// HANDLE SEAT CLICK
-// ========================================
-function handleSeatClick(seatNumber) {
-    // If seat is already selected, deselect it (and unlock)
-    if (appState.selectedSeats[seatNumber]) {
-        unlockSeats([seatNumber]);
-        delete appState.selectedSeats[seatNumber];
+        // Read data-arrival attribute
+        const arrivalTime = selectedOption.getAttribute('data-arrival');
+
+        // Set input value
+        const arrivalInput = document.getElementById('arrivalTime');
+        arrivalInput.value = arrivalTime;
+    }
+
+    // ========================================
+    // RENDER SEAT MAP - 2-2-2 Layout with Aisle
+    // ========================================
+    function renderSeatMap() {
+        const grid = document.getElementById('seatGrid');
+        grid.innerHTML = '';
+
+        // Seat arrangement: 2-2-2 pattern (2 left, aisle, 2 right) for rows 1-10, last row (41-45) is 5 seats
+        const totalSeats = 45;
+        const lastRowStart = 41;
+        let currentSeat = 1;
+
+        // Rows 1-10: 2-2-2 pattern (4 seats per row)
+        for (let row = 0; row < 10; row++) {
+            const rowContainer = document.createElement('div');
+            rowContainer.className = 'seat-row-container';
+
+            // Left pair (2 seats)
+            const leftPair = document.createElement('div');
+            leftPair.className = 'seat-pair-left';
+
+            for (let i = 0; i < 2; i++) {
+                const seatNumber = currentSeat++;
+                const seat = appState.seatMap[seatNumber];
+                const button = createSeatButton(seatNumber, seat);
+                leftPair.appendChild(button);
+            }
+
+            // Aisle
+            const aisle = document.createElement('div');
+            aisle.className = 'seat-aisle';
+            aisle.textContent = '│';
+
+            // Right pair (2 seats)
+            const rightPair = document.createElement('div');
+            rightPair.className = 'seat-pair-right';
+
+            for (let i = 0; i < 2; i++) {
+                const seatNumber = currentSeat++;
+                const seat = appState.seatMap[seatNumber];
+                const button = createSeatButton(seatNumber, seat);
+                rightPair.appendChild(button);
+            }
+
+            rowContainer.appendChild(leftPair);
+            rowContainer.appendChild(aisle);
+            rowContainer.appendChild(rightPair);
+            grid.appendChild(rowContainer);
+        }
+
+        // Last row: 5 seats in a row (seats 41-45)
+        const lastRow = document.createElement('div');
+        lastRow.className = 'seat-row-container';
+        lastRow.style.gap = '0.5rem';
+
+        for (let i = 0; i < 5; i++) {
+            const seatNumber = lastRowStart + i;
+            const seat = appState.seatMap[seatNumber];
+            const button = createSeatButton(seatNumber, seat);
+            lastRow.appendChild(button);
+        }
+
+        grid.appendChild(lastRow);
+    }
+
+    // ========================================
+    // CREATE SEAT BUTTON
+    // ========================================
+    function createSeatButton(seatNumber, seat) {
+        const button = document.createElement('button');
+        button.className = 'seat-btn';
+        button.type = 'button';
+
+        // Create seat content with number
+        const seatNumberSpan = document.createElement('span');
+        seatNumberSpan.textContent = seatNumber;
+        seatNumberSpan.style.fontSize = '0.85rem';
+        seatNumberSpan.style.fontWeight = '600';
+        seatNumberSpan.style.lineHeight = '1';
+
+        // Determine seat status and apply appropriate class, also add gender icon
+        let genderIcon = '';
+
+        if (appState.selectedSeats[seatNumber]) {
+            // Selected seat - same color for all
+            button.className += ' seat-selected';
+            const selectedGender = appState.selectedSeats[seatNumber];
+            if (selectedGender === 'male') {
+                genderIcon = '👨';
+                button.title = `Seat ${seatNumber} - Selected (Male)`;
+            } else if (selectedGender === 'female') {
+                genderIcon = '👩';
+                button.title = `Seat ${seatNumber} - Selected (Female)`;
+            } else {
+                button.title = `Seat ${seatNumber} - Selected`;
+            }
+        } else if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+            button.className += ' seat-held';
+            button.disabled = true;
+            button.title = `Seat ${seatNumber} - Locked by another user`;
+        } else if (seat?.status === 'booked') {
+            // Check gender for booked seats - normalize to lowercase for comparison
+            const seatGender = seat?.gender ? String(seat.gender).toLowerCase() : null;
+
+            if (seatGender === 'male') {
+                button.className += ' seat-booked-male';
+                genderIcon = '👨';
+                button.title = `Seat ${seatNumber} - Booked (Male)`;
+            } else if (seatGender === 'female') {
+                button.className += ' seat-booked-female';
+                genderIcon = '👩';
+                button.title = `Seat ${seatNumber} - Booked (Female)`;
+            } else {
+                // Fallback for booked seats without gender - show without icon
+                button.className += ' seat-booked-male'; // Use default booked color
+                button.title = `Seat ${seatNumber} - Booked`;
+                // No gender icon for seats without gender info
+            }
+            button.disabled = true;
+        } else if (seat?.status === 'held') {
+            button.className += ' seat-held';
+            button.disabled = true;
+            button.title = `Seat ${seatNumber} - Held`;
+        } else {
+            button.className += ' seat-available';
+            button.title = `Seat ${seatNumber} - Available`;
+        }
+
+        // Add seat number to button
+        button.appendChild(seatNumberSpan);
+
+        // Add gender badge in top-right corner if gender is available
+        if (genderIcon) {
+            const badge = document.createElement('span');
+            badge.className = 'seat-gender-badge';
+            badge.textContent = genderIcon;
+            // Add badge color class
+            if (genderIcon === '👨') {
+                badge.classList.add('male-badge');
+            } else if (genderIcon === '👩') {
+                badge.classList.add('female-badge');
+            }
+            button.appendChild(badge);
+        }
+
+        // Additional safety check for disabled state
+        if (seat?.status === 'booked' || seat?.status === 'held' ||
+            (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId)) {
+            button.disabled = true;
+        }
+
+        button.onclick = () => handleSeatClick(seatNumber);
+        return button;
+    }
+
+    // ========================================
+    // HANDLE SEAT CLICK
+    // ========================================
+    function handleSeatClick(seatNumber) {
+        // If seat is already selected, deselect it (and unlock)
+        if (appState.selectedSeats[seatNumber]) {
+            unlockSeats([seatNumber]);
+            delete appState.selectedSeats[seatNumber];
+            updateSeatsList();
+            renderSeatMap();
+            return;
+        }
+
+        // Check if seat is locked by another user
+        if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Seat Already Selected',
+                text: 'This seat is currently being booked by another user. Please select a different seat.',
+                confirmButtonColor: '#ffc107'
+            });
+            return;
+        }
+
+        // Check if seat is available
+        const seat = appState.seatMap[seatNumber];
+        if (!seat || seat.status === 'booked' || seat.status === 'held') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Seat Not Available',
+                text: 'This seat is not available for booking.',
+                confirmButtonColor: '#ffc107'
+            });
+            return;
+        }
+
+        // Lock the seat first, then show gender modal
+        lockSeats([seatNumber], (success) => {
+            if (success) {
+                appState.pendingSeat = seatNumber;
+                document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
+                new bootstrap.Modal(document.getElementById('genderModal')).show();
+            }
+        });
+    }
+
+    // ========================================
+    // SELECT GENDER
+    // ========================================
+    function selectGender(gender) {
+        if (appState.pendingSeat) {
+            appState.selectedSeats[appState.pendingSeat] = gender;
+            appState.pendingSeat = null;
+        }
+        bootstrap.Modal.getInstance(document.getElementById('genderModal')).hide();
         updateSeatsList();
         renderSeatMap();
-        return;
     }
 
-    // Check if seat is locked by another user
-    if (appState.lockedSeats[seatNumber] && appState.lockedSeats[seatNumber] !== appState.userId) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Seat Already Selected',
-            text: 'This seat is currently being booked by another user. Please select a different seat.',
-            confirmButtonColor: '#ffc107'
-        });
-        return;
-    }
+    // ========================================
+    // UPDATE SEATS LIST
+    // ========================================
+    function updateSeatsList() {
+        const list = document.getElementById('selectedSeatsList');
+        const count = Object.keys(appState.selectedSeats).length;
+        document.getElementById('seatCount').textContent = `(${count})`;
 
-    // Check if seat is available
-    const seat = appState.seatMap[seatNumber];
-    if (!seat || seat.status === 'booked' || seat.status === 'held') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Seat Not Available',
-            text: 'This seat is not available for booking.',
-            confirmButtonColor: '#ffc107'
-        });
-        return;
-    }
-
-    // Lock the seat first, then show gender modal
-    lockSeats([seatNumber], (success) => {
-        if (success) {
-            appState.pendingSeat = seatNumber;
-            document.getElementById('seatLabel').textContent = `Seat ${seatNumber}`;
-            new bootstrap.Modal(document.getElementById('genderModal')).show();
+        if (count === 0) {
+            list.innerHTML = '<span class="text-muted small">No seats selected yet</span>';
+            updatePassengerForms(); // ← Clear passenger forms
+            calculateTotalFare();
+            return;
         }
-    });
-}
 
-// ========================================
-// SELECT GENDER
-// ========================================
-function selectGender(gender) {
-    if (appState.pendingSeat) {
-        appState.selectedSeats[appState.pendingSeat] = gender;
-        appState.pendingSeat = null;
-    }
-    bootstrap.Modal.getInstance(document.getElementById('genderModal')).hide();
-    updateSeatsList();
-    renderSeatMap();
-}
+        // Clear previous content
+        list.innerHTML = '';
 
-// ========================================
-// UPDATE SEATS LIST
-// ========================================
-function updateSeatsList() {
-    const list = document.getElementById('selectedSeatsList');
-    const count = Object.keys(appState.selectedSeats).length;
-    document.getElementById('seatCount').textContent = `(${count})`;
+        // Create compact badges for each selected seat
+        Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
+            const gender = appState.selectedSeats[seat];
+            const genderIcon = gender === 'male' ? '👨' : '👩';
 
-    if (count === 0) {
-        list.innerHTML = '<p class="text-muted mb-0">No seats selected yet</p>';
-        updatePassengerForms(); // ← Clear passenger forms
+            const badge = document.createElement('span');
+            badge.className = 'badge p-2';
+            badge.style.cssText =
+                'font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;';
+
+            if (gender === 'male') {
+                badge.classList.add('bg-primary');
+            } else {
+                badge.classList.add('bg-danger');
+            }
+
+            badge.innerHTML = `<span>${genderIcon}</span> <strong>Seat ${seat}</strong>`;
+            badge.title = `Seat ${seat} - ${gender === 'male' ? 'Male' : 'Female'}`;
+
+            list.appendChild(badge);
+        });
+
+        updatePassengerForms(); // ← Update passenger forms based on seats
         calculateTotalFare();
-        return;
     }
-
-    let html = '';
-    Object.keys(appState.selectedSeats).sort((a, b) => a - b).forEach(seat => {
-        const gender = appState.selectedSeats[seat] === 'male' ? '👨 Male' : '👩 Female';
-        html +=
-            `<div class="mb-2 p-2 bg-white rounded border"><strong>Seat ${seat}</strong> - ${gender}</div>`;
-    });
-    list.innerHTML = html;
-    updatePassengerForms(); // ← Update passenger forms based on seats
-    calculateTotalFare();
-}
-
+</script>

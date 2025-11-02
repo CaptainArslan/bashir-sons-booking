@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdvanceBookingController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BusAssignmentController;
 use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\BusTypeController;
@@ -245,7 +246,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/console/trip-passengers/{tripId}', [BookingController::class, 'getTripPassengers'])->can('view bookings')->name('bookings.trip-passengers');
         Route::get('/bookings/console/booking-details/{bookingId}', [BookingController::class, 'getBookingDetailsForConsole'])->can('view bookings')->name('bookings.console-details');
         Route::get('/bookings/console/list-buses', [BookingController::class, 'listBuses'])->can('view bookings')->name('bookings.list-buses');
+        Route::get('/bookings/console/expense-types', [BookingController::class, 'getExpenseTypes'])->can('view bookings')->name('bookings.expense-types');
         Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
+        Route::post('/bookings/console/add-expenses/{tripId}', [BookingController::class, 'addTripExpenses'])->can('create bookings')->name('bookings.add-expenses');
+
+        // Bus Assignments Routes (Terminal-wise segment assignments)
+        Route::get('/bus-assignments', [BusAssignmentController::class, 'index'])->can('view bookings')->name('bus-assignments.index');
+        Route::get('/bus-assignments/create', [BusAssignmentController::class, 'create'])->can('create bookings')->name('bus-assignments.create');
+        Route::post('/bus-assignments', [BusAssignmentController::class, 'store'])->can('create bookings')->name('bus-assignments.store');
+        Route::get('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'show'])->can('view bookings')->name('bus-assignments.show');
+        Route::get('/bus-assignments/{busAssignment}/edit', [BusAssignmentController::class, 'edit'])->can('edit bookings')->name('bus-assignments.edit');
+        Route::put('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'update'])->can('edit bookings')->name('bus-assignments.update');
+        Route::delete('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'destroy'])->can('delete bookings')->name('bus-assignments.destroy');
+        Route::get('/bus-assignments/trip/{tripId}/stops', [BusAssignmentController::class, 'getTripStops'])->can('view bookings')->name('bus-assignments.trip-stops');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
@@ -265,6 +278,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/advance-booking', [AdvanceBookingController::class, 'update'])->can('edit general settings')->name('advance-booking.update');
         Route::patch('/advance-booking/toggle-status', [AdvanceBookingController::class, 'toggleStatus'])->can('edit general settings')->name('advance-booking.toggle-status');
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
+
+        // Terminal Reports Routes
+        Route::get('/terminal-reports', [\App\Http\Controllers\Admin\TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
+        Route::get('/terminal-reports/data', [\App\Http\Controllers\Admin\TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
 
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');

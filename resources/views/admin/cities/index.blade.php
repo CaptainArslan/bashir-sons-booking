@@ -60,9 +60,11 @@
                 <p>Manage cities and their information</p>
             </div>
             <div>
-                <a href="{{ route('admin.cities.create') }}" class="add-city-btn">
-                    <i class="bx bx-plus me-1"></i>Add New City
-                </a>
+                @can('create cities')
+                    <a href="{{ route('admin.cities.create') }}" class="add-city-btn">
+                        <i class="bx bx-plus me-1"></i>Add New City
+                    </a>
+                @endcan
             </div>
         </div>
     </div>

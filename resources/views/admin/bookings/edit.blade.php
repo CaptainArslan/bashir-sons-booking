@@ -354,16 +354,30 @@
 
                 <!-- Action Buttons -->
                 @if(!$departurePassed)
-                    <div class="card shadow-sm">
-                        <div class="card-body d-flex gap-2">
-                            <button type="submit" class="btn btn-success flex-grow-1">
-                                <i class="fas fa-save"></i> Save Changes
-                            </button>
-                            <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary flex-grow-1">
-                                <i class="fas fa-arrow-left"></i> Cancel
-                            </a>
+                    @can('edit bookings')
+                        <div class="card shadow-sm">
+                            <div class="card-body d-flex gap-2">
+                                <button type="submit" class="btn btn-success flex-grow-1">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary flex-grow-1">
+                                    <i class="fas fa-arrow-left"></i> Cancel
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    <strong>You do not have permission to edit bookings.</strong>
+                                    <a href="{{ route('admin.bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="fas fa-arrow-left"></i> Back to Bookings
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endcan
                 @else
                     <div class="card shadow-sm">
                         <div class="card-body">

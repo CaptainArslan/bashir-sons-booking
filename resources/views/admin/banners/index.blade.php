@@ -15,9 +15,11 @@
             </nav>
         </div>
         <div class="ms-auto">
-            <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Banner
-            </a>
+            @can('create banners')
+                <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
+                    <i class="bx bx-plus"></i> Add New Banner
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->

@@ -37,6 +37,7 @@ class City extends Model
     {
         return Attribute::make(
             get: fn($value) => ucfirst($value),
+            set: fn($value) => strtolower($value),
         );
     }
 }

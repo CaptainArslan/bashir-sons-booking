@@ -252,15 +252,19 @@
         <div class="section">
             <div class="section-title">Fare</div>
             <div class="info-row">
-                <span class="label">Total Fare:</span>
-                <span class="value">PKR {{ number_format($booking->total_fare, 2) }}</span>
+                <span class="label">Base Fare:</span>
+                <span class="value">PKR {{ number_format($booking->total_fare + ($booking->discount_amount ?? 0), 2) }}</span>
             </div>
             @if($booking->discount_amount > 0)
-            <div class="info-row">
+            <div class="info-row" style="color: #dc3545;">
                 <span class="label">Discount:</span>
                 <span class="value">-PKR {{ number_format($booking->discount_amount, 2) }}</span>
             </div>
             @endif
+            <div class="info-row">
+                <span class="label">Total Fare:</span>
+                <span class="value">PKR {{ number_format($booking->total_fare, 2) }}</span>
+            </div>
             @if($booking->tax_amount > 0)
             <div class="info-row">
                 <span class="label">Tax/Charge:</span>

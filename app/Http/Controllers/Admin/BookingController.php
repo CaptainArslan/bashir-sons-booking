@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ExpenseTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Expense;
 use App\Models\Fare;
 use App\Models\GeneralSetting;
 use App\Models\Route;
@@ -25,6 +27,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -37,6 +40,8 @@ class BookingController extends Controller
 
     public function consoleIndex(): View
     {
+        $this->authorize('create bookings');
+
         $generalSettings = GeneralSetting::first();
         $mindate = Carbon::today();
         $maxdate = $mindate;
@@ -142,19 +147,29 @@ class BookingController extends Controller
                 return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->payment_status).'</span>';
             })
             ->addColumn('actions', function (Booking $booking) {
-                return '
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                ';
+                $actions = '<div class="btn-group btn-group-sm" role="group">';
+
+                if (auth()->user()->can('view bookings')) {
+                    $actions .= '<button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
+                        <i class="fas fa-eye"></i> View
+                    </button>';
+                }
+
+                if (auth()->user()->can('edit bookings')) {
+                    $actions .= '<a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>';
+                }
+
+                if (auth()->user()->can('delete bookings')) {
+                    $actions .= '<button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
+                        <i class="fas fa-trash"></i>
+                    </button>';
+                }
+
+                $actions .= '</div>';
+
+                return $actions;
             })
             ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'status', 'payment_status', 'actions'])
             ->make(true);
@@ -167,6 +182,8 @@ class BookingController extends Controller
 
     public function show(Booking $booking): View
     {
+        $this->authorize('view bookings');
+
         $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user']);
 
         return view('admin.bookings.show', compact('booking'));
@@ -174,6 +191,8 @@ class BookingController extends Controller
 
     public function printTicket(Booking $booking): View
     {
+        $this->authorize('view bookings');
+
         $booking->load([
             'trip.route',
             'trip.bus',
@@ -189,6 +208,8 @@ class BookingController extends Controller
 
     public function edit(Booking $booking): View
     {
+        $this->authorize('edit bookings');
+
         $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
 
         return view('admin.bookings.edit', [
@@ -199,6 +220,8 @@ class BookingController extends Controller
 
     public function update(Request $request, Booking $booking)
     {
+        $this->authorize('edit bookings');
+
         // Check if departure time has passed - prevent status update if it has
         $departureTime = $booking->trip?->departure_datetime;
         $departurePassed = $departureTime && $departureTime->isPast();
@@ -290,6 +313,8 @@ class BookingController extends Controller
 
     public function destroy(Booking $booking)
     {
+        $this->authorize('delete bookings');
+
         // TODO: Implement destroy
         return response()->json(['message' => 'Booking deleted']);
     }
@@ -297,11 +322,30 @@ class BookingController extends Controller
     public function getTripPassengers(int $tripId): JsonResponse
     {
         try {
-            $bookings = Booking::query()
+            $user = Auth::user();
+
+            // Build base query
+            $bookingsQuery = Booking::query()
                 ->where('trip_id', $tripId)
                 ->where('status', '!=', 'cancelled')
-                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal'])
-                ->get();
+                ->with(['passengers', 'seats', 'fromStop.terminal', 'toStop.terminal']);
+
+            // ✅ TERMINAL-BASED FILTERING LOGIC
+            // Admin can see all passengers
+            if (! $user->hasRole('admin')) {
+                // Terminal staff filtering
+                if ($user->terminal_id) {
+                    // Only show passengers whose booking starts from staff's terminal
+                    $bookingsQuery->whereHas('fromStop', function ($query) use ($user) {
+                        $query->where('terminal_id', $user->terminal_id);
+                    });
+                } else {
+                    // Terminal staff with no assigned terminal sees nothing
+                    return response()->json([]);
+                }
+            }
+
+            $bookings = $bookingsQuery->get();
 
             $passengers = [];
 
@@ -483,17 +527,22 @@ class BookingController extends Controller
         ]);
 
         try {
+            $fromTerminalId = $validated['from_terminal_id'];
             $user = Auth::user();
+
+            // ✅ If user is restricted to routes
             if ($user->routes()->exists()) {
-                $routes = $user->routes->where('status', 'active');
+                $routes = $user->routes()->where('status', 'active')->get();
             } else {
-                $routes = Route::query()
-                    ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                // ✅ Otherwise: get routes that include this terminal
+                $routes = Route::whereHas('routeStops', function ($q) use ($fromTerminalId) {
+                    $q->where('terminal_id', $fromTerminalId);
+                })
                     ->where('status', 'active')
                     ->get();
             }
 
-            $routeStops = collect();
+            $terminals = collect();
 
             foreach ($routes as $route) {
 
@@ -502,22 +551,34 @@ class BookingController extends Controller
                     ->orderBy('sequence')
                     ->get();
 
-                // Remove user's own stop
-                $filteredStops = $stops->filter(
-                    fn ($stop) => $stop->terminal_id != $validated['from_terminal_id']
-                );
+                // ✅ Get the origin stop (starting point)
+                $origin = $stops->firstWhere('terminal_id', $fromTerminalId);
 
-                // Merge into collection
-                $routeStops = $routeStops->merge($filteredStops);
+                if (! $origin) {
+                    continue;
+                }
+
+                // ✅ Only include stops AFTER the origin
+                $filtered = $stops->filter(function ($stop) use ($origin) {
+                    return $stop->sequence > $origin->sequence;
+                });
+
+                // ✅ Push only TERMINAL INFO (not routeStop IDs)
+                foreach ($filtered as $stop) {
+                    $terminals->push([
+                        'terminal_id' => $stop->terminal_id,
+                        'name' => $stop->terminal->name,
+                        'code' => $stop->terminal->code,
+                        'sequence' => $stop->sequence,
+                        'route_id' => $route->id,
+                    ]);
+                }
             }
 
-            // ✅ DISTINCT: remove duplicates using terminal_id
-            $uniqueStops = $routeStops
-                ->unique('terminal_id')
-                ->values()
-                ->all();
+            // ✅ DISTINCT BY terminal_id
+            $unique = $terminals->unique('terminal_id')->values();
 
-            return response()->json(['route_stops' => $uniqueStops]);
+            return response()->json(['route_stops' => $unique]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -527,7 +588,13 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'from_terminal_id' => 'required|exists:terminals,id',
-            'to_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id|different:from_terminal_id',
+        ], [
+            'from_terminal_id.required' => 'From terminal is required',
+            'from_terminal_id.exists' => 'From terminal is invalid',
+            'to_terminal_id.required' => 'To terminal is required',
+            'to_terminal_id.exists' => 'To terminal is invalid',
+            'to_terminal_id.different' => 'To terminal must be different from from terminal',
         ]);
 
         try {
@@ -744,10 +811,10 @@ class BookingController extends Controller
                 ->orderBy('sequence')
                 ->get();
 
-            $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
-            $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+            $fromRouteStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+            $toRouteStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
 
-            if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+            if (! $fromRouteStop || ! $toRouteStop || $fromRouteStop->sequence >= $toRouteStop->sequence) {
                 throw new \Exception('Invalid segment selection');
             }
 
@@ -759,6 +826,10 @@ class BookingController extends Controller
                 throw new \Exception('Selected terminals not found in trip');
             }
 
+            // Load terminal information for trip stops
+            $tripFromStop->load('terminal:id,name,code');
+            $tripToStop->load('terminal:id,name,code');
+
             // Get seat map
             $seatCount = $this->availabilityService->seatCount($trip);
             $availableSeats = $this->availabilityService->availableSeats(
@@ -769,16 +840,75 @@ class BookingController extends Controller
 
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
+            // Load bus assignments with relationships
+            $busAssignments = $trip->busAssignments()
+                ->with(['fromTripStop.terminal', 'toTripStop.terminal', 'bus', 'assignedBy'])
+                ->get();
+
             return response()->json([
                 'trip' => $trip->load('bus'),
-                'route' => $route->only(['id', 'name', 'code']),
-                'from_stop' => $tripFromStop->only(['id', 'terminal_id', 'departure_at', 'sequence']),
-                'to_stop' => $tripToStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
+                'route' => [
+                    'id' => $route->id ?? null,
+                    'name' => $route->name ?? null,
+                    'code' => $route->code ?? null,
+                ],
+                'route_stops' => $routeStops->map(function ($routeStop) {
+                    return [
+                        'id' => $routeStop->id,
+                        'terminal_id' => $routeStop->terminal_id,
+                        'terminal_name' => $routeStop->terminal->name ?? null,
+                        'terminal_code' => $routeStop->terminal->code ?? null,
+                        'sequence' => $routeStop->sequence,
+                    ];
+                })->values(),
+                'from_stop' => [
+                    'trip_stop_id' => $tripFromStop->id ?? null,
+                    'route_stop_id' => $fromRouteStop->id ?? null,
+                    'terminal_id' => $tripFromStop->terminal_id ?? null,
+                    'terminal_name' => $tripFromStop->terminal->name ?? null,
+                    'terminal_code' => $tripFromStop->terminal->code ?? null,
+                    'departure_at' => $tripFromStop->departure_at?->format('Y-m-d H:i:s') ?? null,
+                    'sequence' => $tripFromStop->sequence ?? null,
+                ],
+                'to_stop' => [
+                    'trip_stop_id' => $tripToStop->id ?? null,
+                    'route_stop_id' => $toRouteStop->id ?? null,
+                    'terminal_id' => $tripToStop->terminal_id ?? null,
+                    'terminal_name' => $tripToStop->terminal->name ?? null,
+                    'terminal_code' => $tripToStop->terminal->code ?? null,
+                    'arrival_at' => $tripToStop->arrival_at?->format('Y-m-d H:i:s') ?? null,
+                    'sequence' => $tripToStop->sequence ?? null,
+                ],
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
+                'bus_assignments' => $busAssignments->map(function ($assignment) {
+                    return [
+                        'id' => $assignment->id,
+                        'from_trip_stop_id' => $assignment->from_trip_stop_id,
+                        'to_trip_stop_id' => $assignment->to_trip_stop_id,
+                        'from_terminal' => $assignment->fromTripStop?->terminal?->name ?? 'N/A',
+                        'from_code' => $assignment->fromTripStop?->terminal?->code ?? 'N/A',
+                        'to_terminal' => $assignment->toTripStop?->terminal?->name ?? 'N/A',
+                        'to_code' => $assignment->toTripStop?->terminal?->code ?? 'N/A',
+                        'segment_label' => $assignment->segment_label ?? 'N/A',
+                        'bus' => $assignment->bus ? [
+                            'id' => $assignment->bus->id ?? null,
+                            'name' => $assignment->bus->name ?? null,
+                            'registration_number' => $assignment->bus->registration_number ?? null,
+                        ] : null,
+                        'driver_name' => $assignment->driver_name ?? null,
+                        'driver_phone' => $assignment->driver_phone ?? null,
+                        'host_name' => $assignment->host_name ?? null,
+                        'host_phone' => $assignment->host_phone ?? null,
+                    ];
+                }),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 400);
         }
     }
 
@@ -793,36 +923,40 @@ class BookingController extends Controller
         ]);
 
         try {
-            // Lock the row for the specified trip to prevent race conditions when booking/locking seats
-            $trip = Trip::lockForUpdate()->findOrFail($validated['trip_id']);
-            $availableSeats = $this->availabilityService->availableSeats(
-                $trip->id,
-                $validated['from_stop_id'],
-                $validated['to_stop_id']
-            );
+            // Wrap in transaction so lockForUpdate() works correctly
+            // Row-level locks only work within database transactions
+            return DB::transaction(function () use ($validated) {
+                // Lock the row for the specified trip to prevent race conditions when booking/locking seats
+                $trip = Trip::lockForUpdate()->findOrFail($validated['trip_id']);
+                $availableSeats = $this->availabilityService->availableSeats(
+                    $trip->id,
+                    $validated['from_stop_id'],
+                    $validated['to_stop_id']
+                );
 
-            // Check all seats are available
-            $availableSet = array_flip($availableSeats);
-            foreach ($validated['seat_numbers'] as $seat) {
-                if (! isset($availableSet[$seat])) {
-                    throw ValidationException::withMessages([
-                        'seats' => "Seat {$seat} is not available.",
-                    ]);
+                // Check all seats are available
+                $availableSet = array_flip($availableSeats);
+                foreach ($validated['seat_numbers'] as $seat) {
+                    if (! isset($availableSet[$seat])) {
+                        throw ValidationException::withMessages([
+                            'seats' => "Seat {$seat} is not available.",
+                        ]);
+                    }
                 }
-            }
 
-            // Broadcast seat locked event
-            SeatLocked::dispatch(
-                $trip->id,
-                $validated['seat_numbers'],
-                Auth::user()
-            );
+                // Broadcast seat locked event
+                SeatLocked::dispatch(
+                    $trip->id,
+                    $validated['seat_numbers'],
+                    Auth::user()
+                );
 
-            return response()->json([
-                'message' => 'Seats locked successfully',
-                'locked_seats' => $validated['seat_numbers'],
-                'trip_id' => $trip->id,
-            ]);
+                return response()->json([
+                    'message' => 'Seats locked successfully',
+                    'locked_seats' => $validated['seat_numbers'],
+                    'trip_id' => $trip->id,
+                ]);
+            });
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -851,10 +985,13 @@ class BookingController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create bookings');
+
         $validated = $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'from_terminal_id' => 'required|exists:terminals,id',
             'to_terminal_id' => 'required|exists:terminals,id',
+            'terminal_id' => 'nullable|exists:terminals,id', // Terminal where booking was made
             'seat_numbers' => 'required|array|min:1',
             'seat_numbers.*' => 'integer',
             'seats_data' => 'nullable|json', // Optional: seats with gender information
@@ -893,21 +1030,38 @@ class BookingController extends Controller
             }
 
             // Get trip stops
-            $trip = Trip::findOrFail($validated['trip_id']);
+            $trip = Trip::with('route')->findOrFail($validated['trip_id']);
             $fromTerminalId = $validated['from_terminal_id'];
             $toTerminalId = $validated['to_terminal_id'];
 
-            $fromStop = $trip->stops()->where('terminal_id', $fromTerminalId)->firstOrFail();
-            $toStop = $trip->stops()->where('terminal_id', $toTerminalId)->firstOrFail();
+            $tripFromStop = $trip->stops()->where('terminal_id', $fromTerminalId)->firstOrFail();
+            $tripToStop = $trip->stops()->where('terminal_id', $toTerminalId)->firstOrFail();
 
-            if ($fromStop->sequence >= $toStop->sequence) {
+            if ($tripFromStop->sequence >= $tripToStop->sequence) {
                 throw new \Exception('Invalid segment selection');
             }
 
+            // Find RouteStop IDs based on route_id, terminal_id, and sequence
+            $fromRouteStop = RouteStop::where('route_id', $trip->route_id)
+                ->where('terminal_id', $fromTerminalId)
+                ->where('sequence', $tripFromStop->sequence)
+                ->firstOrFail();
+
+            $toRouteStop = RouteStop::where('route_id', $trip->route_id)
+                ->where('terminal_id', $toTerminalId)
+                ->where('sequence', $tripToStop->sequence)
+                ->firstOrFail();
+
+            // Determine terminal_id: use provided terminal_id or fallback to user's terminal_id or from_terminal_id
+            $terminalId = $validated['terminal_id'] ?? Auth::user()->terminal_id ?? $validated['from_terminal_id'];
+
             $data = [
                 'trip_id' => $validated['trip_id'],
-                'from_stop_id' => $fromStop->id,
-                'to_stop_id' => $toStop->id,
+                'from_stop_id' => $fromRouteStop->id, // RouteStop ID, not TripStop ID
+                'to_stop_id' => $toRouteStop->id, // RouteStop ID, not TripStop ID
+                'from_trip_stop_id' => $tripFromStop->id, // For BookingService to use with AvailabilityService
+                'to_trip_stop_id' => $tripToStop->id, // For BookingService to use with AvailabilityService
+                'terminal_id' => $terminalId, // Terminal where booking was made
                 'seat_numbers' => $validated['seat_numbers'],
                 'seats_data' => $seatsData, // Seats with gender information
                 'passengers' => $passengers, // Passenger information (without seat_number)
@@ -991,24 +1145,43 @@ class BookingController extends Controller
 
     private function getBookedSeats(Trip $trip, TripStop $fromStop, TripStop $toStop): array
     {
-        $bookings = Booking::with(['seats', 'passengers'])
+        // Load bookings with RouteStop relationships
+        $bookings = Booking::with(['seats', 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $trip->id)
             ->whereIn('status', ['confirmed', 'checked_in', 'boarded'])
             ->get();
 
         $bookedSeats = [];
-        foreach ($bookings as $booking) {
-            // Check if segment overlaps
-            $bookingFrom = $booking->fromStop->sequence;
-            $bookingTo = $booking->toStop->sequence;
-            $queryFrom = $fromStop->sequence;
-            $queryTo = $toStop->sequence;
 
+        // Get query segment sequences (TripStop sequences)
+        $queryFrom = $fromStop->sequence ?? null;
+        $queryTo = $toStop->sequence ?? null;
+
+        if ($queryFrom === null || $queryTo === null) {
+            return $bookedSeats;
+        }
+
+        foreach ($bookings as $booking) {
+            // Skip if RouteStop relationships are missing
+            if (! $booking->fromStop || ! $booking->toStop) {
+                continue;
+            }
+
+            // Check if segment overlaps - use RouteStop sequences
+            $bookingFrom = $booking->fromStop->sequence ?? null;
+            $bookingTo = $booking->toStop->sequence ?? null;
+
+            // Skip if sequences are missing
+            if ($bookingFrom === null || $bookingTo === null) {
+                continue;
+            }
+
+            // Check for overlap: bookingFrom < queryTo AND queryFrom < bookingTo
             if ($bookingFrom < $queryTo && $queryFrom < $bookingTo) {
                 foreach ($booking->seats as $seat) {
                     // Get gender from seat first (primary source), fallback to passenger if seat doesn't have it
                     $gender = null;
-                    
+
                     // Check if seat has gender (it's stored as enum)
                     if ($seat->gender) {
                         // Gender is stored as enum, get its string value
@@ -1018,7 +1191,7 @@ class BookingController extends Controller
                             $gender = $seat->gender;
                         }
                     }
-                    
+
                     // Fallback to first passenger's gender if seat doesn't have gender
                     if (! $gender && $booking->passengers->isNotEmpty()) {
                         $passenger = $booking->passengers->first();
@@ -1063,6 +1236,14 @@ class BookingController extends Controller
         }
     }
 
+    public function getExpenseTypes(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'expense_types' => ExpenseTypeEnum::options(),
+        ]);
+    }
+
     public function assignBusDriver(Request $request, $tripId): JsonResponse
     {
         try {
@@ -1073,27 +1254,101 @@ class BookingController extends Controller
                 'driver_cnic' => 'required|string|max:50',
                 'driver_license' => 'required|string|max:100',
                 'driver_address' => 'nullable|string|max:500',
+                'expenses' => 'nullable|array',
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.amount' => 'required|numeric|min:0',
+                'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.description' => 'nullable|string|max:500',
+                'expenses.*.expense_date' => 'nullable|date',
             ]);
 
             $trip = Trip::findOrFail($tripId);
 
-            // Update trip with bus and driver information
-            $trip->update([
-                'bus_id' => $validated['bus_id'],
-                'driver_name' => $validated['driver_name'],
-                'driver_phone' => $validated['driver_phone'],
-                'driver_cnic' => $validated['driver_cnic'],
-                'driver_license' => $validated['driver_license'],
-                'driver_address' => $validated['driver_address'] ?? null,
-            ]);
+            DB::transaction(function () use ($trip, $validated) {
+                // Update trip with bus and driver information
+                $trip->update([
+                    'bus_id' => $validated['bus_id'],
+                    'driver_name' => $validated['driver_name'],
+                    'driver_phone' => $validated['driver_phone'],
+                    'driver_cnic' => $validated['driver_cnic'],
+                    'driver_license' => $validated['driver_license'],
+                    'driver_address' => $validated['driver_address'] ?? null,
+                ]);
 
-            // Load bus relationship
-            $trip->load('bus');
+                // Create expenses if provided
+                if (! empty($validated['expenses'])) {
+                    foreach ($validated['expenses'] as $expenseData) {
+                        Expense::create([
+                            'trip_id' => $trip->id,
+                            'user_id' => Auth::id(),
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'from_terminal_id' => $expenseData['from_terminal_id'] ?? null,
+                            'to_terminal_id' => $expenseData['to_terminal_id'] ?? null,
+                            'description' => $expenseData['description'] ?? null,
+                            'expense_date' => $expenseData['expense_date'] ?? $trip->departure_date,
+                        ]);
+                    }
+                }
+            });
+
+            // Load relationships
+            $trip->load(['bus', 'expenses.fromTerminal', 'expenses.toTerminal']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bus and driver assigned successfully!',
+                'message' => 'Bus, driver, and expenses assigned successfully!',
                 'trip' => $trip,
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function addTripExpenses(Request $request, $tripId): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'expenses' => 'required|array|min:1',
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.amount' => 'required|numeric|min:0',
+                'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
+                'expenses.*.description' => 'nullable|string|max:500',
+                'expenses.*.expense_date' => 'nullable|date',
+            ]);
+
+            $trip = Trip::findOrFail($tripId);
+
+            DB::transaction(function () use ($trip, $validated) {
+                // Create expenses
+                foreach ($validated['expenses'] as $expenseData) {
+                    Expense::create([
+                        'trip_id' => $trip->id,
+                        'user_id' => Auth::id(),
+                        'expense_type' => $expenseData['expense_type'],
+                        'amount' => $expenseData['amount'],
+                        'from_terminal_id' => $expenseData['from_terminal_id'] ?? null,
+                        'to_terminal_id' => $expenseData['to_terminal_id'] ?? null,
+                        'description' => $expenseData['description'] ?? null,
+                        'expense_date' => $expenseData['expense_date'] ?? $trip->departure_date,
+                    ]);
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Expenses added successfully!',
+                'expenses_count' => count($validated['expenses']),
             ]);
         } catch (ValidationException $e) {
             return response()->json([
