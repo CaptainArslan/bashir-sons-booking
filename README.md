@@ -1271,6 +1271,583 @@ USER ACTION                    SYSTEM PROCESS
 
 ---
 
+---
+
+## 🚌 Complete Trip Lifecycle: From Booking to Trip Completion
+
+This section covers the **entire journey** of a trip from initial booking through driver/bus assignment, expense tracking, and final reporting.
+
+### 📋 Trip Lifecycle Overview
+
+```
+1. Booking Creation      → Customer/Employee creates booking
+2. Trip Scheduling       → Trip auto-created from timetable
+3. Bus Assignment        → Assign bus, driver, host/hostess to segments
+4. Trip Execution        → Trip runs, expenses recorded
+5. Expense Tracking      → Track all terminal-wise expenses
+6. Reporting             → Generate terminal reports
+```
+
+---
+
+### 🎫 Phase 1: Booking Creation (Already Covered)
+
+- Customer/Employee creates booking via console
+- Seats are selected and locked
+- Payment is processed
+- Booking record created with RouteStop IDs
+
+---
+
+### 📅 Phase 2: Trip Scheduling & Auto-Creation
+
+**What happens**: When a user loads a trip for a specific date, the system automatically creates it if it doesn't exist.
+
+**Algorithm**:
+```
+1. User selects:
+   - Timetable: Morning Express (ID: 50)
+   - Date: 2025-12-15
+
+2. System checks:
+   - Query trips WHERE timetable_id = 50 AND departure_date = '2025-12-15'
+   
+   IF trip exists:
+     → Use existing trip
+   ELSE:
+     → Create new trip (see TripFactoryService)
+
+3. Trip Creation Process:
+   a. Create trip record:
+      - timetable_id: 50
+      - route_id: (from timetable)
+      - departure_date: '2025-12-15'
+      - status: 'scheduled'
+   
+   b. Create trip_stops from timetable_stops:
+      FOR each stop in timetable:
+         - Combine date + departure_time → departure_at
+         - Combine date + arrival_time → arrival_at
+         - Create trip_stop with terminal_id, sequence
+         - Mark first as is_origin, last as is_destination
+   
+   c. Update trip:
+      - departure_datetime: first stop's departure_at
+      - estimated_arrival_datetime: last stop's arrival_at
+
+4. Trip is ready for bus assignment
+```
+
+**Example**:
+```
+Timetable: Karachi → Lahore → Islamabad
+Date: 2025-12-15
+
+Trip Created:
+- Trip ID: 200
+- Departure: 2025-12-15 08:00:00
+- Arrival: 2025-12-15 18:00:00
+
+Trip Stops Created:
+- Stop 1: Karachi Terminal (08:00:00) [Origin]
+- Stop 2: Lahore Terminal (13:00:00)
+- Stop 3: Islamabad Terminal (18:00:00) [Destination]
+```
+
+---
+
+### 🚌 Phase 3: Bus Assignment to Trip Segments
+
+**What happens**: Assign different buses, drivers, and host/hostess to different segments of the same trip. This is crucial for multi-segment routes where buses change at intermediate terminals.
+
+**Use Cases**:
+- **Multi-Segment Routes**: Different buses for different segments
+- **Bus Changeover**: Bus A handles Karachi→Lahore, Bus B handles Lahore→Islamabad
+- **Driver Rotation**: Different drivers for long routes
+- **Host/Hostess Assignment**: Assign host/hostess per segment
+
+**Algorithm**:
+```
+1. Admin selects trip for bus assignment:
+   - Trip ID: 200
+   - Route: Karachi → Lahore → Islamabad
+
+2. View trip segments:
+   - Segment 1: Karachi (Stop 1) → Lahore (Stop 2)
+   - Segment 2: Lahore (Stop 2) → Islamabad (Stop 3)
+
+3. Assign Bus for Segment 1:
+   a. Select segment:
+      - From TripStop: Stop 1 (Karachi)
+      - To TripStop: Stop 2 (Lahore)
+   
+   b. Select bus:
+      - Available buses (status = 'active')
+      - Choose: Bus A (ID: 10)
+   
+   c. Enter driver details:
+      - driver_name: "Ahmed Khan"
+      - driver_phone: "03001234567"
+      - driver_cnic: "42101-1234567-1"
+      - driver_license: "PK-DL-2023-001"
+      - driver_address: "Karachi, Pakistan"
+   
+   d. Enter host/hostess details (optional):
+      - host_name: "Sara Ali"
+      - host_phone: "03001234568"
+   
+   e. System validates:
+      - From stop sequence < To stop sequence ✅
+      - Both stops belong to same trip ✅
+      - No overlapping assignments for this segment ✅
+   
+   f. Create bus_assignment:
+      INSERT INTO bus_assignments:
+      - trip_id: 200
+      - from_trip_stop_id: 501 (Karachi stop)
+      - to_trip_stop_id: 502 (Lahore stop)
+      - bus_id: 10
+      - driver_name, driver_phone, driver_cnic, driver_license, driver_address
+      - host_name, host_phone
+      - assigned_by_user_id: current admin user
+      - assigned_at: now()
+      - segment_label: "KHI → LHR" (auto-generated)
+
+4. Assign Bus for Segment 2:
+   - From TripStop: Stop 2 (Lahore)
+   - To TripStop: Stop 3 (Islamabad)
+   - Bus: Bus B (ID: 15)
+   - Driver: Different driver for segment 2
+   - Host: Different host/hostess
+   - Repeat validation and creation
+
+5. Multiple Assignments per Trip:
+   - Trip 200 now has:
+     * Assignment 1: Karachi→Lahore (Bus A, Driver Ahmed)
+     * Assignment 2: Lahore→Islamabad (Bus B, Driver Hassan)
+```
+
+**Visual Example**:
+```
+Trip: Karachi → Lahore → Islamabad
+Stops: [Karachi(1), Lahore(2), Islamabad(3)]
+
+Bus Assignments:
+┌─────────────────────────────────────────────────┐
+│ Segment 1: Karachi → Lahore                     │
+│ ├─ Bus: Bus A (Registration: KHI-123)           │
+│ ├─ Driver: Ahmed Khan (CNIC: 42101-1234567-1)  │
+│ └─ Host: Sara Ali (Phone: 03001234568)         │
+└─────────────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────────────┐
+│ Segment 2: Lahore → Islamabad                   │
+│ ├─ Bus: Bus B (Registration: LHR-456)           │
+│ ├─ Driver: Hassan Ali (CNIC: 35201-9876543-2)   │
+│ └─ Host: Fatima Khan (Phone: 03009876543)      │
+└─────────────────────────────────────────────────┘
+```
+
+**Overlap Prevention**:
+- System checks for overlapping assignments
+- Cannot assign two buses to the same segment
+- Validates segment boundaries
+- Prevents conflicts
+
+**Assignment Display in Booking Console**:
+- When loading trip, system shows all bus assignments
+- Display: Bus name, driver, host for each segment
+- Helps booking agents inform customers about bus changes
+
+---
+
+### 💰 Phase 4: Expense Tracking (Terminal-Wise)
+
+**What happens**: Track all expenses related to trips, categorized by type and terminal. Expenses are tracked from the source terminal (where expense originates).
+
+**Expense Types**:
+- `fuel`: Fuel costs
+- `toll`: Toll charges
+- `food`: Food expenses
+- `commission`: Commission payments
+- `ghakri`: Ghakri expenses
+- `other`: Other miscellaneous expenses
+
+**Algorithm**:
+```
+1. Admin selects trip for expense entry:
+   - Trip ID: 200
+   - Trip: Karachi → Lahore → Islamabad
+
+2. Add Expense:
+   a. Select expense type:
+      - Type: 'fuel'
+   
+   b. Enter amount:
+      - Amount: 5000 PKR
+   
+   c. Select terminals:
+      - From Terminal: Karachi (where expense originates)
+      - To Terminal: Lahore (where expense ends, optional)
+   
+   d. Enter description:
+      - "Fuel refill at Karachi terminal before departure"
+   
+   e. Select date:
+      - Expense Date: 2025-12-15 (defaults to trip departure date)
+   
+   f. System creates expense:
+      INSERT INTO expenses:
+      - trip_id: 200
+      - user_id: current admin user
+      - expense_type: 'fuel'
+      - amount: 5000.00
+      - from_terminal_id: 5 (Karachi)
+      - to_terminal_id: 10 (Lahore)
+      - description: "Fuel refill..."
+      - expense_date: '2025-12-15'
+
+3. Multiple Expenses per Trip:
+   - Expense 1: Fuel - 5000 PKR (Karachi → Lahore)
+   - Expense 2: Toll - 500 PKR (Karachi → Lahore)
+   - Expense 3: Food - 2000 PKR (Lahore → Islamabad)
+   - Expense 4: Fuel - 6000 PKR (Lahore → Islamabad)
+
+4. Terminal-Wise Tracking:
+   - Expenses are tracked by from_terminal_id
+   - Allows reporting expenses per terminal
+   - Terminal staff can see expenses originating from their terminal
+```
+
+**Expense Entry Example**:
+```
+Trip: Karachi → Lahore → Islamabad
+Date: 2025-12-15
+
+Expenses Added:
+┌─────────────────────────────────────────────────────┐
+│ Expense 1                                           │
+│ ├─ Type: Fuel                                       │
+│ ├─ Amount: 5,000 PKR                                │
+│ ├─ From Terminal: Karachi                           │
+│ ├─ To Terminal: Lahore                              │
+│ └─ Description: "Fuel refill at Karachi"            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ Expense 2                                           │
+│ ├─ Type: Toll                                       │
+│ ├─ Amount: 500 PKR                                  │
+│ ├─ From Terminal: Karachi                           │
+│ ├─ To Terminal: Lahore                              │
+│ └─ Description: "Motorway toll charges"             │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ Expense 3                                           │
+│ ├─ Type: Food                                       │
+│ ├─ Amount: 2,000 PKR                                │
+│ ├─ From Terminal: Lahore                            │
+│ ├─ To Terminal: Islamabad                           │
+│ └─ Description: "Lunch for driver and host"         │
+└─────────────────────────────────────────────────────┘
+
+Total Expenses: 7,500 PKR
+```
+
+**Why Terminal-Wise?**
+- Track expenses per terminal for accounting
+- Terminal staff can see expenses from their location
+- Generate terminal-specific expense reports
+- Better cost allocation and profit analysis
+
+---
+
+### 📊 Phase 5: Terminal Reports
+
+**What happens**: Generate comprehensive reports for terminals showing bookings, revenue, expenses, and profit for a date range.
+
+**Report Components**:
+1. **Statistics Summary**
+2. **Bookings List** (with details)
+3. **Expenses List** (with breakdown)
+4. **Trips List**
+5. **Calculations** (Revenue, Profit, Margins)
+
+**Algorithm - Report Generation**:
+```
+1. User selects report parameters:
+   - Terminal: Karachi Terminal (Admin can select any, Employee sees only their terminal)
+   - Start Date: 2025-12-01
+   - End Date: 2025-12-31
+
+2. Get Bookings (From Terminal):
+   - Query bookings WHERE from_stop.terminal_id = 5
+   - Date range: created_at BETWEEN start_date AND end_date
+   - Load: fromStop.terminal, toStop.terminal, seats, passengers, user, trip.route
+   
+   Result: All bookings that STARTED from Karachi terminal
+
+3. Get Expenses (From Terminal):
+   - Query expenses WHERE from_terminal_id = 5
+   - Date range: expense_date BETWEEN start_date AND end_date
+   - Load: fromTerminal, toTerminal, trip, user
+   
+   Result: All expenses that ORIGINATED from Karachi terminal
+
+4. Get Trips (Passing Through Terminal):
+   - Query trips WHERE stops.terminal_id = 5
+   - Date range: departure_datetime BETWEEN start_date AND end_date
+   - Load: route, bus, stops
+   
+   Result: All trips that passed through Karachi terminal
+
+5. Calculate Statistics:
+   
+   a. Booking Statistics:
+      - total_bookings: count of all bookings
+      - confirmed_bookings: count where status = 'confirmed'
+      - hold_bookings: count where status = 'hold'
+      - cancelled_bookings: count where status = 'cancelled'
+   
+   b. Revenue Statistics:
+      - total_revenue: sum(final_amount)
+      - total_fare: sum(total_fare)
+      - total_discount: sum(discount_amount)
+      - total_tax: sum(tax_amount)
+   
+   c. Expense Statistics:
+      - total_expenses: sum(amount)
+      - by_type: group by expense_type
+   
+   d. Profit Calculation:
+      - total_profit = total_revenue - total_expenses
+      - profit_margin = (total_profit / total_revenue) * 100
+   
+   e. Passenger Statistics:
+      - total_passengers: sum of passengers per booking
+      - total_seats: sum of seats per booking
+   
+   f. Trip Statistics:
+      - total_trips: count of trips
+   
+   g. Payment Method Breakdown:
+      - Group by payment_method (cash, card)
+      - Count and total amount per method
+   
+   h. Channel Breakdown:
+      - Group by channel (counter, phone, online)
+      - Count and total amount per channel
+
+6. Generate Report Response:
+   {
+     "terminal": {...},
+     "date_range": {...},
+     "stats": {
+       "bookings": {...},
+       "revenue": {...},
+       "expenses": {...},
+       "profit": {...},
+       "passengers": {...},
+       "trips": {...},
+       "payment_methods": {...},
+       "channels": {...}
+     },
+     "bookings": [...],
+     "expenses": [...],
+     "trips": [...]
+   }
+```
+
+**Example Report Output**:
+```
+TERMINAL REPORT: Karachi Terminal
+Period: December 1-31, 2025
+
+┌─────────────────────────────────────────────────┐
+│ SUMMARY STATISTICS                              │
+├─────────────────────────────────────────────────┤
+│ Bookings                                        │
+│ ├─ Total: 245                                  │
+│ ├─ Confirmed: 220                              │
+│ ├─ Hold: 20                                    │
+│ └─ Cancelled: 5                                │
+├─────────────────────────────────────────────────┤
+│ Revenue                                         │
+│ ├─ Total Revenue: 1,250,000 PKR                │
+│ ├─ Total Fare: 1,200,000 PKR                   │
+│ ├─ Discounts: -50,000 PKR                      │
+│ └─ Tax: +100,000 PKR                           │
+├─────────────────────────────────────────────────┤
+│ Expenses                                        │
+│ ├─ Total: 350,000 PKR                          │
+│ ├─ Fuel: 200,000 PKR                           │
+│ ├─ Toll: 50,000 PKR                            │
+│ ├─ Food: 80,000 PKR                            │
+│ └─ Other: 20,000 PKR                           │
+├─────────────────────────────────────────────────┤
+│ Profit                                          │
+│ ├─ Net Profit: 900,000 PKR                     │
+│ └─ Profit Margin: 72%                           │
+├─────────────────────────────────────────────────┤
+│ Passengers                                      │
+│ ├─ Total Passengers: 560                       │
+│ └─ Total Seats Booked: 560                     │
+├─────────────────────────────────────────────────┤
+│ Trips                                           │
+│ └─ Total Trips: 120                            │
+└─────────────────────────────────────────────────┘
+
+Payment Methods:
+- Cash: 180 bookings, 900,000 PKR
+- Card: 40 bookings, 350,000 PKR
+
+Booking Channels:
+- Counter: 150 bookings, 800,000 PKR
+- Phone: 70 bookings, 450,000 PKR
+```
+
+**Access Control**:
+- **Admin**: Can view reports for any terminal
+- **Employee**: Can only view reports for their assigned terminal
+- System automatically filters based on user role
+
+---
+
+### 🔄 Complete Lifecycle Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 1: BOOKING CREATION                                    │
+├─────────────────────────────────────────────────────────────┤
+│ User opens booking console                                   │
+│  ↓                                                           │
+│ Selects: Terminal → Route → Stops → Date → Departure         │
+│  ↓                                                           │
+│ Loads/Creates Trip                                           │
+│  ↓                                                           │
+│ Selects seats, enters passenger info                         │
+│  ↓                                                           │
+│ Confirms booking → Booking created                           │
+│  ↓                                                           │
+│ Booking Status: 'confirmed' (counter) or 'hold' (phone)      │
+└─────────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 2: TRIP SCHEDULING                                     │
+├─────────────────────────────────────────────────────────────┤
+│ Trip auto-created from timetable (if not exists)           │
+│  ↓                                                           │
+│ Trip Stops created with arrival/departure times             │
+│  ↓                                                           │
+│ Trip Status: 'scheduled'                                     │
+│  ↓                                                           │
+│ Trip ready for bus assignment                                │
+└─────────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 3: BUS & DRIVER ASSIGNMENT                             │
+├─────────────────────────────────────────────────────────────┤
+│ Admin views trip → Selects segments                          │
+│  ↓                                                           │
+│ For each segment:                                            │
+│  ├─ Assign Bus (from active buses)                          │
+│  ├─ Enter Driver Details (name, phone, CNIC, license)      │
+│  ├─ Enter Host/Hostess Details (name, phone)               │
+│  └─ Save Assignment                                         │
+│  ↓                                                           │
+│ Bus Assignment created                                       │
+│  ↓                                                           │
+│ Trip Status: 'assigned' (can be updated)                    │
+└─────────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 4: EXPENSE TRACKING                                    │
+├─────────────────────────────────────────────────────────────┤
+│ Admin/Employee records expenses for trip                     │
+│  ↓                                                           │
+│ For each expense:                                            │
+│  ├─ Select Type (fuel, toll, food, commission, etc.)        │
+│  ├─ Enter Amount                                            │
+│  ├─ Select From Terminal (where expense originates)         │
+│  ├─ Select To Terminal (optional)                          │
+│  ├─ Enter Description                                      │
+│  └─ Save Expense                                            │
+│  ↓                                                           │
+│ Expenses tracked terminal-wise                              │
+│  ↓                                                           │
+│ Expenses linked to trip and terminals                       │
+└─────────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 5: TRIP EXECUTION                                      │
+├─────────────────────────────────────────────────────────────┤
+│ Trip departure time arrives                                 │
+│  ↓                                                           │
+│ Bus departs from origin terminal                             │
+│  ↓                                                           │
+│ Passengers board at stops                                    │
+│  ↓                                                           │
+│ Trip progresses through segments                             │
+│  ↓                                                           │
+│ Bus changes at intermediate terminals (if multi-segment)    │
+│  ↓                                                           │
+│ Trip arrives at destination                                 │
+│  ↓                                                           │
+│ Trip Status: 'completed'                                     │
+└─────────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│ PHASE 6: REPORTING & ANALYSIS                                │
+├─────────────────────────────────────────────────────────────┤
+│ Admin/Employee generates terminal report                      │
+│  ↓                                                           │
+│ Select: Terminal, Date Range                                 │
+│  ↓                                                           │
+│ System calculates:                                          │
+│  ├─ Bookings Statistics (total, confirmed, hold, cancelled) │
+│  ├─ Revenue Breakdown (fare, discount, tax, final)         │
+│  ├─ Expense Breakdown (by type, terminal-wise)             │
+│  ├─ Profit Calculation (revenue - expenses, margin)        │
+│  ├─ Passenger Statistics (total, seats)                    │
+│  ├─ Trip Statistics (total trips)                           │
+│  ├─ Payment Method Breakdown                               │
+│  └─ Channel Breakdown                                       │
+│  ↓                                                           │
+│ Report Generated:                                           │
+│  ├─ Summary Statistics                                      │
+│  ├─ Detailed Bookings List                                  │
+│  ├─ Detailed Expenses List                                  │
+│  └─ Detailed Trips List                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🎯 Key Points Summary
+
+1. **Multi-Segment Bus Assignment**:
+   - Different buses for different segments of same trip
+   - Driver and host/hostess assigned per segment
+   - Prevents overlapping assignments
+
+2. **Terminal-Wise Expense Tracking**:
+   - Expenses tracked by source terminal (`from_terminal_id`)
+   - Supports multiple expense types
+   - Enables terminal-specific expense reports
+
+3. **Comprehensive Reporting**:
+   - Terminal reports show bookings, revenue, expenses, profit
+   - Role-based access (admin sees all, employee sees only their terminal)
+   - Detailed breakdowns by payment method, channel, expense type
+
+4. **Complete Lifecycle Management**:
+   - Booking → Trip Creation → Bus Assignment → Expense Tracking → Reporting
+   - All phases integrated and tracked
+   - Full audit trail from booking to trip completion
+
+---
+
 *Next sections: Permission System, Services Details, API Documentation*
 
 ---
