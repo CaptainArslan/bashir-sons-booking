@@ -147,6 +147,9 @@
 
         document.getElementById('confirmBtn').disabled = true;
 
+        // Get terminal_id: use user's assigned terminal or from terminal dropdown
+        const terminalId = appState.userTerminalId || document.getElementById('fromTerminal').value;
+
         $.ajax({
             url: "{{ route('admin.bookings.store') }}",
             type: 'POST',
@@ -154,6 +157,7 @@
                 trip_id: appState.tripData.trip.id,
                 from_terminal_id: document.getElementById('fromTerminal').value,
                 to_terminal_id: document.getElementById('toTerminal').value,
+                terminal_id: terminalId, // Terminal where booking is being made
                 seat_numbers: selectedSeats.map(Number),
                 seats_data: JSON.stringify(seatsData), // Send seats with genders separately
                 passengers: JSON.stringify(passengers), // Passengers without seat_number

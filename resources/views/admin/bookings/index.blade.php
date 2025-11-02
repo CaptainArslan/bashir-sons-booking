@@ -11,9 +11,11 @@
                 <h5 class="mb-0">
                     <i class="fas fa-book"></i> Booking Management & Reports
                 </h5>
-                <a href="{{ route('admin.bookings.console') }}" class="btn btn-light btn-sm">
-                    <i class="fas fa-plus-circle"></i> New Booking
-                </a>
+                @can('create bookings')
+                    <a href="{{ route('admin.bookings.console') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus-circle"></i> New Booking
+                    </a>
+                @endcan
             </div>
         </div>
 
