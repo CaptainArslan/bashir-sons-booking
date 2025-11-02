@@ -366,6 +366,14 @@
                                                         <input type="number" class="form-control sequence-input" name="stops[{{ $stop->id }}][sequence]" 
                                                                value="{{ $stop->sequence }}" min="1" required readonly>
                                                     </div>
+                                                    <div class="col-md-12">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" name="stops[{{ $stop->id }}][online_booking_allowed]" value="1" id="online_booking_{{ $stop->id }}" {{ $stop->online_booking_allowed ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="online_booking_{{ $stop->id }}">
+                                                                Allow Online Booking from this stop
+                                                            </label>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -532,6 +540,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-label">Sequence</label>
                         <input type="number" class="form-control sequence-input" name="stops[new_${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][online_booking_allowed]" value="1" id="online_booking_new_${stopCounter}" checked>
+                            <label class="form-check-label" for="online_booking_new_${stopCounter}">
+                                Allow Online Booking from this stop
+                            </label>
+                        </div>
                     </div>
                 </div>
             `;

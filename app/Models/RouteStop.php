@@ -13,10 +13,12 @@ class RouteStop extends Model
         'route_id',
         'terminal_id',
         'sequence',
+        'online_booking_allowed',
     ];
 
     protected $casts = [
         'sequence' => 'integer',
+        'online_booking_allowed' => 'boolean',
     ];
 
     /*

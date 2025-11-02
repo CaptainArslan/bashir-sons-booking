@@ -468,6 +468,14 @@
                         <input type="number" class="form-control sequence-input" name="stops[${stopCounter}][sequence]" 
                                value="${stopCounter}" min="1" required readonly>
                     </div>
+                    <div class="col-md-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][online_booking_allowed]" value="1" id="online_booking_${stopCounter}" checked>
+                            <label class="form-check-label" for="online_booking_${stopCounter}">
+                                Allow Online Booking from this stop
+                            </label>
+                        </div>
+                    </div>
                 </div>
             `;
 

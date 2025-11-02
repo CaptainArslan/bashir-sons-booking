@@ -200,8 +200,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/routes/{id}', [RouteController::class, 'destroy'])->can('delete routes')->name('routes.destroy');
         Route::get('/routes/{id}/stops', [RouteController::class, 'stops'])->can('view routes')->name('routes.stops');
         Route::post('/routes/{id}/stops', [RouteController::class, 'storeStop'])->can('create routes')->name('routes.stops.store');
+        Route::put('/routes/{id}/stops', [RouteController::class, 'updateStops'])->can('edit routes')->name('routes.stops.update');
         Route::get('/routes/{id}/stops/{stopId}/data', [RouteController::class, 'getStopData'])->can('view routes')->name('routes.stops.data');
-        Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update');
+        Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update-single');
         Route::delete('/routes/{id}/stops/{stopId}', [RouteController::class, 'destroyStop'])->can('delete routes')->name('routes.stops.destroy');
         Route::get('/routes/{id}/manage-fares', [RouteController::class, 'manageFares'])->can('edit routes')->name('routes.manage-fares');
         Route::post('/routes/{id}/fares', [RouteController::class, 'storeFares'])->can('edit routes')->name('routes.fares.store');

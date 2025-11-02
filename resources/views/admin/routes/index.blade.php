@@ -140,40 +140,81 @@
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
+                    }
+                    @if(auth()->user()->can('edit routes') || auth()->user()->can('delete routes') || auth()->user()->can('view routes'))
+                    ,{
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
                     }
+                    @endif
                 ],
             });
         });
 
-        // Delete route function
+        // Delete route function with SweetAlert
         function deleteRoute(routeId) {
-            if (confirm('Are you sure you want to delete this route?')) {
-                $.ajax({
-                    url: "{{ route('admin.routes.destroy', ':id') }}".replace(':id', routeId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#routes-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the route.');
-                    }
-                });
-            }
+                    });
+                    $.ajax({
+                        url: "{{ url('admin/routes') }}/" + routeId,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Route has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#routes-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete route.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the route.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Route not found.';
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete routes.';
+                            }
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection
