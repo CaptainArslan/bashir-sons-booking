@@ -59,9 +59,11 @@
                 <p>Manage bus fleet and vehicle information</p>
             </div>
             <div>
-                <a href="{{ route('admin.buses.create') }}" class="add-bus-btn">
-                    <i class="bx bx-plus me-1"></i>Add New Bus
-                </a>
+                @can('create buses')
+                    <a href="{{ route('admin.buses.create') }}" class="add-bus-btn">
+                        <i class="bx bx-plus me-1"></i>Add New Bus
+                    </a>
+                @endcan
             </div>
         </div>
     </div>

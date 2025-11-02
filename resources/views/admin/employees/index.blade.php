@@ -102,9 +102,11 @@
                 <p>Manage employees and their terminal assignments</p>
             </div>
             <div>
-                <a href="{{ route('admin.employees.create') }}" class="add-employee-btn">
-                    <i class="bx bx-plus me-1"></i>Add New Employee
-                </a>
+                @can('manage users')
+                    <a href="{{ route('admin.employees.create') }}" class="add-employee-btn">
+                        <i class="bx bx-plus me-1"></i>Add New Employee
+                    </a>
+                @endcan
             </div>
         </div>
     </div>

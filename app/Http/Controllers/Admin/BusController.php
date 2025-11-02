@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Bus;
-use App\Models\BusType;
-use App\Models\BusLayout;
-use App\Models\Facility;
 use App\Enums\BusEnum;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Yajra\DataTables\Facades\DataTables;
+use App\Models\Bus;
+use App\Models\BusLayout;
+use App\Models\BusType;
+use App\Models\Facility;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class BusController extends Controller
 {
@@ -30,36 +30,39 @@ class BusController extends Controller
                 ->addColumn('formatted_name', function ($bus) {
                     return '<div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-bold text-primary">' . e($bus->name) . '</h6>
-                                    <small class="text-muted">' . e($bus->registration_number) . '</small>
+                                    <h6 class="mb-1 fw-bold text-primary">'.e($bus->name).'</h6>
+                                    <small class="text-muted">'.e($bus->registration_number).'</small>
                                 </div>
                             </div>';
                 })
                 ->addColumn('description_preview', function ($bus) {
-                    return '<span class="text-muted">' . e(\Str::limit($bus->description, 100)) . '</span>';
+                    return '<span class="text-muted">'.e(\Str::limit($bus->description, 100)).'</span>';
                 })
                 ->addColumn('bus_info', function ($bus) {
                     $busInfo = '<div class="d-flex flex-column">';
-                    $busInfo .= '<span class="fw-bold">' . e($bus->model) . '</span>';
-                    $busInfo .= '<small class="text-muted">' . e($bus->color) . '</small>';
+                    $busInfo .= '<span class="fw-bold">'.e($bus->model).'</span>';
+                    $busInfo .= '<small class="text-muted">'.e($bus->color).'</small>';
                     $busInfo .= '</div>';
+
                     return $busInfo;
                 })
                 ->addColumn('type_info', function ($bus) {
                     $busType = $bus->busType;
-                    if (!$busType) {
+                    if (! $busType) {
                         return '<span class="text-muted">No type</span>';
                     }
-                    return '<span class="badge bg-info">' . e($busType->name) . '</span>';
+
+                    return '<span class="badge bg-info">'.e($busType->name).'</span>';
                 })
                 ->addColumn('layout_info', function ($bus) {
                     $busLayout = $bus->busLayout;
-                    if (!$busLayout) {
+                    if (! $busLayout) {
                         return '<span class="text-muted">No layout</span>';
                     }
+
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold">' . e($busLayout->name) . '</span>
-                                <small class="text-muted">' . $busLayout->total_seats . ' seats</small>
+                                <span class="fw-bold">'.e($busLayout->name).'</span>
+                                <small class="text-muted">'.$busLayout->total_seats.' seats</small>
                             </div>';
                 })
                 ->addColumn('facilities_list', function ($bus) {
@@ -69,45 +72,51 @@ class BusController extends Controller
                     }
 
                     return $facilities->take(3)->map(function ($facility) {
-                        return '<span class="badge bg-success me-1 mb-1">' . e($facility->name) . '</span>';
-                    })->implode('') . ($facilities->count() > 3 ? '<span class="badge bg-light text-dark">+' . ($facilities->count() - 3) . '</span>' : '');
+                        return '<span class="badge bg-success me-1 mb-1">'.e($facility->name).'</span>';
+                    })->implode('').($facilities->count() > 3 ? '<span class="badge bg-light text-dark">+'.($facilities->count() - 3).'</span>' : '');
                 })
                 ->addColumn('status_badge', function ($bus) {
                     $statusValue = $bus->status instanceof BusEnum ? $bus->status->value : $bus->status;
                     $statusName = BusEnum::getStatusName($statusValue);
                     $statusColor = BusEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('actions', function ($bus) {
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="' . route('admin.buses.edit', $bus->id) . '">
-                                        <i class="bx bx-edit me-2"></i>Edit Bus
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteBus(' . $bus->id . ')">
-                                        <i class="bx bx-trash me-2"></i>Delete Bus
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
+
+                    if (auth()->user()->can('edit buses')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.buses.edit', $bus->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit Bus
+                            </a>
+                        </li>';
+                    }
+
+                    if (auth()->user()->can('delete buses')) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteBus('.$bus->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete Bus
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($bus) => $bus->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($bus) => $bus->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['formatted_name', 'description_preview', 'bus_info', 'type_info', 'layout_info', 'facilities_list', 'status_badge', 'actions'])
                 ->make(true);
@@ -120,6 +129,7 @@ class BusController extends Controller
         $busLayouts = BusLayout::where('status', 'active')->orderBy('name')->get();
         $facilities = Facility::where('status', 'active')->orderBy('name')->get();
         $statuses = BusEnum::getStatuses();
+
         return view('admin.buses.create', get_defined_vars());
     }
 
@@ -130,50 +140,50 @@ class BusController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+                'regex:/^[a-zA-Z0-9\s\-_]+$/',
             ],
             'description' => [
                 'nullable',
                 'string',
-                'max:1000'
+                'max:1000',
             ],
             'bus_type_id' => [
                 'required',
-                'exists:bus_types,id'
+                'exists:bus_types,id',
             ],
             'bus_layout_id' => [
                 'required',
-                'exists:bus_layouts,id'
+                'exists:bus_layouts,id',
             ],
             'registration_number' => [
                 'required',
                 'string',
                 'max:50',
-                'unique:buses,registration_number'
+                'unique:buses,registration_number',
             ],
             'model' => [
                 'required',
                 'string',
                 'max:100',
-                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+                'regex:/^[a-zA-Z0-9\s\-_]+$/',
             ],
             'color' => [
                 'required',
                 'string',
                 'max:50',
-                'regex:/^[a-zA-Z\s]+$/'
+                'regex:/^[a-zA-Z\s]+$/',
             ],
             'facilities' => [
                 'nullable',
-                'array'
+                'array',
             ],
             'facilities.*' => [
-                'exists:facilities,id'
+                'exists:facilities,id',
             ],
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', BusEnum::getStatuses())
+                'in:'.implode(',', BusEnum::getStatuses()),
             ],
         ], [
             'name.required' => 'Bus name is required',
@@ -214,7 +224,7 @@ class BusController extends Controller
             ]);
 
             // Attach facilities if provided
-            if (!empty($validated['facilities'])) {
+            if (! empty($validated['facilities'])) {
                 $bus->facilities()->attach($validated['facilities']);
             }
 
@@ -223,9 +233,10 @@ class BusController extends Controller
             return redirect()->route('admin.buses.index')->with('success', 'Bus created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create bus: ' . $e->getMessage());
+                ->with('error', 'Failed to create bus: '.$e->getMessage());
         }
     }
 
@@ -236,6 +247,7 @@ class BusController extends Controller
         $busLayouts = BusLayout::where('status', 'active')->orderBy('name')->get();
         $facilities = Facility::where('status', 'active')->orderBy('name')->get();
         $statuses = BusEnum::getStatuses();
+
         return view('admin.buses.edit', get_defined_vars());
     }
 
@@ -248,51 +260,51 @@ class BusController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+                'regex:/^[a-zA-Z0-9\s\-_]+$/',
             ],
             'description' => [
                 'nullable',
                 'string',
-                'max:1000'
+                'max:1000',
             ],
             'bus_type_id' => [
                 'required',
-                'exists:bus_types,id'
+                'exists:bus_types,id',
             ],
             'bus_layout_id' => [
                 'required',
-                'exists:bus_layouts,id'
+                'exists:bus_layouts,id',
             ],
             'registration_number' => [
                 'required',
                 'string',
                 'max:50',
-                'unique:buses,registration_number,' . $bus->id
+                'unique:buses,registration_number,'.$bus->id,
             ],
             'model' => [
                 'required',
                 'string',
                 'max:100',
-                'regex:/^[a-zA-Z0-9\s\-_]+$/'
+                'regex:/^[a-zA-Z0-9\s\-_]+$/',
             ],
             'color' => [
                 'required',
                 'string',
                 'max:50',
-                'regex:/^[a-zA-Z\s]+$/'
+                'regex:/^[a-zA-Z\s]+$/',
             ],
             'facilities' => [
                 'nullable',
-                'array'
+                'array',
             ],
             'facilities.*' => [
-                'exists:facilities,id'
+                'exists:facilities,id',
             ],
             'status' => [
                 'required',
                 'string',
-                'in:' . implode(',', BusEnum::getStatuses())
-            ]
+                'in:'.implode(',', BusEnum::getStatuses()),
+            ],
         ], [
             'name.required' => 'Bus name is required',
             'name.string' => 'Bus name must be a string',
@@ -339,9 +351,10 @@ class BusController extends Controller
             return redirect()->route('admin.buses.index')->with('success', 'Bus updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update bus: ' . $e->getMessage());
+                ->with('error', 'Failed to update bus: '.$e->getMessage());
         }
     }
 
@@ -350,14 +363,15 @@ class BusController extends Controller
         try {
             $bus = Bus::findOrFail($id);
             $bus->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Bus deleted successfully.'
+                'message' => 'Bus deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting bus: ' . $e->getMessage()
+                'message' => 'Error deleting bus: '.$e->getMessage(),
             ], 500);
         }
     }

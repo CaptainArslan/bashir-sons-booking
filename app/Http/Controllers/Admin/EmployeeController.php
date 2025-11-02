@@ -138,31 +138,33 @@ class EmployeeController extends Controller
                     return '<span class="badge bg-'.$statusColor.'">'.$statusText.'</span>';
                 })
                 ->addColumn('actions', function ($user) {
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="'.route('admin.employees.edit', $user->id).'">
-                                        <i class="bx bx-edit me-2"></i>Edit Employee
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteEmployee('.$user->id.')">
-                                        <i class="bx bx-trash me-2"></i>Delete Employee
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
+
+                    if (auth()->user()->can('manage users')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.employees.edit', $user->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit Employee
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteEmployee('.$user->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete Employee
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })

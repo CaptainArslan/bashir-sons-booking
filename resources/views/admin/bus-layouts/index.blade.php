@@ -15,9 +15,11 @@
             </nav>
         </div>
         <div class="ms-auto">
+            @can('create bus layouts')
                 <a href="{{ route('admin.bus-layouts.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Bus Layout
-            </a>
+                    <i class="bx bx-plus"></i> Add New Bus Layout
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->

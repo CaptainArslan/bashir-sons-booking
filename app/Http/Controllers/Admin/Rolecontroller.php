@@ -58,38 +58,37 @@ class Rolecontroller extends Controller
                     // Only super_admin role is not editable/deletable
                     $isSuperAdmin = $role->name === 'super_admin';
 
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="'.route('admin.roles.edit', $role->id).'">
-                                        <i class="bx bx-edit me-2"></i>Edit Role
-                                    </a>
-                                </li>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
 
-                    // Only show delete option for non-super_admin roles
-                    if (! $isSuperAdmin) {
-                        $actions .= '
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteRole('.$role->id.')">
-                                        <i class="bx bx-trash me-2"></i>Delete Role
-                                    </a>
-                                </li>';
+                    if (auth()->user()->can('edit roles')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.roles.edit', $role->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit Role
+                            </a>
+                        </li>';
                     }
 
-                    $actions .= '
-                            </ul>
-                        </div>';
+                    // Only show delete option for non-super_admin roles
+                    if (! $isSuperAdmin && auth()->user()->can('delete roles')) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteRole('.$role->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete Role
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })

@@ -40,6 +40,8 @@ class BookingController extends Controller
 
     public function consoleIndex(): View
     {
+        $this->authorize('create bookings');
+
         $generalSettings = GeneralSetting::first();
         $mindate = Carbon::today();
         $maxdate = $mindate;
@@ -146,26 +148,27 @@ class BookingController extends Controller
             })
             ->addColumn('actions', function (Booking $booking) {
                 $actions = '<div class="btn-group btn-group-sm" role="group">';
-                
+
                 if (auth()->user()->can('view bookings')) {
                     $actions .= '<button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails('.$booking->id.')">
                         <i class="fas fa-eye"></i> View
                     </button>';
                 }
-                
+
                 if (auth()->user()->can('edit bookings')) {
                     $actions .= '<a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-outline-warning">
                         <i class="fas fa-edit"></i> Edit
                     </a>';
                 }
-                
+
                 if (auth()->user()->can('delete bookings')) {
                     $actions .= '<button type="button" class="btn btn-outline-danger" onclick="deleteBooking('.$booking->id.')">
                         <i class="fas fa-trash"></i>
                     </button>';
                 }
-                
+
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'status', 'payment_status', 'actions'])
@@ -179,6 +182,8 @@ class BookingController extends Controller
 
     public function show(Booking $booking): View
     {
+        $this->authorize('view bookings');
+
         $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user']);
 
         return view('admin.bookings.show', compact('booking'));
@@ -186,6 +191,8 @@ class BookingController extends Controller
 
     public function printTicket(Booking $booking): View
     {
+        $this->authorize('view bookings');
+
         $booking->load([
             'trip.route',
             'trip.bus',
@@ -201,6 +208,8 @@ class BookingController extends Controller
 
     public function edit(Booking $booking): View
     {
+        $this->authorize('edit bookings');
+
         $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
 
         return view('admin.bookings.edit', [
@@ -211,6 +220,8 @@ class BookingController extends Controller
 
     public function update(Request $request, Booking $booking)
     {
+        $this->authorize('edit bookings');
+
         // Check if departure time has passed - prevent status update if it has
         $departureTime = $booking->trip?->departure_datetime;
         $departurePassed = $departureTime && $departureTime->isPast();
@@ -302,6 +313,8 @@ class BookingController extends Controller
 
     public function destroy(Booking $booking)
     {
+        $this->authorize('delete bookings');
+
         // TODO: Implement destroy
         return response()->json(['message' => 'Booking deleted']);
     }
@@ -798,10 +811,10 @@ class BookingController extends Controller
                 ->orderBy('sequence')
                 ->get();
 
-            $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
-            $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+            $fromRouteStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+            $toRouteStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
 
-            if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+            if (! $fromRouteStop || ! $toRouteStop || $fromRouteStop->sequence >= $toRouteStop->sequence) {
                 throw new \Exception('Invalid segment selection');
             }
 
@@ -812,6 +825,10 @@ class BookingController extends Controller
             if (! $tripFromStop || ! $tripToStop) {
                 throw new \Exception('Selected terminals not found in trip');
             }
+
+            // Load terminal information for trip stops
+            $tripFromStop->load('terminal:id,name,code');
+            $tripToStop->load('terminal:id,name,code');
 
             // Get seat map
             $seatCount = $this->availabilityService->seatCount($trip);
@@ -830,9 +847,38 @@ class BookingController extends Controller
 
             return response()->json([
                 'trip' => $trip->load('bus'),
-                'route' => $route->only(['id', 'name', 'code']),
-                'from_stop' => $tripFromStop->only(['id', 'terminal_id', 'departure_at', 'sequence']),
-                'to_stop' => $tripToStop->only(['id', 'terminal_id', 'arrival_at', 'sequence']),
+                'route' => [
+                    'id' => $route->id ?? null,
+                    'name' => $route->name ?? null,
+                    'code' => $route->code ?? null,
+                ],
+                'route_stops' => $routeStops->map(function ($routeStop) {
+                    return [
+                        'id' => $routeStop->id,
+                        'terminal_id' => $routeStop->terminal_id,
+                        'terminal_name' => $routeStop->terminal->name ?? null,
+                        'terminal_code' => $routeStop->terminal->code ?? null,
+                        'sequence' => $routeStop->sequence,
+                    ];
+                })->values(),
+                'from_stop' => [
+                    'trip_stop_id' => $tripFromStop->id ?? null,
+                    'route_stop_id' => $fromRouteStop->id ?? null,
+                    'terminal_id' => $tripFromStop->terminal_id ?? null,
+                    'terminal_name' => $tripFromStop->terminal->name ?? null,
+                    'terminal_code' => $tripFromStop->terminal->code ?? null,
+                    'departure_at' => $tripFromStop->departure_at?->format('Y-m-d H:i:s') ?? null,
+                    'sequence' => $tripFromStop->sequence ?? null,
+                ],
+                'to_stop' => [
+                    'trip_stop_id' => $tripToStop->id ?? null,
+                    'route_stop_id' => $toRouteStop->id ?? null,
+                    'terminal_id' => $tripToStop->terminal_id ?? null,
+                    'terminal_name' => $tripToStop->terminal->name ?? null,
+                    'terminal_code' => $tripToStop->terminal->code ?? null,
+                    'arrival_at' => $tripToStop->arrival_at?->format('Y-m-d H:i:s') ?? null,
+                    'sequence' => $tripToStop->sequence ?? null,
+                ],
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
                 'bus_assignments' => $busAssignments->map(function ($assignment) {
@@ -840,25 +886,29 @@ class BookingController extends Controller
                         'id' => $assignment->id,
                         'from_trip_stop_id' => $assignment->from_trip_stop_id,
                         'to_trip_stop_id' => $assignment->to_trip_stop_id,
-                        'from_terminal' => $assignment->fromTripStop->terminal->name ?? 'N/A',
-                        'from_code' => $assignment->fromTripStop->terminal->code ?? 'N/A',
-                        'to_terminal' => $assignment->toTripStop->terminal->name ?? 'N/A',
-                        'to_code' => $assignment->toTripStop->terminal->code ?? 'N/A',
-                        'segment_label' => $assignment->segment_label,
+                        'from_terminal' => $assignment->fromTripStop?->terminal?->name ?? 'N/A',
+                        'from_code' => $assignment->fromTripStop?->terminal?->code ?? 'N/A',
+                        'to_terminal' => $assignment->toTripStop?->terminal?->name ?? 'N/A',
+                        'to_code' => $assignment->toTripStop?->terminal?->code ?? 'N/A',
+                        'segment_label' => $assignment->segment_label ?? 'N/A',
                         'bus' => $assignment->bus ? [
-                            'id' => $assignment->bus->id,
-                            'name' => $assignment->bus->name,
-                            'registration_number' => $assignment->bus->registration_number,
+                            'id' => $assignment->bus->id ?? null,
+                            'name' => $assignment->bus->name ?? null,
+                            'registration_number' => $assignment->bus->registration_number ?? null,
                         ] : null,
-                        'driver_name' => $assignment->driver_name,
-                        'driver_phone' => $assignment->driver_phone,
-                        'host_name' => $assignment->host_name,
-                        'host_phone' => $assignment->host_phone,
+                        'driver_name' => $assignment->driver_name ?? null,
+                        'driver_phone' => $assignment->driver_phone ?? null,
+                        'host_name' => $assignment->host_name ?? null,
+                        'host_phone' => $assignment->host_phone ?? null,
                     ];
                 }),
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 400);
         }
     }
 
@@ -935,6 +985,8 @@ class BookingController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create bookings');
+
         $validated = $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'from_terminal_id' => 'required|exists:terminals,id',
@@ -1094,19 +1146,37 @@ class BookingController extends Controller
     private function getBookedSeats(Trip $trip, TripStop $fromStop, TripStop $toStop): array
     {
         // Load bookings with RouteStop relationships
-        $bookings = Booking::with(['seats', 'passengers', 'fromStop', 'toStop'])
+        $bookings = Booking::with(['seats', 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $trip->id)
             ->whereIn('status', ['confirmed', 'checked_in', 'boarded'])
             ->get();
 
         $bookedSeats = [];
-        foreach ($bookings as $booking) {
-            // Check if segment overlaps - use RouteStop sequences
-            $bookingFrom = $booking->fromStop->sequence;
-            $bookingTo = $booking->toStop->sequence;
-            $queryFrom = $fromStop->sequence;
-            $queryTo = $toStop->sequence;
 
+        // Get query segment sequences (TripStop sequences)
+        $queryFrom = $fromStop->sequence ?? null;
+        $queryTo = $toStop->sequence ?? null;
+
+        if ($queryFrom === null || $queryTo === null) {
+            return $bookedSeats;
+        }
+
+        foreach ($bookings as $booking) {
+            // Skip if RouteStop relationships are missing
+            if (! $booking->fromStop || ! $booking->toStop) {
+                continue;
+            }
+
+            // Check if segment overlaps - use RouteStop sequences
+            $bookingFrom = $booking->fromStop->sequence ?? null;
+            $bookingTo = $booking->toStop->sequence ?? null;
+
+            // Skip if sequences are missing
+            if ($bookingFrom === null || $bookingTo === null) {
+                continue;
+            }
+
+            // Check for overlap: bookingFrom < queryTo AND queryFrom < bookingTo
             if ($bookingFrom < $queryTo && $queryFrom < $bookingTo) {
                 foreach ($booking->seats as $seat) {
                     // Get gender from seat first (primary source), fallback to passenger if seat doesn't have it

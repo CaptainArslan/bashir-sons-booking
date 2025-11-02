@@ -61,9 +61,11 @@
                 <p>Manage system users and their access permissions</p>
             </div>
             <div>
-                <a href="{{ route('admin.users.create') }}" class="add-user-btn">
-                    <i class="bx bx-plus me-1"></i>Add New User
-                </a>
+                @can('create users')
+                    <a href="{{ route('admin.users.create') }}" class="add-user-btn">
+                        <i class="bx bx-plus me-1"></i>Add New User
+                    </a>
+                @endcan
             </div>
         </div>
     </div>

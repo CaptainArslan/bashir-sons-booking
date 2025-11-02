@@ -15,9 +15,11 @@
             </nav>
         </div>
         <div class="ms-auto">
+            @can('create facilities')
                 <a href="{{ route('admin.facilities.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Facility
-            </a>
+                    <i class="bx bx-plus"></i> Add New Facility
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->
