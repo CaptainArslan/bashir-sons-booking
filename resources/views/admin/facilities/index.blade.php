@@ -35,7 +35,9 @@
                             <th>Status</th>
                             <th>Buses Count</th>
                             <th>Created Date</th>
-                            <th>Actions</th>
+                            @if(auth()->user()->can('edit facilities') || auth()->user()->can('delete facilities'))
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                 </table>
@@ -80,40 +82,81 @@
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
+                    }
+                    @if(auth()->user()->can('edit facilities') || auth()->user()->can('delete facilities'))
+                    ,{
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
                     }
+                    @endif
                 ],
             });
         });
 
-        // Delete facility function
+        // Delete facility function with SweetAlert
         function deleteFacility(facilityId) {
-            if (confirm('Are you sure you want to delete this facility?')) {
-                $.ajax({
-                    url: "{{ route('admin.facilities.destroy', ':id') }}".replace(':id', facilityId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#facilities-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the facility.');
-                    }
-                });
-            }
+                    });
+                    $.ajax({
+                        url: "{{ url('admin/facilities') }}/" + facilityId,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Facility has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#facilities-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete facility.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the facility.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Facility not found.';
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete facilities.';
+                            }
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection

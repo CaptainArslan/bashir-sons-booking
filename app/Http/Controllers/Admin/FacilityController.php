@@ -18,10 +18,15 @@ class FacilityController extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax()) {
+            $user = auth()->user();
+            $hasEditPermission = $user->can('edit facilities');
+            $hasDeletePermission = $user->can('delete facilities');
+            $hasAnyActionPermission = $hasEditPermission || $hasDeletePermission;
+
             $facilities = Facility::query()
                 ->select('id', 'name', 'description', 'icon', 'status', 'created_at');
 
-            return DataTables::eloquent($facilities)
+            $dataTable = DataTables::eloquent($facilities)
                 ->addColumn('formatted_name', function ($facility) {
                     return '<div class="d-flex align-items-center">
                                 <i class="'.e($facility->icon).' me-2 text-primary"></i>
@@ -43,8 +48,11 @@ class FacilityController extends Controller
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
 
                     return '<span class="badge '.$badgeClass.'">'.$count.' bus'.($count !== 1 ? 'es' : '').'</span>';
-                })
-                ->addColumn('actions', function ($facility) {
+                });
+
+            // Only add actions column if user has at least one action permission
+            if ($hasAnyActionPermission) {
+                $dataTable->addColumn('actions', function ($facility) use ($hasEditPermission, $hasDeletePermission) {
                     $actions = '<div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                                 type="button" 
@@ -54,7 +62,7 @@ class FacilityController extends Controller
                         </button>
                         <ul class="dropdown-menu">';
 
-                    if (auth()->user()->can('edit facilities')) {
+                    if ($hasEditPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
                                href="'.route('admin.facilities.edit', $facility->id).'">
@@ -63,9 +71,11 @@ class FacilityController extends Controller
                         </li>';
                     }
 
-                    if (auth()->user()->can('delete facilities')) {
-                        $actions .= '<li><hr class="dropdown-divider"></li>
-                        <li>
+                    if ($hasDeletePermission) {
+                        if ($hasEditPermission) {
+                            $actions .= '<li><hr class="dropdown-divider"></li>';
+                        }
+                        $actions .= '<li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
                                onclick="deleteFacility('.$facility->id.')">
@@ -77,10 +87,16 @@ class FacilityController extends Controller
                     $actions .= '</ul></div>';
 
                     return $actions;
-                })
+                });
+            }
+
+            return $dataTable
                 ->editColumn('created_at', fn ($facility) => $facility->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns(['formatted_name', 'description_preview', 'status_badge', 'buses_count', 'actions'])
+                ->rawColumns($hasAnyActionPermission
+                    ? ['formatted_name', 'description_preview', 'status_badge', 'buses_count', 'actions']
+                    : ['formatted_name', 'description_preview', 'status_badge', 'buses_count']
+                )
                 ->make(true);
         }
     }
@@ -173,27 +189,44 @@ class FacilityController extends Controller
     public function destroy($id)
     {
         try {
+            $this->authorize('delete facilities');
+
             $facility = Facility::findOrFail($id);
 
             // Check if facility has buses assigned
             if ($facility->buses()->count() > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete facility. It has buses assigned to it.',
-                ], 400);
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot delete facility. It has buses assigned to it.',
+                    ], 400);
+                }
+
+                return redirect()->route('admin.facilities.index')
+                    ->with('error', 'Cannot delete facility. It has buses assigned to it.');
             }
 
             $facility->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Facility deleted successfully.',
-            ]);
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Facility deleted successfully.',
+                ]);
+            }
+
+            return redirect()->route('admin.facilities.index')
+                ->with('success', 'Facility deleted successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting facility: '.$e->getMessage(),
-            ], 500);
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting facility: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('admin.facilities.index')
+                ->with('error', 'Error deleting facility: '.$e->getMessage());
         }
     }
 }
