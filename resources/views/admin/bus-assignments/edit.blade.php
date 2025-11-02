@@ -52,7 +52,11 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Driver Phone <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" name="driver_phone" value="{{ old('driver_phone', $busAssignment->driver_phone) }}" required maxlength="20">
+                        <input type="text" class="form-control" name="driver_phone" id="driver_phone" value="{{ old('driver_phone', $busAssignment->driver_phone) }}" placeholder="0317-7777777" required maxlength="12">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            <i class="bx bx-info-circle me-1"></i>
+                            Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                        </div>
                         @error('driver_phone')
                             <div class="text-danger small">{{ $message }}</div>
                         @enderror
@@ -62,7 +66,11 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Driver CNIC <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="driver_cnic" value="{{ old('driver_cnic', $busAssignment->driver_cnic) }}" required maxlength="50">
+                        <input type="text" class="form-control" name="driver_cnic" id="driver_cnic" value="{{ old('driver_cnic', $busAssignment->driver_cnic) }}" placeholder="34101-1111111-1" required maxlength="15">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            <i class="bx bx-info-circle me-1"></i>
+                            Format: XXXXX-XXXXXXX-X (e.g., 34101-1111111-1)
+                        </div>
                         @error('driver_cnic')
                             <div class="text-danger small">{{ $message }}</div>
                         @enderror
@@ -98,7 +106,11 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Host Phone</label>
-                        <input type="tel" class="form-control" name="host_phone" value="{{ old('host_phone', $busAssignment->host_phone) }}" maxlength="20">
+                        <input type="text" class="form-control" name="host_phone" id="host_phone" value="{{ old('host_phone', $busAssignment->host_phone) }}" placeholder="0317-7777777" maxlength="12">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            <i class="bx bx-info-circle me-1"></i>
+                            Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                        </div>
                         @error('host_phone')
                             <div class="text-danger small">{{ $message }}</div>
                         @enderror

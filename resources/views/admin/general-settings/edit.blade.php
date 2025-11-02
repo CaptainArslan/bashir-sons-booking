@@ -170,7 +170,11 @@
                                         </span>
                                         <input type="text" class="form-control @error('phone') is-invalid @enderror" 
                                             id="phone" name="phone" 
-                                            placeholder="Enter Phone" value="{{ old('phone', $settings->phone) }}" required>
+                                            placeholder="0317-7777777" value="{{ old('phone', $settings->phone) }}" maxlength="12" required>
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                            <i class="bx bx-info-circle me-1"></i>
+                                            Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                        </div>
                                     </div>
                                     @error('phone')
                                         <div class="text-danger small mt-1">{{ $message }}</div>
@@ -185,7 +189,11 @@
                                         </span>
                                         <input type="text" class="form-control @error('alternate_phone') is-invalid @enderror" 
                                             id="alternate_phone" name="alternate_phone" 
-                                            placeholder="Enter Alternate Phone" value="{{ old('alternate_phone', $settings->alternate_phone) }}">
+                                            placeholder="0317-7777777" value="{{ old('alternate_phone', $settings->alternate_phone) }}" maxlength="12">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                            <i class="bx bx-info-circle me-1"></i>
+                                            Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                        </div>
                                     </div>
                                     @error('alternate_phone')
                                         <div class="text-danger small mt-1">{{ $message }}</div>
@@ -459,7 +467,11 @@
                                         </span>
                                         <input type="text" class="form-control @error('support_phone') is-invalid @enderror" 
                                             id="support_phone" name="support_phone" 
-                                            placeholder="Enter Support Phone" value="{{ old('support_phone', $settings->support_phone) }}">
+                                            placeholder="0317-7777777" value="{{ old('support_phone', $settings->support_phone) }}" maxlength="12">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                            <i class="bx bx-info-circle me-1"></i>
+                                            Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                        </div>
                                     </div>
                                     @error('support_phone')
                                         <div class="text-danger small mt-1">{{ $message }}</div>

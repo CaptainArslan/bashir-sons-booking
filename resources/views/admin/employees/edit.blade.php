@@ -207,16 +207,24 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="phone" class="form-label required-field">Phone Number</label>
-                                <input type="number" class="form-control @error('phone') is-invalid @enderror" id="phone"
-                                    name="phone" value="{{ old('phone', $user->profile?->phone) }}" required maxlength="11">
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
+                                    name="phone" value="{{ old('phone', $user->profile?->phone) }}" placeholder="0317-7777777" required maxlength="12">
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                </div>
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6">
                                 <label for="cnic" class="form-label required-field">CNIC</label>
-                                <input type="number" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
-                                    name="cnic" value="{{ old('cnic', $user->profile?->cnic) }}" required maxlength="13">
+                                <input type="text" class="form-control @error('cnic') is-invalid @enderror" id="cnic"
+                                    name="cnic" value="{{ old('cnic', $user->profile?->cnic) }}" placeholder="34101-1111111-1" required maxlength="15">
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Format: XXXXX-XXXXXXX-X (e.g., 34101-1111111-1)
+                                </div>
                                 @error('cnic')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

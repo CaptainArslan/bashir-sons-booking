@@ -595,11 +595,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Driver Phone <span class="text-danger">*</span></label>
-                            <input type="tel" id="driverPhone" class="form-control" placeholder="03001234567" required>
+                            <input type="text" id="driverPhone" class="form-control" placeholder="0317-7777777" maxlength="12" required>
+                            <small class="text-muted">Format: XXXX-XXXXXXX</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Driver CNIC <span class="text-danger">*</span></label>
-                            <input type="text" id="driverCnic" class="form-control" placeholder="12345-6789012-3" required>
+                            <input type="text" id="driverCnic" class="form-control" placeholder="34101-1111111-1" maxlength="15" required>
+                            <small class="text-muted">Format: XXXXX-XXXXXXX-X</small>
                         </div>
                     </div>
 
@@ -624,7 +626,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Host Phone</label>
-                            <input type="tel" id="hostPhone" class="form-control" placeholder="03001234567">
+                            <input type="text" id="hostPhone" class="form-control" placeholder="0317-7777777" maxlength="12">
+                            <small class="text-muted">Format: XXXX-XXXXXXX</small>
                         </div>
                     </div>
 
@@ -710,6 +713,30 @@
 
             // Add first expense row
             addExpenseRow();
+
+            // Initialize input masks for dynamically created inputs
+            setTimeout(function() {
+                if (typeof $.fn.inputmask !== 'undefined') {
+                    $('#driverPhone').inputmask('9999-9999999', {
+                        placeholder: '_',
+                        clearMaskOnLostFocus: false,
+                        showMaskOnHover: true,
+                        showMaskOnFocus: true
+                    });
+                    $('#driverCnic').inputmask('99999-9999999-9', {
+                        placeholder: '_',
+                        clearMaskOnLostFocus: false,
+                        showMaskOnHover: true,
+                        showMaskOnFocus: true
+                    });
+                    $('#hostPhone').inputmask('9999-9999999', {
+                        placeholder: '_',
+                        clearMaskOnLostFocus: false,
+                        showMaskOnHover: true,
+                        showMaskOnFocus: true
+                    });
+                }
+            }, 200);
 
             // Handle confirm button - Create Bus Assignment
             document.getElementById('confirmAssignBusBtn').onclick = () => {

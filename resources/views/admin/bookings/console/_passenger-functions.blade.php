@@ -72,17 +72,17 @@
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold">CNIC</label>
-                                <input type="text" class="form-control form-control-sm" 
+                                <input type="text" class="form-control form-control-sm cnic-input" 
                                     value="${info.cnic || ''}" 
                                     onchange="updatePassengerField('${passengerId}', 'cnic', this.value)"
-                                    placeholder="CNIC / ID Number" maxlength="20">
+                                    placeholder="34101-1111111-1" maxlength="15">
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold">Phone</label>
-                                <input type="tel" class="form-control form-control-sm" 
+                                <input type="text" class="form-control form-control-sm phone-input" 
                                     value="${info.phone || ''}" 
                                     onchange="updatePassengerField('${passengerId}', 'phone', this.value)"
-                                    placeholder="Phone Number" maxlength="20">
+                                    placeholder="0317-7777777" maxlength="12">
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold">Email</label>
@@ -99,6 +99,35 @@
 
         container.innerHTML = html;
         document.getElementById('addPassengerBtn').style.display = 'inline-block';
+
+        // Apply input masks to all CNIC and phone inputs after forms are updated
+        setTimeout(function() {
+            if (typeof $.fn.inputmask !== 'undefined') {
+                // Apply CNIC masks
+                $('.cnic-input, input[onchange*="\'cnic\'"]').each(function() {
+                    if (!$(this).data('inputmask')) {
+                        $(this).inputmask('99999-9999999-9', {
+                            placeholder: '_',
+                            clearMaskOnLostFocus: false,
+                            showMaskOnHover: true,
+                            showMaskOnFocus: true
+                        });
+                    }
+                });
+
+                // Apply phone masks
+                $('.phone-input, input[onchange*="\'phone\'"]').each(function() {
+                    if (!$(this).data('inputmask')) {
+                        $(this).inputmask('9999-9999999', {
+                            placeholder: '_',
+                            clearMaskOnLostFocus: false,
+                            showMaskOnHover: true,
+                            showMaskOnFocus: true
+                        });
+                    }
+                });
+            }
+        }, 100);
     }
 
     // ========================================
@@ -129,6 +158,30 @@
         };
 
         updatePassengerForms();
+
+        // Initialize input masks for newly created passenger inputs
+        setTimeout(function() {
+            const cnicInput = document.querySelector(`input[onchange*="'${passengerId}'"][onchange*="'cnic'"]`);
+            const phoneInput = document.querySelector(`input[onchange*="'${passengerId}'"][onchange*="'phone'"]`);
+            
+            if (cnicInput && typeof $.fn.inputmask !== 'undefined') {
+                $(cnicInput).inputmask('99999-9999999-9', {
+                    placeholder: '_',
+                    clearMaskOnLostFocus: false,
+                    showMaskOnHover: true,
+                    showMaskOnFocus: true
+                });
+            }
+            
+            if (phoneInput && typeof $.fn.inputmask !== 'undefined') {
+                $(phoneInput).inputmask('9999-9999999', {
+                    placeholder: '_',
+                    clearMaskOnLostFocus: false,
+                    showMaskOnHover: true,
+                    showMaskOnFocus: true
+                });
+            }
+        }, 200);
 
         // Scroll to the newly added passenger form
         setTimeout(() => {

@@ -270,8 +270,12 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control @error('phone') is-invalid @enderror"
-                                    id="phone" name="phone" placeholder="Enter Phone Number"
-                                    value="{{ old('phone', $terminal->phone) }}" required>
+                                    id="phone" name="phone" placeholder="0317-7777777"
+                                    value="{{ old('phone', $terminal->phone) }}" maxlength="12" required>
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                </div>
                                 @error('phone')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror

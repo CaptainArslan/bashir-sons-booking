@@ -86,8 +86,9 @@
                         </div>
 
                         <div class="col-lg-6 mb-3">
-                            <input type="text" name="phone" value="{{ old('phone') }}"
-                                class="form-control @error('phone') is-invalid @enderror" placeholder="Phone:">
+                            <input type="text" name="phone" id="phone" value="{{ old('phone') }}"
+                                class="form-control @error('phone') is-invalid @enderror" placeholder="0317-7777777" maxlength="12">
+                            <small class="text-muted">Format: XXXX-XXXXXXX (e.g., 0317-7777777)</small>
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

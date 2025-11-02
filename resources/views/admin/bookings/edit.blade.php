@@ -169,11 +169,11 @@
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">CNIC</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][cnic]" value="{{ $passenger->cnic }}" maxlength="20" {{ $formDisabled }}>
+                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][cnic]" value="{{ $passenger->cnic }}" placeholder="34101-1111111-1" maxlength="15" {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Phone</label>
-                                                <input type="tel" class="form-control form-control-sm" name="passengers[{{ $index }}][phone]" value="{{ $passenger->phone }}" maxlength="20" {{ $formDisabled }}>
+                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][phone]" value="{{ $passenger->phone }}" placeholder="0317-7777777" maxlength="12" {{ $formDisabled }}>
                                             </div>
                                             <div class="mb-0">
                                                 <label class="form-label small fw-bold">Email</label>
