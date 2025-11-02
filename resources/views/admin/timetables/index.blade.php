@@ -348,11 +348,13 @@ function displayTimetables(timetables) {
                                 ${timetable.status}
                             </span>
                             <div class="action-buttons">
+                                ${timetable.can_edit ? `
                                 <button class="btn btn-sm ${timetable.status === 'active' ? 'btn-warning' : 'btn-success'}" 
                                         onclick="toggleTimetableStatus(${timetable.id}, '${timetable.status}')" 
                                         title="${timetable.status === 'active' ? 'Deactivate' : 'Activate'}">
                                     <i class="bx ${timetable.status === 'active' ? 'bx-pause' : 'bx-play'}"></i>
                                 </button>
+                                ` : ''}
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
                                             type="button" 
@@ -367,17 +369,21 @@ function displayTimetables(timetables) {
                                                 <i class="bx bx-show me-2"></i>View Details
                                             </a>
                                         </li>
+                                        ${timetable.can_edit ? `
                                         <li>
                                             <a class="dropdown-item" href="#" onclick="editTimetable(${timetable.id})">
                                                 <i class="bx bx-edit me-2"></i>Edit Timetable
                                             </a>
                                         </li>
+                                        ` : ''}
+                                        ${timetable.can_delete ? `
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item text-danger" href="#" onclick="deleteTimetable(${timetable.id})">
                                                 <i class="bx bx-trash me-2"></i>Delete Timetable
                                             </a>
                                         </li>
+                                        ` : ''}
                                     </ul>
                                 </div>
                             </div>
@@ -390,13 +396,12 @@ function displayTimetables(timetables) {
                     <table class="stops-table">
                         <thead>
                             <tr>
-                                <th width="5%">#</th>
-                                <th width="25%">Stop Name</th>
-                                <th width="12%">Type</th>
-                                <th width="12%">Status</th>
-                                <th width="12%">Arrival Time</th>
-                                <th width="12%">Departure Time</th>
-                                <th width="22%">Actions</th>
+                                <th width="8%">#</th>
+                                <th width="30%">Stop Name</th>
+                                <th width="15%">Type</th>
+                                <th width="15%">Arrival Time</th>
+                                <th width="15%">Departure Time</th>
+                                <th width="17%">Sequence</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -413,7 +418,7 @@ function displayTimetables(timetables) {
 
 function generateStopsTableRows(stops) {
     if (!stops || stops.length === 0) {
-        return '<tr><td colspan="7" class="text-center text-muted py-3">No stops data available</td></tr>';
+        return '<tr><td colspan="6" class="text-center text-muted py-3">No stops data available</td></tr>';
     }
     
     let html = '';
@@ -421,24 +426,17 @@ function generateStopsTableRows(stops) {
         const isStartStop = index === 0;
         const isEndStop = index === stops.length - 1;
         const stopType = isStartStop ? 'Starting Point' : (isEndStop ? 'Final Destination' : 'Intermediate Stop');
-        const stopStatus = stop.status || 'active';
-        const statusClass = stopStatus === 'active' ? 'active' : 'inactive';
         
         html += `
             <tr>
                 <td class="stop-sequence">${index + 1}</td>
                 <td>
-                    <div>${stop.name}</div>
+                    <div><strong>${stop.name}</strong></div>
                     <div class="stop-type">${stopType}</div>
                 </td>
                 <td>
                     <span class="badge ${isStartStop ? 'bg-success' : (isEndStop ? 'bg-danger' : 'bg-primary')}">
                         ${stopType}
-                    </span>
-                </td>
-                <td>
-                    <span class="status-badge ${statusClass}">
-                        ${stopStatus}
                     </span>
                 </td>
                 <td class="time-value">
@@ -448,19 +446,7 @@ function generateStopsTableRows(stops) {
                     ${!isEndStop ? (stop.departure_time || '--:--') : '-'}
                 </td>
                 <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-primary" onclick="viewStop(${stop.id})" title="View Stop">
-                            <i class="bx bx-show"></i>
-                        </button>
-                        <button class="btn btn-sm btn-warning" onclick="editStop(${stop.id})" title="Edit Stop">
-                            <i class="bx bx-edit"></i>
-                        </button>
-                        <button class="btn btn-sm ${stopStatus === 'active' ? 'btn-outline-warning' : 'btn-outline-success'}" 
-                                onclick="toggleStopStatus(${stop.id}, '${stopStatus}')" 
-                                title="${stopStatus === 'active' ? 'Deactivate Stop' : 'Activate Stop'}">
-                            <i class="bx ${stopStatus === 'active' ? 'bx-pause' : 'bx-play'}"></i>
-                        </button>
-                    </div>
+                    <span class="badge bg-secondary">${stop.sequence || index + 1}</span>
                 </td>
             </tr>
         `;
@@ -488,81 +474,139 @@ function editTimetable(timetableId) {
 function toggleTimetableStatus(timetableId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     const action = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionText = newStatus === 'active' ? 'activate' : 'deactivate';
     
-    if (confirm(`Are you sure you want to ${action} this timetable?`)) {
-        $.ajax({
-            url: "{{ route('admin.timetables.toggle-status', ':id') }}".replace(':id', timetableId),
-            type: 'PATCH',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            data: {
-                status: newStatus
-            },
-            success: function(response) {
-                if (response.success) {
-                    loadTimetables(); // Reload timetables
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You want to ${actionText} this timetable?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: `Yes, ${actionText} it!`,
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: `${actionText === 'activate' ? 'Activating' : 'Deactivating'}...`,
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response.message || 'An error occurred while updating the timetable status.');
-            }
-        });
-    }
+            });
+
+            $.ajax({
+                url: "{{ route('admin.timetables.toggle-status', ':id') }}".replace(':id', timetableId),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                data: {
+                    status: newStatus
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire(
+                            'Success!',
+                            response.message,
+                            'success'
+                        ).then(() => {
+                            loadTimetables();
+                        });
+                    } else {
+                        Swal.fire(
+                            'Error!',
+                            response.message || `Failed to ${actionText} timetable.`,
+                            'error'
+                        );
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    let errorMessage = `An error occurred while ${actionText}ing the timetable.`;
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'You do not have permission to edit timetables.';
+                    }
+                    Swal.fire(
+                        'Error!',
+                        errorMessage,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 // Enhanced Delete Function
 function deleteTimetable(timetableId) {
-    if (confirm('Are you sure you want to delete this timetable? This action cannot be undone.')) {
-        $.ajax({
-            url: "{{ route('admin.timetables.destroy', ':id') }}".replace(':id', timetableId),
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    loadTimetables(); // Reload timetables
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Deleting...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response.message || 'An error occurred while deleting the timetable.');
-            }
-        });
-    }
-}
+            });
 
-// Stop action functions
-function viewStop(stopId) {
-    console.log('View stop:', stopId);
-    // Add your view stop logic here
-}
-
-function editStop(stopId) {
-    console.log('Edit stop:', stopId);
-    // Add your edit stop logic here
-}
-
-function toggleStopStatus(stopId, currentStatus) {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const action = newStatus === 'active' ? 'activate' : 'deactivate';
-    
-    if (confirm(`Are you sure you want to ${action} this stop?`)) {
-        // Add your stop status toggle logic here
-        console.log(`Toggle stop ${stopId} from ${currentStatus} to ${newStatus}`);
-        
-        // You can add AJAX call here to update stop status
-        // For now, just reload the timetables to show updated status
-        loadTimetables();
-    }
+            $.ajax({
+                url: "{{ route('admin.timetables.destroy', ':id') }}".replace(':id', timetableId),
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire(
+                            'Deleted!',
+                            response.message || 'Timetable has been deleted.',
+                            'success'
+                        ).then(() => {
+                            loadTimetables();
+                        });
+                    } else {
+                        Swal.fire(
+                            'Error!',
+                            response.message || 'Failed to delete timetable.',
+                            'error'
+                        );
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    let errorMessage = 'An error occurred while deleting the timetable.';
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'You do not have permission to delete timetables.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Timetable not found.';
+                    }
+                    Swal.fire(
+                        'Error!',
+                        errorMessage,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 // Add smooth scrolling for better UX

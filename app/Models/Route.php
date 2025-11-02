@@ -119,14 +119,14 @@ class Route extends Model
     protected function totalTravelTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
+            get: fn ($value) => 0, // Distance and travel time are no longer tracked at route_stops level
         );
     }
 
     protected function totalDistance(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
+            get: fn ($value) => 0, // Distance and travel time are no longer tracked at route_stops level
         );
     }
 
@@ -134,20 +134,6 @@ class Route extends Model
     {
         return Attribute::make(
             get: fn ($value) => $this->routeStops()->count(),
-        );
-    }
-
-    protected function totalDropoffAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
-        );
-    }
-
-    protected function totalPickupAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
         );
     }
 

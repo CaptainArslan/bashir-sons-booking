@@ -275,7 +275,7 @@
                     <h5 class="mb-3">Basic Information</h5>
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Timetable Name</label>
                                 <input type="text" 
@@ -290,32 +290,51 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="start_departure_time" class="form-label">Start Departure Time</label>
-                                <input type="time" 
-                                       name="start_departure_time" 
-                                       id="start_departure_time" 
+                                <label for="start_departure_time" class="form-label">
+                                    Start Departure Time 
+                                    <small class="text-muted">(Auto-calculated)</small>
+                                </label>
+                                @php
+                                    // Get raw database value to avoid accessor formatting
+                                    $rawStartTime = $timetable->getRawOriginal('start_departure_time');
+                                    $startTimeFormatted = $rawStartTime ? \Carbon\Carbon::parse($rawStartTime)->format('H:i') : '';
+                                @endphp
+                                <input type="text" 
+                                       id="start_departure_time_display" 
                                        class="form-control" 
-                                       value="{{ old('start_departure_time', $timetable->start_departure_time) }}"
-                                       required>
-                                @error('start_departure_time')
-                                    <div class="text-danger mt-1">{{ $message }}</div>
-                                @enderror
+                                       value="{{ $startTimeFormatted }}"
+                                       readonly
+                                       style="background-color: #e9ecef; cursor: not-allowed;">
+                                <small class="form-text text-muted">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Automatically set from first stop's departure time
+                                </small>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="end_arrival_time" class="form-label">End Arrival Time</label>
-                                <input type="time" 
-                                       name="end_arrival_time" 
-                                       id="end_arrival_time" 
+                                <label for="end_arrival_time" class="form-label">
+                                    End Arrival Time 
+                                    <small class="text-muted">(Auto-calculated)</small>
+                                </label>
+                                @php
+                                    // Get raw database value to avoid accessor formatting
+                                    $rawEndTime = $timetable->getRawOriginal('end_arrival_time');
+                                    $endTimeFormatted = $rawEndTime ? \Carbon\Carbon::parse($rawEndTime)->format('H:i') : '';
+                                @endphp
+                                <input type="text" 
+                                       id="end_arrival_time_display" 
                                        class="form-control" 
-                                       value="{{ old('end_arrival_time', $timetable->end_arrival_time) }}">
-                                @error('end_arrival_time')
-                                    <div class="text-danger mt-1">{{ $message }}</div>
-                                @enderror
+                                       value="{{ $endTimeFormatted }}"
+                                       readonly
+                                       style="background-color: #e9ecef; cursor: not-allowed;">
+                                <small class="form-text text-muted">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Automatically set from last stop's arrival time
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -358,6 +377,7 @@
                                     <td>
                                         <div class="stop-name">{{ $stop->terminal->name }}</div>
                                         <div class="stop-type">{{ $stop->terminal->city->name ?? 'N/A' }}</div>
+                                        <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
                                     </td>
                                     <td>
                                         @if($index === 0)
@@ -367,16 +387,20 @@
                                                    value=""
                                                    disabled
                                                    style="background-color: #e9ecef; cursor: not-allowed;">
-                                            <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
                                             <div class="form-text text-muted">
                                                 <i class="bx bx-info-circle me-1"></i>First stop - no arrival time
                                             </div>
                                         @else
+                                            @php
+                                                // Get raw database value to avoid accessor formatting
+                                                $rawArrivalTime = $stop->getRawOriginal('arrival_time');
+                                                $arrivalTimeFormatted = $rawArrivalTime ? \Carbon\Carbon::parse($rawArrivalTime)->format('H:i') : '';
+                                            @endphp
                                             <input type="time" 
                                                    name="stops[{{ $index }}][arrival_time]" 
-                                                   class="form-control" 
-                                                   value="{{ old('stops.' . $index . '.arrival_time', $stop->arrival_time) }}">
-                                            <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
+                                                   class="form-control stop-arrival-time" 
+                                                   data-stop-index="{{ $index }}"
+                                                   value="{{ old('stops.' . $index . '.arrival_time', $arrivalTimeFormatted) }}">
                                         @endif
                                     </td>
                                     <td>
@@ -391,10 +415,16 @@
                                                 <i class="bx bx-info-circle me-1"></i>Last stop - no departure time
                                             </div>
                                         @else
+                                            @php
+                                                // Get raw database value to avoid accessor formatting
+                                                $rawDepartureTime = $stop->getRawOriginal('departure_time');
+                                                $departureTimeFormatted = $rawDepartureTime ? \Carbon\Carbon::parse($rawDepartureTime)->format('H:i') : '';
+                                            @endphp
                                             <input type="time" 
                                                    name="stops[{{ $index }}][departure_time]" 
-                                                   class="form-control" 
-                                                   value="{{ old('stops.' . $index . '.departure_time', $stop->departure_time) }}">
+                                                   class="form-control stop-departure-time" 
+                                                   data-stop-index="{{ $index }}"
+                                                   value="{{ old('stops.' . $index . '.departure_time', $departureTimeFormatted) }}">
                                         @endif
                                     </td>
                                 </tr>
@@ -419,55 +449,88 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Auto-calculate end arrival time based on last stop
-    $('input[name*="[arrival_time]"]:not(:disabled)').on('change', function() {
-        const lastStopIndex = {{ $timetableStops->count() - 1 }};
-        const lastArrivalTime = $(`input[name="stops[${lastStopIndex}][arrival_time]"]:not(:disabled)`).val();
-        
-        if (lastArrivalTime) {
-            $('#end_arrival_time').val(lastArrivalTime);
+    // Function to update start and end times based on stop inputs
+    function updateTimetableTimes() {
+        // Get first stop's departure time (start_departure_time)
+        const firstStopDeparture = $('input[name="stops[0][departure_time]"]').val();
+        if (firstStopDeparture) {
+            $('#start_departure_time_display').val(firstStopDeparture);
+        } else {
+            $('#start_departure_time_display').val('');
         }
+        
+        // Get last stop's arrival time (end_arrival_time)
+        const lastStopIndex = {{ $timetableStops->count() - 1 }};
+        const lastStopArrival = $(`input[name="stops[${lastStopIndex}][arrival_time]"]`).val();
+        if (lastStopArrival) {
+            $('#end_arrival_time_display').val(lastStopArrival);
+        } else {
+            $('#end_arrival_time_display').val('');
+        }
+    }
+    
+    // Update times when stop times change
+    $(document).on('change', '.stop-departure-time, .stop-arrival-time', function() {
+        updateTimetableTimes();
     });
+    
+    // Also update when first stop departure changes
+    $(document).on('change', 'input[name="stops[0][departure_time]"]', function() {
+        updateTimetableTimes();
+    });
+    
+    // Initial update on page load
+    updateTimetableTimes();
     
     // Form validation
     $('form').on('submit', function(e) {
         let isValid = true;
         const errors = [];
         
-        // Check if start departure time is set
-        const startTime = $('#start_departure_time').val();
-        if (!startTime) {
-            errors.push('Start departure time is required.');
+        // Check if first stop has departure time
+        const firstStopDeparture = $('input[name="stops[0][departure_time]"]').val();
+        if (!firstStopDeparture) {
+            errors.push('First stop must have a departure time.');
             isValid = false;
+            $('input[name="stops[0][departure_time]"]').addClass('is-invalid');
+        } else {
+            $('input[name="stops[0][departure_time]"]').removeClass('is-invalid');
         }
         
-        // Check if at least one stop has times set (excluding disabled fields)
-        let hasStopTimes = false;
-        $('input[name*="[arrival_time]"]:not(:disabled), input[name*="[departure_time]"]:not(:disabled)').each(function() {
-            if ($(this).val()) {
-                hasStopTimes = true;
-                return false;
+        // Validate that times are logical (arrival before departure for intermediate stops)
+        $('.stop-arrival-time, .stop-departure-time, input[name*="[departure_time]"]').each(function() {
+            const stopIndex = $(this).data('stop-index');
+            if (stopIndex !== undefined && stopIndex > 0 && stopIndex < {{ $timetableStops->count() - 1 }}) {
+                const arrivalTime = $(`input[name="stops[${stopIndex}][arrival_time]"]`).val();
+                const departureTime = $(`input[name="stops[${stopIndex}][departure_time]"]`).val();
+                
+                if (arrivalTime && departureTime) {
+                    if (arrivalTime >= departureTime) {
+                        errors.push(`Stop ${parseInt(stopIndex) + 1}: Arrival time must be before departure time.`);
+                        isValid = false;
+                        $(`input[name="stops[${stopIndex}][arrival_time]"]`).addClass('is-invalid');
+                        $(`input[name="stops[${stopIndex}][departure_time]"]`).addClass('is-invalid');
+                    }
+                }
             }
         });
         
-        if (!hasStopTimes) {
-            errors.push('Please set arrival or departure times for at least one stop.');
-            isValid = false;
-        }
-        
         if (!isValid) {
             e.preventDefault();
-            alert('Please fix the following errors:\n' + errors.join('\n'));
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                html: 'Please fix the following errors:<br><ul style="text-align: left;"><li>' + errors.join('</li><li>') + '</li></ul>',
+                confirmButtonText: 'OK'
+            });
         }
     });
     
     // Real-time validation for time inputs
-    $('.form-control').on('change', function() {
+    $(document).on('change', '.stop-arrival-time, .stop-departure-time, input[name*="[departure_time]"]', function() {
         const time = $(this).val();
         if (time) {
             $(this).removeClass('is-invalid');
-        } else {
-            $(this).addClass('is-invalid');
         }
     });
 });

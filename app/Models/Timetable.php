@@ -62,6 +62,7 @@ class Timetable extends Model
     {
         return Attribute::make(
             get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
+            set: fn($value) => $value ? Carbon::parse($value)->format('h:i') : null,
         );
     }
 
@@ -69,6 +70,7 @@ class Timetable extends Model
     {
         return Attribute::make(
             get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
+            set: fn($value) => $value ? Carbon::parse($value)->format('h:i') : null,
         );
     }
 
