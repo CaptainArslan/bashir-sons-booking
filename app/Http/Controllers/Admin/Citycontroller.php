@@ -136,13 +136,39 @@ class Citycontroller extends Controller
 
     public function destroy($id)
     {
-        $city = City::findOrFail($id);
+        try {
+            $city = City::findOrFail($id);
 
-        if ($city->terminals->count() > 0) {
-            return redirect()->route('admin.cities.index')->with('error', 'City has associated terminals. Please delete the terminals first.');
+            if ($city->terminals->count() > 0) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'City has associated terminals. Please delete the terminals first.',
+                    ], 400);
+                }
+
+                return redirect()->route('admin.cities.index')->with('error', 'City has associated terminals. Please delete the terminals first.');
+            }
+
+            $city->delete();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'City deleted successfully.',
+                ]);
+            }
+
+            return redirect()->route('admin.cities.index')->with('success', 'City deleted successfully');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting city: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('admin.cities.index')->with('error', 'Error deleting city: '.$e->getMessage());
         }
-        $city->delete();
-
-        return redirect()->route('admin.cities.index')->with('success', 'City deleted successfully');
     }
 }
