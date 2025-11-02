@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\GenderEnum;
+use App\Enums\UserStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\profile;
 use App\Models\Route;
 use App\Models\Terminal;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -34,7 +36,7 @@ class EmployeeController extends Controller
                     $query->where('role_id', $employeeRole->id);
                 })
                 ->with(['roles:id,name', 'profile', 'terminal.city', 'routes'])
-                ->select('id', 'name', 'email', 'terminal_id', 'created_at');
+                ->select('id', 'name', 'email', 'terminal_id', 'status', 'created_at');
 
             return DataTables::eloquent($employees)
                 ->addColumn('employee_info', function ($user) {
@@ -131,36 +133,98 @@ class EmployeeController extends Controller
                     return $addressInfo ?: '<span class="text-muted">No notes</span>';
                 })
                 ->addColumn('status_info', function ($user) {
-                    $status = $user->terminal ? 'active' : 'inactive';
-                    $statusColor = $status === 'active' ? 'success' : 'danger';
-                    $statusText = $status === 'active' ? 'Active' : 'No Terminal';
+                    // Get raw status value from database to ensure we get the actual stored value
+                    $statusValue = $user->getRawOriginal('status') ?? 'active';
 
-                    return '<span class="badge bg-'.$statusColor.'">'.$statusText.'</span>';
+                    // If getRawOriginal returns null, fall back to accessing the attribute
+                    if ($statusValue === null || $statusValue === '') {
+                        if ($user->status instanceof UserStatusEnum) {
+                            $statusValue = $user->status->value;
+                        } elseif (is_string($user->status)) {
+                            $statusValue = $user->status;
+                        } else {
+                            $statusValue = 'active';
+                        }
+                    }
+
+                    $statusName = UserStatusEnum::getStatusName($statusValue);
+                    $statusColor = UserStatusEnum::getStatusColor($statusValue);
+
+                    // If user is not banned, check terminal assignment
+                    if ($statusValue === UserStatusEnum::ACTIVE->value) {
+                        if (! $user->terminal) {
+                            $statusName = 'No Terminal';
+                            $statusColor = 'warning';
+                        }
+                    }
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('actions', function ($user) {
+                    $hasEditPermission = auth()->user()->can('manage users');
+                    $hasDeletePermission = auth()->user()->can('manage users');
+                    $hasBanPermission = auth()->user()->can('ban users');
+                    $hasActivatePermission = auth()->user()->can('activate users');
+                    $hasAnyPermission = $hasEditPermission || $hasDeletePermission || $hasBanPermission || $hasActivatePermission;
+
+                    if (! $hasAnyPermission) {
+                        return '<span class="text-muted">No actions available</span>';
+                    }
+
                     $actions = '<div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                type="button" 
-                                data-bs-toggle="dropdown" 
-                                aria-expanded="false">
-                            <i class="bx bx-dots-horizontal-rounded"></i>
-                        </button>
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="bx bx-dots-horizontal-rounded"></i>
+                            </button>
                         <ul class="dropdown-menu">';
 
-                    if (auth()->user()->can('manage users')) {
+                    if ($hasEditPermission) {
                         $actions .= '<li>
-                            <a class="dropdown-item" 
+                                    <a class="dropdown-item" 
                                href="'.route('admin.employees.edit', $user->id).'">
-                                <i class="bx bx-edit me-2"></i>Edit Employee
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
+                                        <i class="bx bx-edit me-2"></i>Edit Employee
+                                    </a>
+                        </li>';
+                    }
+
+                    // Get status value for comparison
+                    $userStatusValue = $user->getRawOriginal('status') ?? 'active';
+                    if ($userStatusValue === null || $userStatusValue === '') {
+                        $userStatusValue = ($user->status instanceof UserStatusEnum) ? $user->status->value : ($user->status ?? 'active');
+                    }
+
+                    if ($hasBanPermission && $userStatusValue !== UserStatusEnum::BANNED->value) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteEmployee('.$user->id.')">
-                                <i class="bx bx-trash me-2"></i>Delete Employee
+                               onclick="banEmployee('.$user->id.')">
+                                <i class="bx bx-block me-2"></i>Ban Employee
                             </a>
+                        </li>';
+                    }
+
+                    if ($hasActivatePermission && $userStatusValue === UserStatusEnum::BANNED->value) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-success" 
+                               href="javascript:void(0)" 
+                               onclick="activateEmployee('.$user->id.')">
+                                <i class="bx bx-check-circle me-2"></i>Activate Employee
+                            </a>
+                        </li>';
+                    }
+
+                    if ($hasDeletePermission) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" 
+                                       href="javascript:void(0)" 
+                               onclick="deleteEmployee('.$user->id.')">
+                                        <i class="bx bx-trash me-2"></i>Delete Employee
+                                    </a>
                         </li>';
                     }
 
@@ -457,6 +521,119 @@ class EmployeeController extends Controller
                 'success' => false,
                 'message' => 'Error deleting employee: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Ban an employee (requires 'ban users' permission)
+     */
+    public function ban($id)
+    {
+        try {
+            $this->authorize('ban users');
+
+            $user = User::findOrFail($id);
+
+            // Ensure this is an employee
+            $employeeRole = Role::where('name', 'Employee')->first();
+            if (! $user->hasRole($employeeRole)) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User is not an employee.',
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'User is not an employee.');
+            }
+
+            // Prevent banning yourself while active
+            if ($user->id === auth()->id() && $user->status === UserStatusEnum::ACTIVE) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You cannot ban yourself while active. Please have another admin do it.',
+                    ], 403);
+                }
+
+                return redirect()->back()->with('error', 'You cannot ban yourself while active.');
+            }
+
+            $user->update([
+                'status' => UserStatusEnum::BANNED->value,
+            ]);
+
+            // Logout the user if they are currently logged in
+            if ($user->id === auth()->id()) {
+                Auth::logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
+            }
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Employee banned successfully.',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Employee banned successfully.');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error banning employee: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Error banning employee: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Activate an employee (requires 'activate users' permission)
+     */
+    public function activate($id)
+    {
+        try {
+            $this->authorize('activate users');
+
+            $user = User::findOrFail($id);
+
+            // Ensure this is an employee
+            $employeeRole = Role::where('name', 'Employee')->first();
+            if (! $user->hasRole($employeeRole)) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User is not an employee.',
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'User is not an employee.');
+            }
+
+            $user->update([
+                'status' => UserStatusEnum::ACTIVE->value,
+            ]);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Employee activated successfully.',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Employee activated successfully.');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error activating employee: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Error activating employee: '.$e->getMessage());
         }
     }
 

@@ -54,6 +54,12 @@ Route::middleware(['guest', '2fa.pending'])->group(function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
+// User activation route (for banned users, before authentication - guest only)
+Route::middleware('guest')->group(function () {
+    Route::get('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'show'])->name('user.activate');
+    Route::post('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'activate'])->name('user.activate.post');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -105,6 +111,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->can('edit users')->name('users.edit');
         Route::put('/users/{id}', [UserController::class, 'update'])->can('edit users')->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->can('delete users')->name('users.destroy');
+        Route::post('/users/{id}/ban', [UserController::class, 'ban'])->can('ban users')->name('users.ban');
+        Route::post('/users/{id}/activate', [UserController::class, 'activate'])->can('activate users')->name('users.activate');
 
         // Employees Routes
         Route::get('/employees', [EmployeeController::class, 'index'])->can('manage users')->name('employees.index');
@@ -116,6 +124,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->can('manage users')->name('employees.edit');
         Route::put('/employees/{id}', [EmployeeController::class, 'update'])->can('manage users')->name('employees.update');
         Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->can('manage users')->name('employees.destroy');
+        Route::post('/employees/{id}/ban', [EmployeeController::class, 'ban'])->can('ban users')->name('employees.ban');
+        Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate'])->can('activate users')->name('employees.activate');
 
         // Bus Types Routes
         Route::get('/bus-types', [BusTypeController::class, 'index'])->can('view bus types')->name('bus-types.index');

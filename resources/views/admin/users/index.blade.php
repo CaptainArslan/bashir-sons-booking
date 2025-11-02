@@ -83,6 +83,7 @@
                             <th>Address Info</th>
                             <th>Roles</th>
                             <th>Terminal</th>
+                            <th>Status</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -137,6 +138,10 @@
                     orderable: false,
                 },
                 {
+                    data: 'status_badge',
+                    name: 'status',
+                },
+                {
                     data: 'created_at',
                     name: 'created_at',
                 },
@@ -153,29 +158,158 @@
             });
         });
 
-        // Delete user function
+        // Delete user function with SweetAlert
         function deleteUser(userId) {
-            if (confirm('Are you sure you want to delete this user?')) {
-                $.ajax({
-                    url: "{{ route('admin.users.destroy', ':id') }}".replace(':id', userId),
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Reload the users table
-                            $('#users-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        toastr.error('Error deleting user');
-                    }
-                });
-            }
+                    });
+
+                    $.ajax({
+                        url: "{{ url('admin/users') }}/" + userId,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Deleted!', response.message || 'User has been deleted.', 'success')
+                                    .then(() => {
+                                        $('#users-table').DataTable().ajax.reload();
+                                    });
+                            } else {
+                                Swal.fire('Error!', response.message || 'Failed to delete user.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the user.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Ban user function with SweetAlert
+        function banUser(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This user will be banned and logged out immediately!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, ban user!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Banning...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ url('admin/users') }}/" + userId + "/ban",
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Banned!', response.message || 'User has been banned.', 'success')
+                                    .then(() => {
+                                        $('#users-table').DataTable().ajax.reload();
+                                    });
+                            } else {
+                                Swal.fire('Error!', response.message || 'Failed to ban user.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while banning the user.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to ban users.';
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Activate user function with SweetAlert
+        function activateUser(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This user will be activated and can login again!",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, activate user!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Activating...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ url('admin/users') }}/" + userId + "/activate",
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Activated!', response.message || 'User has been activated.', 'success')
+                                    .then(() => {
+                                        $('#users-table').DataTable().ajax.reload();
+                                    });
+                            } else {
+                                Swal.fire('Error!', response.message || 'Failed to activate user.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while activating the user.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to activate users.';
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection

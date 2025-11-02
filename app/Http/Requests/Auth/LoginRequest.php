@@ -41,6 +41,19 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Check if user exists and credentials are correct (without status check)
+        $user = \App\Models\User::where('email', $this->string('email'))->first();
+
+        if (! $user || ! \Illuminate\Support\Facades\Hash::check($this->string('password'), $user->password)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // If user is banned, allow authentication but will be handled in controller
+        // This allows banned users to login and activate themselves
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

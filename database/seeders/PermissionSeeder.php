@@ -19,6 +19,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'create users', 'module' => 'User Management'],
             ['name' => 'edit users', 'module' => 'User Management'],
             ['name' => 'delete users', 'module' => 'User Management'],
+            ['name' => 'ban users', 'module' => 'User Management'],
+            ['name' => 'activate users', 'module' => 'User Management'],
             ['name' => 'manage user profiles', 'module' => 'User Management'],
             ['name' => 'manage users', 'module' => 'User Management'],
 

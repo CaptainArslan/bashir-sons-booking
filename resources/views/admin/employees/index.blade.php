@@ -235,23 +235,6 @@
                 }
             });
 
-            // Update statistics
-            function updateStatistics() {
-                $.ajax({
-                    url: "{{ route('admin.employees.stats') }}",
-                    type: 'GET',
-                    success: function(response) {
-                        $('#totalEmployees').text(response.total);
-                        $('#activeEmployees').text(response.active);
-                        $('#inactiveEmployees').text(response.inactive);
-                        $('#newEmployees').text(response.new_this_month);
-                    },
-                    error: function() {
-                        console.log('Error loading statistics');
-                    }
-                });
-            }
-
             // Initial statistics load
             updateStatistics();
 
@@ -270,41 +253,163 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
-                        url: "{{ route('admin.employees.destroy', ':id') }}".replace(':id',
-                            userId),
+                        url: "{{ url('admin/employees') }}/" + userId,
                         type: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        data: {
+                            _token: "{{ csrf_token() }}"
                         },
                         success: function(response) {
                             if (response.success) {
-                                Swal.fire(
-                                    'Deleted!',
-                                    response.message || 'Employee has been deleted.',
-                                    'success'
-                                );
-                                // Reload the employees table
-                                table.ajax.reload();
-                                // Update statistics
-                                updateStatistics();
+                                Swal.fire('Deleted!', response.message || 'Employee has been deleted.', 'success')
+                                    .then(() => {
+                                        table.ajax.reload();
+                                        updateStatistics();
+                                    });
                             } else {
-                                Swal.fire(
-                                    'Error!',
-                                    response?.message || 'Failed to delete employee.',
-                                    'error'
-                                );
+                                Swal.fire('Error!', response.message || 'Failed to delete employee.', 'error');
                             }
                         },
-                        error: function(error) {
-                            Swal.fire(
-                                'Error!',
-                                error?.responseJSON?.message ||
-                                'An error occurred while deleting the employee.',
-                                'error'
-                            );
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the employee.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
                         }
                     });
+                }
+            });
+        }
+
+        // Ban employee function with SweetAlert
+        function banEmployee(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This employee will be banned and logged out immediately!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, ban employee!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Banning...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ url('admin/employees') }}/" + userId + "/ban",
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Banned!', response.message || 'Employee has been banned.', 'success')
+                                    .then(() => {
+                                        table.ajax.reload();
+                                        updateStatistics();
+                                    });
+                            } else {
+                                Swal.fire('Error!', response.message || 'Failed to ban employee.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while banning the employee.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to ban employees.';
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Activate employee function with SweetAlert
+        function activateEmployee(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This employee will be activated and can login again!",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, activate employee!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Activating...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ url('admin/employees') }}/" + userId + "/activate",
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Activated!', response.message || 'Employee has been activated.', 'success')
+                                    .then(() => {
+                                        table.ajax.reload();
+                                        updateStatistics();
+                                    });
+                            } else {
+                                Swal.fire('Error!', response.message || 'Failed to activate employee.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while activating the employee.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to activate employees.';
+                            }
+                            Swal.fire('Error!', errorMessage, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Update statistics function (make it global so it can be called from other functions)
+        function updateStatistics() {
+            $.ajax({
+                url: "{{ route('admin.employees.stats') }}",
+                type: 'GET',
+                success: function(response) {
+                    $('#totalEmployees').text(response.total);
+                    $('#activeEmployees').text(response.active);
+                    $('#inactiveEmployees').text(response.inactive);
+                    $('#newEmployees').text(response.new_this_month);
+                },
+                error: function() {
+                    console.log('Error loading statistics');
                 }
             });
         }
