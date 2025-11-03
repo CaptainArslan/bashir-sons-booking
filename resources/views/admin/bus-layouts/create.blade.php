@@ -124,7 +124,7 @@
                     <div class="card-body">
                         <!-- Info Box -->
                         <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Enter the layout name and seat configuration. The total number of seats will be calculated automatically based on rows and columns.</p>
+                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Choose between grid layout (rows × columns) or enter the total number of seats directly. For buses with odd seat numbers, use the "Custom Total Seats" option.</p>
                         </div>
                         
                         <!-- Basic Information -->
@@ -193,46 +193,101 @@
                             <i class="bx bx-chair me-1"></i>Seat Configuration
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="total_rows" class="form-label">
-                                    Total Rows 
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <input type="number" 
-                                       class="form-control @error('total_rows') is-invalid @enderror" 
-                                       id="total_rows"
-                                       name="total_rows" 
-                                       placeholder="Enter total rows" 
-                                       value="{{ old('total_rows') }}" 
-                                       min="1" 
-                                       max="50" 
-                                       required>
-                                <div class="form-text">Enter number of rows (1-50)</div>
-                                @error('total_rows')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
+                        <!-- Configuration Method Selection -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Configuration Method</label>
+                                <div class="btn-group w-100" role="group" id="config-method-group">
+                                    <input type="radio" class="btn-check" name="config_method" id="method_grid" value="grid" checked>
+                                    <label class="btn btn-outline-primary" for="method_grid">
+                                        <i class="bx bx-grid-alt me-1"></i>Grid Layout (Rows × Columns)
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="config_method" id="method_custom" value="custom">
+                                    <label class="btn btn-outline-primary" for="method_custom">
+                                        <i class="bx bx-edit me-1"></i>Custom Total Seats
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grid Layout Method -->
+                        <div id="grid-config" class="config-section">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="total_rows" class="form-label">
+                                        Total Rows 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control @error('total_rows') is-invalid @enderror" 
+                                           id="total_rows"
+                                           name="total_rows" 
+                                           placeholder="Enter total rows" 
+                                           value="{{ old('total_rows') }}" 
+                                           min="1" 
+                                           max="50">
+                                    <div class="form-text">Enter number of rows (1-50)</div>
+                                    @error('total_rows')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="total_columns" class="form-label">
+                                        Total Columns 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control @error('total_columns') is-invalid @enderror" 
+                                           id="total_columns"
+                                           name="total_columns" 
+                                           placeholder="Enter total columns" 
+                                           value="{{ old('total_columns') }}" 
+                                           min="1" 
+                                           max="10">
+                                    <div class="form-text">Enter number of columns (1-10)</div>
+                                    @error('total_columns')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Custom Total Seats Method -->
+                        <div id="custom-config" class="config-section" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="total_seats_custom" class="form-label">
+                                        Total Seats 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control @error('total_seats_custom') is-invalid @enderror" 
+                                           id="total_seats_custom"
+                                           name="total_seats_custom" 
+                                           placeholder="Enter total number of seats" 
+                                           value="{{ old('total_seats_custom') }}" 
+                                           min="1" 
+                                           max="500">
+                                    <div class="form-text">Enter total number of seats (1-500)</div>
+                                    @error('total_seats_custom')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Suggested Grid Layout</label>
+                                    <div class="form-control bg-light" id="suggested-layout" style="padding-top: 0.5rem;">
+                                        <span class="text-muted">Enter total seats to see suggested layout</span>
+                                    </div>
+                                    <div class="form-text">This is a suggestion based on your total seats</div>
+                                </div>
                             </div>
                             
-                            <div class="col-md-6">
-                                <label for="total_columns" class="form-label">
-                                    Total Columns 
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <input type="number" 
-                                       class="form-control @error('total_columns') is-invalid @enderror" 
-                                       id="total_columns"
-                                       name="total_columns" 
-                                       placeholder="Enter total columns" 
-                                       value="{{ old('total_columns') }}" 
-                                       min="1" 
-                                       max="10" 
-                                       required>
-                                <div class="form-text">Enter number of columns (1-10)</div>
-                                @error('total_columns')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
+                            <!-- Auto-calculated rows/columns (hidden inputs) -->
+                            <input type="hidden" id="total_rows_calc" name="total_rows">
+                            <input type="hidden" id="total_columns_calc" name="total_columns">
                         </div>
                         
                         <!-- Seat Calculation Display -->
@@ -278,19 +333,121 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const methodGrid = document.getElementById('method_grid');
+    const methodCustom = document.getElementById('method_custom');
+    const gridConfig = document.getElementById('grid-config');
+    const customConfig = document.getElementById('custom-config');
     const totalRowsInput = document.getElementById('total_rows');
     const totalColumnsInput = document.getElementById('total_columns');
+    const totalSeatsCustomInput = document.getElementById('total_seats_custom');
+    const totalRowsCalc = document.getElementById('total_rows_calc');
+    const totalColumnsCalc = document.getElementById('total_columns_calc');
+    const suggestedLayout = document.getElementById('suggested-layout');
     const totalSeatsSpan = document.getElementById('total-seats');
     const calculationDetailSpan = document.getElementById('calculation-detail');
     
+    // Toggle between configuration methods
+    methodGrid.addEventListener('change', function() {
+        if (this.checked) {
+            gridConfig.style.display = 'block';
+            customConfig.style.display = 'none';
+            totalRowsInput.required = true;
+            totalColumnsInput.required = true;
+            totalSeatsCustomInput.required = false;
+            updateSeatCalculation();
+        }
+    });
+    
+    methodCustom.addEventListener('change', function() {
+        if (this.checked) {
+            gridConfig.style.display = 'none';
+            customConfig.style.display = 'block';
+            totalRowsInput.required = false;
+            totalColumnsInput.required = false;
+            totalSeatsCustomInput.required = true;
+            updateSeatCalculation();
+        }
+    });
+    
+    // Calculate suggested grid layout from total seats
+    function calculateSuggestedLayout(totalSeats) {
+        if (totalSeats <= 0) {
+            return null;
+        }
+        
+        // Try to find a reasonable grid layout
+        // Prefer layouts that are close to a rectangle
+        let bestRows = 1;
+        let bestColumns = 1;
+        let bestDiff = Infinity;
+        
+        // Try different column counts (2-10)
+        for (let cols = 2; cols <= 10; cols++) {
+            let rows = Math.ceil(totalSeats / cols);
+            if (rows > 50) continue; // Skip if rows exceed limit
+            
+            let calculatedSeats = rows * cols;
+            let diff = Math.abs(calculatedSeats - totalSeats);
+            
+            // If exact match, use it
+            if (diff === 0) {
+                return { rows: rows, columns: cols };
+            }
+            
+            // If better match, save it
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestRows = rows;
+                bestColumns = cols;
+            }
+        }
+        
+        return { rows: bestRows, columns: bestColumns, diff: bestDiff };
+    }
+    
     function updateSeatCalculation() {
-        const rows = parseInt(totalRowsInput.value) || 0;
-        const columns = parseInt(totalColumnsInput.value) || 0;
-        const totalSeats = rows * columns;
+        let totalSeats = 0;
+        let rows = 0;
+        let columns = 0;
+        let calculationMethod = '';
+        
+        if (methodCustom.checked && totalSeatsCustomInput.value) {
+            // Custom method
+            totalSeats = parseInt(totalSeatsCustomInput.value) || 0;
+            const suggested = calculateSuggestedLayout(totalSeats);
+            
+            if (suggested) {
+                rows = suggested.rows;
+                columns = suggested.columns;
+                
+                // Update hidden inputs
+                totalRowsCalc.value = rows;
+                totalColumnsCalc.value = columns;
+                
+                // Show suggested layout
+                if (suggested.diff === 0) {
+                    suggestedLayout.innerHTML = `<span class="text-success"><strong>${rows} rows × ${columns} columns</strong> (Perfect match)</span>`;
+                } else {
+                    const calculatedSeats = rows * columns;
+                    suggestedLayout.innerHTML = `<span class="text-warning"><strong>${rows} rows × ${columns} columns</strong> = ${calculatedSeats} seats (${suggested.diff} seat${suggested.diff !== 1 ? 's' : ''} difference)</span>`;
+                }
+                
+                calculationMethod = `(${rows} rows × ${columns} columns suggested)`;
+            } else {
+                suggestedLayout.innerHTML = '<span class="text-muted">No suitable layout found</span>';
+                calculationMethod = '';
+            }
+        } else {
+            // Grid method
+            rows = parseInt(totalRowsInput.value) || 0;
+            columns = parseInt(totalColumnsInput.value) || 0;
+            totalSeats = rows * columns;
+            calculationMethod = `(${rows} rows × ${columns} columns)`;
+        }
         
         if (totalSeats > 0) {
             totalSeatsSpan.textContent = `${totalSeats} seats`;
-            calculationDetailSpan.textContent = `(${rows} rows × ${columns} columns)`;
+            calculationDetailSpan.textContent = calculationMethod;
             calculationDetailSpan.style.display = 'inline';
         } else {
             totalSeatsSpan.textContent = '0 seats';
@@ -302,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners
     totalRowsInput.addEventListener('input', updateSeatCalculation);
     totalColumnsInput.addEventListener('input', updateSeatCalculation);
+    totalSeatsCustomInput.addEventListener('input', updateSeatCalculation);
     
     // Initial calculation
     updateSeatCalculation();
