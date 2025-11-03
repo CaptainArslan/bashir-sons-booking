@@ -126,24 +126,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this fare? This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete Fare</button>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @section('scripts')
@@ -198,7 +180,6 @@
                 order: [
                     [3, 'desc']
                 ],
-                pageLength: 25,
                 responsive: true,
                 language: {
                     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
@@ -213,31 +194,70 @@
             };
         });
 
-        // Delete fare function
+        // Delete fare function with SweetAlert
         function deleteFare(fareId) {
-            $('#deleteModal').modal('show');
-
-            $('#confirmDelete').off('click').on('click', function() {
-                $.ajax({
-                    url: "{{ route('admin.fares.destroy', ':id') }}".replace(':id', fareId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#deleteModal').modal('hide');
-                            toastr.success(response.message);
-                            $('#fares-table').DataTable().ajax.reload();
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the fare.');
-                    }
-                });
+                    });
+
+                    $.ajax({
+                        url: "{{ route('admin.fares.destroy', ':id') }}".replace(':id', fareId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Fare has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#fares-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete fare.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            let errorMessage = 'An error occurred while deleting the fare.';
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete fares.';
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Fare not found.';
+                            }
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
             });
         }
     </script>

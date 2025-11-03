@@ -7,6 +7,7 @@
     .fare-card {
         border-left: 4px solid #0d6efd;
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        overflow: hidden;
     }
     
     .card-header-info {
@@ -35,6 +36,12 @@
         border-radius: 6px;
     }
     
+    .form-control:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
     .card-body {
         padding: 1rem !important;
     }
@@ -46,35 +53,6 @@
     .btn {
         border-radius: 6px;
         font-weight: 500;
-    }
-    
-    .info-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-        border-left: 4px solid #2196f3;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin-bottom: 1rem;
-    }
-    
-    .info-box p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #1976d2;
-    }
-    
-    .section-divider {
-        border-top: 1px solid #e9ecef;
-        margin: 1rem 0;
-        padding-top: 1rem;
-    }
-    
-    .section-title {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
     }
     
     .form-text {
@@ -106,29 +84,6 @@
         border-radius: 6px;
         text-align: center;
     }
-    
-    .current-info-box {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-left: 4px solid #6c757d;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin-top: 0.5rem;
-    }
-    
-    .info-item {
-        margin-bottom: 0.5rem;
-    }
-    
-    .info-label {
-        font-weight: 600;
-        color: #495057;
-        font-size: 0.875rem;
-    }
-    
-    .info-value {
-        color: #6c757d;
-        font-size: 0.875rem;
-    }
 </style>
 @endsection
 
@@ -149,7 +104,7 @@
     <!--end breadcrumb-->
 
     <div class="row">
-        <div class="col-xl-8 mx-auto">
+        <div class="col-xl-6 mx-auto">
             <div class="card fare-card">
                 <div class="card-header-info">
                     <h5><i class="bx bx-edit me-2"></i>Edit Fare: {{ $fare->fromTerminal->name }} → {{ $fare->toTerminal->name }}</h5>
@@ -160,56 +115,6 @@
                     @method('PUT')
                     
                     <div class="card-body">
-                        <!-- Info Box -->
-                        <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating fare information will affect all bookings using this fare. Please review carefully before saving changes.</p>
-                        </div>
-                        
-                        <!-- Current Fare Information -->
-                        <div class="current-info-box">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Base Fare:</div>
-                                        <div class="info-value text-primary">{{ $fare->currency }} {{ number_format($fare->base_fare, 2) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Discount:</div>
-                                        <div class="info-value text-info">
-                                            @if($fare->discount_type && $fare->discount_value > 0)
-                                                {{ $fare->discount_type === 'percent' ? $fare->discount_value . '%' : $fare->currency . ' ' . number_format($fare->discount_value, 2) }}
-                                            @else
-                                                No Discount
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Final Fare:</div>
-                                        <div class="info-value text-success">{{ $fare->currency }} {{ number_format($fare->final_fare, 2) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Status:</div>
-                                        <div class="info-value">
-                                            <span class="badge {{ $fare->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
-                                                {{ ucfirst($fare->status->value) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Terminal Selection -->
-                        <div class="section-title">
-                            <i class="bx bx-map-pin me-1"></i>Terminal Selection
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="from_terminal_id" class="form-label">
@@ -252,13 +157,7 @@
                             </div>
                         </div>
 
-                        <!-- Fare Information -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-money me-1"></i>Fare Information
-                        </div>
-                        
-                        <div class="row">
+                        <div class="row mt-3">
                             <div class="col-md-6">
                                 <label for="base_fare" class="form-label">
                                     Base Fare <span class="text-danger">*</span>
@@ -278,10 +177,6 @@
                                 @error('base_fare')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    Enter the base fare amount
-                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -303,13 +198,7 @@
                             </div>
                         </div>
 
-                        <!-- Discount Information -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-percentage me-1"></i>Discount Information
-                        </div>
-                        
-                        <div class="row">
+                        <div class="row mt-3">
                             <div class="col-md-6">
                                 <label for="discount_type" class="form-label">Discount Type</label>
                                 <select class="form-select @error('discount_type') is-invalid @enderror" 
@@ -338,48 +227,19 @@
                                            value="{{ old('discount_value', $fare->discount_value) }}" 
                                            step="0.01" 
                                            min="0" 
-                                           max="100000">
+                                           max="100000"
+                                           {{ !old('discount_type', $fare->discount_type) ? 'disabled' : '' }}>
                                 </div>
                                 @error('discount_value')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    Enter discount amount or percentage
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Status & Preview -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-toggle-right me-1"></i>Status & Preview
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="status" class="form-label">
-                                    Status <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status" name="status" required>
-                                    @foreach($statuses as $value => $label)
-                                        <option value="{{ $value }}" 
-                                                {{ old('status', $fare->status) == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('status')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Final Fare Preview</label>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
                                 <div class="preview-box">
                                     <div class="fare-display" id="final-fare-display">{{ $fare->currency }} {{ number_format($fare->final_fare, 2) }}</div>
-                                    <small class="text-muted">Calculated automatically</small>
                                 </div>
                             </div>
                         </div>
@@ -431,11 +291,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const fromTerminalSelect = document.getElementById('from_terminal_id');
     const toTerminalSelect = document.getElementById('to_terminal_id');
 
+    // Function to toggle discount value field based on discount type
+    function toggleDiscountValue() {
+        const discountType = discountTypeSelect.value;
+        if (!discountType || discountType === '') {
+            discountValueInput.disabled = true;
+            discountValueInput.value = '';
+        } else {
+            discountValueInput.disabled = false;
+        }
+        calculateFinalFare();
+    }
+
     // Update currency symbol when currency changes
     currencySelect.addEventListener('change', function() {
         const currency = this.value;
         document.getElementById('currency-symbol').textContent = currency;
-        document.getElementById('discount-symbol').textContent = currency;
+        if (!discountTypeSelect.value || discountTypeSelect.value !== 'percent') {
+            document.getElementById('discount-symbol').textContent = currency;
+        }
         calculateFinalFare();
     });
 
@@ -445,12 +319,12 @@ document.addEventListener('DOMContentLoaded', function() {
         element.addEventListener('change', calculateFinalFare);
     });
 
-    // Update discount symbol based on discount type
+    // Update discount symbol and enable/disable discount value based on discount type
     discountTypeSelect.addEventListener('change', function() {
         const discountType = this.value;
         const symbol = discountType === 'percent' ? '%' : currencySelect.value;
         document.getElementById('discount-symbol').textContent = symbol;
-        calculateFinalFare();
+        toggleDiscountValue();
     });
 
     // Show route preview when terminals are selected
@@ -458,7 +332,8 @@ document.addEventListener('DOMContentLoaded', function() {
         element.addEventListener('change', updateRoutePreview);
     });
 
-    // Initial calculation
+    // Initial setup
+    toggleDiscountValue();
     calculateFinalFare();
 });
 
