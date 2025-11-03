@@ -52,6 +52,13 @@ Route::prefix('bookings')->name('frontend.bookings.')->group(function () {
     Route::get('/seats', [\App\Http\Controllers\FrontendBookingController::class, 'selectSeats'])->name('select-seats')->middleware('auth');
     Route::get('/trip-details', [\App\Http\Controllers\FrontendBookingController::class, 'loadTripDetails'])->name('load-trip-details')->middleware('auth');
     Route::post('/store', [\App\Http\Controllers\FrontendBookingController::class, 'store'])->name('store')->middleware('auth');
+    
+    // Payment Routes
+    Route::middleware('auth')->group(function () {
+        Route::get('/{booking}/payment', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payment');
+        Route::post('/{booking}/payment', [\App\Http\Controllers\PaymentController::class, 'process'])->name('payment.process');
+        Route::get('/{booking}/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('success');
+    });
 });
 
 // Frontend Routes

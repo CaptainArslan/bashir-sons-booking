@@ -55,7 +55,14 @@
                                                         Booking #{{ $booking->booking_number }}
                                                     </h5>
                                                 </div>
-                                                <div>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    @if(($booking->status === 'hold' || $booking->payment_status === 'unpaid') && $booking->reserved_until && now()->lt($booking->reserved_until))
+                                                        <div class="countdown-timer" data-reserved-until="{{ $booking->reserved_until->format('Y-m-d H:i:s') }}" data-booking-id="{{ $booking->id }}">
+                                                            <i class="bi bi-clock me-2"></i>
+                                                            <span class="timer-text fw-bold">00:00</span>
+                                                            <small class="d-block" style="font-size: 0.7rem;">Payment Due</small>
+                                                        </div>
+                                                    @endif
                                                     <span class="badge bg-light text-dark">
                                                         {{ strtoupper($booking->status) }}
                                                     </span>
@@ -197,6 +204,19 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        @if(($booking->status === 'hold' || $booking->payment_status === 'unpaid') && $booking->reserved_until && now()->lt($booking->reserved_until))
+                                            <div class="alert alert-warning mb-0 border-0 rounded-0">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                                        <strong>Payment Pending:</strong> Complete payment to confirm your booking
+                                                    </div>
+                                                    <a href="{{ route('frontend.bookings.payment', $booking) }}" class="btn btn-warning btn-sm">
+                                                        <i class="bi bi-credit-card me-1"></i>Pay Now
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        @endif
                                         <div class="card-footer bg-light">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
@@ -232,11 +252,95 @@
     </section>
 @endsection
 
+@section('styles')
+    <style>
+        .countdown-timer {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .countdown-timer .timer-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .countdown-timer.expiring {
+            background-color: rgba(220, 53, 69, 0.3);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+@endsection
+
 @section('scripts')
     <script>
         function printTicket(bookingId) {
             // Redirect to print ticket route
             window.open('/admin/bookings/' + bookingId + '/print', '_blank');
         }
+
+        $(document).ready(function() {
+            // Initialize countdown timers for unpaid bookings
+            $('.countdown-timer').each(function() {
+                const $timer = $(this);
+                const reservedUntil = $timer.data('reserved-until');
+                const bookingId = $timer.data('booking-id');
+                
+                if (!reservedUntil) {
+                    return;
+                }
+
+                function updateCountdown() {
+                    const now = new Date().getTime();
+                    const endTime = new Date(reservedUntil).getTime();
+                    const distance = endTime - now;
+
+                    if (distance < 0) {
+                        $timer.find('.timer-text').text('EXPIRED');
+                        $timer.addClass('expiring');
+                        
+                        // Optionally reload the page after expiration
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+                        return;
+                    }
+
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    const timeString = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                    $timer.find('.timer-text').text(timeString);
+
+                    // Add warning class when less than 5 minutes
+                    if (minutes < 5) {
+                        $timer.addClass('expiring');
+                    } else {
+                        $timer.removeClass('expiring');
+                    }
+                }
+
+                // Update immediately
+                updateCountdown();
+
+                // Update every second
+                const interval = setInterval(updateCountdown, 1000);
+
+                // Store interval ID for cleanup if needed
+                $timer.data('interval-id', interval);
+            });
+        });
     </script>
 @endsection

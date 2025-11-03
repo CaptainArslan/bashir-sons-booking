@@ -214,6 +214,7 @@ class FrontendBookingController extends Controller
                     'route_name' => $trip->route?->name,
                     'bus_name' => $trip->bus?->name ?? 'TBA',
                     'departure_date' => $trip->departure_date->format('Y-m-d'),
+                    'departure_datetime' => $trip->departure_datetime?->format('Y-m-d H:i:s'),
                 ],
                 'from_stop' => [
                     'terminal_name' => $tripFromStop->terminal?->name,
@@ -306,7 +307,7 @@ class FrontendBookingController extends Controller
                 'seats_data' => $seatsData,
                 'passengers' => $passengers,
                 'channel' => 'online',
-                'payment_method' => 'online',
+                'payment_method' => 'mobile_wallet', // Will be updated after payment
                 'online_transaction_id' => null,
                 'total_fare' => $validated['total_fare'],
                 'discount_amount' => $validated['discount_amount'] ?? 0,
@@ -316,9 +317,12 @@ class FrontendBookingController extends Controller
                 'user_id' => Auth::user()->id,
                 'payment_received_from_customer' => 0,
                 'return_after_deduction_from_customer' => 0,
+                'status' => 'hold', // Set as hold until payment
+                'reserved_until' => now()->addMinutes(15), // Expire after 15 minutes
+                'payment_status' => 'unpaid',
             ];
 
-            // Create booking
+            // Create booking with hold status
             $booking = $this->bookingService->create($data, Auth::user());
 
             return response()->json([
@@ -328,6 +332,7 @@ class FrontendBookingController extends Controller
                     'booking_number' => $booking->booking_number,
                     'status' => $booking->status,
                     'final_amount' => $booking->final_amount,
+                    'reserved_until' => $booking->reserved_until?->format('Y-m-d H:i:s'),
                 ],
             ], 201);
         } catch (ValidationException $e) {

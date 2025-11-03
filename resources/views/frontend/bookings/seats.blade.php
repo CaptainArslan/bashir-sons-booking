@@ -4,162 +4,353 @@
 
 @section('styles')
     <style>
-        .seat-btn {
-            width: 3.5rem;
-            height: 3.5rem;
+        .booking-progress {
+            background-color: #0d6efd;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .progress-step {
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: .5rem;
-            font-size: .9rem;
-            font-weight: 600;
+            gap: 0.5rem;
+        }
+
+        .progress-step.active {
+            color: #ffd700;
+        }
+
+        .seat-btn {
+            width: 3.8rem;
+            height: 3.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 700;
             padding: 0;
             line-height: 1;
-            border: 2px solid transparent;
-            transition: all 0.2s;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .available {
             background-color: #e9ecef;
-            color: #000;
+            color: #495057;
             border-color: #dee2e6;
         }
 
         .available:hover {
-            background-color: #d0d7de;
+            background-color: #dee2e6;
             border-color: #adb5bd;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .selected {
             background-color: #0d6efd;
             color: #fff;
-            border-color: #0a58ca;
+            border-color: #0d6efd;
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
         }
 
         .booked-male {
             background-color: #0dcaf0;
             color: #fff;
-            border-color: #0aa2c0;
+            border-color: #0dcaf0;
             cursor: not-allowed;
+            position: relative;
+        }
+
+        .booked-male::before {
+            content: '👨';
+            position: absolute;
+            font-size: 0.7rem;
+            top: 2px;
+            right: 2px;
         }
 
         .booked-female {
             background-color: #e83e8c;
             color: #fff;
-            border-color: #c2185b;
+            border-color: #e83e8c;
             cursor: not-allowed;
+            position: relative;
+        }
+
+        .booked-female::before {
+            content: '👩';
+            position: absolute;
+            font-size: 0.7rem;
+            top: 2px;
+            right: 2px;
         }
 
         .held {
             background-color: #ffc107;
             color: #000;
-            border-color: #ffb300;
+            border-color: #ffc107;
             cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .seat-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none !important;
         }
 
         .aisle {
-            width: 2rem;
+            width: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #adb5bd;
+            font-size: 1.2rem;
+        }
+
+        .aisle::before {
+            content: '│';
         }
 
         .legend-box {
-            width: 1.5rem;
-            height: 1.5rem;
+            width: 1.75rem;
+            height: 1.75rem;
             display: inline-block;
-            border-radius: .25rem;
+            border-radius: 0.5rem;
             border: 2px solid transparent;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .passenger-form {
-            background: #f8f9fa;
-            border-radius: .5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .passenger-form:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
         }
 
         .summary-card {
             position: sticky;
             top: 100px;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .summary-card .card-header {
+            background-color: #0d6efd;
+            border: none;
+        }
+
+        .route-info-banner {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .seat-btn.selected {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .passenger-form {
+            animation: slideIn 0.4s ease forwards;
+        }
+
+        .seat-map-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .driver-seat-indicator {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .seat-gender-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.75rem;
+            line-height: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 1.2rem;
+            height: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .seat-btn {
+            position: relative;
+        }
+
+        .seat-btn.selected .seat-gender-badge {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
     </style>
 @endsection
 
 @section('content')
-    <section class="py-5" style="background: #f8f9fa; min-height: calc(100vh - 300px);">
+    <section class="py-5 bg-light" style="min-height: calc(100vh - 300px);">
         <div class="container py-5">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <div>
-                                    <h4 class="mb-1" id="trip-info">
-                                        <i class="bi bi-bus-front me-2 text-primary"></i>
-                                        <span id="route-name">Loading...</span>
-                                    </h4>
-                                    <p class="text-muted mb-0" id="trip-details">
-                                        <i class="bi bi-calendar-event me-1"></i>
-                                        <span id="trip-date">Loading...</span>
-                                        <span class="mx-2">|</span>
-                                        <i class="bi bi-people me-1"></i>
-                                        <span id="selected-seats-count">0</span> of {{ $passengers }} seat(s) selected
-                                    </p>
-                                </div>
-                                <a href="{{ route('frontend.bookings.trips', request()->only(['from_terminal_id', 'to_terminal_id', 'date', 'passengers'])) }}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-arrow-left me-2"></i>Back to Trips
-                                </a>
-                            </div>
+            <!-- Booking Progress -->
+            <div class="booking-progress">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="progress-step active">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>1. Search</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="progress-step active">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>2. Select Trip</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="progress-step active">
+                            <i class="bi bi-grid"></i>
+                            <span>3. Select Seats</span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Route Info Banner -->
+            <div class="route-info-banner">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="flex-grow-1">
+                        <!-- Full Route Name (Small, Less Prominent) -->
+                        <div class="mb-2">
+                            <small class="text-white-50 d-flex align-items-center">
+                                <i class="bi bi-route me-2" style="font-size: 0.9rem;"></i>
+                                <span id="full-route-name" style="font-size: 0.85rem; font-weight: 400;">Loading route...</span>
+                            </small>
+                        </div>
+                        
+                        <!-- Selected Terminals (Large, Prominent) -->
+                        <h3 class="mb-2 fw-bold" id="selected-terminals" style="font-size: 1.75rem;">
+                            <i class="bi bi-geo-alt-fill me-2"></i>
+                            <span id="from-terminal-name">Loading...</span>
+                            <i class="bi bi-arrow-right mx-2" style="font-size: 1.5rem;"></i>
+                            <span id="to-terminal-name">Loading...</span>
+                        </h3>
+                        
+                        <!-- Trip Details -->
+                        <div class="d-flex align-items-center gap-4 flex-wrap" id="trip-details">
+                            <div>
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <span id="trip-date">Loading...</span>
+                            </div>
+                            <div>
+                                <i class="bi bi-people me-2"></i>
+                                <span id="selected-seats-count">0</span> of {{ $passengers }} seat(s) selected
+                            </div>
+                            <div>
+                                <i class="bi bi-bus-front me-2"></i>
+                                <span id="bus-name">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ route('frontend.bookings.trips', request()->only(['from_terminal_id', 'to_terminal_id', 'date', 'passengers'])) }}" class="btn btn-light btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Trips
+                    </a>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">
-                                <i class="bi bi-grid me-2"></i>Select Your Seats
-                            </h5>
+                    <div class="card shadow-lg border-0 mb-4">
+                        <div class="card-header bg-white border-0 pb-0">
+                            <h4 class="mb-0 fw-bold">
+                                <i class="bi bi-grid me-2 text-primary"></i>Select Your Seats
+                            </h4>
                         </div>
                         <div class="card-body">
                             <div class="loading-spinner text-center py-5" id="loading-seats">
-                                <div class="spinner-border text-primary" role="status">
+                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <p class="mt-3 text-muted">Loading seat map...</p>
+                                <p class="mt-3 text-muted fs-5">Loading seat map...</p>
                             </div>
 
-                            <div id="seat-map-container" class="text-center" style="display: none;">
+                            <div id="seat-map-container" class="seat-map-container" style="display: none;">
+                                <div class="driver-seat-indicator">
+                                    <i class="bi bi-shield-check me-2"></i>Driver's Seat (Front)
+                                </div>
                                 <div id="seat-map" class="mb-4">
                                     <!-- Seat map will be rendered here -->
                                 </div>
 
                                 <!-- Legend -->
-                                <div class="d-flex justify-content-center align-items-center flex-wrap gap-4 mt-4">
+                                <div class="d-flex justify-content-center align-items-center flex-wrap gap-4 mt-4 pt-4 border-top">
                                     <div class="d-flex align-items-center">
                                         <span class="legend-box available me-2"></span>
-                                        <small>Available</small>
+                                        <small class="fw-semibold">Available</small>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <span class="legend-box selected me-2"></span>
-                                        <small>Selected</small>
+                                        <small class="fw-semibold">Selected</small>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <span class="legend-box booked-male me-2"></span>
-                                        <small>Male Booked</small>
+                                        <small class="fw-semibold">Male Booked</small>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <span class="legend-box booked-female me-2"></span>
-                                        <small>Female Booked</small>
+                                        <small class="fw-semibold">Female Booked</small>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <span class="legend-box held me-2"></span>
-                                        <small>Held</small>
+                                        <small class="fw-semibold">Held</small>
                                     </div>
                                 </div>
                             </div>
@@ -167,14 +358,22 @@
                     </div>
 
                     <!-- Passenger Information Forms -->
-                    <div class="card shadow-sm border-0" id="passenger-forms-card" style="display: none;">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">
-                                <i class="bi bi-person me-2"></i>Passenger Information
-                            </h5>
+                    <div class="card shadow-lg border-0" id="passenger-forms-card" style="display: none;">
+                        <div class="card-header bg-white border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0 fw-bold">
+                                    <i class="bi bi-person-fill me-2 text-primary"></i>Passenger Information
+                                </h4>
+                                <button type="button" class="btn btn-primary" id="addPassengerBtn" onclick="addExtraPassenger()">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Passenger
+                                </button>
+                            </div>
+                            <p class="text-muted small mb-0 mt-2">
+                                <strong>Required:</strong> At least 1 passenger information. Passengers will be assigned to selected seats.
+                            </p>
                         </div>
                         <div class="card-body">
-                            <div id="passengers-container">
+                            <div id="passengers-container" style="max-height: 500px; overflow-y: auto;">
                                 <!-- Passenger forms will be generated here -->
                             </div>
                         </div>
@@ -183,44 +382,47 @@
 
                 <!-- Booking Summary -->
                 <div class="col-lg-4">
-                    <div class="card shadow-sm border-0 summary-card">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">
-                                <i class="bi bi-receipt me-2"></i>Booking Summary
-                            </h5>
+                    <div class="card shadow-lg border-0 summary-card">
+                        <div class="card-header text-white border-0">
+                            <h4 class="mb-0 fw-bold">
+                                <i class="bi bi-receipt-cutoff me-2"></i>Booking Summary
+                            </h4>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Fare per seat:</span>
-                                    <strong id="fare-per-seat">PKR 0.00</strong>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                    <span class="text-muted">Fare per seat:</span>
+                                    <strong id="fare-per-seat" class="text-dark">PKR 0.00</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Seats selected:</span>
-                                    <strong id="seats-count">0</strong>
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                    <span class="text-muted">Seats selected:</span>
+                                    <strong id="seats-count" class="text-dark">0</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Subtotal:</span>
-                                    <strong id="subtotal">PKR 0.00</strong>
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                    <span class="text-muted">Subtotal:</span>
+                                    <strong id="subtotal" class="text-dark">PKR 0.00</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Discount:</span>
-                                    <strong id="discount" class="text-success">PKR 0.00</strong>
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                    <span class="text-muted">Discount:</span>
+                                    <strong id="discount" class="text-success">-PKR 0.00</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Tax:</span>
-                                    <strong id="tax">PKR 0.00</strong>
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                    <span class="text-muted">Tax:</span>
+                                    <strong id="tax" class="text-dark">PKR 0.00</strong>
                                 </div>
-                                <hr>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <h5 class="mb-0">Total:</h5>
-                                    <h5 class="mb-0 text-primary" id="total">PKR 0.00</h5>
+                                <hr class="my-3">
+                                <div class="d-flex justify-content-between mb-4">
+                                    <h4 class="mb-0 fw-bold">Total:</h4>
+                                    <h4 class="mb-0 fw-bold text-primary" id="total">PKR 0.00</h4>
                                 </div>
                             </div>
 
-                            <button type="button" id="proceed-booking-btn" class="btn btn-primary w-100" disabled>
-                                <i class="bi bi-check-circle me-2"></i>Proceed to Booking
+                            <button type="button" id="proceed-booking-btn" class="btn btn-lg btn-primary w-100 text-white fw-bold" disabled>
+                                <i class="bi bi-check-circle me-2"></i>Confirm Booking
                             </button>
+                            <small class="text-muted d-block text-center mt-3">
+                                <i class="bi bi-shield-check me-1"></i>Secure payment processing
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -267,8 +469,21 @@
             let tripData = null;
             let seatMap = {};
             let selectedSeats = {}; // {seatNumber: 'male'|'female'}
+            let passengerInfo = {}; // {passengerId: {name, gender, age, cnic, phone, email, type}}
+            let nextPassengerId = 1;
             let pendingSeat = null;
             let fareData = null;
+
+            // Initialize mandatory passenger
+            passengerInfo['passenger_1'] = {
+                type: 'mandatory',
+                name: '',
+                gender: '',
+                age: '',
+                cnic: '',
+                phone: '',
+                email: ''
+            };
 
             // Load trip details
             loadTripDetails();
@@ -291,16 +506,29 @@
                         fareData = response.fare;
 
                         // Update trip info
-                        $('#route-name').text(response.trip.route_name);
+                        // Full route name (small, less prominent)
+                        $('#full-route-name').text('Route: ' + response.trip.route_name);
+                        
+                        // Selected terminals (large, prominent)
+                        $('#from-terminal-name').text(response.from_stop.terminal_name || 'N/A');
+                        $('#to-terminal-name').text(response.to_stop.terminal_name || 'N/A');
+                        
+                        // Trip date and other details
                         $('#trip-date').text(new Date(response.trip.departure_date).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
                         }));
+                        
+                        // Bus name
+                        $('#bus-name').text(response.trip.bus_name || 'TBA');
 
                         // Render seat map
                         renderSeatMap();
+
+                        // Initialize passenger forms
+                        updatePassengerForms();
 
                         // Update fare display
                         updateFareDisplay();
@@ -368,26 +596,55 @@
                 const button = $('<button></button>')
                     .addClass('seat-btn')
                     .text(seatNumber)
-                    .attr('data-seat', seatNumber);
+                    .attr('data-seat', seatNumber)
+                    .attr('title', `Seat ${seatNumber}`);
 
-                if (seatInfo.status === 'available') {
+                let genderIcon = '';
+
+                // Determine seat status and add gender icon
+                if (selectedSeats[seatNumber]) {
+                    // Selected seat - show gender icon
+                    button.removeClass('available').addClass('selected');
+                    const selectedGender = selectedSeats[seatNumber];
+                    if (selectedGender === 'male') {
+                        genderIcon = '👨';
+                        button.attr('title', `Seat ${seatNumber} - Selected (Male)`);
+                    } else if (selectedGender === 'female') {
+                        genderIcon = '👩';
+                        button.attr('title', `Seat ${seatNumber} - Selected (Female)`);
+                    } else {
+                        button.attr('title', `Seat ${seatNumber} - Selected`);
+                    }
+                } else if (seatInfo.status === 'available') {
                     button.addClass('available');
+                    button.attr('title', `Seat ${seatNumber} - Available`);
                 } else if (seatInfo.status === 'booked') {
                     if (seatInfo.gender === 'male') {
                         button.addClass('booked-male').prop('disabled', true);
+                        genderIcon = '👨';
+                        button.attr('title', `Seat ${seatNumber} - Booked (Male)`);
                     } else if (seatInfo.gender === 'female') {
                         button.addClass('booked-female').prop('disabled', true);
+                        genderIcon = '👩';
+                        button.attr('title', `Seat ${seatNumber} - Booked (Female)`);
                     } else {
                         button.addClass('booked-male').prop('disabled', true);
+                        button.attr('title', `Seat ${seatNumber} - Booked`);
                     }
                 } else if (seatInfo.status === 'held') {
                     button.addClass('held').prop('disabled', true);
+                    button.attr('title', `Seat ${seatNumber} - Held`);
                 }
 
-                if (selectedSeats[seatNumber]) {
-                    button.removeClass('available').addClass('selected');
+                // Add gender badge in top-right corner if gender icon is available
+                if (genderIcon) {
+                    const badge = $('<span></span>')
+                        .addClass('seat-gender-badge')
+                        .text(genderIcon);
+                    button.append(badge);
                 }
 
+                // Make clickable only if available or selected
                 if (seatInfo.status === 'available' || selectedSeats[seatNumber]) {
                     button.on('click', function() {
                         handleSeatClick(seatNumber);
@@ -402,7 +659,6 @@
                 if (selectedSeats[seatNumber]) {
                     delete selectedSeats[seatNumber];
                     renderSeatMap();
-                    updatePassengerForms();
                     updateFareDisplay();
                     updateSelectedSeatsCount();
                     return;
@@ -447,9 +703,11 @@
 
                     bootstrap.Modal.getInstance(document.getElementById('genderModal')).hide();
                     renderSeatMap();
-                    updatePassengerForms();
                     updateFareDisplay();
                     updateSelectedSeatsCount();
+                    
+                    // Sync passenger gender if only one passenger exists and matches seat
+                    syncPassengerGenders();
                 }
             });
 
@@ -457,48 +715,92 @@
                 const container = $('#passengers-container');
                 container.html('');
 
-                const seatNumbers = Object.keys(selectedSeats).sort((a, b) => parseInt(a) - parseInt(b));
+                // Show passenger forms if we have selected seats or passengers
+                const selectedSeatCount = Object.keys(selectedSeats).length;
+                const passengerCount = Object.keys(passengerInfo).length;
 
-                if (seatNumbers.length === 0) {
+                if (selectedSeatCount === 0 && passengerCount === 0) {
                     $('#passenger-forms-card').hide();
                     return;
                 }
 
                 $('#passenger-forms-card').show();
 
-                seatNumbers.forEach(function(seatNum, index) {
-                    const gender = selectedSeats[seatNum];
+                // Sort passengers: mandatory first, then extras
+                const passengers = Object.keys(passengerInfo).sort((a, b) => {
+                    if (passengerInfo[a].type === 'mandatory') return -1;
+                    if (passengerInfo[b].type === 'mandatory') return 1;
+                    return a.localeCompare(b);
+                });
+
+                passengers.forEach(function(passengerId, index) {
+                    const info = passengerInfo[passengerId];
+                    const isMandatory = info.type === 'mandatory';
+                    const passengerNumber = index + 1;
+
                     const form = `
-                        <div class="passenger-form" data-seat="${seatNum}">
-                            <h6 class="mb-3">
-                                <i class="bi bi-person me-2"></i>Passenger ${index + 1} - Seat ${seatNum}
-                                <span class="badge ${gender === 'male' ? 'bg-info' : 'bg-pink'} ms-2">${gender}</span>
-                            </h6>
+                        <div class="passenger-form" data-passenger-id="${passengerId}" style="animation-delay: ${index * 0.1}s; border-color: ${isMandatory ? '#e9ecef' : '#ffc107'};">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold">
+                                    <i class="bi ${isMandatory ? 'bi-person-fill' : 'bi-person-plus-fill'} me-2"></i>
+                                    Passenger ${passengerNumber}
+                                    ${isMandatory ? '<span class="badge bg-danger ms-2">Required</span>' : ''}
+                                </h5>
+                                ${!isMandatory ? `
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-passenger-btn" data-passenger-id="${passengerId}">
+                                        <i class="bi bi-trash me-1"></i>Remove
+                                    </button>
+                                ` : ''}
+                            </div>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control passenger-name" required 
-                                        placeholder="Enter passenger name">
+                                    <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-lg passenger-name" 
+                                        data-passenger-id="${passengerId}"
+                                        value="${info.name || ''}"
+                                        placeholder="Enter passenger name" 
+                                        maxlength="100" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">CNIC <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control passenger-cnic" required 
-                                        placeholder="34101-1111111-1">
+                                    <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                                    <select class="form-select form-control-lg passenger-gender" 
+                                        data-passenger-id="${passengerId}" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="male" ${info.gender === 'male' ? 'selected' : ''}>👨 Male</option>
+                                        <option value="female" ${info.gender === 'female' ? 'selected' : ''}>👩 Female</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Phone</label>
-                                    <input type="text" class="form-control passenger-phone" 
-                                        placeholder="0317-7777777">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control passenger-email" 
-                                        placeholder="email@example.com">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Age</label>
-                                    <input type="number" class="form-control passenger-age" min="1" max="120" 
+                                    <label class="form-label fw-semibold">Age</label>
+                                    <input type="number" class="form-control form-control-lg passenger-age" 
+                                        data-passenger-id="${passengerId}"
+                                        value="${info.age || ''}"
+                                        min="1" max="120" 
                                         placeholder="Age">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">CNIC</label>
+                                    <input type="text" class="form-control form-control-lg passenger-cnic" 
+                                        data-passenger-id="${passengerId}"
+                                        value="${info.cnic || ''}"
+                                        placeholder="34101-1111111-1"
+                                        maxlength="15">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Phone</label>
+                                    <input type="text" class="form-control form-control-lg passenger-phone" 
+                                        data-passenger-id="${passengerId}"
+                                        value="${info.phone || ''}"
+                                        placeholder="0317-7777777"
+                                        maxlength="12">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Email</label>
+                                    <input type="email" class="form-control form-control-lg passenger-email" 
+                                        data-passenger-id="${passengerId}"
+                                        value="${info.email || ''}"
+                                        placeholder="email@example.com"
+                                        maxlength="100">
                                 </div>
                             </div>
                         </div>
@@ -508,8 +810,134 @@
                 });
 
                 // Apply input masks
-                $('.passenger-cnic').inputmask('99999-9999999-9');
-                $('.passenger-phone').inputmask('9999-9999999');
+                setTimeout(function() {
+                    $('.passenger-cnic').each(function() {
+                        if (!$(this).data('inputmask')) {
+                            $(this).inputmask('99999-9999999-9', {
+                                placeholder: '_',
+                                clearMaskOnLostFocus: false,
+                                showMaskOnHover: true,
+                                showMaskOnFocus: true
+                            });
+                        }
+                    });
+
+                    $('.passenger-phone').each(function() {
+                        if (!$(this).data('inputmask')) {
+                            $(this).inputmask('9999-9999999', {
+                                placeholder: '_',
+                                clearMaskOnLostFocus: false,
+                                showMaskOnHover: true,
+                                showMaskOnFocus: true
+                            });
+                        }
+                    });
+                }, 100);
+
+                // Update passenger info on input change
+                $(document).off('input change', '.passenger-name, .passenger-gender, .passenger-age, .passenger-cnic, .passenger-phone, .passenger-email');
+                $(document).on('input change', '.passenger-name, .passenger-gender, .passenger-age, .passenger-cnic, .passenger-phone, .passenger-email', function() {
+                    const passengerId = $(this).data('passenger-id');
+                    const field = $(this).hasClass('passenger-name') ? 'name' :
+                                 $(this).hasClass('passenger-gender') ? 'gender' :
+                                 $(this).hasClass('passenger-age') ? 'age' :
+                                 $(this).hasClass('passenger-cnic') ? 'cnic' :
+                                 $(this).hasClass('passenger-phone') ? 'phone' : 'email';
+                    const value = $(this).val();
+                    
+                    if (passengerInfo[passengerId]) {
+                        passengerInfo[passengerId][field] = value;
+                        updateFareDisplay();
+                    }
+                });
+
+                // Handle remove passenger button
+                $(document).off('click', '.remove-passenger-btn');
+                $(document).on('click', '.remove-passenger-btn', function() {
+                    const passengerId = $(this).data('passenger-id');
+                    removeExtraPassenger(passengerId);
+                });
+            }
+
+            function syncPassengerGenders() {
+                // Sync first passenger gender with first selected seat gender if only one passenger exists
+                const selectedSeatNumbers = Object.keys(selectedSeats).sort((a, b) => parseInt(a) - parseInt(b));
+                const passengerIds = Object.keys(passengerInfo).sort((a, b) => {
+                    if (passengerInfo[a].type === 'mandatory') return -1;
+                    if (passengerInfo[b].type === 'mandatory') return 1;
+                    return a.localeCompare(b);
+                });
+
+                if (selectedSeatNumbers.length === 1 && passengerIds.length === 1) {
+                    const seatGender = selectedSeats[selectedSeatNumbers[0]];
+                    const passengerId = passengerIds[0];
+                    if (passengerInfo[passengerId] && !passengerInfo[passengerId].gender) {
+                        passengerInfo[passengerId].gender = seatGender;
+                        updatePassengerForms();
+                    }
+                }
+            }
+
+            // Make addExtraPassenger globally accessible
+            window.addExtraPassenger = function() {
+                const timestamp = Date.now();
+                const passengerId = `passenger_extra_${timestamp}`;
+
+                passengerInfo[passengerId] = {
+                    type: 'extra',
+                    name: '',
+                    gender: '',
+                    age: '',
+                    cnic: '',
+                    phone: '',
+                    email: ''
+                };
+
+                updatePassengerForms();
+
+                // Scroll to newly added passenger
+                setTimeout(() => {
+                    const container = document.getElementById('passengers-container');
+                    if (container) {
+                        container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+                }, 100);
+            };
+
+            function removeExtraPassenger(passengerId) {
+                if (passengerInfo[passengerId]?.type === 'mandatory') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cannot Remove',
+                        text: 'At least one passenger information is required.',
+                        confirmButtonColor: '#ffc107'
+                    });
+                    return;
+                }
+
+                delete passengerInfo[passengerId];
+                updatePassengerForms();
+                updateFareDisplay();
+            }
+
+            function validatePassengerInfo() {
+                const passengers = Object.keys(passengerInfo);
+
+                if (passengers.length === 0) {
+                    return false;
+                }
+
+                for (let passengerId of passengers) {
+                    const info = passengerInfo[passengerId];
+                    if (!info.name || info.name.trim() === '') {
+                        return false;
+                    }
+                    if (!info.gender || info.gender === '') {
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             function updateFareDisplay() {
@@ -539,11 +967,22 @@
                 $('#tax').text(`${fareData.currency} ${tax.toFixed(2)}`);
                 $('#total').text(`${fareData.currency} ${total.toFixed(2)}`);
 
+                // Show passenger forms if seats are selected
+                if (seatCount > 0) {
+                    $('#passenger-forms-card').show();
+                }
+
                 // Enable/disable proceed button
-                if (seatCount > 0 && seatCount <= passengers && allPassengerFormsValid()) {
-                    $('#proceed-booking-btn').prop('disabled', false);
+                if (seatCount > 0 && seatCount <= passengers && validatePassengerInfo()) {
+                    const passengerCount = Object.keys(passengerInfo).length;
+                    // Ensure we have enough passengers for seats (can have more passengers than seats)
+                    if (passengerCount >= seatCount) {
+                        $('#proceed-booking-btn').prop('disabled', false).removeClass('opacity-50');
+                    } else {
+                        $('#proceed-booking-btn').prop('disabled', true).addClass('opacity-50');
+                    }
                 } else {
-                    $('#proceed-booking-btn').prop('disabled', true);
+                    $('#proceed-booking-btn').prop('disabled', true).addClass('opacity-50');
                 }
             }
 
@@ -551,31 +990,13 @@
                 $('#selected-seats-count').text(Object.keys(selectedSeats).length);
             }
 
-            function allPassengerFormsValid() {
-                let valid = true;
-                $('.passenger-form').each(function() {
-                    const name = $(this).find('.passenger-name').val();
-                    const cnic = $(this).find('.passenger-cnic').val();
-                    if (!name || !cnic) {
-                        valid = false;
-                        return false;
-                    }
-                });
-                return valid;
-            }
-
-            // Validate forms on input
-            $(document).on('input', '.passenger-name, .passenger-cnic', function() {
-                updateFareDisplay();
-            });
-
             // Proceed to booking
             $('#proceed-booking-btn').on('click', function() {
-                if (!allPassengerFormsValid()) {
+                if (!validatePassengerInfo()) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Incomplete Information',
-                        text: 'Please fill all required fields for all passengers.',
+                        text: 'Please fill all required fields (Name and Gender) for all passengers.',
                         confirmButtonColor: '#ffc107'
                     });
                     return;
@@ -591,31 +1012,49 @@
                     return;
                 }
 
-                // Collect passenger data
+                const selectedSeatCount = Object.keys(selectedSeats).length;
+                const passengerCount = Object.keys(passengerInfo).length;
+
+                if (passengerCount < selectedSeatCount) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Not Enough Passengers',
+                        text: `You have selected ${selectedSeatCount} seat(s) but only ${passengerCount} passenger(s). Please add more passengers or select fewer seats.`,
+                        confirmButtonColor: '#ffc107'
+                    });
+                    return;
+                }
+
+                // Collect passenger data - take first N passengers for N seats
                 const passengersData = [];
                 const seatsData = [];
+                const selectedSeatNumbers = Object.keys(selectedSeats).sort((a, b) => parseInt(a) - parseInt(b));
+                const passengerIds = Object.keys(passengerInfo).sort((a, b) => {
+                    if (passengerInfo[a].type === 'mandatory') return -1;
+                    if (passengerInfo[b].type === 'mandatory') return 1;
+                    return a.localeCompare(b);
+                });
 
-                $('.passenger-form').each(function() {
-                    const seatNum = parseInt($(this).data('seat'));
-                    const name = $(this).find('.passenger-name').val();
-                    const cnic = $(this).find('.passenger-cnic').val();
-                    const phone = $(this).find('.passenger-phone').val();
-                    const email = $(this).find('.passenger-email').val();
-                    const age = $(this).find('.passenger-age').val();
+                // Map passengers to seats
+                selectedSeatNumbers.forEach((seatNum, index) => {
+                    const passengerId = passengerIds[index];
+                    const info = passengerInfo[passengerId];
 
-                    passengersData.push({
-                        name: name,
-                        cnic: cnic || null,
-                        phone: phone || null,
-                        email: email || null,
-                        age: age ? parseInt(age) : null,
-                        gender: selectedSeats[seatNum]
-                    });
+                    if (info) {
+                        passengersData.push({
+                            name: info.name,
+                            gender: info.gender || selectedSeats[seatNum], // Use passenger gender or seat gender
+                            cnic: info.cnic || null,
+                            phone: info.phone || null,
+                            email: info.email || null,
+                            age: info.age ? parseInt(info.age) : null
+                        });
 
-                    seatsData.push({
-                        seat_number: seatNum,
-                        gender: selectedSeats[seatNum]
-                    });
+                        seatsData.push({
+                            seat_number: parseInt(seatNum),
+                            gender: selectedSeats[seatNum]
+                        });
+                    }
                 });
 
                 // Calculate totals
@@ -655,18 +1094,8 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Booking Successful!',
-                            html: `
-                                <p>Your booking has been confirmed!</p>
-                                <p><strong>Booking Number:</strong> ${response.booking.booking_number}</p>
-                                <p><strong>Total Amount:</strong> PKR ${parseFloat(response.booking.final_amount).toFixed(2)}</p>
-                            `,
-                            confirmButtonColor: '#0d6efd'
-                        }).then(() => {
-                            window.location.href = '{{ route('profile.bookings') }}';
-                        });
+                        // Redirect to payment page
+                        window.location.href = `/bookings/${response.booking.id}/payment`;
                     },
                     error: function(xhr) {
                         $('#proceed-booking-btn').prop('disabled', false);

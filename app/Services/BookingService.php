@@ -80,11 +80,18 @@ class BookingService
 
             // Statuses by channel
             $channel = $data['channel']; // counter|phone|online
-            $status = $channel === 'phone' ? 'hold' : 'confirmed';
-            $paymentStatus = $channel === 'counter' ? 'paid' : 'unpaid';
-            $method = $channel === 'counter' ? 'cash' : ($channel === 'online' ? 'gateway' : 'none');
+            $status = $data['status'] ?? ($channel === 'phone' ? 'hold' : ($channel === 'online' ? 'hold' : 'confirmed'));
+            $paymentStatus = $data['payment_status'] ?? ($channel === 'counter' ? 'paid' : 'unpaid');
+            $method = $data['payment_method'] ?? ($channel === 'counter' ? 'cash' : ($channel === 'online' ? 'mobile_wallet' : 'none'));
             $reservedSeatsTimeout = config('app.reserved_seats_timeout', 30);
-            $reservedUntil = $channel === 'phone' ? $fromTripStop->departure_at->copy()->subMinutes($reservedSeatsTimeout) : null;
+
+            // Use provided reserved_until or calculate based on channel
+            $reservedUntil = $data['reserved_until'] ?? null;
+            if (! $reservedUntil && ($channel === 'phone' || ($channel === 'online' && $status === 'hold'))) {
+                $reservedUntil = $channel === 'phone'
+                    ? $fromTripStop->departure_at->copy()->subMinutes($reservedSeatsTimeout)
+                    : now()->addMinutes(15); // 15 minutes for online bookings
+            }
 
             $booking = Booking::create([
                 'booking_number' => $this->pnr(),
@@ -167,10 +174,18 @@ class BookingService
         if (in_array($booking->status, ['expired', 'cancelled'])) {
             throw new RuntimeException('Cannot confirm payment for expired/cancelled booking.');
         }
+
+        // Check if booking is expired
+        if ($booking->reserved_until && now()->gt($booking->reserved_until)) {
+            $booking->update(['status' => 'expired']);
+            throw new RuntimeException('Booking has expired. Please create a new booking.');
+        }
+
         $booking->payment_status = 'paid';
-        $booking->payment_method = $method;
+        $booking->payment_method = $method === 'easypaisa' || $method === 'jazzcash' ? 'mobile_wallet' : $method;
         $booking->status = 'confirmed';
         $booking->confirmed_at = now();
+        $booking->reserved_until = null; // Clear reservation after payment
         $booking->save();
     }
 
