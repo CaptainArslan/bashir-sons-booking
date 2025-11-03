@@ -10,36 +10,81 @@
             return;
         }
 
-        console.log('Loading trip passengers for tripId:', tripId);
-
-        const passengersList = document.getElementById('tripPassengersList');
-        if (passengersList) {
-            // Show loading state
-            passengersList.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="text-muted mt-2 mb-0 small">Loading passengers...</p>
-                </div>
-            `;
+        console.log('[loadTripPassengers] ===== STARTING ===== tripId:', tripId);
+        
+        // Verify tripPassengersList element exists before making AJAX call
+        let passengersList = document.getElementById('tripPassengersList');
+        if (!passengersList) {
+            console.error('[loadTripPassengers] ERROR: tripPassengersList element not found in DOM');
+            console.error('[loadTripPassengers] Searching for element with retries...');
+            
+            // Try multiple times to find the element
+            let retryCount = 0;
+            const maxRetries = 5;
+            const checkElement = setInterval(function() {
+                retryCount++;
+                passengersList = document.getElementById('tripPassengersList');
+                if (passengersList) {
+                    console.log('[loadTripPassengers] Element found on retry #' + retryCount);
+                    clearInterval(checkElement);
+                    loadTripPassengers(tripId); // Retry with found element
+                } else if (retryCount >= maxRetries) {
+                    console.error('[loadTripPassengers] ERROR: Element still not found after', maxRetries, 'retries');
+                    clearInterval(checkElement);
+                }
+            }, 200);
+            return;
         }
+        
+        console.log('[loadTripPassengers] Element found:', passengersList.id);
 
+        // Show loading state
+        passengersList.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 mb-0 small">Loading passengers...</p>
+            </div>
+        `;
+
+        const routeUrl = "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId', tripId);
+        console.log('[loadTripPassengers] Making AJAX request to:', routeUrl);
+        
         $.ajax({
-            url: "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId', tripId),
+            url: routeUrl,
             type: 'GET',
             dataType: 'json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
             success: function(response) {
-                console.log('Passengers response:', response);
+                console.log('[loadTripPassengers] Success - Response received:', response);
+                console.log('[loadTripPassengers] Response type:', Array.isArray(response) ? 'Array' : typeof response);
+                console.log('[loadTripPassengers] Response length:', Array.isArray(response) ? response.length : 'N/A');
                 
+                // Re-fetch element in case DOM changed
+                passengersList = document.getElementById('tripPassengersList');
                 if (!passengersList) {
-                    console.error('tripPassengersList element not found');
+                    console.error('[loadTripPassengers] tripPassengersList element not found in success callback');
+                    console.error('[loadTripPassengers] Attempting to find element again...');
+                    // Try one more time after a short delay
+                    setTimeout(function() {
+                        const retryList = document.getElementById('tripPassengersList');
+                        if (retryList && Array.isArray(response)) {
+                            console.log('[loadTripPassengers] Element found on retry, rendering passengers...');
+                            renderPassengersList(response, retryList);
+                        } else {
+                            console.error('[loadTripPassengers] Element still not found after retry');
+                        }
+                    }, 200);
                     return;
                 }
-
+                
                 // Handle error response
                 if (response.error) {
-                    console.error('Error loading passengers:', response.error);
+                    console.error('[loadTripPassengers] Error in response:', response.error);
                     passengersList.innerHTML = `
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -51,7 +96,7 @@
 
                 // Ensure response is an array
                 if (!Array.isArray(response)) {
-                    console.error('Invalid response format:', response);
+                    console.error('[loadTripPassengers] Invalid response format:', response);
                     passengersList.innerHTML = `
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -222,16 +267,18 @@
                 // ✅ Render final HTML
                 passengersList.innerHTML = html;
                 
-                console.log('Passengers list rendered:', response.length, 'passengers');
+                console.log('[loadTripPassengers] Passengers list rendered successfully:', response.length, 'passengers');
+                console.log('[loadTripPassengers] HTML content length:', html.length, 'characters');
             },
 
             error: function(xhr, status, error) {
-                console.error('Error loading trip passengers:', {
+                console.error('[loadTripPassengers] AJAX Error:', {
                     status: status,
                     error: error,
                     response: xhr.responseJSON,
                     statusText: xhr.statusText,
-                    statusCode: xhr.status
+                    statusCode: xhr.status,
+                    url: routeUrl
                 });
 
                 const passengersList = document.getElementById('tripPassengersList');

@@ -52,22 +52,39 @@
                     behavior: 'smooth'
                 });
                 
-                // Load trip passengers - ensure function exists before calling
-                if (typeof loadTripPassengers === 'function') {
-                    console.log('Calling loadTripPassengers for trip:', response.trip.id);
-                    loadTripPassengers(response.trip.id);
-                } else {
-                    console.error('loadTripPassengers function is not defined');
-                    // Try again after a short delay in case scripts are still loading
-                    setTimeout(function() {
-                        if (typeof loadTripPassengers === 'function') {
-                            console.log('Calling loadTripPassengers (retry) for trip:', response.trip.id);
-                            loadTripPassengers(response.trip.id);
-                        } else {
-                            console.error('loadTripPassengers function still not available after retry');
-                        }
-                    }, 500);
-                }
+                // Load trip passengers immediately after trip is loaded
+                const tripId = response.trip.id;
+                console.log('[loadTrip] Trip loaded successfully. Trip ID:', tripId);
+                console.log('[loadTrip] loadTripPassengers function available:', typeof loadTripPassengers === 'function');
+                
+                // Call loadTripPassengers - scripts are loaded in order so function should be available
+                // Use a small delay to ensure DOM is fully rendered
+                setTimeout(function() {
+                    if (typeof loadTripPassengers === 'function') {
+                        console.log('[loadTrip] Calling loadTripPassengers for trip:', tripId);
+                        loadTripPassengers(tripId);
+                    } else {
+                        console.error('[loadTrip] ERROR: loadTripPassengers function not found!');
+                        // Try one more time after a longer delay
+                        setTimeout(function() {
+                            if (typeof loadTripPassengers === 'function') {
+                                console.log('[loadTrip] Retry successful - calling loadTripPassengers for trip:', tripId);
+                                loadTripPassengers(tripId);
+                            } else {
+                                console.error('[loadTrip] ERROR: loadTripPassengers still not available after retry');
+                                const passengersList = document.getElementById('tripPassengersList');
+                                if (passengersList) {
+                                    passengersList.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Error:</strong> Unable to load passengers. Please refresh the page.
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }, 800);
+                    }
+                }, 200);
                 
                 setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
             },
