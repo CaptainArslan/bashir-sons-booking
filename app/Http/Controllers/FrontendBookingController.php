@@ -8,6 +8,7 @@ use App\Models\TimetableStop;
 use App\Models\Trip;
 use App\Services\AvailabilityService;
 use App\Services\BookingService;
+use App\Services\DiscountService;
 use App\Services\TripFactoryService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -21,7 +22,8 @@ class FrontendBookingController extends Controller
     public function __construct(
         private AvailabilityService $availabilityService,
         private BookingService $bookingService,
-        private TripFactoryService $tripFactory
+        private TripFactoryService $tripFactory,
+        private DiscountService $discountService
     ) {}
 
     public function showTrips(Request $request): View
@@ -90,7 +92,10 @@ class FrontendBookingController extends Controller
                         $selectedDate.' '.$ts->departure_time
                     );
 
-                    if ($fullDeparture->greaterThanOrEqualTo($now)) {
+                    // Check if trip is at least 2 hours away (online booking restriction)
+                    $minimumBookingTime = $now->copy()->addHours(2);
+
+                    if ($fullDeparture->greaterThanOrEqualTo($minimumBookingTime)) {
                         // Get or create trip
                         $trip = Trip::where('timetable_id', $ts->timetable_id)
                             ->whereDate('departure_date', $selectedDate)
@@ -188,6 +193,16 @@ class FrontendBookingController extends Controller
                 throw new \Exception('Invalid segment selection');
             }
 
+            // Check 2-hour booking restriction for online customers
+            if ($tripFromStop->departure_at) {
+                $departureTime = $tripFromStop->departure_at;
+                $minimumBookingTime = now()->addHours(2);
+
+                if ($departureTime->lt($minimumBookingTime)) {
+                    throw new \Exception('Online bookings must be made at least 2 hours before departure. This trip departs too soon.');
+                }
+            }
+
             // Get fare
             $fare = Fare::active()
                 ->where('from_terminal_id', $validated['from_terminal_id'])
@@ -196,6 +211,36 @@ class FrontendBookingController extends Controller
 
             if (! $fare) {
                 throw new \Exception('No fare found for this route segment');
+            }
+
+            // Check for applicable discounts
+            $baseFarePerSeat = (float) $fare->final_fare;
+            $bookingDate = $trip->departure_date;
+            $bookingTime = $tripFromStop->departure_at;
+
+            // Find applicable discount (will be applied to total when seats are selected on frontend)
+            $applicableDiscount = $this->discountService->findApplicableDiscounts(
+                $trip->route,
+                'web', // Platform is web for frontend bookings
+                $bookingDate,
+                $bookingTime
+            )->first();
+
+            // Store discount info for frontend calculation
+            $discountInfo = [
+                'type' => null,
+                'value' => null,
+                'amount' => 0,
+                'has_discount' => false,
+            ];
+
+            if ($applicableDiscount) {
+                $discountInfo = [
+                    'type' => $applicableDiscount->discount_type,
+                    'value' => (float) $applicableDiscount->value,
+                    'amount' => 0, // Will be calculated on frontend based on seat count
+                    'has_discount' => true,
+                ];
             }
 
             // Get seat map
@@ -227,10 +272,13 @@ class FrontendBookingController extends Controller
                     'arrival_at' => $tripToStop->arrival_at?->format('Y-m-d H:i:s'),
                 ],
                 'fare' => [
-                    'final_fare' => (float) $fare->final_fare,
+                    'base_fare' => $baseFarePerSeat,
+                    'final_fare' => $baseFarePerSeat, // Final fare per seat (before discount)
                     'currency' => $fare->currency,
-                    'discount_type' => $fare->discount_type?->value,
-                    'discount_value' => (float) $fare->discount_value,
+                    'discount_type' => $discountInfo['type'],
+                    'discount_value' => $discountInfo['value'],
+                    'discount_amount' => $discountInfo['amount'], // Will be calculated on frontend
+                    'has_discount' => $discountInfo['has_discount'],
                 ],
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
@@ -283,6 +331,18 @@ class FrontendBookingController extends Controller
 
             if ($tripFromStop->sequence >= $tripToStop->sequence) {
                 throw new \Exception('Invalid segment selection');
+            }
+
+            // Check 2-hour booking restriction for online customers
+            if ($tripFromStop->departure_at) {
+                $departureTime = $tripFromStop->departure_at;
+                $minimumBookingTime = now()->addHours(2);
+
+                if ($departureTime->lt($minimumBookingTime)) {
+                    throw ValidationException::withMessages([
+                        'departure_time' => 'Online bookings must be made at least 2 hours before departure. This trip departs too soon to book online. Please visit our counter or try booking an upcoming trip.',
+                    ]);
+                }
             }
 
             // Find RouteStop IDs

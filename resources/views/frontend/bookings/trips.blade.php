@@ -224,9 +224,15 @@
                 <div class="col-12">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-white">
-                            <h5 class="mb-0">
-                                <i class="bi bi-clock-history me-2"></i>Available Trips
-                            </h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-clock-history me-2"></i>Available Trips
+                                </h5>
+                                <div class="alert alert-info alert-sm mb-0 py-2 px-3" style="font-size: 0.875rem;">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>2-Hour Rule:</strong> Online bookings must be made at least 2 hours before departure
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="loading-spinner text-center py-5" id="loading-trips">
@@ -244,6 +250,10 @@
                                 <i class="bi bi-inbox text-muted"></i>
                                 <h4 class="mt-3 mb-2">No trips available</h4>
                                 <p class="text-muted mb-4">We couldn't find any trips for your selected route and date. Please try different dates or routes.</p>
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Note:</strong> Online bookings must be made at least 2 hours before departure. Trips departing within 2 hours are not available for online booking.
+                                </div>
                                 <a href="{{ route('home') }}" class="btn btn-primary btn-lg">
                                     <i class="bi bi-arrow-left me-2"></i>Search Again
                                 </a>

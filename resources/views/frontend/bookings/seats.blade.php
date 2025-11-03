@@ -402,7 +402,7 @@
                                     <span class="text-muted">Subtotal:</span>
                                     <strong id="subtotal" class="text-dark">PKR 0.00</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                                <div class="d-flex justify-content-between mb-3 pb-2 border-bottom" id="discount-row" style="display: none;">
                                     <span class="text-muted">Discount:</span>
                                     <strong id="discount" class="text-success">-PKR 0.00</strong>
                                 </div>
@@ -539,15 +539,24 @@
                     error: function(xhr) {
                         $('#loading-seats').hide();
                         let errorMsg = 'Failed to load trip details';
+                        let errorTitle = 'Error';
+                        
                         if (xhr.responseJSON && xhr.responseJSON.error) {
                             errorMsg = xhr.responseJSON.error;
+                            
+                            // Check if it's a 2-hour restriction error
+                            if (errorMsg.includes('2 hours') || errorMsg.includes('departs too soon')) {
+                                errorTitle = 'Booking Not Available';
+                                errorMsg = 'Online bookings must be made at least 2 hours before departure. This trip departs too soon to book online. Please visit our counter or try booking an upcoming trip.';
+                            }
                         }
 
                         Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
+                            icon: 'warning',
+                            title: errorTitle,
                             text: errorMsg,
-                            confirmButtonColor: '#d33'
+                            confirmButtonColor: '#ffc107',
+                            confirmButtonText: 'Go Back to Trips'
                         }).then(() => {
                             window.history.back();
                         });
@@ -944,26 +953,40 @@
                 if (!fareData) return;
 
                 const seatCount = Object.keys(selectedSeats).length;
-                const farePerSeat = parseFloat(fareData.final_fare);
-                let subtotal = farePerSeat * seatCount;
+                const baseFarePerSeat = parseFloat(fareData.base_fare || fareData.final_fare);
+                let subtotal = baseFarePerSeat * seatCount;
 
-                // Apply discount
+                // Calculate discount amount from route discounts
+                // Discount is calculated on the total subtotal amount
                 let discountAmount = 0;
-                if (fareData.discount_type && fareData.discount_value) {
-                    if (fareData.discount_type === 'flat') {
-                        discountAmount = parseFloat(fareData.discount_value) * seatCount;
-                    } else if (fareData.discount_type === 'percent') {
-                        discountAmount = subtotal * (parseFloat(fareData.discount_value) / 100);
+                if (fareData.has_discount && fareData.discount_type && fareData.discount_value !== undefined) {
+                    if (fareData.discount_type === 'fixed' || fareData.discount_type === 'flat') {
+                        // Fixed discount - can be per seat or per booking
+                        // Assuming it's per seat based on the value structure
+                        const discountValue = parseFloat(fareData.discount_value);
+                        discountAmount = discountValue * seatCount;
+                    } else if (fareData.discount_type === 'percentage' || fareData.discount_type === 'percent') {
+                        // Percentage discount - apply to total subtotal
+                        discountAmount = subtotal * (parseFloat(fareData.discount_value || 0) / 100);
                     }
                 }
 
-                const total = Math.max(0, subtotal - discountAmount);
                 const tax = 0; // No tax for online bookings initially
+                const total = Math.max(0, subtotal - discountAmount + tax);
 
-                $('#fare-per-seat').text(`${fareData.currency} ${farePerSeat.toFixed(2)}`);
+                $('#fare-per-seat').text(`${fareData.currency} ${baseFarePerSeat.toFixed(2)}`);
                 $('#seats-count').text(seatCount);
                 $('#subtotal').text(`${fareData.currency} ${subtotal.toFixed(2)}`);
-                $('#discount').text(`-${fareData.currency} ${discountAmount.toFixed(2)}`);
+                
+                // Show/hide discount row
+                if (discountAmount > 0) {
+                    $('#discount-row').show();
+                    $('#discount').text(`-${fareData.currency} ${discountAmount.toFixed(2)}`);
+                } else {
+                    $('#discount-row').hide();
+                    $('#discount').text(`-${fareData.currency} 0.00`);
+                }
+                
                 $('#tax').text(`${fareData.currency} ${tax.toFixed(2)}`);
                 $('#total').text(`${fareData.currency} ${total.toFixed(2)}`);
 
@@ -1059,20 +1082,24 @@
 
                 // Calculate totals
                 const seatCount = seatsData.length;
-                const farePerSeat = parseFloat(fareData.final_fare);
-                let subtotal = farePerSeat * seatCount;
+                const baseFarePerSeat = parseFloat(fareData.base_fare || fareData.final_fare);
+                let subtotal = baseFarePerSeat * seatCount;
 
+                // Calculate discount amount
                 let discountAmount = 0;
-                if (fareData.discount_type && fareData.discount_value) {
-                    if (fareData.discount_type === 'flat') {
-                        discountAmount = parseFloat(fareData.discount_value) * seatCount;
-                    } else if (fareData.discount_type === 'percent') {
-                        discountAmount = subtotal * (parseFloat(fareData.discount_value) / 100);
+                if (fareData.has_discount && fareData.discount_type && fareData.discount_value !== undefined) {
+                    if (fareData.discount_type === 'fixed' || fareData.discount_type === 'flat') {
+                        // Fixed discount - multiply by seat count
+                        const discountValue = parseFloat(fareData.discount_value);
+                        discountAmount = discountValue * seatCount;
+                    } else if (fareData.discount_type === 'percentage' || fareData.discount_type === 'percent') {
+                        // Percentage discount on total subtotal
+                        discountAmount = subtotal * (parseFloat(fareData.discount_value || 0) / 100);
                     }
                 }
 
                 const tax = 0;
-                const total = Math.max(0, subtotal - discountAmount);
+                const total = Math.max(0, subtotal - discountAmount + tax);
 
                 // Submit booking
                 $('#proceed-booking-btn').prop('disabled', true);
@@ -1100,6 +1127,10 @@
                     error: function(xhr) {
                         $('#proceed-booking-btn').prop('disabled', false);
                         let errorMsg = 'Failed to create booking';
+                        let errorTitle = 'Booking Failed';
+                        let errorIcon = 'error';
+                        let confirmColor = '#d33';
+                        
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.error) {
                                 errorMsg = xhr.responseJSON.error;
@@ -1107,13 +1138,21 @@
                                 const errors = xhr.responseJSON.errors;
                                 errorMsg = Object.values(errors).flat().join(', ');
                             }
+                            
+                            // Check if it's a 2-hour restriction error
+                            if (errorMsg.includes('2 hours') || errorMsg.includes('departs too soon')) {
+                                errorTitle = 'Booking Not Available';
+                                errorIcon = 'warning';
+                                confirmColor = '#ffc107';
+                                errorMsg = 'Online bookings must be made at least 2 hours before departure. This trip departs too soon to book online. Please visit our counter or try booking an upcoming trip.';
+                            }
                         }
 
                         Swal.fire({
-                            icon: 'error',
-                            title: 'Booking Failed',
+                            icon: errorIcon,
+                            title: errorTitle,
                             text: errorMsg,
-                            confirmButtonColor: '#d33'
+                            confirmButtonColor: confirmColor
                         });
                     }
                 });
