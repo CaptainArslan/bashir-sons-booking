@@ -52,8 +52,6 @@ Route::middleware(['guest', '2fa.pending'])->group(function () {
     Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
-
 // User activation route (for banned users, before authentication - guest only)
 Route::middleware('guest')->group(function () {
     Route::get('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'show'])->name('user.activate');
@@ -61,9 +59,11 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // Profile routes - now using frontend views
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile/bookings', [ProfileController::class, 'bookings'])->name('profile.bookings');
 
     Route::get('/user/two-factor', [TwoFactorController::class, 'show'])->name('2fa.show');
     Route::post('/user/two-factor/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');

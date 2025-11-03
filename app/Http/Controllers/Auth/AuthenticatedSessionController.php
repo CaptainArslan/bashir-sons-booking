@@ -16,7 +16,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        return view('frontend.auth.login');
     }
 
     /**
@@ -56,8 +56,11 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('2fa.challenge');
         }
 
-        // Default fallback
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Default fallback - redirect to home or profile based on user role
+        if ($user && ($user->isAdmin() || $user->isEmployee())) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**
@@ -71,6 +74,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('home');
     }
 }

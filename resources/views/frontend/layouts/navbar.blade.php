@@ -22,18 +22,38 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            {{ Auth::user()->name }}
+                            <i class="bi bi-person-circle me-1"></i>{{ Auth::user()->name }}
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('dashboard') }}">Dashboard</a></li>
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person me-2"></i>Account
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                    <i class="bi bi-person me-2"></i>Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('profile.bookings') }}">
+                                    <i class="bi bi-ticket-perforated me-2"></i>My Bookings
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('2fa.show') }}">
+                                    <i class="bi bi-shield-check me-2"></i>Two-Factor Authentication
+                                </a>
+                            </li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="dropdown-item">Logout</button>
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
                                 </form>
                             </li>
                         </ul>

@@ -21,7 +21,7 @@ class TwoFactorController extends Controller
 
         // If 2FA already enabled
         if ($user->two_factor_secret) {
-            return view('profile.2fa', ['enabled' => true]);
+            return view('frontend.auth.two-factor', ['enabled' => true]);
         }
 
         // Try to use a pending secret from session
@@ -52,17 +52,22 @@ class TwoFactorController extends Controller
 
         $QR_Image = $writer->writeString($qrCodeUrl);
 
-        return view('profile.2fa', compact('secret', 'QR_Image'));
+        return view('frontend.auth.two-factor', compact('secret', 'QR_Image'));
     }
 
 
     public function enable(Request $request)
     {
+        $request->validate([
+            'code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
+            'secret' => ['required', 'string'],
+        ]);
+
         $google2fa = new Google2FA();
         $valid = $google2fa->verifyKey($request->secret, $request->code);
 
         if (! $valid) {
-            return back()->with('error', 'Invalid 2FA code -> ' . var_dump($valid));
+            return back()->with('error', 'Invalid authentication code. Please check your authenticator app and try again.');
         }
 
         $user = Auth::user();
@@ -72,7 +77,10 @@ class TwoFactorController extends Controller
             collect(range(1, 8))->map(fn() => bin2hex(random_bytes(4)))->toArray()
         );
 
-        return back()->with('success', 'Two-Factor Authentication enabled!');
+        // Clear the temporary secret from session
+        session()->forget('2fa_secret');
+
+        return redirect()->route('2fa.show')->with('success', 'Two-Factor Authentication enabled successfully! Your account is now more secure.');
     }
 
     public function disable()
@@ -80,7 +88,7 @@ class TwoFactorController extends Controller
         $user = Auth::user();
         $user->disableTwoFactorAuthentication();
 
-        return back()->with('success', 'Two-Factor Authentication disabled!');
+        return redirect()->route('2fa.show')->with('success', 'Two-Factor Authentication disabled successfully.');
     }
 
     public function challenge()
@@ -88,18 +96,22 @@ class TwoFactorController extends Controller
         $user = User::find(session('2fa:user_id'));
 
         if (! $user) {
-            return redirect()->route('login')->withErrors(['login' => 'Session expired.']);
+            return redirect()->route('login')->withErrors(['login' => 'Session expired. Please log in again.']);
         }
 
-        return view('profile.twofactor-challenge', compact('user'));
+        return view('frontend.auth.two-factor-challenge', compact('user'));
     }
 
     public function verifyChallenge(Request $request)
     {
+        $request->validate([
+            'code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
+        ]);
+
         $user = User::find(session('2fa:user_id'));
 
         if (! $user) {
-            return redirect()->route('login')->withErrors(['login' => 'Session expired.']);
+            return redirect()->route('login')->withErrors(['login' => 'Session expired. Please log in again.']);
         }
 
         $google2fa = new Google2FA();
@@ -108,9 +120,14 @@ class TwoFactorController extends Controller
         if ($google2fa->verifyKey($secret, $request->code)) {
             session()->forget('2fa:user_id');
             Auth::login($user);
-            return redirect()->intended(route('dashboard', absolute: false));
+
+            // Redirect based on user role
+            if ($user->isAdmin() || $user->isEmployee()) {
+                return redirect()->intended(route('admin.dashboard', absolute: false));
+            }
+            return redirect()->intended(route('home', absolute: false));
         }
 
-        return back()->with('error', 'Invalid authentication code.');
+        return back()->with('error', 'Invalid authentication code. Please check your authenticator app and try again.');
     }
 }
