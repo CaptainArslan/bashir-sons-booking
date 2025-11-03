@@ -7,6 +7,7 @@ use App\Enums\FareStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Fare;
 use App\Models\Terminal;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -349,6 +350,58 @@ class FareController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting fare: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Check if fare exists for terminal pair (AJAX)
+     */
+    public function checkFare(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id|different:from_terminal_id',
+            'exclude_fare_id' => 'nullable|exists:fares,id',
+        ]);
+
+        try {
+            $fare = Fare::where('from_terminal_id', $validated['from_terminal_id'])
+                ->where('to_terminal_id', $validated['to_terminal_id']);
+
+            // Exclude current fare when editing
+            if (! empty($validated['exclude_fare_id'])) {
+                $fare->where('id', '!=', $validated['exclude_fare_id']);
+            }
+
+            $fare = $fare->first();
+
+            if ($fare) {
+                return response()->json([
+                    'success' => true,
+                    'exists' => true,
+                    'fare' => [
+                        'id' => $fare->id,
+                        'base_fare' => (float) $fare->base_fare,
+                        'currency' => $fare->currency,
+                        'discount_type' => $fare->discount_type?->value,
+                        'discount_value' => (float) $fare->discount_value,
+                        'final_fare' => (float) $fare->final_fare,
+                    ],
+                    'message' => 'A fare already exists for this terminal pair.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'exists' => false,
+                'message' => 'No fare exists for this terminal pair. You can create a new one.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'exists' => false,
+                'message' => 'Error checking fare: '.$e->getMessage(),
             ], 500);
         }
     }

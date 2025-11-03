@@ -214,6 +214,7 @@ Route::middleware('auth')->group(function () {
         // Fares Management
         Route::get('/fares', [FareController::class, 'index'])->can('view fares')->name('fares.index');
         Route::get('/fares/data', [FareController::class, 'getData'])->can('view fares')->name('fares.data');
+        Route::get('/fares/check', [FareController::class, 'checkFare'])->can('view fares')->name('fares.check');
         Route::get('/fares/create', [FareController::class, 'create'])->can('create fares')->name('fares.create');
         Route::post('/fares', [FareController::class, 'store'])->can('create fares')->name('fares.store');
         Route::get('/fares/{id}/edit', [FareController::class, 'edit'])->can('edit fares')->name('fares.edit');

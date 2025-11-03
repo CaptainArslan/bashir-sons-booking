@@ -84,6 +84,40 @@
         border-radius: 6px;
         text-align: center;
     }
+    
+    .fare-alert-box {
+        padding: 0.75rem;
+        border-radius: 6px;
+        border-left: 4px solid;
+    }
+    
+    .fare-alert-box.info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-left-color: #2196f3;
+        color: #1976d2;
+    }
+    
+    .fare-alert-box.warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+        border-left-color: #ffc107;
+        color: #856404;
+    }
+    
+    .fare-alert-box.danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border-left-color: #dc3545;
+        color: #721c24;
+    }
+    
+    .fare-alert-box p {
+        margin: 0;
+        font-size: 0.875rem;
+    }
+    
+    .fare-alert-box .btn {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
 </style>
 @endsection
 
@@ -244,7 +278,7 @@
                             </div>
                         </div>
 
-                        <!-- Route Preview -->
+                        <!-- Route Preview & Fare Status -->
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="route-preview-box">
@@ -253,6 +287,13 @@
                                         <small class="text-muted">{{ $fare->fromTerminal->city->name }} → {{ $fare->toTerminal->city->name }}</small>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Fare Alert -->
+                        <div class="row mt-3" id="fare-alert-container" style="display: none;">
+                            <div class="col-12">
+                                <div id="fare-alert"></div>
                             </div>
                         </div>
                     </div>
@@ -269,7 +310,7 @@
                                 <a href="{{ route('admin.fares.index') }}" class="btn btn-secondary px-4">
                                     <i class="bx bx-x me-1"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-primary px-4" id="submit-btn">
                                     <i class="bx bx-save me-1"></i>Update Fare
                                 </button>
                             </div>
@@ -327,14 +368,106 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleDiscountValue();
     });
 
-    // Show route preview when terminals are selected
+    // Show route preview and check for existing fare when terminals are selected
     [fromTerminalSelect, toTerminalSelect].forEach(element => {
-        element.addEventListener('change', updateRoutePreview);
+        element.addEventListener('change', function() {
+            updateRoutePreview();
+            checkExistingFare();
+        });
     });
+
+    // Function to check if fare exists for selected terminals (excluding current fare)
+    function checkExistingFare() {
+        const fromTerminalId = fromTerminalSelect.value;
+        const toTerminalId = toTerminalSelect.value;
+        const currentFareId = {{ $fare->id }};
+        const alertContainer = document.getElementById('fare-alert-container');
+        const alertDiv = document.getElementById('fare-alert');
+
+        // Don't check if terminals haven't changed from original
+        const originalFromId = {{ $fare->from_terminal_id }};
+        const originalToId = {{ $fare->to_terminal_id }};
+        
+        if (!fromTerminalId || !toTerminalId || fromTerminalId === toTerminalId) {
+            alertContainer.style.display = 'none';
+            // Show submit button when terminals are cleared
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+            return;
+        }
+
+        // Don't show alert if terminals haven't changed
+        if (fromTerminalId == originalFromId && toTerminalId == originalToId) {
+            alertContainer.style.display = 'none';
+            // Show submit button when terminals match original
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+            return;
+        }
+
+        // Show loading state
+        alertContainer.style.display = 'block';
+        alertDiv.innerHTML = '<p><i class="bx bx-loader-alt bx-spin me-1"></i>Checking for existing fare...</p>';
+
+        fetch(`{{ route('admin.fares.check') }}?from_terminal_id=${fromTerminalId}&to_terminal_id=${toTerminalId}&exclude_fare_id=${currentFareId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.exists) {
+                // Fare exists for this terminal pair - hide update button
+                const fare = data.fare;
+                alertDiv.className = 'fare-alert-box danger';
+                alertDiv.innerHTML = `
+                    <p><i class="bx bx-error me-1"></i><strong>Warning!</strong> A fare already exists for this terminal pair.</p>
+                    <p class="mb-2">Base Fare: ${fare.currency} ${parseFloat(fare.base_fare).toFixed(2)} | Final Fare: ${fare.currency} ${parseFloat(fare.final_fare).toFixed(2)}</p>
+                    <a href="${window.location.origin}/admin/fares/${fare.id}/edit" class="btn btn-sm btn-primary">
+                        <i class="bx bx-edit me-1"></i>Edit Existing Fare Instead
+                    </a>
+                `;
+
+                // Hide submit button since fare already exists
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn) {
+                    submitBtn.style.display = 'none';
+                }
+            } else {
+                // No fare exists - allow update and show submit button
+                alertDiv.className = 'fare-alert-box info';
+                alertDiv.innerHTML = `
+                    <p><i class="bx bx-check-circle me-1"></i><strong>No Conflict</strong></p>
+                    <p class="mb-0">${data.message || 'No fare exists for this terminal pair. You can update this fare with the new terminals.'}</p>
+                `;
+
+                // Show submit button
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn) {
+                    submitBtn.style.display = '';
+                }
+            }
+        })
+        .catch(error => {
+            alertDiv.className = 'fare-alert-box warning';
+            alertDiv.innerHTML = `<p><i class="bx bx-error me-1"></i>Error checking fare: ${error.message}</p>`;
+            // Show submit button on error (allow user to proceed)
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+        });
+    }
 
     // Initial setup
     toggleDiscountValue();
     calculateFinalFare();
+    updateRoutePreview();
 });
 
 function calculateFinalFare() {
