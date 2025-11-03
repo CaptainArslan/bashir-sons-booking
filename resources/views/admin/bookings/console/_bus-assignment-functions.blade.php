@@ -341,8 +341,9 @@
         const hasSegmentAssignments = busAssignments.length > 0;
 
         // Get the currently selected segment from the booking form
-        const currentFromStopId = appState.tripData?.from_stop?.id;
-        const currentToStopId = appState.tripData?.to_stop?.id;
+        // Use trip_stop_id from the response structure, not id
+        const currentFromStopId = appState.tripData?.from_stop?.trip_stop_id;
+        const currentToStopId = appState.tripData?.to_stop?.trip_stop_id;
 
         // Check if an assignment already exists for the current segment
         let assignmentExistsForSegment = false;
@@ -357,8 +358,10 @@
         const isLegacyBusAssigned = trip.bus_id && trip.bus_id !== null && trip.bus_id !== undefined;
 
         if (assignBusCard && assignBusBtn) {
-            // Hide the assign bus button if assignment already exists for this segment
-            if (assignmentExistsForSegment) {
+            // Hide the assign bus card if:
+            // 1. A segment assignment exists for the current segment, OR
+            // 2. A legacy bus is assigned (for backward compatibility)
+            if (assignmentExistsForSegment || isLegacyBusAssigned) {
                 assignBusCard.style.display = 'none';
             } else {
                 // Show the assign bus card - open modal
