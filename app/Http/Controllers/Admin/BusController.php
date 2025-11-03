@@ -362,16 +362,47 @@ class BusController extends Controller
     {
         try {
             $bus = Bus::findOrFail($id);
+
+            // Check for associated data
+            $tripsCount = $bus->trips()->count();
+            $busAssignmentsCount = $bus->busAssignments()->count();
+
+            $associations = [];
+            if ($tripsCount > 0) {
+                $associations[] = "{$tripsCount} trip".($tripsCount !== 1 ? 's' : '');
+            }
+            if ($busAssignmentsCount > 0) {
+                $associations[] = "{$busAssignmentsCount} bus assignment".($busAssignmentsCount !== 1 ? 's' : '');
+            }
+
+            if (! empty($associations)) {
+                $associationText = implode(' and ', $associations);
+                $message = "Cannot delete bus. It has {$associationText} associated with it. Please remove all associations before deleting.";
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'trips_count' => $tripsCount,
+                    'bus_assignments_count' => $busAssignmentsCount,
+                ], 400);
+            }
+
+            $busName = $bus->name;
             $bus->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bus deleted successfully.',
+                'message' => "Bus '{$busName}' has been deleted successfully.",
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bus not found.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting bus: '.$e->getMessage(),
+                'message' => 'An error occurred while deleting the bus. Please try again.',
             ], 500);
         }
     }
