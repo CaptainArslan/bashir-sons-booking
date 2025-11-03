@@ -107,6 +107,48 @@ class BusAssignmentController extends Controller
             ]);
         }
 
+        // Load the trip to get date and time information
+        $trip = Trip::findOrFail($validated['trip_id']);
+
+        // Check for exact duplicate assignment (same segment)
+        $exactDuplicate = BusAssignment::where('trip_id', $validated['trip_id'])
+            ->where('from_trip_stop_id', $validated['from_trip_stop_id'])
+            ->where('to_trip_stop_id', $validated['to_trip_stop_id'])
+            ->exists();
+
+        if ($exactDuplicate) {
+            throw ValidationException::withMessages([
+                'from_trip_stop_id' => 'A bus is already assigned for this exact segment. Please edit or remove the existing assignment first.',
+            ]);
+        }
+
+        // Check if the same bus is already assigned to another trip on the same date with overlapping times
+        if ($trip->departure_date && $trip->departure_datetime && $trip->estimated_arrival_datetime) {
+            $conflictingAssignment = BusAssignment::with('trip')
+                ->where('bus_id', $validated['bus_id'])
+                ->where('trip_id', '!=', $validated['trip_id'])
+                ->whereHas('trip', function ($query) use ($trip) {
+                    // Same date
+                    $query->where('departure_date', $trip->departure_date)
+                        // Overlapping time ranges
+                        ->where(function ($q) use ($trip) {
+                            $q->where(function ($timeQuery) use ($trip) {
+                                // New trip starts before existing trip ends AND new trip ends after existing trip starts
+                                $timeQuery->where('departure_datetime', '<', $trip->estimated_arrival_datetime)
+                                    ->where('estimated_arrival_datetime', '>', $trip->departure_datetime);
+                            });
+                        });
+                })
+                ->first();
+
+            if ($conflictingAssignment) {
+                $conflictingTrip = $conflictingAssignment->trip;
+                throw ValidationException::withMessages([
+                    'bus_id' => "This bus is already assigned to another trip on {$trip->departure_date->format('Y-m-d')} with overlapping time ({$conflictingTrip->departure_datetime->format('H:i')} - {$conflictingTrip->estimated_arrival_datetime?->format('H:i')}). Please choose a different bus or date.",
+                ]);
+            }
+        }
+
         // Check for overlapping assignments (optional - can be removed if multiple buses allowed on same segment)
         $overlapping = BusAssignment::where('trip_id', $validated['trip_id'])
             ->where(function ($query) use ($fromStop, $toStop) {
