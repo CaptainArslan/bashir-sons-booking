@@ -94,7 +94,8 @@
     </div>
 @endsection
 
-@push('scripts')
+@section('scripts')
+@include('admin.layouts.datatables')
 <script>
 $(document).ready(function() {
     // Initialize DataTable
@@ -185,4 +186,4 @@ $(document).ready(function() {
     };
 });
 </script>
-@endpush
+@endsection
