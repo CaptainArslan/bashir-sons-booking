@@ -9,7 +9,9 @@
         const toTerminalId = document.getElementById('toTerminal').value;
         const timetableId = document.getElementById('departureTime').value;
         const date = document.getElementById('travelDate').value;
+        const arrivalTime = document.getElementById('arrivalTime').value;
 
+        // Validate all required fields
         if (!fromTerminalId || !toTerminalId || !timetableId || !date) {
             Swal.fire({
                 icon: 'warning',
@@ -19,6 +21,45 @@
             });
             return;
         }
+
+        // Validate terminals are different
+        if (fromTerminalId === toTerminalId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Selection',
+                text: 'Origin and destination terminals must be different.',
+                confirmButtonColor: '#ffc107'
+            });
+            return;
+        }
+
+        // Check if fare is valid
+        if (appState.fareValid === false || !appState.fareData) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Fare Not Configured',
+                text: 'No valid fare found for this route. Please configure the fare first before loading the trip.',
+                confirmButtonColor: '#d33'
+            }).then(() => {
+                // Scroll to fare error if visible
+                const fareErrorContainer = document.getElementById('fareErrorContainer');
+                if (fareErrorContainer && fareErrorContainer.style.display !== 'none') {
+                    fareErrorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+            return;
+        }
+
+        // Validate arrival time is set
+        // if (!arrivalTime || arrivalTime === 'N/A') {
+        //     Swal.fire({
+        //         icon: 'warning',
+        //         title: 'Missing Arrival Time',
+        //         text: 'Please select a departure time to set the arrival time.',
+        //         confirmButtonColor: '#ffc107'
+        //     });
+        //     return;
+        // }
 
         document.getElementById('loadTripBtn').disabled = true;
         showLoader(true, 'Loading trip...');
@@ -89,12 +130,34 @@
                 setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
             },
             error: function(error) {
-                const message = error.responseJSON?.error ||
-                    'Unable to load trip information. Please check all selections and try again.';
+                let message = 'Unable to load trip information. Please check all selections and try again.';
+                
+                if (error.responseJSON) {
+                    if (error.responseJSON.error) {
+                        message = error.responseJSON.error;
+                    } else if (error.responseJSON.message) {
+                        message = error.responseJSON.message;
+                    } else if (error.responseJSON.errors) {
+                        // Validation errors
+                        const errors = error.responseJSON.errors;
+                        const errorList = [];
+                        for (const field in errors) {
+                            if (Array.isArray(errors[field])) {
+                                errorList.push(...errors[field]);
+                            } else {
+                                errorList.push(errors[field]);
+                            }
+                        }
+                        if (errorList.length > 0) {
+                            message = errorList.join(', ');
+                        }
+                    }
+                }
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Failed to Load Trip',
-                    text: message,
+                    html: message,
                     confirmButtonColor: '#d33'
                 });
             },
@@ -111,13 +174,34 @@
     function fetchArrivalTime() {
         const select = document.getElementById('departureTime');
         const selectedOption = select.options[select.selectedIndex];
+        const arrivalInput = document.getElementById('arrivalTime');
+
+        if (!select || !selectedOption || selectedOption.value === '') {
+            // No departure time selected
+            if (arrivalInput) {
+                arrivalInput.value = '';
+                arrivalInput.disabled = true;
+            }
+            return;
+        }
 
         // Read data-arrival attribute
         const arrivalTime = selectedOption.getAttribute('data-arrival');
 
-        // Set input value
-        const arrivalInput = document.getElementById('arrivalTime');
-        arrivalInput.value = arrivalTime;
+        // Set input value and enable it
+        if (arrivalInput) {
+            arrivalInput.value = arrivalTime || 'N/A';
+            arrivalInput.disabled = false;
+        }
+        
+        // Validate fare when departure time changes (if both terminals are selected)
+        const fromTerminalId = document.getElementById('fromTerminal').value;
+        const toTerminalId = document.getElementById('toTerminal').value;
+        
+        if (fromTerminalId && toTerminalId && typeof fetchFare === 'function') {
+            // Re-fetch fare to ensure it's still valid
+            fetchFare(fromTerminalId, toTerminalId);
+        }
     }
 
     // ========================================

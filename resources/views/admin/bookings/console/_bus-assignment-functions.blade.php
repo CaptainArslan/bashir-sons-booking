@@ -574,8 +574,19 @@
         // Reset expense row counter
         expenseRowCounter = 0;
 
+        // Validate tripId parameter
+        if (!tripId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Trip ID',
+                text: 'Trip ID is required to assign a bus.',
+                confirmButtonColor: '#d33'
+            });
+            return;
+        }
+
         const tripData = appState.tripData;
-        if (!tripData || !tripData.trip || !tripData.from_stop || !tripData.to_stop) {
+        if (!tripData || !tripData.trip) {
             Swal.fire({
                 icon: 'error',
                 title: 'Trip Data Not Available',
@@ -585,10 +596,27 @@
             return;
         }
 
-        // Use tripId parameter (already declared in function signature)
         // Verify tripId matches tripData
         if (tripId !== tripData.trip.id) {
-            console.warn('Trip ID mismatch between parameter and trip data');
+            console.warn('[openAssignBusModal] Trip ID mismatch:', tripId, 'vs', tripData.trip.id);
+            Swal.fire({
+                icon: 'warning',
+                title: 'Trip Mismatch',
+                text: 'The trip data may be outdated. Please reload the trip and try again.',
+                confirmButtonColor: '#ffc107'
+            });
+            return;
+        }
+
+        // Validate trip stops are available
+        if (!tripData.from_stop || !tripData.to_stop) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Trip Stops Not Available',
+                text: 'Unable to determine trip stops. Please reload the trip.',
+                confirmButtonColor: '#d33'
+            });
+            return;
         }
 
         const defaultFromTripStopId = tripData.from_stop.trip_stop_id;
@@ -596,35 +624,90 @@
         const defaultFromTerminalId = tripData.from_stop.terminal_id;
         const defaultToTerminalId = tripData.to_stop.terminal_id;
 
-        // Fetch list of available buses, expense types, and all trip stops
+        // Fetch list of available buses, expense types, and all trip stops with error handling
         Promise.all([
             $.ajax({
                 url: "{{ route('admin.bookings.list-buses') }}",
-                type: 'GET'
+                type: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).catch(function(error) {
+                console.error('[openAssignBusModal] Error fetching buses:', error);
+                return { success: false, error: error };
             }),
             $.ajax({
                 url: "{{ route('admin.bookings.expense-types') }}",
-                type: 'GET'
+                type: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).catch(function(error) {
+                console.error('[openAssignBusModal] Error fetching expense types:', error);
+                return { success: false, error: error };
             }),
             $.ajax({
                 url: "{{ route('admin.bus-assignments.trip-stops', ['tripId' => ':tripId']) }}".replace(
                     ':tripId', tripId),
-                type: 'GET'
+                type: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).catch(function(error) {
+                console.error('[openAssignBusModal] Error fetching trip stops:', error);
+                return { success: false, error: error };
             })
         ]).then(function([busesResponse, expenseTypesResponse, tripStopsResponse]) {
-            if (!busesResponse.success || !expenseTypesResponse.success || !tripStopsResponse.success) {
+            // Validate all responses
+            const errors = [];
+            
+            if (!busesResponse || !busesResponse.success) {
+                errors.push('Unable to load buses list.');
+            }
+            
+            if (!expenseTypesResponse || !expenseTypesResponse.success) {
+                errors.push('Unable to load expense types.');
+            }
+            
+            if (!tripStopsResponse || !tripStopsResponse.success) {
+                errors.push('Unable to load trip stops.');
+            }
+            
+            if (errors.length > 0) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed to Load Data',
-                    text: 'Unable to fetch required data. Please try again.',
+                    title: 'Failed to Load Required Data',
+                    html: '<ul style="text-align: left;"><li>' + errors.join('</li><li>') + '</li></ul>',
                     confirmButtonColor: '#d33'
                 });
                 return;
             }
 
-            const buses = busesResponse.buses;
-            const expenseTypes = expenseTypesResponse.expense_types;
-            const tripStops = tripStopsResponse.stops.sort((a, b) => a.sequence - b.sequence);
+            // Validate buses array is not empty
+            if (!busesResponse.buses || busesResponse.buses.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Buses Available',
+                    text: 'No active buses found. Please add buses first.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return;
+            }
+
+            const buses = busesResponse.buses || [];
+            const expenseTypes = expenseTypesResponse.expense_types || [];
+            const tripStops = (tripStopsResponse.stops || []).sort((a, b) => a.sequence - b.sequence);
+
+            // Validate trip stops
+            if (tripStops.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Trip Stops Found',
+                    text: 'Unable to load trip stops for this trip. Please reload the trip.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
 
             let busesHtml = '<option value="">-- Select a Bus --</option>';
             buses.forEach(bus => {
@@ -878,12 +961,55 @@
                 const fromTripStopId = document.getElementById('fromTripStopId').value;
                 const toTripStopId = document.getElementById('toTripStopId').value;
 
-                if (!busId || !driverName || !driverPhone || !driverCnic || !driverLicense || !
-                    fromTripStopId || !toTripStopId) {
+                // Comprehensive validation
+                const validationErrors = [];
+                
+                if (!busId) {
+                    validationErrors.push('Bus selection is required');
+                }
+                
+                if (!driverName || driverName.trim() === '') {
+                    validationErrors.push('Driver name is required');
+                }
+                
+                if (!driverPhone || driverPhone.trim() === '') {
+                    validationErrors.push('Driver phone is required');
+                } else if (!/^[\d\s\-+()]+$/.test(driverPhone.trim())) {
+                    validationErrors.push('Driver phone format is invalid');
+                }
+                
+                if (!driverCnic || driverCnic.trim() === '') {
+                    validationErrors.push('Driver CNIC is required');
+                } else {
+                    // Basic CNIC format validation (Pakistan CNIC format: 5 digits - 7 digits - 1 digit)
+                    const cnicClean = driverCnic.trim().replace(/\D/g, '');
+                    if (cnicClean.length !== 13) {
+                        validationErrors.push('Driver CNIC must be 13 digits');
+                    }
+                }
+                
+                if (!driverLicense || driverLicense.trim() === '') {
+                    validationErrors.push('Driver license is required');
+                }
+                
+                if (!fromTripStopId) {
+                    validationErrors.push('From trip stop is required');
+                }
+                
+                if (!toTripStopId) {
+                    validationErrors.push('To trip stop is required');
+                }
+                
+                // Validate trip stops are different
+                if (fromTripStopId && toTripStopId && fromTripStopId === toTripStopId) {
+                    validationErrors.push('Origin and destination stops must be different');
+                }
+
+                if (validationErrors.length > 0) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Missing Information',
-                        text: 'Please fill all required fields: Bus, Driver Name, Phone, CNIC, and License.',
+                        title: 'Validation Error',
+                        html: '<ul style="text-align: left;"><li>' + validationErrors.join('</li><li>') + '</li></ul>',
                         confirmButtonColor: '#ffc107'
                     });
                     return;
@@ -974,13 +1100,35 @@
                                 },
                                 error: function(error) {
                                     Swal.close();
-                                    const message = error.responseJSON?.error ||
-                                        error.responseJSON?.message ||
-                                        'Bus assignment created but expenses failed. Please add expenses manually.';
+                                    
+                                    let message = 'Bus assignment created but expenses failed. Please add expenses manually.';
+                                    
+                                    if (error.responseJSON) {
+                                        if (error.responseJSON.message) {
+                                            message = error.responseJSON.message;
+                                        } else if (error.responseJSON.error) {
+                                            message = error.responseJSON.error;
+                                        } else if (error.responseJSON.errors) {
+                                            const errors = error.responseJSON.errors;
+                                            const errorList = [];
+                                            for (const field in errors) {
+                                                if (Array.isArray(errors[field])) {
+                                                    errorList.push(...errors[field]);
+                                                } else {
+                                                    errorList.push(errors[field]);
+                                                }
+                                            }
+                                            if (errorList.length > 0) {
+                                                message = 'Bus assignment created but expenses failed:<br><ul style="text-align: left;"><li>' + 
+                                                    errorList.join('</li><li>') + '</li></ul>';
+                                            }
+                                        }
+                                    }
+                                    
                                     Swal.fire({
                                         icon: 'warning',
                                         title: 'Partially Successful',
-                                        text: message,
+                                        html: message,
                                         confirmButtonColor: '#ffc107'
                                     });
                                     // Close modal and reset form
@@ -1015,13 +1163,36 @@
                     },
                     error: function(error) {
                         Swal.close();
-                        const message = error.responseJSON?.message || error.responseJSON
-                            ?.error ||
-                            'Unable to create bus assignment. Please check your connection and try again.';
+                        
+                        let message = 'Unable to create bus assignment. Please check your connection and try again.';
+                        
+                        // Extract detailed error messages
+                        if (error.responseJSON) {
+                            if (error.responseJSON.message) {
+                                message = error.responseJSON.message;
+                            } else if (error.responseJSON.error) {
+                                message = error.responseJSON.error;
+                            } else if (error.responseJSON.errors) {
+                                // Validation errors
+                                const errors = error.responseJSON.errors;
+                                const errorList = [];
+                                for (const field in errors) {
+                                    if (Array.isArray(errors[field])) {
+                                        errorList.push(...errors[field]);
+                                    } else {
+                                        errorList.push(errors[field]);
+                                    }
+                                }
+                                message = errorList.length > 0 
+                                    ? '<ul style="text-align: left;"><li>' + errorList.join('</li><li>') + '</li></ul>'
+                                    : message;
+                            }
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
-                            title: 'Failed',
-                            text: message,
+                            title: 'Assignment Failed',
+                            html: message,
                             confirmButtonColor: '#d33'
                         });
                     }
@@ -1070,7 +1241,7 @@
     }
 
     // ========================================
-    // OPEN ASSIGN BUS MODAL FROM HEADER
+    // OPEN ASSIGN BUS MODAL FROM HEADER BUTTON
     // ========================================
     function openAssignBusModalFromHeader() {
         const tripId = appState.tripData ? appState.tripData.trip.id : null;

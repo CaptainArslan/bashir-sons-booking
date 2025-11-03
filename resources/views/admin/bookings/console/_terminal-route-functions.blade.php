@@ -49,14 +49,37 @@
 
     function onFromTerminalChange() {
         const fromTerminalId = document.getElementById('fromTerminal').value;
+        
+        // Reset dependent fields
         document.getElementById('toTerminal').value = '';
         document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+        document.getElementById('arrivalTime').value = '';
         document.getElementById('toTerminal').disabled = true;
         document.getElementById('departureTime').disabled = true;
+        document.getElementById('arrivalTime').disabled = true;
+        
+        // Hide trip content if visible
+        const tripContent = document.getElementById('tripContent');
+        if (tripContent) {
+            tripContent.style.display = 'none';
+        }
+        
+        // Reset fare and app state
+        if (typeof hideFareError === 'function') {
+            hideFareError();
+        }
+        if (typeof resetFareDisplay === 'function') {
+            resetFareDisplay();
+        }
 
         if (fromTerminalId) {
             fetchToTerminals(fromTerminalId);
-            fetchFare(fromTerminalId); // Fetch fare when from terminal changes
+            // Don't fetch fare yet - need both terminals
+        } else {
+            // Reset fare display
+            if (typeof resetFareDisplay === 'function') {
+                resetFareDisplay();
+            }
         }
     }
 
@@ -122,6 +145,14 @@
     // FETCH DEPARTURE TIMES (Timetable Stops)
     // ========================================
     function fetchDepartureTimes(fromTerminalId, toTerminalId, date) {
+        if (!fromTerminalId || !toTerminalId || !date) {
+            console.error('[fetchDepartureTimes] Missing required parameters');
+            return;
+        }
+        
+        // Reset arrival time
+        document.getElementById('arrivalTime').value = '';
+        
         showLoader(true, 'Loading departure times...');
         $.ajax({
             url: "{{ route('admin.bookings.departure-times') }}",
@@ -132,22 +163,42 @@
                 date: date
             },
             success: function(response) {
-                appState.timetableStops = response.timetable_stops;
+                appState.timetableStops = response.timetable_stops || [];
                 const timeSelect = document.getElementById('departureTime');
 
                 timeSelect.innerHTML = '<option value="">Select Departure Time</option>';
-                response.timetable_stops.forEach(stop => {
-                    timeSelect.innerHTML +=
-                        `<option value="${stop.timetable_id}" data-arrival="${stop.arrival_at ?? 'N/A'}">${stop.departure_at}</option>`;
-                });
-                timeSelect.disabled = false;
+                
+                if (appState.timetableStops.length === 0) {
+                    timeSelect.innerHTML += '<option value="" disabled>No trips available</option>';
+                    timeSelect.disabled = true;
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Trips Available',
+                        text: 'No trips are available for the selected route and date. Please try a different date or route.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                } else {
+                    appState.timetableStops.forEach(stop => {
+                        const arrivalTime = stop.arrival_at || 'N/A';
+                        timeSelect.innerHTML +=
+                            `<option value="${stop.timetable_id}" data-arrival="${arrivalTime}">${stop.departure_at}</option>`;
+                    });
+                    timeSelect.disabled = false;
+                }
             },
-            error: function() {
+            error: function(xhr) {
+                const timeSelect = document.getElementById('departureTime');
+                timeSelect.innerHTML = '<option value="">Error loading times</option>';
+                timeSelect.disabled = true;
+                
+                const errorMsg = xhr.responseJSON?.error || xhr.responseJSON?.message || 
+                    'Unable to fetch departure times. Please check your connection and try again.';
+                
                 Swal.fire({
-                    icon: 'info',
-                    title: 'No Trips Available',
-                    text: 'No trips are available for the selected route and date. Please try a different date or route.',
-                    confirmButtonColor: '#3085d6'
+                    icon: 'error',
+                    title: 'Failed to Load Departure Times',
+                    text: errorMsg,
+                    confirmButtonColor: '#d33'
                 });
             },
             complete: function() {
@@ -162,9 +213,27 @@
     document.getElementById('travelDate')?.addEventListener('change', function() {
         const fromTerminalId = document.getElementById('fromTerminal').value;
         const toTerminalId = document.getElementById('toTerminal').value;
+        const date = this.value;
 
-        if (fromTerminalId && toTerminalId) {
-            fetchDepartureTimes(fromTerminalId, toTerminalId, this.value);
+        // Reset departure time and arrival time
+        document.getElementById('departureTime').innerHTML = '<option value="">Select Departure Time</option>';
+        document.getElementById('departureTime').disabled = true;
+        document.getElementById('arrivalTime').value = '';
+        document.getElementById('arrivalTime').disabled = true;
+
+        // Hide trip content if visible
+        const tripContent = document.getElementById('tripContent');
+        if (tripContent) {
+            tripContent.style.display = 'none';
+        }
+
+        if (fromTerminalId && toTerminalId && date) {
+            // Re-fetch fare to ensure it's still valid
+            if (typeof fetchFare === 'function') {
+                fetchFare(fromTerminalId, toTerminalId);
+            }
+            // Fetch departure times for new date
+            fetchDepartureTimes(fromTerminalId, toTerminalId, date);
         }
     });
 </script>

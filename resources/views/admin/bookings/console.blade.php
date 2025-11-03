@@ -70,6 +70,15 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- Fare Error Display (Persistent) -->
+                <div id="fareErrorContainer" class="mt-3" style="display: none;">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="fareErrorAlert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Fare Error:</strong> <span id="fareErrorMessage">No fare found for this route.</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="hideFareError()"></button>
+                    </div>
+                </div>
             </div>
         </div>
 

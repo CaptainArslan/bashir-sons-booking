@@ -5,10 +5,21 @@
     // FETCH FARE FOR SEGMENT
     // ========================================
     function fetchFare(fromTerminalId, toTerminalId) {
+        // Hide error display first
+        hideFareError();
+        
         if (!fromTerminalId || !toTerminalId) {
             resetFareDisplay();
             return;
         }
+        
+        // Check if same terminals selected
+        if (fromTerminalId === toTerminalId) {
+            showFareError('Please select different terminals for origin and destination.');
+            resetFareDisplay();
+            return;
+        }
+
         showLoader(true, 'Loading fare...');
 
         $.ajax({
@@ -19,9 +30,13 @@
                 to_terminal_id: toTerminalId
             },
             success: function(response) {
-                if (response.success) {
+                if (response.success && response.fare) {
+                    // Hide error display on success
+                    hideFareError();
+                    
                     appState.fareData = response.fare;
-                    appState.baseFare = response.fare.base_fare; // Use base fare before discount
+                    appState.baseFare = response.fare.base_fare;
+                    appState.fareValid = true; // Mark fare as valid
 
                     // Update UI with fare info - show base fare
                     document.getElementById('baseFare').value = parseFloat(response.fare.base_fare)
@@ -40,24 +55,28 @@
 
                     calculateTotalFare();
                 } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'No Fare Found',
-                        text: 'No fare configuration found for this route segment. Please contact administrator.',
-                        confirmButtonColor: '#ffc107'
-                    });
+                    // Show persistent error
+                    const errorMsg = response.message || 'No fare configuration found for this route segment. Please contact administrator.';
+                    showFareError(errorMsg);
                     resetFareDisplay();
+                    appState.fareValid = false;
                 }
             },
             error: function(error) {
-                const message = error.responseJSON?.error || 'Unable to fetch fare information';
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Failed to Load Fare',
-                    text: message,
-                    confirmButtonColor: '#d33'
-                });
+                let message = 'Unable to fetch fare information. Please check your connection and try again.';
+                
+                if (error.responseJSON) {
+                    if (error.responseJSON.error) {
+                        message = error.responseJSON.error;
+                    } else if (error.responseJSON.message) {
+                        message = error.responseJSON.message;
+                    }
+                }
+                
+                // Show persistent error
+                showFareError(message);
                 resetFareDisplay();
+                appState.fareValid = false;
             },
             complete: function() {
                 showLoader(false);
@@ -66,14 +85,49 @@
     }
 
     // ========================================
+    // SHOW FARE ERROR (Persistent Display)
+    // ========================================
+    function showFareError(message) {
+        const errorContainer = document.getElementById('fareErrorContainer');
+        const errorMessage = document.getElementById('fareErrorMessage');
+        
+        if (errorContainer && errorMessage) {
+            errorMessage.textContent = message;
+            errorContainer.style.display = 'block';
+            
+            // Scroll to error if needed
+            errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        appState.fareValid = false;
+    }
+
+    // ========================================
+    // HIDE FARE ERROR
+    // ========================================
+    function hideFareError() {
+        const errorContainer = document.getElementById('fareErrorContainer');
+        if (errorContainer) {
+            errorContainer.style.display = 'none';
+        }
+    }
+
+    // ========================================
     // RESET FARE DISPLAY
     // ========================================
     function resetFareDisplay() {
         appState.fareData = null;
         appState.baseFare = 0;
-        document.getElementById('baseFare').value = '';
-        document.getElementById('discountInfo').value = '';
-        document.getElementById('totalFare').value = '';
+        appState.fareValid = false;
+        
+        const baseFareInput = document.getElementById('baseFare');
+        const discountInfoInput = document.getElementById('discountInfo');
+        const totalFareInput = document.getElementById('totalFare');
+        
+        if (baseFareInput) baseFareInput.value = '';
+        if (discountInfoInput) discountInfoInput.value = '';
+        if (totalFareInput) totalFareInput.value = '';
+        
         calculateFinal();
     }
 

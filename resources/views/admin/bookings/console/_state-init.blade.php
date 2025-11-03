@@ -20,6 +20,7 @@
         fareData: null,
         baseFare: 0,
         discountAmount: 0, // Store discount amount for booking
+        fareValid: false, // Track if fare is valid
         lockedSeats: {}, // Track locked seats: {seatNumber: userId}
         echoChannel: null, // Echo channel for this trip
     };
