@@ -212,5 +212,27 @@
         flex-shrink: 0;
         white-space: nowrap;
     }
+
+    /* Print button styling */
+    #printPassengerListBtn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .print-passenger-table,
+        .print-passenger-table * {
+            visibility: visible;
+        }
+        .print-passenger-table {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+    }
 </style>
 
