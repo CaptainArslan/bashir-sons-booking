@@ -91,29 +91,77 @@
             });
         });
 
-        // Delete bus type function
+        // Delete bus type function with SweetAlert
         function deleteBusType(busTypeId) {
-            if (confirm('Are you sure you want to delete this bus type?')) {
-                $.ajax({
-                    url: "{{ route('admin.bus-types.destroy', ':id') }}".replace(':id', busTypeId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#bus-types-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the bus type.');
-                    }
-                });
-            }
+                    });
+
+                    $.ajax({
+                        url: "{{ route('admin.bus-types.destroy', ':id') }}".replace(':id', busTypeId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Bus type has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#bus-types-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete bus type.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            let errorMessage = 'An error occurred while deleting the bus type.';
+                            
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete bus types.';
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Bus type not found.';
+                            } else if (xhr.status === 400) {
+                                // Handle association errors
+                                errorMessage = response.message || 'Cannot delete bus type due to associated data.';
+                            }
+                            
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection
