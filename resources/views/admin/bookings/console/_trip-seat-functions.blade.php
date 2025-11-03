@@ -51,7 +51,24 @@
                 document.getElementById('tripContent').scrollIntoView({
                     behavior: 'smooth'
                 });
-                loadTripPassengers(response.trip.id);
+                
+                // Load trip passengers - ensure function exists before calling
+                if (typeof loadTripPassengers === 'function') {
+                    console.log('Calling loadTripPassengers for trip:', response.trip.id);
+                    loadTripPassengers(response.trip.id);
+                } else {
+                    console.error('loadTripPassengers function is not defined');
+                    // Try again after a short delay in case scripts are still loading
+                    setTimeout(function() {
+                        if (typeof loadTripPassengers === 'function') {
+                            console.log('Calling loadTripPassengers (retry) for trip:', response.trip.id);
+                            loadTripPassengers(response.trip.id);
+                        } else {
+                            console.error('loadTripPassengers function still not available after retry');
+                        }
+                    }, 500);
+                }
+                
                 setupTripWebSocket(response.trip.id); // Setup WebSocket for this trip
             },
             error: function(error) {

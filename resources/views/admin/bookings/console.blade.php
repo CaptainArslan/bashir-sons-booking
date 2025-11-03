@@ -374,7 +374,12 @@
                             </h6>
                         </div>
                         <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto;">
-                            <div id="tripPassengersList"></div>
+                            <div id="tripPassengersList">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    <p class="mb-0 small">Passengers will appear here once a trip is loaded.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -495,10 +500,10 @@
     @include('admin.bookings.console._state-init')
     @include('admin.bookings.console._terminal-route-functions')
     @include('admin.bookings.console._fare-functions')
+    @include('admin.bookings.console._bus-assignment-functions')
     @include('admin.bookings.console._trip-seat-functions')
     @include('admin.bookings.console._passenger-functions')
     @include('admin.bookings.console._booking-payment-functions')
     @include('admin.bookings.console._websocket-functions')
-    @include('admin.bookings.console._bus-assignment-functions')
     @include('admin.bookings.console._utility-functions')
 @endsection

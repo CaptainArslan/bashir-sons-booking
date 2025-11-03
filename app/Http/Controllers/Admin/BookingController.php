@@ -347,9 +347,22 @@ class BookingController extends Controller
 
             $bookings = $bookingsQuery->get();
 
+            \Log::info('getTripPassengers', [
+                'trip_id' => $tripId,
+                'user_id' => $user->id,
+                'is_admin' => $user->hasRole('admin'),
+                'user_terminal_id' => $user->terminal_id,
+                'bookings_count' => $bookings->count(),
+            ]);
+
             $passengers = [];
 
             foreach ($bookings as $booking) {
+                // Skip bookings without passengers
+                if ($booking->passengers->isEmpty()) {
+                    continue;
+                }
+
                 // Get all seat numbers for this booking
                 $seatNumbers = $booking->seats->pluck('seat_number')->toArray();
                 $seatsDisplay = implode(', ', $seatNumbers);
@@ -358,7 +371,7 @@ class BookingController extends Controller
                     $passengers[] = [
                         'id' => $passenger->id,
                         'booking_id' => $booking->id,
-                        'name' => $passenger->name,
+                        'name' => $passenger->name ?? 'N/A',
                         'gender' => $passenger->gender,
                         'age' => $passenger->age,
                         'cnic' => $passenger->cnic,

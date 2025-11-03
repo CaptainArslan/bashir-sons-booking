@@ -67,8 +67,8 @@
         }
 
         const tripId = appState.tripData.trip.id;
-        const fromStopId = appState.tripData.from_stop.id;
-        const toStopId = appState.tripData.to_stop.id;
+        const fromStopId = appState.tripData.from_stop.trip_stop_id;
+        const toStopId = appState.tripData.to_stop.trip_stop_id;
 
         $.ajax({
             url: "{{ route('admin.bookings.lock-seats') }}",
@@ -89,8 +89,33 @@
                 if (callback) callback(true);
             },
             error: function(error) {
-                const message = error.responseJSON?.error || error.responseJSON?.errors?.seats?.[0] ||
-                    'Failed to lock seat';
+                let message = 'Failed to lock seat';
+                
+                if (error.responseJSON?.error) {
+                    message = error.responseJSON.error;
+                } else if (error.responseJSON?.errors) {
+                    // Collect all validation errors
+                    const errors = error.responseJSON.errors;
+                    const errorMessages = [];
+                    
+                    if (errors.seats && errors.seats.length > 0) {
+                        errorMessages.push(...errors.seats);
+                    }
+                    if (errors.from_stop_id && errors.from_stop_id.length > 0) {
+                        errorMessages.push(...errors.from_stop_id);
+                    }
+                    if (errors.to_stop_id && errors.to_stop_id.length > 0) {
+                        errorMessages.push(...errors.to_stop_id);
+                    }
+                    if (errors.trip_id && errors.trip_id.length > 0) {
+                        errorMessages.push(...errors.trip_id);
+                    }
+                    
+                    if (errorMessages.length > 0) {
+                        message = errorMessages.join(', ');
+                    }
+                }
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Failed to Lock Seat',

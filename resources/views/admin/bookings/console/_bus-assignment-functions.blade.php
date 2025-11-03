@@ -5,13 +5,61 @@
     // LOAD TRIP PASSENGERS
     // ========================================
     function loadTripPassengers(tripId) {
-        $.ajax({
-            url: "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId',
-                tripId),
-            type: 'GET',
+        if (!tripId) {
+            console.error('loadTripPassengers: tripId is required');
+            return;
+        }
 
+        console.log('Loading trip passengers for tripId:', tripId);
+
+        const passengersList = document.getElementById('tripPassengersList');
+        if (passengersList) {
+            // Show loading state
+            passengersList.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2 mb-0 small">Loading passengers...</p>
+                </div>
+            `;
+        }
+
+        $.ajax({
+            url: "{{ route('admin.bookings.trip-passengers', ['tripId' => ':tripId']) }}".replace(':tripId', tripId),
+            type: 'GET',
+            dataType: 'json',
             success: function(response) {
-                const passengersList = document.getElementById('tripPassengersList');
+                console.log('Passengers response:', response);
+                
+                if (!passengersList) {
+                    console.error('tripPassengersList element not found');
+                    return;
+                }
+
+                // Handle error response
+                if (response.error) {
+                    console.error('Error loading passengers:', response.error);
+                    passengersList.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Error:</strong> ${response.error}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Ensure response is an array
+                if (!Array.isArray(response)) {
+                    console.error('Invalid response format:', response);
+                    passengersList.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Warning:</strong> Invalid response format received.
+                        </div>
+                    `;
+                    return;
+                }
 
                 // ✅ If no passengers found
                 if (response.length === 0) {
@@ -173,13 +221,43 @@
 
                 // ✅ Render final HTML
                 passengersList.innerHTML = html;
+                
+                console.log('Passengers list rendered:', response.length, 'passengers');
             },
 
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('Error loading trip passengers:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseJSON,
+                    statusText: xhr.statusText,
+                    statusCode: xhr.status
+                });
+
+                const passengersList = document.getElementById('tripPassengersList');
+                if (passengersList) {
+                    let errorMessage = 'Unable to fetch passenger list for this trip.';
+                    
+                    if (xhr.responseJSON?.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.status === 403) {
+                        errorMessage = 'You do not have permission to view passengers.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Trip not found.';
+                    }
+
+                    passengersList.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Error:</strong> ${errorMessage}
+                        </div>
+                    `;
+                }
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Failed to Load Passengers',
-                    text: 'Unable to fetch passenger list for this trip. Please refresh and try again.',
+                    text: xhr.responseJSON?.error || 'Unable to fetch passenger list for this trip. Please refresh and try again.',
                     confirmButtonColor: '#d33'
                 });
             }
@@ -466,8 +544,8 @@
             console.warn('Trip ID mismatch between parameter and trip data');
         }
 
-        const defaultFromTripStopId = tripData.from_stop.id;
-        const defaultToTripStopId = tripData.to_stop.id;
+        const defaultFromTripStopId = tripData.from_stop.trip_stop_id;
+        const defaultToTripStopId = tripData.to_stop.trip_stop_id;
         const defaultFromTerminalId = tripData.from_stop.terminal_id;
         const defaultToTerminalId = tripData.to_stop.terminal_id;
 

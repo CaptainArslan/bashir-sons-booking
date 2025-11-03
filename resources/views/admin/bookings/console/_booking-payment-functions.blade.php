@@ -199,6 +199,11 @@
                 // Store booking ID for print functionality
                 window.lastBookingId = booking.id;
 
+                // Reload passenger list after successful booking
+                if (appState.tripData && appState.tripData.trip && appState.tripData.trip.id) {
+                    loadTripPassengers(appState.tripData.trip.id);
+                }
+
                 // Show success modal
                 const successModal = new bootstrap.Modal(document.getElementById('successModal'));
                 successModal.show();
