@@ -37,7 +37,7 @@ class DashboardController extends Controller
         $minDate = Carbon::today()->format('Y-m-d');
         $maxDate = $minDate;
 
-        if ($generalSettings->advance_booking_enable) {
+        if ($generalSettings->advance_booking_enable ) {
             $maxDate = Carbon::today()->addDays($generalSettings->advance_booking_days ?? 7)->format('Y-m-d');
         }
 

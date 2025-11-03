@@ -219,11 +219,11 @@
                                       style="font-size: 0.7rem;"></i>Add New Route</a>
                           </li>
                       @endcan
-                      @can('view route stops')
+                      {{-- @can('view route stops')
                           <li> <a href="{{ route('admin.route-stops.index') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Route Stops</a></li>
-                      @endcan
+                      @endcan --}}
                   </ul>
               </li>
           @endcan
@@ -285,7 +285,7 @@
                   @can('create bookings')
                       <li> <a href="{{ route('admin.bookings.console') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i>🎫 Live Booking Console</a></li>
+                                  style="font-size: 0.7rem;"></i>Live Booking Console</a></li>
                   @endcan
                   @can('view bookings')
                       <li> <a href="{{ route('admin.bookings.index') }}"
@@ -295,13 +295,13 @@
                   @can('view bookings')
                       <li> <a href="{{ route('admin.terminal-reports.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i>📊 Terminal Reports</a></li>
+                                  style="font-size: 0.7rem;"></i> Terminal Reports</a></li>
                   @endcan
-                  @can('view bookings')
+                  {{-- @can('view bookings')
                       <li> <a href="{{ route('admin.bus-assignments.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i>🚌 Bus Assignments (Segments)</a></li>
-                  @endcan
+                                  style="font-size: 0.7rem;"></i> Bus Assignments (Segments)</a></li>
+                  @endcan --}}
               </ul>
           </li>
 
