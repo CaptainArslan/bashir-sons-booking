@@ -60,7 +60,8 @@
                 'Accept': 'application/json'
             },
             success: function(response) {
-                console.log('[loadTripPassengers] Success - Response received:', response);
+                console.log('[loadTripPassengers] ===== SUCCESS CALLBACK =====');
+                console.log('[loadTripPassengers] Response received:', response);
                 console.log('[loadTripPassengers] Response type:', Array.isArray(response) ? 'Array' : typeof response);
                 console.log('[loadTripPassengers] Response length:', Array.isArray(response) ? response.length : 'N/A');
                 
@@ -74,7 +75,8 @@
                         const retryList = document.getElementById('tripPassengersList');
                         if (retryList && Array.isArray(response)) {
                             console.log('[loadTripPassengers] Element found on retry, rendering passengers...');
-                            renderPassengersList(response, retryList);
+                            // Re-call loadTripPassengers with the found element
+                            loadTripPassengers(tripId);
                         } else {
                             console.error('[loadTripPassengers] Element still not found after retry');
                         }
@@ -97,10 +99,12 @@
                 // Ensure response is an array
                 if (!Array.isArray(response)) {
                     console.error('[loadTripPassengers] Invalid response format:', response);
+                    console.error('[loadTripPassengers] Expected array but got:', typeof response);
                     passengersList.innerHTML = `
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Warning:</strong> Invalid response format received.
+                            <strong>Warning:</strong> Invalid response format received. Expected array but got ${typeof response}.
+                            <br><small>Response: ${JSON.stringify(response).substring(0, 200)}...</small>
                         </div>
                     `;
                     return;
@@ -108,6 +112,7 @@
 
                 // ✅ If no passengers found
                 if (response.length === 0) {
+                    console.log('[loadTripPassengers] No passengers found - showing empty state');
                     passengersList.innerHTML = `
                         <div class="text-center py-5">
                             <div class="mb-3" style="font-size: 3rem; opacity: 0.3;">
@@ -119,6 +124,8 @@
                     `;
                     return;
                 }
+
+                console.log('[loadTripPassengers] Rendering', response.length, 'passengers');
 
                 // ✅ Build all HTML at once
                 let html = ``;
@@ -267,8 +274,15 @@
                 // ✅ Render final HTML
                 passengersList.innerHTML = html;
                 
-                console.log('[loadTripPassengers] Passengers list rendered successfully:', response.length, 'passengers');
+                console.log('[loadTripPassengers] ✅✅✅ Passengers list rendered successfully! ✅✅✅');
+                console.log('[loadTripPassengers] Passengers count:', response.length);
                 console.log('[loadTripPassengers] HTML content length:', html.length, 'characters');
+                console.log('[loadTripPassengers] Element innerHTML length after render:', passengersList.innerHTML.length);
+                
+                // Scroll to passenger list if it was empty before
+                if (passengersList.innerHTML.length > 0) {
+                    passengersList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             },
 
             error: function(xhr, status, error) {
