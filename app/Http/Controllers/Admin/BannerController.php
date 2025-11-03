@@ -35,8 +35,8 @@ class BannerController extends Controller
                     return '<span class="badge bg-'.$typeColor.'">'.e($typeName).'</span>';
                 })
                 ->addColumn('image_preview', function ($banner) {
-                    if ($banner->path) {
-                        return '<img src="'.asset('storage/'.$banner->path).'" alt="'.e($banner->title).'" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">';
+                    if ($banner->path && Storage::disk('public')->exists($banner->path)) {
+                        return '<img src="'.Storage::url($banner->path).'" alt="'.e($banner->title).'" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">';
                     }
 
                     return '<span class="text-muted">No image</span>';
@@ -99,12 +99,23 @@ class BannerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'type' => 'required|string|in:'.implode(',', BannerTypeEnum::getTypes()),
             'path' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'status' => 'required|string|in:'.implode(',', BannerStatusEnum::getStatuses()),
-        ], [
+        ];
+
+        // Add dimension validation based on banner type
+        $type = $request->input('type');
+        if ($type) {
+            $dimensions = $this->getBannerDimensions($type);
+            if ($dimensions) {
+                $rules['path'] .= '|dimensions:width='.$dimensions['width'].',height='.$dimensions['height'];
+            }
+        }
+
+        $validated = $request->validate($rules, [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
             'title.max' => 'Banner title must be less than 255 characters',
@@ -116,6 +127,7 @@ class BannerController extends Controller
             'path.image' => 'File must be an image',
             'path.mimes' => 'Image must be jpeg, png, jpg, gif, or webp',
             'path.max' => 'Image size must be less than 2MB',
+            'path.dimensions' => 'Image dimensions do not match the required size for this banner type.',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -154,12 +166,25 @@ class BannerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
+        $banner = Banner::findOrFail($id);
+        $currentType = $request->input('type', $banner->type);
+
+        $rules = [
             'title' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'type' => 'required|string|in:'.implode(',', BannerTypeEnum::getTypes()),
             'path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'status' => 'required|string|in:'.implode(',', BannerStatusEnum::getStatuses()),
-        ], [
+        ];
+
+        // Add dimension validation based on banner type (if image is being updated)
+        if ($request->hasFile('path')) {
+            $dimensions = $this->getBannerDimensions($currentType);
+            if ($dimensions) {
+                $rules['path'] .= '|dimensions:width='.$dimensions['width'].',height='.$dimensions['height'];
+            }
+        }
+
+        $validated = $request->validate($rules, [
             'title.required' => 'Banner title is required',
             'title.string' => 'Banner title must be a string',
             'title.max' => 'Banner title must be less than 255 characters',
@@ -170,13 +195,13 @@ class BannerController extends Controller
             'path.image' => 'File must be an image',
             'path.mimes' => 'Image must be jpeg, png, jpg, gif, or webp',
             'path.max' => 'Image size must be less than 2MB',
+            'path.dimensions' => 'Image dimensions do not match the required size for this banner type.',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
         try {
-            $banner = Banner::findOrFail($id);
 
             // Handle file upload
             if ($request->hasFile('path')) {
@@ -222,5 +247,20 @@ class BannerController extends Controller
                 'message' => 'Error deleting banner: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Get required dimensions for a banner type.
+     */
+    private function getBannerDimensions(string $type): ?array
+    {
+        return match ($type) {
+            BannerTypeEnum::MAIN->value => ['width' => 1920, 'height' => 1080],
+            BannerTypeEnum::INNER->value => ['width' => 1200, 'height' => 600],
+            BannerTypeEnum::SLIDER->value => ['width' => 1920, 'height' => 800],
+            BannerTypeEnum::PROMOTION->value => ['width' => 800, 'height' => 600],
+            BannerTypeEnum::OTHER->value => null, // No size restrictions for "other" type
+            default => null,
+        };
     }
 }

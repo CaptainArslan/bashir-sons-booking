@@ -71,7 +71,7 @@ class DiscountController extends Controller
                 return implode('', $platforms);
             })
             ->addColumn('status_badge', function ($discount) {
-                if ($discount->isExpired()) {
+                if ($discount->ends_at && $discount->isExpired()) {
                     return '<span class="badge bg-danger">Expired</span>';
                 } elseif ($discount->is_active) {
                     return '<span class="badge bg-success">Active</span>';
@@ -80,10 +80,11 @@ class DiscountController extends Controller
                 }
             })
             ->addColumn('validity_period', function ($discount) {
+                if (! $discount->starts_at || ! $discount->ends_at) {
+                    return '<span class="text-muted">Not set</span>';
+                }
+
                 return $discount->starts_at->format('M d, Y').' - '.$discount->ends_at->format('M d, Y');
-            })
-            ->addColumn('creator_name', function ($discount) {
-                return $discount->creator ? $discount->creator->name : 'N/A';
             })
             ->addColumn('actions', function ($discount) {
                 $actions = '<div class="dropdown">
@@ -116,7 +117,7 @@ class DiscountController extends Controller
 
                 return $actions;
             })
-            ->rawColumns(['discount_type_badge', 'platforms', 'status_badge', 'actions'])
+            ->rawColumns(['discount_type_badge', 'platforms', 'status_badge', 'validity_period', 'actions'])
             ->make(true);
     }
 

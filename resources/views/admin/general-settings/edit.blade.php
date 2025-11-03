@@ -309,7 +309,7 @@
                                                 <i class="bx bx-image me-2"></i>
                                                 Current Logo
                                             </label>
-                                            <img src="{{ asset('storage/' . $settings->logo) }}" alt="Current Logo">
+                                            <img src="{{ Storage::url($settings->logo) }}" alt="Current Logo" onerror="this.style.display='none';">
                                         </div>
                                     @endif
                                     @error('logo')
@@ -331,7 +331,7 @@
                                                 <i class="bx bx-bookmark me-2"></i>
                                                 Current Favicon
                                             </label>
-                                            <img src="{{ asset('storage/' . $settings->favicon) }}" alt="Current Favicon">
+                                            <img src="{{ Storage::url($settings->favicon) }}" alt="Current Favicon" onerror="this.style.display='none';">
                                         </div>
                                     @endif
                                     @error('favicon')

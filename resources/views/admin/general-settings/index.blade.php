@@ -386,7 +386,7 @@
                                             Company Logo
                                         </label>
                                         <div class="border rounded p-3 bg-light text-center">
-                                            <img src="{{ asset('storage/' . $settings->logo) }}" alt="Company Logo" class="img-fluid" style="max-height: 150px;">
+                                            <img src="{{ Storage::url($settings->logo) }}" alt="Company Logo" class="img-fluid" style="max-height: 150px;" onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null;">
                                         </div>
                                     </div>
                                     @endif
@@ -397,7 +397,7 @@
                                             Favicon
                                         </label>
                                         <div class="border rounded p-3 bg-light text-center">
-                                            <img src="{{ asset('storage/' . $settings->favicon) }}" alt="Favicon" class="img-fluid" style="max-height: 100px;">
+                                            <img src="{{ Storage::url($settings->favicon) }}" alt="Favicon" class="img-fluid" style="max-height: 100px;" onerror="this.src='{{ asset('images/placeholder.png') }}'; this.onerror=null;">
                                         </div>
                                     </div>
                                     @endif

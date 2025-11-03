@@ -140,9 +140,9 @@ class Discount extends Model
     public function getFormattedValueAttribute(): string
     {
         return match ($this->discount_type) {
-            'fixed' => '₹'.number_format($this->value, 2),
+            'fixed' => 'PKR '.number_format($this->value, 2),
             'percentage' => $this->value.'%',
-            default => '₹'.number_format($this->value, 2),
+            default => 'PKR '.number_format($this->value, 2),
         };
     }
 

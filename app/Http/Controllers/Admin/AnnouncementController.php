@@ -161,6 +161,11 @@ class AnnouncementController extends Controller
         $data['priority'] = AnnouncementPriorityEnum::from($data['priority']);
         $data['audience_type'] = AnnouncementAudienceTypeEnum::from($data['audience_type']);
 
+        // If no start_date or end_date, set is_active to true by default (stay active)
+        if (empty($data['start_date']) && empty($data['end_date'])) {
+            $data['is_active'] = $data['is_active'] ?? true;
+        }
+
         // Handle image upload if present
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('announcements', 'public');
@@ -211,6 +216,11 @@ class AnnouncementController extends Controller
         $data['display_type'] = AnnouncementDisplayTypeEnum::from($data['display_type']);
         $data['priority'] = AnnouncementPriorityEnum::from($data['priority']);
         $data['audience_type'] = AnnouncementAudienceTypeEnum::from($data['audience_type']);
+
+        // If no start_date or end_date, set is_active to true by default (stay active)
+        if (empty($data['start_date']) && empty($data['end_date'])) {
+            $data['is_active'] = $data['is_active'] ?? true;
+        }
 
         // Handle image upload if present
         if ($request->hasFile('image')) {
