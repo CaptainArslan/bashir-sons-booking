@@ -9,20 +9,35 @@
     $formDisabled = $departurePassed ? 'disabled' : '';
 @endphp
 
+<!--breadcrumb-->
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+    <div class="breadcrumb-title pe-3">Booking Management</div>
+    <div class="ps-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.bookings.index') }}">Bookings</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit Booking #{{ $booking->booking_number }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!--end breadcrumb-->
+
 <div class="container-fluid p-4">
     <!-- Header Section -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-edit"></i> Edit Booking #{{ $booking->booking_number }}
+    <div class="card mb-4 border">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-edit text-primary"></i> Edit Booking #{{ $booking->booking_number }}
                 @if($departurePassed)
-                    <span class="badge bg-warning ms-2">
+                    <span class="badge bg-warning text-dark ms-2">
                         <i class="fas fa-lock"></i> Trip Departed - Read Only
                     </span>
                 @endif
             </h5>
         </div>
-        <div class="card-body bg-light">
+        <div class="card-body">
             <div class="row">
                 <div class="col-md-3">
                     <small class="text-muted">Booking Date</small>
@@ -34,17 +49,45 @@
                 </div>
                 <div class="col-md-3">
                     <small class="text-muted">Total Seats</small>
-                    <p class="mb-0"><span class="badge bg-info">{{ $booking->seats->count() }} seat(s)</span></p>
+                    <p class="mb-0">
+                        <span class="badge bg-info">{{ $booking->seats->whereNull('cancelled_at')->count() }} active</span>
+                        @if($booking->seats->whereNotNull('cancelled_at')->count() > 0)
+                            <span class="badge bg-danger">{{ $booking->seats->whereNotNull('cancelled_at')->count() }} cancelled</span>
+                        @endif
+                    </p>
                 </div>
                 <div class="col-md-3">
                     <small class="text-muted">Current Status</small>
-                    <p class="mb-0">
-                        <span class="badge {{ $booking->status === 'confirmed' ? 'bg-success' : 'bg-warning' }}">
-                            {{ ucfirst($booking->status) }}
+                    <p class="mb-0">    
+                        <span class="badge {{ \App\Enums\BookingStatusEnum::from($booking->status ?? '')->getBadge() }}">
+                            <i class="{{ \App\Enums\BookingStatusEnum::from($booking->status ?? '')->getIcon() }}"></i> {{ \App\Enums\BookingStatusEnum::from($booking->status ?? '')->getLabel() }}
                         </span>
                     </p>
                 </div>
             </div>
+            @if($booking->cancelled_at)
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-danger border mb-0">
+                            <h6 class="fw-bold mb-2"><i class="bx bx-error-circle"></i> Booking Cancelled</h6>
+                            <p class="mb-1 small"><strong>Cancelled On:</strong> {{ $booking->cancelled_at->format('d M Y, H:i A') }}</p>
+                            <p class="mb-1 small"><strong>Cancelled By:</strong>
+                                @if($booking->cancelled_by_type)
+                                    <span class="badge {{ $booking->cancelled_by_type === 'admin' ? 'bg-danger' : ($booking->cancelled_by_type === 'employee' ? 'bg-warning' : 'bg-secondary') }}">
+                                        {{ ucfirst($booking->cancelled_by_type) }}
+                                    </span>
+                                @endif
+                                @if($booking->cancelledByUser)
+                                    - <strong>{{ $booking->cancelledByUser->name }}</strong>
+                                @endif
+                            </p>
+                            @if($booking->cancellation_reason)
+                                <p class="mb-0 small"><strong>Reason:</strong> {{ $booking->cancellation_reason }}</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -56,9 +99,11 @@
             <!-- Left Column -->
             <div class="col-lg-8">
                 <!-- Route Information -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-route"></i> Route Information</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-route text-info"></i> Route Information
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -88,9 +133,11 @@
                 </div>
 
                 <!-- Booking Seats -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-chair"></i> Booked Seats</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-chair text-info"></i> Booked Seats
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -102,26 +149,67 @@
                                         <th>Fare (PKR)</th>
                                         <th>Tax (PKR)</th>
                                         <th>Total (PKR)</th>
+                                        <th>Status</th>
+                                        @if(!$departurePassed)
+                                            <th>Action</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($booking->seats as $seat)
-                                        <tr>
-                                            <td><strong>{{ $seat->seat_number }}</strong></td>
+                                        <tr class="{{ $seat->cancelled_at ? 'table-secondary opacity-75' : '' }}">
                                             <td>
-                                                @if($seat->gender === 'male')
-                                                    <i class="fas fa-mars"></i> Male
-                                                @else
-                                                    <i class="fas fa-venus"></i> Female
-                                                @endif
+                                                <strong>{{ $seat->seat_number }}</strong>
+                                            </td>
+                                            <td>
+                                                <i class="{{ \App\Enums\GenderEnum::getGenderIcon($seat->gender?->value ?? $seat->gender) }}"></i>
+                                                {{ \App\Enums\GenderEnum::getGenderName($seat->gender?->value ?? $seat->gender) }}
                                             </td>
                                             <td>{{ number_format($seat->fare, 2) }}</td>
                                             <td>{{ number_format($seat->tax_amount, 2) }}</td>
                                             <td><strong>{{ number_format($seat->final_amount, 2) }}</strong></td>
+                                            <td>
+                                                @if($seat->cancelled_at)
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle"></i> Cancelled
+                                                    </span>
+                                                    <br>
+                                                    <small class="text-muted">{{ $seat->cancelled_at->format('d M Y, H:i') }}</small>
+                                                    @if($seat->cancellation_reason)
+                                                        <br>
+                                                        <small class="text-danger">
+                                                            <i class="fas fa-info-circle"></i> Reason: {{ $seat->cancellation_reason }}
+                                                        </small>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i> Active
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            @if(!$departurePassed)
+                                                <td>
+                                                    @if(!$seat->cancelled_at)
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-danger cancel-seat-btn" 
+                                                                data-seat-id="{{ $seat->id }}"
+                                                                data-seat-number="{{ $seat->seat_number }}">
+                                                            <i class="fas fa-times"></i> Cancel Seat
+                                                        </button>
+                                                    @else
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-success restore-seat-btn" 
+                                                                data-seat-id="{{ $seat->id }}"
+                                                                data-seat-number="{{ $seat->seat_number }}">
+                                                            <i class="fas fa-undo"></i> Restore
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                            @endif
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted">No seats found</td>
+                                            <td colspan="{{ !$departurePassed ? '7' : '6' }}" class="text-center text-muted">No seats found</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -131,26 +219,49 @@
                 </div>
 
                 <!-- Passengers Information -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-users"></i> Passengers Information</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-users text-info"></i> Passengers Information
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="row" id="passengersContainer">
                             @forelse($booking->passengers as $index => $passenger)
+                                @php
+                                    $passengerSeat = $booking->seats->sortBy('seat_number')->values()->get($index);
+                                @endphp
                                 <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <h6 class="mb-0">
-                                                <i class="fas fa-user"></i> Passenger {{ $index + 1 }}
-                                                @if($passenger->gender === 'male')
-                                                    <i class="fas fa-mars text-primary"></i>
-                                                @else
-                                                    <i class="fas fa-venus text-danger"></i>
+                                    <div class="card border">
+                                        <div class="card-header bg-white border-bottom">
+                                            <h6 class="mb-0 fw-bold">
+                                                <i class="fas fa-user text-secondary"></i> Passenger {{ $index + 1 }}
+                                                <i class="{{ \App\Enums\GenderEnum::getGenderIcon($passenger->gender?->value ?? $passenger->gender) }} {{ ($passenger->gender?->value ?? $passenger->gender) === 'male' ? 'text-primary' : 'text-danger' }}"></i>
+                                                @if($passengerSeat)
+                                                    <span class="badge bg-light text-dark border ms-2">
+                                                        <i class="fas fa-chair"></i> Seat {{ $passengerSeat->seat_number }}
+                                                        @if($passengerSeat->cancelled_at)
+                                                            <span class="badge bg-danger ms-1">Cancelled</span>
+                                                        @endif
+                                                    </span>
                                                 @endif
                                             </h6>
                                         </div>
                                         <div class="card-body">
+                                            @if($passengerSeat)
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-bold">Seat Number</label>
+                                                    <input type="text" class="form-control form-control-sm" value="{{ $passengerSeat->seat_number }}" disabled>
+                                                    @if($passengerSeat->cancelled_at)
+                                                        <small class="text-danger">
+                                                            <i class="fas fa-times-circle"></i> This seat was cancelled on {{ $passengerSeat->cancelled_at->format('d M Y, H:i') }}
+                                                            @if($passengerSeat->cancellation_reason)
+                                                                <br><strong>Reason:</strong> {{ $passengerSeat->cancellation_reason }}
+                                                            @endif
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                            @endif
                                             <div class="mb-2">
                                                 <label class="form-label small fw-bold">Name</label>
                                                 <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][name]" value="{{ $passenger->name }}" required {{ $formDisabled }}>
@@ -159,8 +270,15 @@
                                                 <label class="form-label small fw-bold">Gender</label>
                                                 <select class="form-select form-select-sm" name="passengers[{{ $index }}][gender]" {{ $formDisabled }}>
                                                     <option value="">Select Gender</option>
-                                                    <option value="male" {{ $passenger->gender === 'male' ? 'selected' : '' }}>👨 Male</option>
-                                                    <option value="female" {{ $passenger->gender === 'female' ? 'selected' : '' }}>👩 Female</option>
+                                                    @foreach(\App\Enums\GenderEnum::getGenders() as $genderValue)
+                                                        @php
+                                                            $genderName = \App\Enums\GenderEnum::getGenderName($genderValue);
+                                                            $currentGender = $passenger->gender?->value ?? $passenger->gender;
+                                                        @endphp
+                                                        <option value="{{ $genderValue }}" {{ $currentGender === $genderValue ? 'selected' : '' }}>
+                                                            {{ $genderName }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                             <div class="mb-2">
@@ -195,13 +313,15 @@
             <!-- Right Column -->
             <div class="col-lg-4">
                 <!-- Booking Status -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Booking Status</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-info-circle text-success"></i> Booking Status
+                        </h6>
                     </div>
                     <div class="card-body">
                         @if($departurePassed)
-                            <div class="alert alert-warning mb-3">
+                            <div class="alert alert-warning mb-3 border">
                                 <i class="fas fa-exclamation-triangle"></i> 
                                 <strong>Departure time has passed.</strong> This booking is read-only and cannot be modified.
                             </div>
@@ -211,14 +331,11 @@
                             <label class="form-label fw-bold">Status</label>
                             <select class="form-select" name="status" required {{ $formDisabled }}>
                                 <option value="">Select Status</option>
-                                @foreach(\App\Enums\BookingStatusEnum::cases() as $status)
+                                @foreach($bookingStatuses as $status)
                                     <option value="{{ $status->value }}" {{ $booking->status === $status->value ? 'selected' : '' }}>
                                         {{ $status->getLabel() }}
                                     </option>
                                 @endforeach
-                                {{-- Additional statuses not in enum but used in system --}}
-                                <option value="checked_in" {{ $booking->status === 'checked_in' ? 'selected' : '' }}>🔵 Checked In</option>
-                                <option value="boarded" {{ $booking->status === 'boarded' ? 'selected' : '' }}>🛫 Boarded</option>
                             </select>
                             @if($formDisabled)
                                 <input type="hidden" name="status" value="{{ $booking->status }}">
@@ -234,17 +351,23 @@
                 </div>
 
                 <!-- Payment Information -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0"><i class="fas fa-credit-card"></i> Payment Information</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-credit-card text-success"></i> Payment Information
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Payment Status</label>
                             <select class="form-select" name="payment_status" required {{ $formDisabled }}>
                                 <option value="">Select Status</option>
-                                <option value="paid" {{ $booking->payment_status === 'paid' ? 'selected' : '' }}>✅ Paid</option>
-                                <option value="unpaid" {{ $booking->payment_status === 'unpaid' ? 'selected' : '' }}>❌ Unpaid</option>
+                                @foreach($paymentStatuses as $status)
+                                    <option value="{{ $status->value }}" {{ $booking->payment_status === $status->value ? 'selected' : '' }}>
+                                        {{ $status->getLabel() }}
+                                    </option>
+                                @endforeach
+                                {{-- Additional statuses not in enum but used in system --}}
                                 <option value="partial" {{ $booking->payment_status === 'partial' ? 'selected' : '' }}>⚠️ Partial</option>
                             </select>
                         </div>
@@ -289,7 +412,7 @@
                             
                             {{-- Return Amount display --}}
                             <div id="returnAmountDiv" style="display: {{ ($booking->payment_received_from_customer ?? 0) > $booking->final_amount ? 'block' : 'none' }};">
-                                <div class="alert alert-success mb-0">
+                                <div class="alert alert-success mb-0 border">
                                     <strong>Return: PKR <span id="returnAmountDisplay">{{ number_format(max(0, ($booking->payment_received_from_customer ?? 0) - $booking->final_amount), 2) }}</span></strong>
                                 </div>
                             </div>
@@ -301,9 +424,11 @@
                 </div>
 
                 <!-- Fare Summary -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0"><i class="fas fa-calculator"></i> Fare Summary</h6>
+                <div class="card mb-4 border">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-calculator text-success"></i> Fare Summary
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-2">
@@ -328,10 +453,10 @@
                                 </div>
                             </div>
                         @endif
-                        <hr>
+                        <hr class="my-3">
                         <div class="d-flex justify-content-between mb-3">
-                            <strong>Final Amount:</strong>
-                            <strong class="text-success" style="font-size: 1.1rem;">PKR {{ number_format($booking->final_amount, 2) }}</strong>
+                            <strong class="fs-5">Final Amount:</strong>
+                            <strong class="text-success fs-5">PKR {{ number_format($booking->final_amount, 2) }}</strong>
                         </div>
 
                         @if($booking->channel === 'counter')
@@ -355,7 +480,7 @@
                 <!-- Action Buttons -->
                 @if(!$departurePassed)
                     @can('edit bookings')
-                        <div class="card shadow-sm">
+                        <div class="card border">
                             <div class="card-body d-flex gap-2">
                                 <button type="submit" class="btn btn-success flex-grow-1">
                                     <i class="fas fa-save"></i> Save Changes
@@ -366,9 +491,9 @@
                             </div>
                         </div>
                     @else
-                        <div class="card shadow-sm">
+                        <div class="card border">
                             <div class="card-body">
-                                <div class="alert alert-warning mb-0">
+                                <div class="alert alert-warning mb-0 border">
                                     <i class="fas fa-exclamation-triangle"></i> 
                                     <strong>You do not have permission to edit bookings.</strong>
                                     <a href="{{ route('admin.bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">
@@ -379,9 +504,9 @@
                         </div>
                     @endcan
                 @else
-                    <div class="card shadow-sm">
+                    <div class="card border">
                         <div class="card-body">
-                            <div class="alert alert-info mb-0">
+                            <div class="alert alert-info mb-0 border">
                                 <i class="fas fa-info-circle"></i> 
                                 <strong>This booking cannot be modified</strong> as the trip has already departed. 
                                 <a href="{{ route('admin.bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">
@@ -420,6 +545,7 @@
         }
         
         const statusSelect = form.querySelector('select[name="status"]');
+        let cancellationReason = null;
 
         if (statusSelect) {
             statusSelect.addEventListener('change', function() {
@@ -435,7 +561,48 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const formData = new FormData(this);
+            const selectedStatus = statusSelect?.value;
+            const wasCancelled = '{{ $booking->status }}' === 'cancelled';
+            
+            // If status is being changed to cancelled, ask for reason
+            if (selectedStatus === 'cancelled' && !wasCancelled) {
+                Swal.fire({
+                    title: 'Cancel Booking?',
+                    text: 'Please provide a reason for cancelling this booking:',
+                    icon: 'warning',
+                    input: 'textarea',
+                    inputPlaceholder: 'Enter cancellation reason (optional)',
+                    inputAttributes: {
+                        'aria-label': 'Cancellation reason'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, cancel booking',
+                    cancelButtonText: 'No, keep it',
+                    inputValidator: (value) => {
+                        // Reason is optional, so no validation needed
+                        return Promise.resolve();
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        cancellationReason = result.value || null;
+                        submitForm();
+                    }
+                });
+            } else {
+                submitForm();
+            }
+        });
+
+        function submitForm() {
+            const formData = new FormData(form);
+            
+            // Add cancellation reason if provided
+            if (cancellationReason !== null) {
+                formData.append('cancellation_reason', cancellationReason);
+            }
+            
             const button = form.querySelector('button[type="submit"]');
             button.disabled = true;
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -477,7 +644,7 @@
                     }
                 }
             });
-        });
+        }
     });
 
     // ========================================
@@ -545,6 +712,159 @@
                 returnAmountDiv.style.display = 'none';
             }
         }
+    }
+
+    // ========================================
+    // CANCEL/RESTORE SEAT HANDLERS
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const departurePassed = {{ $departurePassed ? 'true' : 'false' }};
+        
+        if (departurePassed) {
+            return; // Don't set up seat cancellation handlers if departure passed
+        }
+
+        // Cancel seat handler
+        document.querySelectorAll('.cancel-seat-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const seatId = this.getAttribute('data-seat-id');
+                const seatNumber = this.getAttribute('data-seat-number');
+
+                Swal.fire({
+                    title: 'Cancel Seat?',
+                    text: `Please provide a reason for cancelling seat ${seatNumber}:`,
+                    icon: 'warning',
+                    input: 'textarea',
+                    inputPlaceholder: 'Enter cancellation reason (optional)',
+                    inputAttributes: {
+                        'aria-label': 'Cancellation reason'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, cancel seat',
+                    cancelButtonText: 'No, keep it',
+                    inputValidator: (value) => {
+                        // Reason is optional, so no validation needed
+                        return Promise.resolve();
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        cancelSeat(seatId, seatNumber, result.value || null);
+                    }
+                });
+            });
+        });
+
+        // Restore seat handler
+        document.querySelectorAll('.restore-seat-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const seatId = this.getAttribute('data-seat-id');
+                const seatNumber = this.getAttribute('data-seat-number');
+
+                Swal.fire({
+                    title: 'Restore Seat?',
+                    text: `Are you sure you want to restore seat ${seatNumber}? This action will recalculate the booking totals.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, restore seat',
+                    cancelButtonText: 'No, cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        restoreSeat(seatId, seatNumber);
+                    }
+                });
+            });
+        });
+    });
+
+    function cancelSeat(seatId, seatNumber, cancellationReason) {
+        const btn = document.querySelector(`.cancel-seat-btn[data-seat-id="${seatId}"]`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+        }
+
+        $.ajax({
+            url: `{{ route('admin.bookings.seats.cancel', ['booking' => $booking, 'seat' => '__SEAT_ID__']) }}`.replace('__SEAT_ID__', seatId),
+            type: 'POST',
+            data: {
+                cancellation_reason: cancellationReason
+            },
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Seat Cancelled',
+                    text: `Seat ${seatNumber} has been cancelled successfully.`,
+                    confirmButtonColor: '#28a745',
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    // Reload the page to show updated totals and seat status
+                    window.location.reload();
+                });
+            },
+            error: function(error) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-times"></i> Cancel Seat';
+                }
+                const message = error.responseJSON?.message || error.responseJSON?.error || 'Failed to cancel seat';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cancellation Failed',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
+            }
+        });
+    }
+
+    function restoreSeat(seatId, seatNumber) {
+        const btn = document.querySelector(`.restore-seat-btn[data-seat-id="${seatId}"]`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restoring...';
+        }
+
+        $.ajax({
+            url: `{{ route('admin.bookings.seats.restore', ['booking' => $booking, 'seat' => '__SEAT_ID__']) }}`.replace('__SEAT_ID__', seatId),
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Seat Restored',
+                    text: `Seat ${seatNumber} has been restored successfully.`,
+                    confirmButtonColor: '#28a745',
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    // Reload the page to show updated totals and seat status
+                    window.location.reload();
+                });
+            },
+            error: function(error) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-undo"></i> Restore';
+                }
+                const message = error.responseJSON?.message || error.responseJSON?.error || 'Failed to restore seat';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Restore Failed',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
+            }
+        });
     }
 </script>
 @endsection

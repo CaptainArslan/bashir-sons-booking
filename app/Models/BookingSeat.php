@@ -21,6 +21,8 @@ class BookingSeat extends Model
         'tax_amount',
         'final_amount',
         'notes',
+        'cancelled_at',
+        'cancellation_reason',
     ];
 
     protected function casts(): array
@@ -30,6 +32,7 @@ class BookingSeat extends Model
             'fare' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'final_amount' => 'decimal:2',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -49,5 +52,26 @@ class BookingSeat extends Model
     public function toStop(): BelongsTo
     {
         return $this->belongsTo(RouteStop::class, 'to_stop_id');
+    }
+
+    // =============================
+    // Scopes
+    // =============================
+    public function scopeActive($query)
+    {
+        return $query->whereNull('cancelled_at');
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->whereNotNull('cancelled_at');
+    }
+
+    // =============================
+    // Accessors & Mutators
+    // =============================
+    public function isCancelled(): bool
+    {
+        return $this->cancelled_at !== null;
     }
 }

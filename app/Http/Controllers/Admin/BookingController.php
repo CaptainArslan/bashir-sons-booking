@@ -2,33 +2,40 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Carbon\Carbon;
-use App\Models\Fare;
-use App\Models\Trip;
-use App\Models\Route;
-use App\Models\Booking;
-use App\Models\Expense;
-use App\Models\Terminal;
-use App\Models\TripStop;
-use App\Models\RouteStop;
-use App\Models\Timetable;
+use App\Enums\BookingStatusEnum;
+use App\Enums\ChannelEnum;
+use App\Enums\ExpenseTypeEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\RouteStatusEnum;
+use App\Enums\TerminalEnum;
+use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
-use Illuminate\Http\Request;
-use App\Events\SeatConfirmed;
-use App\Models\TimetableStop;
-use App\Enums\ExpenseTypeEnum;
-use App\Models\GeneralSetting;
-use App\Enums\PaymentMethodEnum;
-use App\Services\BookingService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Services\TripFactoryService;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Booking;
+use App\Models\BookingSeat;
+use App\Models\Expense;
+use App\Models\Fare;
+use App\Models\GeneralSetting;
+use App\Models\Route;
+use App\Models\RouteStop;
+use App\Models\Terminal;
+use App\Models\Timetable;
+use App\Models\TimetableStop;
+use App\Models\Trip;
+use App\Models\TripStop;
+use App\Models\User;
 use App\Services\AvailabilityService;
+use App\Services\BookingService;
+use App\Services\TripFactoryService;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -57,18 +64,68 @@ class BookingController extends Controller
 
     public function index(): View
     {
-        return view('admin.bookings.index');
+        $this->authorize('view bookings');
+
+        $bookingStatuses = BookingStatusEnum::cases();
+        $paymentStatuses = PaymentStatusEnum::cases();
+        $channels = ChannelEnum::cases();
+
+        $user = Auth::user();
+        // If user has terminal assigned, show only that terminal; otherwise show all active terminals
+        $terminals = $user->terminal_id
+            ? Terminal::where('id', $user->terminal_id)->where('status', TerminalEnum::ACTIVE)->orderBy('name')->get(['id', 'name', 'code'])
+            : Terminal::where('status', TerminalEnum::ACTIVE)->orderBy('name')->get(['id', 'name', 'code']);
+
+        // Get users who have created bookings (distinct booked_by_user_id or user_id)
+        // Exclude users with 'Customer' role
+        $bookedByUserIds = Booking::whereNotNull('booked_by_user_id')->distinct()->pluck('booked_by_user_id');
+        $userIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
+        $allUserIds = $bookedByUserIds->merge($userIds)->unique();
+
+        $users = User::whereIn('id', $allUserIds)
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Customer');
+            })
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        // Get active routes
+        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)
+            ->select('id', 'name', 'code')
+            ->orderBy('name')
+            ->get();
+
+        // Get payment methods
+        $paymentMethods = PaymentMethodEnum::options();
+
+        return view('admin.bookings.index', compact(
+            'bookingStatuses',
+            'paymentStatuses',
+            'channels',
+            'terminals',
+            'users',
+            'routes',
+            'paymentMethods'
+        ));
     }
 
     public function getData(Request $request)
     {
         $query = Booking::query()
-            ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user'])
+            ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user', 'cancelledByUser'])
             ->latest();
 
-        // Filter by date
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
+        // Filter by date range
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->date_from)->startOfDay(),
+                Carbon::parse($request->date_to)->endOfDay(),
+            ]);
+        } elseif ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        } elseif ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         // Filter by status
@@ -88,13 +145,51 @@ class BookingController extends Controller
 
         // Filter by booking number
         if ($request->filled('booking_number')) {
-            $query->where('booking_number', 'like', '%' . $request->booking_number . '%');
+            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+        }
+
+        // Filter by terminal (from terminal)
+        if ($request->filled('terminal_id')) {
+            $query->whereHas('fromStop', function ($q) use ($request) {
+                $q->where('terminal_id', $request->terminal_id);
+            });
+        }
+
+        // Filter by from terminal
+        if ($request->filled('from_terminal_id')) {
+            $query->whereHas('fromStop', function ($q) use ($request) {
+                $q->where('terminal_id', $request->from_terminal_id);
+            });
+        }
+
+        // Filter by to terminal
+        if ($request->filled('to_terminal_id')) {
+            $query->whereHas('toStop', function ($q) use ($request) {
+                $q->where('terminal_id', $request->to_terminal_id);
+            });
+        }
+
+        // Filter by route
+        if ($request->filled('route_id')) {
+            $query->whereHas('trip', function ($q) use ($request) {
+                $q->where('route_id', $request->route_id);
+            });
+        }
+
+        // Filter by user (booked by)
+        if ($request->filled('user_id')) {
+            $query->where('booked_by_user_id', $request->user_id);
+        }
+
+        // Filter by payment method
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
         }
 
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
-                return '<span class="badge bg-primary">#' . $booking->booking_number . '</span>';
+                return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
             })
             ->addColumn('created_at', function (Booking $booking) {
                 return $booking->created_at->format('d M Y, H:i');
@@ -103,69 +198,78 @@ class BookingController extends Controller
                 $from = $booking->fromStop?->terminal?->code ?? 'N/A';
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
-                return '<strong>' . $from . ' → ' . $to . '</strong>';
+                return '<strong>'.$from.' → '.$to.'</strong>';
             })
             ->addColumn('seats', function (Booking $booking) {
-                $seatNumbers = $booking->seats->pluck('seat_number')->join(', ');
+                // Only show active (non-cancelled) seats
+                $seatNumbers = $booking->seats->whereNull('cancelled_at')->pluck('seat_number')->join(', ');
 
-                return '<span class="badge bg-info">' . $seatNumbers . '</span>';
+                return '<span class="badge bg-info">'.$seatNumbers.'</span>';
             })
             ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">' . $booking->passengers->count() . ' passengers</span>';
+                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR ' . number_format($booking->final_amount, 2) . '</strong>';
+                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
-                $icons = [
-                    'counter' => '<i class="fas fa-store"></i> Counter',
-                    'phone' => '<i class="fas fa-phone"></i> Phone',
-                    'online' => '<i class="fas fa-globe"></i> Online',
-                ];
+                try {
+                    $channel = ChannelEnum::from($booking->channel ?? '');
 
-                return $icons[$booking->channel] ?? $booking->channel;
+                    return '<i class="'.$channel->getIcon().'"></i> '.$channel->getLabel();
+                } catch (\ValueError $e) {
+                    return $booking->channel ?? 'N/A';
+                }
             })
             ->addColumn('status', function (Booking $booking) {
-                $badgeClass = match ($booking->status) {
-                    'confirmed' => 'bg-success',
-                    'hold' => 'bg-warning',
-                    'checked_in' => 'bg-info',
-                    'boarded' => 'bg-primary',
-                    'cancelled' => 'bg-danger',
-                    default => 'bg-secondary',
-                };
+                try {
+                    $status = BookingStatusEnum::from($booking->status ?? '');
 
-                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->status) . '</span>';
+                    return '<span class="badge '.$status->getBadge().'"><i class="'.$status->getIcon().'"></i> '.$status->getLabel().'</span>';
+                } catch (\ValueError $e) {
+                    // Handle non-enum statuses like 'checked_in', 'boarded'
+                    $badgeClass = match ($booking->status) {
+                        'checked_in' => 'bg-info',
+                        'boarded' => 'bg-primary',
+                        default => 'bg-secondary',
+                    };
+
+                    return '<span class="badge '.$badgeClass.'">'.ucfirst($booking->status ?? 'Unknown').'</span>';
+                }
             })
             ->addColumn('payment_status', function (Booking $booking) {
-                $badgeClass = match ($booking->payment_status) {
-                    'paid' => 'bg-success',
-                    'unpaid' => 'bg-danger',
-                    'partial' => 'bg-warning',
-                    default => 'bg-secondary',
-                };
+                try {
+                    $paymentStatus = PaymentStatusEnum::from($booking->payment_status ?? '');
 
-                return '<span class="badge ' . $badgeClass . '">' . ucfirst($booking->payment_status) . '</span>';
+                    return '<span class="badge '.$paymentStatus->getBadge().'"><i class="'.$paymentStatus->getIcon().'"></i> '.$paymentStatus->getLabel().'</span>';
+                } catch (\ValueError $e) {
+                    // Handle non-enum statuses like 'partial'
+                    if ($booking->payment_status === 'partial') {
+                        return '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle"></i> Partial</span>';
+                    }
+
+                    return '<span class="badge bg-secondary">'.ucfirst($booking->payment_status ?? 'Unknown').'</span>';
+                }
             })
             ->addColumn('actions', function (Booking $booking) {
-                $actions = '<div class="btn-group btn-group-sm" role="group">';
+                $actions = '<div class="d-flex gap-1 flex-wrap justify-content-center">';
 
                 if (auth()->user()->can('view bookings')) {
-                    $actions .= '<button type="button" class="btn btn-outline-primary" onclick="viewBookingDetails(' . $booking->id . ')">
-                        <i class="fas fa-eye"></i> View
+                    $actions .= '<button type="button" class="btn btn-sm btn-primary" onclick="viewBookingDetails('.$booking->id.')" title="View Details">
+                        <i class="bx bx-show"></i>
                     </button>';
                 }
 
-                if (auth()->user()->can('edit bookings')) {
-                    $actions .= '<a href="' . route('admin.bookings.edit', $booking->id) . '" class="btn btn-outline-warning">
-                        <i class="fas fa-edit"></i> Edit
+                if (auth()->user()->can('view bookings')) {
+                    $actions .= '<a href="'.route('admin.bookings.print', $booking->id).'" target="_blank" class="btn btn-sm btn-info" title="Print Ticket">
+                        <i class="bx bx-printer"></i>
                     </a>';
                 }
 
-                if (auth()->user()->can('delete bookings')) {
-                    $actions .= '<button type="button" class="btn btn-outline-danger" onclick="deleteBooking(' . $booking->id . ')">
-                        <i class="fas fa-trash"></i>
-                    </button>';
+                if (auth()->user()->can('edit bookings')) {
+                    $actions .= '<a href="'.route('admin.bookings.edit', $booking->id).'" class="btn btn-sm btn-warning" title="Edit Booking">
+                        <i class="bx bx-edit"></i>
+                    </a>';
                 }
 
                 $actions .= '</div>';
@@ -185,7 +289,7 @@ class BookingController extends Controller
     {
         $this->authorize('view bookings');
 
-        $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user']);
+        $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user', 'cancelledByUser']);
 
         return view('admin.bookings.show', compact('booking'));
     }
@@ -202,6 +306,7 @@ class BookingController extends Controller
             'seats',
             'passengers',
             'user',
+            'cancelledByUser',
         ]);
 
         return view('admin.bookings.print-ticket', compact('booking'));
@@ -211,11 +316,18 @@ class BookingController extends Controller
     {
         $this->authorize('edit bookings');
 
-        $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal']);
+        $booking->load(['trip.stops', 'seats', 'passengers', 'fromStop.terminal', 'toStop.terminal', 'cancelledByUser']);
+        $bookingStatuses = BookingStatusEnum::cases();
+        $paymentStatuses = PaymentStatusEnum::cases();
+        $channels = ChannelEnum::cases();
+        $paymentMethods = PaymentMethodEnum::options();
 
         return view('admin.bookings.edit', [
             'booking' => $booking,
-            'paymentMethods' => PaymentMethodEnum::options(),
+            'bookingStatuses' => $bookingStatuses,
+            'paymentStatuses' => $paymentStatuses,
+            'channels' => $channels,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 
@@ -228,19 +340,22 @@ class BookingController extends Controller
         $departurePassed = $departureTime && $departureTime->isPast();
 
         $validated = $request->validate([
-            'status' => 'required|in:' . implode(',', array_merge(
+            'status' => 'required|in:'.implode(',', array_merge(
                 array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
                 ['checked_in', 'boarded']
             )),
-            'payment_status' => 'required|in:paid,unpaid,partial',
-            'payment_method' => 'nullable|in:cash,card,mobile_wallet,bank_transfer',
+            'payment_status' => 'required|in:'.implode(',', array_merge(
+                array_column(\App\Enums\PaymentStatusEnum::cases(), 'value')
+            )),
+            'payment_method' => 'nullable|in:'.implode(',', array_column(\App\Enums\PaymentMethodEnum::cases(), 'value')),
             'online_transaction_id' => 'nullable|string|max:100',
             'amount_received' => 'nullable|numeric|min:0',
             'reserved_until' => 'nullable|date_format:Y-m-d\TH:i',
             'notes' => 'nullable|string|max:500',
+            'cancellation_reason' => 'nullable|string|max:500',
             'passengers' => 'nullable|array',
             'passengers.*.name' => 'nullable|string|max:100',
-            'passengers.*.gender' => 'nullable|in:male,female',
+            'passengers.*.gender' => 'nullable|in:'.implode(',', \App\Enums\GenderEnum::getGenders()),
             'passengers.*.age' => 'nullable|integer|min:1|max:120',
             'passengers.*.cnic' => 'nullable|string|max:20',
             'passengers.*.phone' => 'nullable|string|max:20',
@@ -248,8 +363,15 @@ class BookingController extends Controller
         ]);
 
         try {
+            DB::beginTransaction();
+
             // If departure has passed, keep the original status
             $statusToUpdate = $departurePassed ? $booking->status : $validated['status'];
+
+            // Check if booking is being cancelled
+            $isBeingCancelled = ($statusToUpdate === 'cancelled' || $statusToUpdate === BookingStatusEnum::CANCELLED->value);
+            $wasCancelled = ($booking->status === 'cancelled' || $booking->status === BookingStatusEnum::CANCELLED->value);
+            $shouldCancelSeats = $isBeingCancelled && ! $wasCancelled;
 
             // Validate transaction ID for non-cash payments
             $paymentMethod = $validated['payment_method'] ?? $booking->payment_method ?? 'cash';
@@ -274,6 +396,27 @@ class BookingController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ];
 
+            // If booking is being cancelled, set cancellation fields
+            if ($shouldCancelSeats) {
+                $updateData['cancelled_at'] = now();
+                $updateData['cancellation_reason'] = $validated['cancellation_reason'] ?? null;
+                if (! $booking->cancelled_by_user_id) {
+                    $updateData['cancelled_by_user_id'] = Auth::id();
+                }
+                if (! $booking->cancelled_by_type) {
+                    // Determine cancelled_by_type based on user role
+                    $user = Auth::user();
+                    if ($user->hasRole('admin') || $user->hasRole('Admin') || $user->hasRole('super_admin')) {
+                        $updateData['cancelled_by_type'] = 'admin';
+                    } elseif ($user->hasRole('employee') || $user->hasRole('Employee')) {
+                        $updateData['cancelled_by_type'] = 'employee';
+                    } else {
+                        // Default to admin if role cannot be determined
+                        $updateData['cancelled_by_type'] = 'admin';
+                    }
+                }
+            }
+
             // Add payment received and return amount if cash payment
             if ($paymentMethod === 'cash') {
                 $updateData['payment_received_from_customer'] = $amountReceived;
@@ -281,6 +424,20 @@ class BookingController extends Controller
             }
 
             $booking->update($updateData);
+
+            // If booking is being cancelled, cancel all active seats
+            if ($shouldCancelSeats) {
+                $cancellationReason = $validated['cancellation_reason'] ?? null;
+                $booking->seats()
+                    ->whereNull('cancelled_at')
+                    ->update([
+                        'cancelled_at' => now(),
+                        'cancellation_reason' => $cancellationReason,
+                    ]);
+
+                // Recalculate booking totals (will be 0 since all seats are cancelled)
+                $this->recalculateBookingTotals($booking);
+            }
 
             // Update passengers if provided
             if ($validated['passengers'] ?? false) {
@@ -300,11 +457,15 @@ class BookingController extends Controller
                 }
             }
 
+            DB::commit();
+
             return response()->json([
                 'message' => 'Booking updated successfully',
                 'booking' => $booking->load(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers']),
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'message' => 'Failed to update booking',
                 'error' => $e->getMessage(),
@@ -320,6 +481,143 @@ class BookingController extends Controller
         return response()->json(['message' => 'Booking deleted']);
     }
 
+    public function cancelSeat(Booking $booking, BookingSeat $seat, Request $request)
+    {
+        $this->authorize('edit bookings');
+
+        // Check if seat belongs to this booking
+        if ($seat->booking_id !== $booking->id) {
+            return response()->json([
+                'message' => 'Seat does not belong to this booking',
+            ], 400);
+        }
+
+        // Check if departure time has passed
+        $departureTime = $booking->trip?->departure_datetime;
+        $departurePassed = $departureTime && $departureTime->isPast();
+        if ($departurePassed) {
+            return response()->json([
+                'message' => 'Cannot cancel seat as trip has already departed',
+            ], 400);
+        }
+
+        // Check if seat is already cancelled
+        if ($seat->cancelled_at) {
+            return response()->json([
+                'message' => 'Seat is already cancelled',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Cancel the seat with cancellation reason
+            $seat->update([
+                'cancelled_at' => now(),
+                'cancellation_reason' => $validated['cancellation_reason'] ?? null,
+            ]);
+
+            // Recalculate booking totals from active seats only
+            $this->recalculateBookingTotals($booking);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Seat cancelled successfully',
+                'booking' => $booking->fresh(['seats', 'trip.route', 'fromStop.terminal', 'toStop.terminal']),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to cancel seat',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function restoreSeat(Booking $booking, BookingSeat $seat)
+    {
+        $this->authorize('edit bookings');
+
+        // Check if seat belongs to this booking
+        if ($seat->booking_id !== $booking->id) {
+            return response()->json([
+                'message' => 'Seat does not belong to this booking',
+            ], 400);
+        }
+
+        // Check if departure time has passed
+        $departureTime = $booking->trip?->departure_datetime;
+        $departurePassed = $departureTime && $departureTime->isPast();
+        if ($departurePassed) {
+            return response()->json([
+                'message' => 'Cannot restore seat as trip has already departed',
+            ], 400);
+        }
+
+        // Check if seat is not cancelled
+        if (! $seat->cancelled_at) {
+            return response()->json([
+                'message' => 'Seat is not cancelled',
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Restore the seat (clear cancellation reason as well)
+            $seat->update([
+                'cancelled_at' => null,
+                'cancellation_reason' => null,
+            ]);
+
+            // Recalculate booking totals from active seats only
+            $this->recalculateBookingTotals($booking);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Seat restored successfully',
+                'booking' => $booking->fresh(['seats', 'trip.route', 'fromStop.terminal', 'toStop.terminal']),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to restore seat',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Recalculate booking totals from active (non-cancelled) seats
+     */
+    private function recalculateBookingTotals(Booking $booking): void
+    {
+        // Get all active (non-cancelled) seats
+        $activeSeats = $booking->seats()->whereNull('cancelled_at')->get();
+
+        // Calculate totals from active seats
+        $totalFare = $activeSeats->sum('fare');
+        $taxAmount = $activeSeats->sum('tax_amount');
+        $finalAmount = $totalFare + $taxAmount;
+
+        // Update booking totals
+        // Note: We preserve discount_amount as it was set during booking creation
+        $booking->update([
+            'total_fare' => $totalFare,
+            'tax_amount' => $taxAmount,
+            'final_amount' => $finalAmount,
+            'total_passengers' => $activeSeats->count(),
+        ]);
+    }
+
     public function getTripPassengers(int $tripId): JsonResponse
     {
         try {
@@ -331,8 +629,8 @@ class BookingController extends Controller
                 ->where('trip_id', $tripId)
                 ->where('status', '!=', 'cancelled')
                 ->with([
-                    'passengers' => fn($q) => $q->orderBy('id'),
-                    'seats' => fn($q) => $q->orderBy('seat_number'),
+                    'passengers' => fn ($q) => $q->orderBy('id'),
+                    'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
                     'fromStop.terminal',
                     'toStop.terminal',
                 ])
@@ -400,7 +698,6 @@ class BookingController extends Controller
         }
     }
 
-
     public function getBookingDetailsForConsole(int $bookingId): JsonResponse
     {
         try {
@@ -428,7 +725,7 @@ class BookingController extends Controller
                     'updated_at' => $booking->updated_at,
                     'from_stop' => $booking->fromStop?->terminal?->name,
                     'to_stop' => $booking->toStop?->terminal?->name,
-                    'passengers' => $booking->passengers->map(fn($p) => [
+                    'passengers' => $booking->passengers->map(fn ($p) => [
                         'name' => $p->name,
                         'age' => $p->age,
                         'gender' => $p->gender,
@@ -437,7 +734,7 @@ class BookingController extends Controller
                         'email' => $p->email,
                         'seat_number' => $booking->seats->where('id', '!=', null)->first()?->seat_number,
                     ])->toArray(),
-                    'seats' => $booking->seats->map(fn($s) => [
+                    'seats' => $booking->seats->map(fn ($s) => [
                         'seat_number' => $s->seat_number,
                         'gender' => $s->gender,
                         'fare' => $s->fare,
@@ -472,7 +769,7 @@ class BookingController extends Controller
         ]);
 
         $routes = Route::query()
-            ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['terminal_id']))
+            ->whereHas('routeStops', fn ($q) => $q->where('terminal_id', $validated['terminal_id']))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'direction', 'base_currency']);
@@ -761,7 +1058,7 @@ class BookingController extends Controller
 
                     // ✅ Combine selected date WITH departure time
                     $fullDeparture = Carbon::parse(
-                        $selectedDate . ' ' . $ts->departure_time
+                        $selectedDate.' '.$ts->departure_time
                     );
 
                     // ✅ Only allow future trips
@@ -1012,8 +1309,8 @@ class BookingController extends Controller
             'seat_numbers.*' => 'integer',
             'seats_data' => 'nullable|json', // Optional: seats with gender information
             'passengers' => 'required|json',
-            'channel' => 'required|in:counter,phone,online',
-            'payment_method' => 'nullable|in:cash,card,mobile_wallet,bank_transfer',
+            'channel' => 'required|in:'.implode(',', array_column(\App\Enums\ChannelEnum::cases(), 'value')),
+            'payment_method' => 'nullable|in:'.implode(',', array_column(\App\Enums\PaymentMethodEnum::cases(), 'value')),
             'transaction_id' => 'nullable|string|max:100',
             'amount_received' => 'nullable|numeric|min:0',
             'fare_per_seat' => 'required|numeric|min:0',
@@ -1164,7 +1461,10 @@ class BookingController extends Controller
         // Load bookings with RouteStop relationships
         $bookings = Booking::with(['seats', 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $trip->id)
-            ->whereIn('status', ['confirmed', 'checked_in', 'boarded'])
+            ->whereIn('status', array_merge(
+                array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
+                ['checked_in', 'boarded']
+            ))
             ->get();
 
         $bookedSeats = [];
@@ -1194,7 +1494,8 @@ class BookingController extends Controller
 
             // Check for overlap: bookingFrom < queryTo AND queryFrom < bookingTo
             if ($bookingFrom < $queryTo && $queryFrom < $bookingTo) {
-                foreach ($booking->seats as $seat) {
+                // Only process active (non-cancelled) seats
+                foreach ($booking->seats->whereNull('cancelled_at') as $seat) {
                     // Get gender from seat first (primary source), fallback to passenger if seat doesn't have it
                     $gender = null;
 
@@ -1271,7 +1572,7 @@ class BookingController extends Controller
                 'driver_license' => 'required|string|max:100',
                 'driver_address' => 'nullable|string|max:500',
                 'expenses' => 'nullable|array',
-                'expenses.*.expense_type' => 'required|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
                 'expenses.*.amount' => 'required|numeric|min:0',
                 'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
                 'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',
@@ -1335,7 +1636,7 @@ class BookingController extends Controller
         try {
             $validated = $request->validate([
                 'expenses' => 'required|array|min:1',
-                'expenses.*.expense_type' => 'required|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+                'expenses.*.expense_type' => 'required|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
                 'expenses.*.amount' => 'required|numeric|min:0',
                 'expenses.*.from_terminal_id' => 'nullable|exists:terminals,id',
                 'expenses.*.to_terminal_id' => 'nullable|exists:terminals,id',

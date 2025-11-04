@@ -2,16 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Trip;
-use App\Models\RouteStop;
-use App\Models\BookingSeat;
-use App\Models\BookingPassenger;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Booking extends Model
 {
@@ -43,6 +39,9 @@ class Booking extends Model
         'return_after_deduction_from_customer',
         'confirmed_at',
         'cancelled_at',
+        'cancelled_by_user_id',
+        'cancelled_by_type',
+        'cancellation_reason',
     ];
 
     protected function casts(): array
@@ -84,6 +83,11 @@ class Booking extends Model
         return $this->hasMany(BookingSeat::class);
     }
 
+    public function activeSeats(): HasMany
+    {
+        return $this->hasMany(BookingSeat::class)->whereNull('cancelled_at');
+    }
+
     public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class);
@@ -99,9 +103,9 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'booked_by_user_id');
     }
 
-    public function sourceTerminal(): BelongsTo
+    public function cancelledByUser(): BelongsTo
     {
-        return $this->belongsTo(Terminal::class, 'terminal_id');
+        return $this->belongsTo(User::class, 'cancelled_by_user_id');
     }
 
     // =============================
@@ -110,8 +114,8 @@ class Booking extends Model
     protected function bookingNumber(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
-            set: fn($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
+            get: fn ($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
+            set: fn ($value) => str_pad($value, 6, '0', STR_PAD_LEFT),
         );
     }
 

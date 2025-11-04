@@ -79,7 +79,10 @@ class AvailabilityService
         $routeStopMap = $this->getRouteStopMap($trip->route_id);
 
         // Load bookings with RouteStop relationships
-        $bookings = Booking::with(['seats:booking_id,seat_number', 'fromStop:id,sequence', 'toStop:id,sequence'])
+        // Exclude cancelled seats when loading seats
+        $bookings = Booking::with(['seats' => function ($query) {
+            $query->whereNull('cancelled_at')->select('booking_id', 'seat_number');
+        }, 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $tripId)
             ->activeForAvailability()
             ->get(['id', 'from_stop_id', 'to_stop_id', 'status']);
