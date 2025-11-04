@@ -176,7 +176,7 @@
                         <!-- Info Box -->
                         <div class="info-box">
                             <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Enter route details and add stops
-                                in sequence. The route code will be auto-generated based on the route name and direction.
+                                in sequence. The route code will be auto-generated based on the route name.
                             </p>
                         </div>
 
@@ -186,7 +186,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="name" class="form-label">
                                     Route Name
                                     <span class="text-danger">*</span>
@@ -198,28 +198,10 @@
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-
-                            <div class="col-md-6">
-                                <label for="direction" class="form-label">
-                                    Direction
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select @error('direction') is-invalid @enderror" id="direction"
-                                    name="direction" required>
-                                    <option value="">Select Direction</option>
-                                    <option value="forward" {{ old('direction') == 'forward' ? 'selected' : '' }}>Forward
-                                    </option>
-                                    <option value="return" {{ old('direction') == 'return' ? 'selected' : '' }}>Return
-                                    </option>
-                                </select>
-                                @error('direction')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="code" class="form-label">
                                     Route Code
                                     <span class="text-danger">*</span>
@@ -229,27 +211,9 @@
                                     value="{{ old('code') }}" style="text-transform: uppercase;" required readonly>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
-                                    Code will be auto-generated based on route name and direction
+                                    Code will be auto-generated based on route name
                                 </div>
                                 @error('code')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="is_return_of" class="form-label">Return Route Of</label>
-                                <select class="form-select select2 @error('is_return_of') is-invalid @enderror" id="is_return_of"
-                                    name="is_return_of">
-                                    <option value="">Select Return Route (Optional)</option>
-                                    @foreach ($routes as $route)
-                                        <option value="{{ $route->id }}"
-                                            {{ old('is_return_of') == $route->id ? 'selected' : '' }}>
-                                            {{ $route->name }} ({{ $route->code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="form-text">Select if this route is a return route of another route</div>
-                                @error('is_return_of')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -351,39 +315,37 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('name');
-            const directionSelect = document.getElementById('direction');
             const codeInput = document.getElementById('code');
 
-            // Auto-generate code when name or direction changes
+            // Auto-generate code when name changes
             function generateRouteCode() {
                 const name = nameInput.value.trim();
-                const direction = directionSelect.value;
 
-                if (name && direction) {
-                    const code = generateCodeFromName(name, direction);
+                if (name) {
+                    const code = generateCodeFromName(name);
                     codeInput.value = code;
                 } else {
                     codeInput.value = '';
                 }
             }
 
-            // Generate code based on route name and direction
-            function generateCodeFromName(name, direction) {
+            // Generate code based on route name
+            function generateCodeFromName(name) {
                 // Extract city names from route name
                 const cities = extractCitiesFromName(name);
 
                 if (cities.length >= 2) {
                     const fromCity = cities[0].substring(0, 3).toUpperCase();
                     const toCity = cities[1].substring(0, 3).toUpperCase();
-                    const directionCode = direction === 'forward' ? '001' : '002';
-                    return `${fromCity}-${toCity}-${directionCode}`;
+                    return `${fromCity}-${toCity}`;
                 } else if (cities.length === 1) {
                     const city = cities[0].substring(0, 3).toUpperCase();
-                    const directionCode = direction === 'forward' ? '001' : '002';
-                    return `${city}-ROUTE-${directionCode}`;
+                    return `${city}-ROUTE`;
                 } else {
-                    const directionCode = direction === 'forward' ? '001' : '002';
-                    return `ROUTE-${directionCode}`;
+                    // Generate code from route name initials
+                    const words = name.split(/\s+/);
+                    const initials = words.map(word => word.charAt(0).toUpperCase()).join('');
+                    return initials.length > 0 ? initials.substring(0, 8) : 'ROUTE';
                 }
             }
 
@@ -416,10 +378,9 @@
 
             // Event listeners
             nameInput.addEventListener('input', generateRouteCode);
-            directionSelect.addEventListener('change', generateRouteCode);
 
             // Initialize code generation if there are existing values
-            if (nameInput.value || directionSelect.value) {
+            if (nameInput.value) {
                 generateRouteCode();
             }
 
@@ -438,7 +399,7 @@
             function addStop() {
                 stopCounter++;
                 const stopDiv = document.createElement('div');
-                stopDiv.className = 'stop-item border rounded p-3 mb-1 col-md-6'; // Added p-3 to match the parent
+                stopDiv.className = 'stop-item border rounded p-3 mb-1 col-md-4'; // Added p-3 to match the parent
                 stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
@@ -452,7 +413,7 @@
                     </button>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
                         <select class="form-select select2 terminal-select" name="stops[${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
@@ -463,11 +424,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Sequence</label>
-                        <input type="number" class="form-control sequence-input" name="stops[${stopCounter}][sequence]" 
-                               value="${stopCounter}" min="1" required readonly>
-                    </div>
+                    <input type="hidden" class="sequence-input" name="stops[${stopCounter}][sequence]" value="${stopCounter}">
                     <div class="col-md-12">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="stops[${stopCounter}][online_booking_allowed]" value="1" id="online_booking_${stopCounter}" checked>
@@ -503,10 +460,17 @@
                 const stopItems = stopsContainer.querySelectorAll('.stop-item');
                 stopItems.forEach((item, index) => {
                     const sequenceInput = item.querySelector('.sequence-input');
-                    const stopNumber = item.querySelector('h6');
-                    sequenceInput.value = index + 1;
-                    stopNumber.innerHTML =
-                        `<i class="bx bx-map-pin me-2 text-primary"></i>Stop ${index + 1}`;
+                    const badge = item.querySelector('.badge');
+                    const stopHeader = item.querySelector('.stop-header');
+                    if (sequenceInput) {
+                        sequenceInput.value = index + 1;
+                    }
+                    if (badge) {
+                        badge.textContent = index + 1;
+                    }
+                    if (stopHeader) {
+                        stopHeader.textContent = `Stop ${index + 1}`;
+                    }
                 });
             }
 

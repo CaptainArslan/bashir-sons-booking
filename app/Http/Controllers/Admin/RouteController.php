@@ -30,8 +30,8 @@ class RouteController extends Controller
             $hasAnyActionPermission = $hasEditPermission || $hasDeletePermission || $hasViewPermission;
 
             $routes = Route::query()
-                ->with(['returnRoute:id,name', 'routeStops.terminal:id,name,code'])
-                ->select('id', 'code', 'name', 'direction', 'is_return_of', 'base_currency', 'status', 'created_at');
+                ->with(['routeStops.terminal:id,name,code'])
+                ->select('id', 'code', 'name', 'base_currency', 'status', 'created_at');
 
             $dataTable = DataTables::eloquent($routes)
                 ->addColumn('formatted_name', function ($route) {
@@ -39,12 +39,6 @@ class RouteController extends Controller
                                 <span class="fw-bold text-primary">'.e($route->name).'</span>
                                 <small class="text-muted">Code: '.e($route->code).'</small>
                             </div>';
-                })
-                ->addColumn('direction_badge', function ($route) {
-                    $direction = ucfirst($route->direction);
-                    $color = $route->direction === 'forward' ? 'bg-success' : 'bg-warning';
-
-                    return '<span class="badge '.$color.'">'.e($direction).'</span>';
                 })
                 ->addColumn('total_fare', function ($route) {
                     // Get all stops for this route
@@ -91,13 +85,6 @@ class RouteController extends Controller
                     $html .= '</div>';
 
                     return $html;
-                })
-                ->addColumn('return_route', function ($route) {
-                    if ($route->is_return_of) {
-                        return $route->returnRoute ? '<span class="badge bg-secondary">'.e($route->returnRoute->name).'</span>' : '<span class="text-muted">Unknown</span>';
-                    }
-
-                    return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('stops_count', function ($route) {
                     $count = $route->routeStops()->count();
@@ -178,8 +165,8 @@ class RouteController extends Controller
                 ->editColumn('created_at', fn ($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns($hasAnyActionPermission
-                    ? ['formatted_name', 'direction_badge', 'return_route', 'total_fare', 'stops_count', 'status_badge', 'actions']
-                    : ['formatted_name', 'direction_badge', 'return_route', 'total_fare', 'stops_count', 'status_badge']
+                    ? ['formatted_name', 'total_fare', 'stops_count', 'status_badge', 'actions']
+                    : ['formatted_name', 'total_fare', 'stops_count', 'status_badge']
                 )
                 ->make(true);
         }
@@ -187,7 +174,6 @@ class RouteController extends Controller
 
     public function create()
     {
-        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
         $terminals = Terminal::with('city')->where('status', 'active')->get();
@@ -210,15 +196,6 @@ class RouteController extends Controller
                 'string',
                 'max:255',
                 'min:3',
-            ],
-            'direction' => [
-                'required',
-                'string',
-                'in:forward,return',
-            ],
-            'is_return_of' => [
-                'nullable',
-                'exists:routes,id',
             ],
             'base_currency' => [
                 'required',
@@ -259,10 +236,6 @@ class RouteController extends Controller
             'name.string' => 'Route name must be a string',
             'name.max' => 'Route name cannot exceed 255 characters',
             'name.min' => 'Route name must be at least 3 characters',
-            'direction.required' => 'Direction is required',
-            'direction.string' => 'Direction must be a string',
-            'direction.in' => 'Direction must be either forward or return',
-            'is_return_of.exists' => 'Selected return route is invalid or does not exist',
             'base_currency.required' => 'Base currency is required',
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
@@ -282,8 +255,16 @@ class RouteController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create the route
-            $route = Route::create($validated);
+            // Create the route - only include validated fields that exist in the form
+            $routeData = [
+                'code' => $validated['code'],
+                'name' => $validated['name'],
+                'base_currency' => $validated['base_currency'],
+                'status' => $validated['status'],
+                'direction' => 'forward',
+                'is_return_of' => null,
+            ];
+            $route = Route::create($routeData);
 
             // Create route stops
             $stops = $validated['stops'];
@@ -315,7 +296,6 @@ class RouteController extends Controller
     public function edit($id)
     {
         $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
-        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)->where('id', '!=', $id)->get();
         $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
         $terminals = Terminal::with('city')->where('status', 'active')->get();
@@ -340,15 +320,6 @@ class RouteController extends Controller
                 'string',
                 'max:255',
                 'min:3',
-            ],
-            'direction' => [
-                'required',
-                'string',
-                'in:forward,return',
-            ],
-            'is_return_of' => [
-                'nullable',
-                'exists:routes,id',
             ],
             'base_currency' => [
                 'required',
@@ -389,10 +360,6 @@ class RouteController extends Controller
             'name.string' => 'Route name must be a string',
             'name.max' => 'Route name cannot exceed 255 characters',
             'name.min' => 'Route name must be at least 3 characters',
-            'direction.required' => 'Direction is required',
-            'direction.string' => 'Direction must be a string',
-            'direction.in' => 'Direction must be either forward or return',
-            'is_return_of.exists' => 'Selected return route is invalid or does not exist',
             'base_currency.required' => 'Base currency is required',
             'base_currency.string' => 'Base currency must be a string',
             'base_currency.in' => 'Base currency must be PKR',
@@ -412,8 +379,16 @@ class RouteController extends Controller
         try {
             DB::beginTransaction();
 
-            // Update the route
-            $route->update($validated);
+            // Update the route - only include validated fields that exist in the form
+            $routeData = [
+                'code' => $validated['code'],
+                'name' => $validated['name'],
+                'base_currency' => $validated['base_currency'],
+                'status' => $validated['status'],
+                'direction' => 'forward',
+                'is_return_of' => null,
+            ];
+            $route->update($routeData);
 
             // Handle route stops
             $stops = $validated['stops'];

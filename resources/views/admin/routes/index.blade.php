@@ -77,8 +77,6 @@
                         <tr>
                             <th>ID</th>
                             <th>Route</th>
-                            <th>Direction</th>
-                            <th>Return Route</th>
                             <th>Stops</th>
                             <th>Total Fare</th>
                             <th>Status</th>
@@ -110,16 +108,6 @@
                     {
                         data: 'formatted_name',
                         name: 'name',
-                    },
-                    {
-                        data: 'direction_badge',
-                        name: 'direction',
-                    },
-                    {
-                        data: 'return_route',
-                        name: 'return_route',
-                        orderable: false,
-                        searchable: false,
                     },
                     {
                         data: 'stops_count',
