@@ -3,400 +3,493 @@
 @section('title', 'Terminal Reports')
 
 @section('content')
-    <div class="container-fluid p-4">
-        <!-- Header Section -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line"></i> Terminal Reports
-                    </h5>
-                    @if ($isAdmin)
-                        <span class="badge bg-info">Admin View - All Terminals</span>
-                    @else
-                        <span class="badge bg-warning">Employee View - My Terminal Only</span>
-                    @endif
-                </div>
-            </div>
+<!--breadcrumb-->
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+    <div class="breadcrumb-title pe-3">Reports</div>
+    <div class="ps-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="bx bx-home-alt"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Terminal Reports</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!--end breadcrumb-->
 
-            <!-- Filter Section -->
+<div class="container-fluid">
+    <!-- Filter Card -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bx bx-filter-alt text-primary"></i> Report Filters
+                </h6>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true">
+                    <i class="bx bx-chevron-down"></i> Toggle Filters
+                </button>
+            </div>
+        </div>
+        <div class="collapse show" id="filterCollapse">
             <div class="card-body bg-light">
-                <div class="row g-3">
-                    @if ($isAdmin)
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">
-                                <i class="fas fa-building"></i> Terminal <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="terminalSelect" required>
-                                <option value="">-- Select Terminal --</option>
-                                @foreach ($terminals as $terminal)
-                                    <option value="{{ $terminal->id }}">{{ $terminal->name }} ({{ $terminal->code }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @else
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">
-                                <i class="fas fa-building"></i> Terminal
-                            </label>
-                            <input type="text" class="form-control" value="{{ $terminals->first()->name ?? 'N/A' }} ({{ $terminals->first()->code ?? 'N/A' }})"
-                                readonly>
-                            <input type="hidden" id="terminalSelect" value="{{ $terminals->first()->id ?? '' }}">
-                        </div>
-                    @endif
-
+            <div class="row g-3">
+                @if ($canSelectTerminal)
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">
-                            <i class="fas fa-calendar-alt"></i> Start Date <span class="text-danger">*</span>
+                        <label class="form-label small fw-bold">
+                            <i class="bx bx-building"></i> Terminal <span class="text-danger">*</span>
                         </label>
-                        <input type="date" class="form-control" id="startDate" value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
+                        <select class="form-select form-select-sm" id="terminalSelect" required>
+                            <option value="">-- Select Terminal --</option>
+                            @foreach ($terminals as $terminal)
+                                <option value="{{ $terminal->id }}">{{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}</option>
+                            @endforeach
+                        </select>
                     </div>
-
+                @else
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">
-                            <i class="fas fa-calendar-alt"></i> End Date <span class="text-danger">*</span>
+                        <label class="form-label small fw-bold">
+                            <i class="bx bx-building"></i> Terminal
                         </label>
-                        <input type="date" class="form-control" id="endDate" value="{{ date('Y-m-d') }}" required>
+                        @php
+                            $terminal = $terminals->first();
+                        @endphp
+                        <input type="text" class="form-control form-control-sm"
+                            value="{{ ($terminal ? $terminal->name . ($terminal->code ? ' (' . $terminal->code . ')' : '') : 'N/A') }}"
+                            readonly>
+                        <input type="hidden" id="terminalSelect" value="{{ $terminal->id ?? '' }}">
                     </div>
+                @endif
 
-                    <div class="col-md-3 d-flex align-items-end gap-2">
-                        <button class="btn btn-primary flex-grow-1" onclick="loadReport()">
-                            <i class="fas fa-search"></i> Generate Report
-                        </button>
-                        <button class="btn btn-secondary no-print" onclick="printReport()" id="printBtn" disabled>
-                            <i class="fas fa-print"></i> Print
-                        </button>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">
+                        <i class="bx bx-calendar"></i> Start Date <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control form-control-sm" id="startDate"
+                        value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">
+                        <i class="bx bx-calendar"></i> End Date <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control form-control-sm" id="endDate" value="{{ date('Y-m-d') }}" required>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">
+                        <i class="bx bx-user"></i> User (Booked By)
+                    </label>
+                    <select class="form-select form-select-sm" id="filterUser">
+                        <option value="">All Users</option>
+                        @foreach ($users as $user)
+                            <option value="{{ $user->id }}">
+                                {{ $user->name }}{{ $user->email ? ' (' . $user->email . ')' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary btn-sm flex-grow-1" onclick="loadReport()">
+                        <i class="bx bx-search"></i> Generate Report
+                    </button>
+                    <button class="btn btn-secondary btn-sm no-print" onclick="printReport()" id="printBtn" disabled>
+                        <i class="bx bx-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Generating report...</p>
+    </div>
+
+    <!-- Report Content -->
+    <div id="reportContent" style="display: none;">
+        <!-- Summary Statistics Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
+            <div class="col">
+                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-1 text-secondary small">Total Revenue</p>
+                                <h4 class="mb-0 fw-bold text-primary" id="totalRevenue">PKR 0.00</h4>
+                                <small class="text-muted">From bookings</small>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-light-primary text-primary ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bx bx-money fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-1 text-secondary small">Total Bookings</p>
+                                <h4 class="mb-0 fw-bold text-success" id="totalBookings">0</h4>
+                                <small class="text-muted">Confirmed & active</small>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-light-success text-success ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bx bx-ticket fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-warning">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-1 text-secondary small">Total Expenses</p>
+                                <h4 class="mb-0 fw-bold text-warning" id="totalExpenses">PKR 0.00</h4>
+                                <small class="text-muted">Terminal expenses</small>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-light-warning text-warning ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bx bx-receipt fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-info">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="mb-1 text-secondary small">Net Profit</p>
+                                <h4 class="mb-0 fw-bold text-info" id="netProfit">PKR 0.00</h4>
+                                <small class="text-muted">Revenue - Expenses</small>
+                            </div>
+                            <div class="widgets-icons-2 rounded-circle bg-light-info text-info ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bx bx-trending-up fs-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Loading Indicator -->
-        <div id="loadingIndicator" class="text-center py-5" style="display: none;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Generating report...</p>
-        </div>
-
-        <!-- Report Content -->
-        <div id="reportContent" style="display: none;">
-            <!-- Summary Statistics -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="card shadow-sm border-0 bg-gradient-primary text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="opacity-75">Total Revenue</small>
-                                    <h4 class="mb-0 fw-bold" id="totalRevenue">PKR 0.00</h4>
-                                </div>
-                                <div style="font-size: 2.5rem; opacity: 0.5;">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card shadow-sm border-0 bg-gradient-success text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="opacity-75">Total Bookings</small>
-                                    <h4 class="mb-0 fw-bold" id="totalBookings">0</h4>
-                                </div>
-                                <div style="font-size: 2.5rem; opacity: 0.5;">
-                                    <i class="fas fa-ticket-alt"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card shadow-sm border-0 bg-gradient-warning text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="opacity-75">Total Expenses</small>
-                                    <h4 class="mb-0 fw-bold" id="totalExpenses">PKR 0.00</h4>
-                                </div>
-                                <div style="font-size: 2.5rem; opacity: 0.5;">
-                                    <i class="fas fa-receipt"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card shadow-sm border-0 bg-gradient-info text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="opacity-75">Net Profit</small>
-                                    <h4 class="mb-0 fw-bold" id="netProfit">PKR 0.00</h4>
-                                </div>
-                                <div style="font-size: 2.5rem; opacity: 0.5;">
-                                    <i class="fas fa-chart-line"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Detailed Statistics -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-chart-pie"></i> Booking Statistics
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Confirmed</small>
-                                    <h5 class="mb-0 text-success" id="confirmedBookings">0</h5>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">On Hold</small>
-                                    <h5 class="mb-0 text-warning" id="holdBookings">0</h5>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Cancelled</small>
-                                    <h5 class="mb-0 text-danger" id="cancelledBookings">0</h5>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Total Trips</small>
-                                    <h5 class="mb-0 text-primary" id="totalTrips">0</h5>
-                                </div>
-                                <div class="col-12">
-                                    <hr>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">Total Passengers</small>
-                                            <h5 class="mb-0" id="totalPassengers">0</h5>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">Total Seats</small>
-                                            <h5 class="mb-0" id="totalSeats">0</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-money-bill"></i> Revenue Breakdown
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <small class="text-muted d-block">Total Fare</small>
-                                    <h5 class="mb-0" id="totalFare">PKR 0.00</h5>
-                                </div>
-                                <div class="col-12">
-                                    <small class="text-muted d-block">Total Discount</small>
-                                    <h5 class="mb-0 text-danger" id="totalDiscount">-PKR 0.00</h5>
-                                </div>
-                                <div class="col-12">
-                                    <small class="text-muted d-block">Total Tax/Charge</small>
-                                    <h5 class="mb-0 text-info" id="totalTax">+PKR 0.00</h5>
-                                </div>
-                                <div class="col-12">
-                                    <hr>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <strong>Final Revenue:</strong>
-                                        <h5 class="mb-0 text-success" id="finalRevenue">PKR 0.00</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Detailed Terminal Report Summary -->
-            <div class="card shadow-sm mb-4 border-primary">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">
-                            <i class="fas fa-file-invoice-dollar"></i> Terminal Financial Summary
+        <!-- Detailed Statistics -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bx bx-pie-chart-alt-2 text-info"></i> Booking Statistics
                         </h6>
-                        <div id="reportTerminalInfo" class="text-white-50 small"></div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light rounded border">
-                                <small class="text-muted d-block mb-1">Total Sales (Bookings)</small>
-                                <h4 class="mb-0 text-success fw-bold" id="summaryTotalSales">PKR 0.00</h4>
-                                <small class="text-muted" id="summaryBookingsCount">0 bookings</small>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded border-start border-3 border-success">
+                                    <small class="text-muted d-block">Confirmed</small>
+                                    <h5 class="mb-0 text-success fw-bold" id="confirmedBookings">0</h5>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light rounded border">
-                                <small class="text-muted d-block mb-1">Total Expenses</small>
-                                <h4 class="mb-0 text-danger fw-bold" id="summaryTotalExpenses">PKR 0.00</h4>
-                                <small class="text-muted" id="summaryExpensesCount">0 expenses</small>
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded border-start border-3 border-warning">
+                                    <small class="text-muted d-block">On Hold</small>
+                                    <h5 class="mb-0 text-warning fw-bold" id="holdBookings">0</h5>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light rounded border border-primary border-3">
-                                <small class="text-muted d-block mb-1">Net Amount (Remaining)</small>
-                                <h4 class="mb-0 text-primary fw-bold" id="summaryNetAmount">PKR 0.00</h4>
-                                <small class="text-muted" id="summaryProfitMargin">0% margin</small>
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded border-start border-3 border-danger">
+                                    <small class="text-muted d-block">Cancelled</small>
+                                    <h5 class="mb-0 text-danger fw-bold" id="cancelledBookings">0</h5>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded border-start border-3 border-primary">
+                                    <small class="text-muted d-block">Total Trips</small>
+                                    <h5 class="mb-0 text-primary fw-bold" id="totalTrips">0</h5>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <hr class="my-2">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="p-2 bg-light rounded">
+                                            <small class="text-muted d-block">Total Passengers</small>
+                                            <h5 class="mb-0 fw-bold" id="totalPassengers">0</h5>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 bg-light rounded">
+                                            <small class="text-muted d-block">Total Seats</small>
+                                            <h5 class="mb-0 fw-bold" id="totalSeats">0</h5>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bookings Table -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-list"></i> Bookings from This Terminal
-                        <span class="badge bg-light text-dark ms-2" id="bookingsTableCount">0</span>
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bx bx-money text-success"></i> Revenue Breakdown
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="small text-muted">Total Fare:</td>
+                                        <td class="small text-end fw-bold" id="totalFare">PKR 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="small text-muted">Total Discount:</td>
+                                        <td class="small text-end text-danger fw-bold" id="totalDiscount">-PKR 0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="small text-muted">Total Tax/Charge:</td>
+                                        <td class="small text-end text-info fw-bold" id="totalTax">+PKR 0.00</td>
+                                    </tr>
+                                    <tr class="border-top">
+                                        <td class="small fw-bold">Final Revenue:</td>
+                                        <td class="small text-end fw-bold text-success" id="finalRevenue">PKR 0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bx bx-receipt text-primary"></i> Terminal Financial Summary
                     </h6>
+                    <div id="reportTerminalInfo" class="text-muted small"></div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-hover table-striped table-sm mb-0" id="bookingsTable">
-                            <thead class="table-dark sticky-top">
-                                <tr>
-                                    <th style="width: 100px;">Booking #</th>
-                                    <th style="width: 120px;">Date & Time</th>
-                                    <th style="width: 150px;">From → To</th>
-                                    <th style="width: 80px;">Channel</th>
-                                    <th style="width: 90px;">Status</th>
-                                    <th style="width: 100px;">Payment Method</th>
-                                    <th style="width: 100px;">Payment Status</th>
-                                    <th style="width: 110px;" class="text-end">Fare</th>
-                                    <th style="width: 110px;" class="text-end">Discount</th>
-                                    <th style="width: 100px;" class="text-end">Tax</th>
-                                    <th style="width: 120px;" class="text-end">Final Amount</th>
-                                    <th style="width: 100px;">Passengers</th>
-                                    <th style="width: 120px;">Booked By</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bookingsTableBody">
-                                <tr>
-                                    <td colspan="13" class="text-center text-muted py-3">
-                                        No data available. Please generate a report.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border-start border-3 border-success">
+                            <small class="text-muted d-block mb-1">Total Sales (Bookings)</small>
+                            <h4 class="mb-0 text-success fw-bold" id="summaryTotalSales">PKR 0.00</h4>
+                            <small class="text-muted" id="summaryBookingsCount">0 bookings</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border-start border-3 border-danger">
+                            <small class="text-muted d-block mb-1">Total Expenses</small>
+                            <h4 class="mb-0 text-danger fw-bold" id="summaryTotalExpenses">PKR 0.00</h4>
+                            <small class="text-muted" id="summaryExpensesCount">0 expenses</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border-start border-3 border-primary">
+                            <small class="text-muted d-block mb-1">Net Amount (Remaining)</small>
+                            <h4 class="mb-0 text-primary fw-bold" id="summaryNetAmount">PKR 0.00</h4>
+                            <small class="text-muted" id="summaryProfitMargin">0% margin</small>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Expenses Table -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0">
-                        <i class="fas fa-receipt"></i> Expenses for This Terminal
-                        <span class="badge bg-dark ms-2" id="expensesTableCount">0</span>
+        <!-- Bookings Table -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bx bx-list-ul text-primary"></i> Bookings from This Terminal
                     </h6>
+                    <span class="badge bg-light text-dark" id="bookingsTableCount">0 records</span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-hover table-striped table-sm mb-0" id="expensesTable">
-                            <thead class="table-dark sticky-top">
-                                <tr>
-                                    <th style="width: 110px;">Date</th>
-                                    <th style="width: 120px;">Expense Type</th>
-                                    <th style="width: 150px;">From → To Terminal</th>
-                                    <th style="width: 120px;" class="text-end">Amount (PKR)</th>
-                                    <th style="width: 200px;">Description</th>
-                                    <th style="width: 150px;">Trip</th>
-                                    <th style="width: 120px;">Added By</th>
-                                    <th style="width: 130px;">Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expensesTableBody">
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-3">
-                                        No data available. Please generate a report.
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-secondary fw-bold">
-                                <tr>
-                                    <td colspan="3" class="text-end">Total Expenses:</td>
-                                    <td class="text-end text-danger" id="expensesTableTotal">PKR 0.00</td>
-                                    <td colspan="4"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-striped table-sm mb-0" id="bookingsTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="small">Booking #</th>
+                                <th class="small">Date & Time</th>
+                                <th class="small">From → To</th>
+                                <th class="small">Channel</th>
+                                <th class="small">Status</th>
+                                <th class="small">Payment Method</th>
+                                <th class="small">Payment Status</th>
+                                <th class="small text-end">Fare</th>
+                                <th class="small text-end">Discount</th>
+                                <th class="small text-end">Tax</th>
+                                <th class="small text-end">Final Amount</th>
+                                <th class="small">Passengers</th>
+                                <th class="small">Booked By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTableBody">
+                            <tr>
+                                <td colspan="13" class="text-center text-muted py-3 small">
+                                    No data available. Please generate a report.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses Table -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bx bx-receipt text-warning"></i> Expenses for This Terminal
+                    </h6>
+                    <span class="badge bg-light text-dark" id="expensesTableCount">0 records</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-striped table-sm mb-0" id="expensesTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="small">Date</th>
+                                <th class="small">Expense Type</th>
+                                <th class="small">From → To Terminal</th>
+                                <th class="small text-end">Amount (PKR)</th>
+                                <th class="small">Description</th>
+                                <th class="small">Trip</th>
+                                <th class="small">Added By</th>
+                                <th class="small">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-3 small">
+                                    No data available. Please generate a report.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-secondary fw-bold">
+                            <tr>
+                                <td colspan="3" class="text-end small">Total Expenses:</td>
+                                <td class="text-end text-danger small" id="expensesTableTotal">PKR 0.00</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Methods & Channels Breakdown -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bx bx-credit-card text-info"></i> Payment Methods Breakdown
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="paymentMethodsBreakdown">
+                            <p class="text-muted text-center mb-0 small">No data available</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Payment Methods & Channels Breakdown -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-credit-card"></i> Payment Methods
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="paymentMethodsBreakdown">
-                                <p class="text-muted text-center mb-0">No data available</p>
-                            </div>
-                        </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bx bx-store text-success"></i> Booking Channels Breakdown
+                        </h6>
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-sitemap"></i> Booking Channels
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="channelsBreakdown">
-                                <p class="text-muted text-center mb-0">No data available</p>
-                            </div>
+                    <div class="card-body">
+                        <div id="channelsBreakdown">
+                            <p class="text-muted text-center mb-0 small">No data available</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <style>
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .radius-10 {
+            border-radius: 10px;
         }
 
-        .bg-gradient-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        .border-start {
+            border-left-width: 4px !important;
         }
 
-        .bg-gradient-warning {
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        .bg-light-primary {
+            background-color: rgba(13, 110, 253, 0.1);
         }
 
-        .bg-gradient-info {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        .bg-light-success {
+            background-color: rgba(25, 135, 84, 0.1);
+        }
+
+        .bg-light-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .bg-light-info {
+            background-color: rgba(13, 202, 240, 0.1);
+        }
+
+        .text-primary {
+            color: #0d6efd !important;
+        }
+
+        .text-success {
+            color: #198754 !important;
+        }
+
+        .text-info {
+            color: #0dcaf0 !important;
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
+
+        .widgets-icons-2 {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            border-radius: 8px;
+        }
+
+        .table thead th {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* Print Styles */
@@ -491,7 +584,8 @@
                 data: {
                     terminal_id: terminalId,
                     start_date: startDate,
-                    end_date: endDate
+                    end_date: endDate,
+                    user_id: document.getElementById('filterUser').value || null
                 },
                 success: function(response) {
                     if (response.success) {
@@ -508,7 +602,8 @@
                     }
                 },
                 error: function(error) {
-                    const message = error.responseJSON?.error || 'Unable to generate report. Please check your connection and try again.';
+                    const message = error.responseJSON?.error ||
+                        'Unable to generate report. Please check your connection and try again.';
                     Swal.fire({
                         icon: 'error',
                         title: 'Failed to Load Report',
@@ -527,7 +622,7 @@
 
             // Update terminal info
             if (data.terminal) {
-                document.getElementById('reportTerminalInfo').textContent = 
+                document.getElementById('reportTerminalInfo').textContent =
                     `${data.terminal.name} (${data.terminal.code}) | ${data.date_range.start} to ${data.date_range.end}`;
             }
 
@@ -579,27 +674,31 @@
             document.getElementById('totalSeats').textContent = stats.passengers.total_seats;
 
             // Update revenue breakdown
-            document.getElementById('totalFare').textContent = 'PKR ' + parseFloat(stats.revenue.total_fare).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            document.getElementById('totalDiscount').textContent = '-PKR ' + parseFloat(stats.revenue.total_discount).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            document.getElementById('totalTax').textContent = '+PKR ' + parseFloat(stats.revenue.total_tax).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            document.getElementById('finalRevenue').textContent = 'PKR ' + parseFloat(stats.revenue.total_revenue).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            document.getElementById('totalFare').textContent = 'PKR ' + parseFloat(stats.revenue.total_fare).toLocaleString(
+                'en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            document.getElementById('totalDiscount').textContent = '-PKR ' + parseFloat(stats.revenue.total_discount)
+                .toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            document.getElementById('totalTax').textContent = '+PKR ' + parseFloat(stats.revenue.total_tax).toLocaleString(
+                'en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            document.getElementById('finalRevenue').textContent = 'PKR ' + parseFloat(stats.revenue.total_revenue)
+                .toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
 
             // Render bookings table (detailed)
             const bookingsBody = document.getElementById('bookingsTableBody');
             document.getElementById('bookingsTableCount').textContent = data.bookings.length;
-            
+
             if (data.bookings.length === 0) {
                 bookingsBody.innerHTML = `
                     <tr>
@@ -619,7 +718,7 @@
                     const channelBadge = booking.channel === 'counter' ? 'bg-info' :
                         booking.channel === 'phone' ? 'bg-warning' :
                         booking.channel === 'online' ? 'bg-success' : 'bg-secondary';
-                    
+
                     const finalAmount = parseFloat(booking.final_amount) || 0;
                     totalSalesCalc += finalAmount;
 
@@ -658,7 +757,7 @@
             // Render expenses table (detailed)
             const expensesBody = document.getElementById('expensesTableBody');
             document.getElementById('expensesTableCount').textContent = data.expenses.length;
-            
+
             if (data.expenses.length === 0) {
                 expensesBody.innerHTML = `
                     <tr>
@@ -672,7 +771,7 @@
                 data.expenses.forEach(expense => {
                     const amount = parseFloat(expense.amount) || 0;
                     totalExpensesCalc += amount;
-                    
+
                     expensesHtml += `
                         <tr>
                             <td><small>${expense.expense_date}</small></td>
@@ -687,8 +786,11 @@
                     `;
                 });
                 expensesBody.innerHTML = expensesHtml;
-                document.getElementById('expensesTableTotal').textContent = 
-                    'PKR ' + totalExpensesCalc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('expensesTableTotal').textContent =
+                    'PKR ' + totalExpensesCalc.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
             }
 
             // Render payment methods breakdown
@@ -742,8 +844,8 @@
             window.print();
         }
 
-        // Auto-load report for employees (their terminal)
-        @if (!$isAdmin && $terminals->isNotEmpty())
+        // Auto-load report for users with assigned terminal (their terminal)
+        @if (!$canSelectTerminal && $terminals->isNotEmpty())
             document.addEventListener('DOMContentLoaded', function() {
                 loadReport();
             });

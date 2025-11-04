@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\TerminalEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Expense;
 use App\Models\Terminal;
 use App\Models\Trip;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -18,48 +20,72 @@ class TerminalReportController extends Controller
     public function index(): View
     {
         $user = Auth::user();
-        $isAdmin = $user->hasRole('admin');
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Super Admin') || $user->hasRole('admin') || $user->hasRole('super_admin');
+        $hasTerminalAssigned = (bool) $user->terminal_id;
 
-        // Get terminals - admin sees all, employee sees only their terminal
-        $terminals = $isAdmin
-            ? Terminal::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code'])
-            : Terminal::where('id', $user->terminal_id)
-                ->where('status', 'active')
+        // If user has no terminal assigned OR is admin, show all terminals (selectable)
+        // If user has terminal assigned, show only their terminal (read-only)
+        if ($isAdmin || ! $hasTerminalAssigned) {
+            $terminals = Terminal::where('status', TerminalEnum::ACTIVE->value)->orderBy('name')->get(['id', 'name', 'code']);
+            $canSelectTerminal = true;
+        } else {
+            $terminals = Terminal::where('id', $user->terminal_id)
+                ->where('status', TerminalEnum::ACTIVE->value)
                 ->get(['id', 'name', 'code']);
+            $canSelectTerminal = false;
+        }
 
-        return view('admin.terminal-reports.index', compact('terminals', 'isAdmin'));
+        // Get users who have created bookings (excluding customers)
+        $bookedByUserIds = Booking::whereNotNull('booked_by_user_id')->distinct()->pluck('booked_by_user_id');
+        $userIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
+        $allUserIds = $bookedByUserIds->merge($userIds)->unique();
+
+        $users = User::whereIn('id', $allUserIds)
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Customer');
+            })
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.terminal-reports.index', compact('terminals', 'isAdmin', 'users', 'canSelectTerminal'));
     }
 
     public function getData(Request $request): JsonResponse
     {
         $user = Auth::user();
-        $isAdmin = $user->hasRole('admin');
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Super Admin') || $user->hasRole('admin') || $user->hasRole('super_admin');
+        $hasTerminalAssigned = (bool) $user->terminal_id;
 
-        $validated = $request->validate([
-            'terminal_id' => $isAdmin ? 'required|exists:terminals,id' : 'nullable',
+        // If user has no terminal assigned OR is admin, terminal_id is required from request
+        // If user has terminal assigned, use their terminal_id (ignore request)
+        $validationRules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+            'user_id' => 'nullable|exists:users,id',
+        ];
 
-        // For employees, use their terminal_id (enforce it)
-        if ($isAdmin) {
-            $terminalId = $validated['terminal_id'];
+        if ($isAdmin || ! $hasTerminalAssigned) {
+            $validationRules['terminal_id'] = 'required|exists:terminals,id';
         } else {
-            // Employee can only view their own terminal
-            $terminalId = $user->terminal_id;
+            $validationRules['terminal_id'] = 'nullable';
+        }
+
+        $validated = $request->validate($validationRules);
+
+        // Determine which terminal to use
+        if ($isAdmin || ! $hasTerminalAssigned) {
+            // Admin or user without terminal: use selected terminal from request
+            $terminalId = $validated['terminal_id'];
             if (! $terminalId) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'You are not assigned to any terminal. Please contact administrator.',
-                ], 403);
+                    'error' => 'Terminal ID is required',
+                ], 400);
             }
-        }
-
-        if (! $terminalId) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Terminal ID is required',
-            ], 400);
+        } else {
+            // User with terminal assigned: use their terminal (ignore request)
+            $terminalId = $user->terminal_id;
         }
 
         $terminal = Terminal::findOrFail($terminalId);
@@ -67,7 +93,7 @@ class TerminalReportController extends Controller
         $endDate = Carbon::parse($validated['end_date'])->endOfDay();
 
         // Get bookings where from_stop or to_stop is at this terminal
-        $bookings = $this->getBookingsForTerminal($terminalId, $startDate, $endDate);
+        $bookings = $this->getBookingsForTerminal($terminalId, $startDate, $endDate, $validated['user_id'] ?? null);
 
         // Get trips departing from or arriving at this terminal
         $trips = $this->getTripsForTerminal($terminalId, $startDate, $endDate);
@@ -137,23 +163,29 @@ class TerminalReportController extends Controller
         ]);
     }
 
-    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate)
+    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate, ?int $userId = null)
     {
         // ✅ Only get bookings that START from this terminal (from_terminal_id)
         // This matches the passenger filtering logic - terminal staff sees bookings from their terminal
-        return Booking::query()
+        $query = Booking::query()
             ->whereHas('fromStop', function ($query) use ($terminalId) {
                 $query->where('terminal_id', $terminalId);
             })
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->with([
-                'fromStop.terminal',
-                'toStop.terminal',
-                'seats',
-                'passengers',
-                'user',
-                'trip.route',
-            ])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Filter by user if provided
+        if ($userId) {
+            $query->where('booked_by_user_id', $userId);
+        }
+
+        return $query->with([
+            'fromStop.terminal',
+            'toStop.terminal',
+            'seats',
+            'passengers',
+            'user',
+            'trip.route',
+        ])
             ->orderBy('created_at', 'desc')
             ->get();
     }

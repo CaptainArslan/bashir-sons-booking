@@ -1,32 +1,33 @@
 <?php
 
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\AnnouncementController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BusController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\BusAssignmentController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\CounterTerminalController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TwoFactorController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\BusAssignmentController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -296,8 +297,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
 
         // Terminal Reports Routes
-        Route::get('/terminal-reports', [\App\Http\Controllers\Admin\TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
-        Route::get('/terminal-reports/data', [\App\Http\Controllers\Admin\TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
+        Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
+        Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
 
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');
