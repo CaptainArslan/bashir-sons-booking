@@ -13,6 +13,8 @@ class BusLayout extends Model
     /** @use HasFactory<\Database\Factories\BusLayoutFactory> */
     use HasFactory;
 
+    const DEFAULT_SEATS = 44;
+
     protected $fillable = [
         'name',
         'description',

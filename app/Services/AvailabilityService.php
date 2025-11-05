@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\BusLayout;
 use App\Models\RouteStop;
 use App\Models\Trip;
 use App\Models\TripStop;
@@ -57,7 +58,7 @@ class AvailabilityService
 
     public function seatCount(Trip $trip): int
     {
-        return $trip->bus?->seatCount ?? 44;
+        return $trip->bus?->seatCount ?? BusLayout::DEFAULT_SEATS;
     }
 
     /**
