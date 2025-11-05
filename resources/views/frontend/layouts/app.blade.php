@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ asset('frontend/assets/css/responsive.css') }}" />
     <link rel="stylesheet" href="{{ asset('frontend/assets/css/sweetalert2.min.css') }}">
     <script src="{{ asset('frontend/assets/js/jquery-3.7.1.js') }}"></script>
+    @vite(['resources/js/app.js'])
     @yield('styles')
 </head>
 

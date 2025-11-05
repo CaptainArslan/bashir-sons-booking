@@ -149,6 +149,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -159,10 +160,21 @@
             animation: fadeInUp 0.5s ease forwards;
         }
 
-        .trip-card:nth-child(1) { animation-delay: 0.1s; }
-        .trip-card:nth-child(2) { animation-delay: 0.2s; }
-        .trip-card:nth-child(3) { animation-delay: 0.3s; }
-        .trip-card:nth-child(n+4) { animation-delay: 0.4s; }
+        .trip-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .trip-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .trip-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .trip-card:nth-child(n+4) {
+            animation-delay: 0.4s;
+        }
     </style>
 @endsection
 
@@ -230,7 +242,8 @@
                                 </h5>
                                 <div class="alert alert-info alert-sm mb-0 py-2 px-3" style="font-size: 0.875rem;">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    <strong>2-Hour Rule:</strong> Online bookings must be made at least 2 hours before departure
+                                    <strong>2-Hour Rule:</strong> Online bookings must be made at least 2 hours before
+                                    departure
                                 </div>
                             </div>
                         </div>
@@ -249,10 +262,12 @@
                             <div id="no-trips" class="no-trips-empty" style="display: none;">
                                 <i class="bi bi-inbox text-muted"></i>
                                 <h4 class="mt-3 mb-2">No trips available</h4>
-                                <p class="text-muted mb-4">We couldn't find any trips for your selected route and date. Please try different dates or routes.</p>
+                                <p class="text-muted mb-4">We couldn't find any trips for your selected route and date.
+                                    Please try different dates or routes.</p>
                                 <div class="alert alert-info mb-3">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    <strong>Note:</strong> Online bookings must be made at least 2 hours before departure. Trips departing within 2 hours are not available for online booking.
+                                    <strong>Note:</strong> Online bookings must be made at least 2 hours before departure.
+                                    Trips departing within 2 hours are not available for online booking.
                                 </div>
                                 <a href="{{ route('home') }}" class="btn btn-primary btn-lg">
                                     <i class="bi bi-arrow-left me-2"></i>Search Again
@@ -285,7 +300,7 @@
                 $('#no-trips').hide();
 
                 $.ajax({
-                    url: '{{ route('frontend.bookings.load-trips') }}',
+                    url: "{{ route('frontend.bookings.load-trips') }}",
                     type: 'GET',
                     data: {
                         from_terminal_id: fromTerminalId,
@@ -327,14 +342,14 @@
                         `${trip.fare.currency} ${parseFloat(trip.fare.final_fare).toFixed(2)}` :
                         'Price on request';
 
-                    const timeDisplay = formatTime(trip.departure_time);
-                    const arrivalDisplay = trip.arrival_time ? formatTime(trip.arrival_time) : '--';
+                    const timeDisplay = trip.departure_time;
+                    const arrivalDisplay = trip.arrival_time ?? '--';
 
                     const seatBadgeClass = trip.available_seats > 0 ? 'bg-success' :
                         trip.available_seats === 0 ? 'bg-danger' : 'bg-warning';
 
-                    const seatBadgeText = trip.available_seats > 0 ? 
-                        `${trip.available_seats} Available` : 
+                    const seatBadgeText = trip.available_seats > 0 ?
+                        `${trip.available_seats} Available` :
                         trip.available_seats === 0 ? 'Sold Out' : 'Limited';
 
                     const card = `
@@ -429,7 +444,7 @@
                 url.searchParams.append('passengers', passengers);
 
                 window.location.href = url.toString();
-                @else
+            @else
                 // User not authenticated, redirect to login with return URL
                 Swal.fire({
                     icon: 'info',
@@ -446,22 +461,21 @@
                         window.location.href = loginUrl.toString();
                     }
                 });
-                @endauth
-            }
+            @endauth
+        }
 
-            function formatTime(time) {
-                if (!time) return '--';
-                const parts = time.split(':');
-                if (parts.length >= 2) {
-                    let hour = parseInt(parts[0]);
-                    const minute = parts[1];
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    hour = hour % 12 || 12;
-                    return `${hour}:${minute} ${ampm}`;
-                }
-                return time;
+        function formatTime(time) {
+            if (!time) return '--';
+            const parts = time.split(':');
+            if (parts.length >= 2) {
+                let hour = parseInt(parts[0]);
+                const minute = parts[1];
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                hour = hour % 12 || 12;
+                return `${hour}:${minute} ${ampm}`;
             }
+            return time;
+        }
         });
     </script>
 @endsection
-
