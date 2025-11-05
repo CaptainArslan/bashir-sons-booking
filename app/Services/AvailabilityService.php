@@ -57,7 +57,7 @@ class AvailabilityService
 
     public function seatCount(Trip $trip): int
     {
-        return $trip->bus?->seat_count ?? 44;
+        return $trip->bus?->seatCount ?? 44;
     }
 
     /**
