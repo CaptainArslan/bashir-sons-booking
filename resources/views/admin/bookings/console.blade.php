@@ -378,9 +378,15 @@
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-warning text-dark">
-                            <h6 class="mb-0 small">
-                                <i class="fas fa-list-check"></i> Booked Passengers
-                            </h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small">
+                                    <i class="fas fa-list-check"></i> Booked Passengers
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-outline-dark" id="printPassengerListBtn" 
+                                    onclick="printPassengerList()" style="display: none;">
+                                    <i class="fas fa-print"></i> Print List
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body p-2" style="max-height: calc(100vh - 250px); overflow-y: auto;">
                             <div id="tripPassengersList">

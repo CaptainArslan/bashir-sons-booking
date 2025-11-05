@@ -89,11 +89,99 @@ class Discount extends Model
      */
     public function isValid(): bool
     {
+        if (! $this->is_active) {
+            return false;
+        }
+
         $now = now();
 
-        return $this->is_active
-            && $this->starts_at <= $now
-            && $this->ends_at >= $now;
+        // If date range is provided, check date range
+        if ($this->starts_at && $this->ends_at) {
+            if ($now->lt($this->starts_at) || $now->gt($this->ends_at)) {
+                return false;
+            }
+        } elseif ($this->start_time && $this->end_time) {
+            // If date range is not provided but time range is, check time range for today
+            $currentTime = $now->format('H:i:s');
+            $startTime = $this->start_time->format('H:i:s');
+            $endTime = $this->end_time->format('H:i:s');
+
+            // Handle time ranges that cross midnight
+            if ($startTime <= $endTime) {
+                // Normal time range (e.g., 09:00 to 17:00)
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return false;
+                }
+            } else {
+                // Time range crosses midnight (e.g., 22:00 to 06:00)
+                if ($currentTime < $startTime && $currentTime > $endTime) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if discount is valid for a specific platform and date/time.
+     */
+    public function isValidForBooking(string $platform, ?\Carbon\Carbon $bookingDate = null, ?\Carbon\Carbon $bookingTime = null): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        // Check platform
+        if (! $this->isActiveForPlatform($platform)) {
+            return false;
+        }
+
+        $now = $bookingDate ?? now();
+        $checkTime = $bookingTime ?? now();
+
+        // If date range is provided, check date range
+        if ($this->starts_at && $this->ends_at) {
+            if ($now->lt($this->starts_at) || $now->gt($this->ends_at)) {
+                return false;
+            }
+
+            // If time range is also provided, check time within the day
+            if ($this->start_time && $this->end_time) {
+                $currentTime = $checkTime->format('H:i:s');
+                $startTime = $this->start_time->format('H:i:s');
+                $endTime = $this->end_time->format('H:i:s');
+
+                if ($startTime <= $endTime) {
+                    if ($currentTime < $startTime || $currentTime > $endTime) {
+                        return false;
+                    }
+                } else {
+                    // Time range crosses midnight
+                    if ($currentTime < $startTime && $currentTime > $endTime) {
+                        return false;
+                    }
+                }
+            }
+        } elseif ($this->start_time && $this->end_time) {
+            // If date range is not provided but time range is, check time range
+            $currentTime = $checkTime->format('H:i:s');
+            $startTime = $this->start_time->format('H:i:s');
+            $endTime = $this->end_time->format('H:i:s');
+
+            if ($startTime <= $endTime) {
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return false;
+                }
+            } else {
+                // Time range crosses midnight
+                if ($currentTime < $startTime && $currentTime > $endTime) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

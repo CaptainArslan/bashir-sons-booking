@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('app:expire-holds')->everyMinute();
+        $schedule->command('bookings:expire')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

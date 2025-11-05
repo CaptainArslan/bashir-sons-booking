@@ -56,6 +56,17 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('2fa.challenge');
         }
 
+        // Check for redirect parameter or intended URL
+        $redirect = $request->query('redirect');
+        if ($redirect && filter_var($redirect, FILTER_VALIDATE_URL)) {
+            // Validate that redirect is to same domain
+            $redirectHost = parse_url($redirect, PHP_URL_HOST);
+            $currentHost = $request->getHost();
+            if ($redirectHost === $currentHost) {
+                return redirect($redirect);
+            }
+        }
+
         // Default fallback - redirect to home or profile based on user role
         if ($user && ($user->isAdmin() || $user->isEmployee())) {
             return redirect()->intended(route('admin.dashboard', absolute: false));

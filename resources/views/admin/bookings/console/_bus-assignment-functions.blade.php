@@ -274,6 +274,23 @@
                 // ✅ Render final HTML
                 passengersList.innerHTML = html;
                 
+                // Show print button when passengers are loaded
+                const printBtn = document.getElementById('printPassengerListBtn');
+                if (printBtn && response.length > 0) {
+                    printBtn.style.display = 'inline-block';
+                    // Store passenger data for printing
+                    window.currentTripPassengers = response;
+                    window.currentTripData = {
+                        route: appState.tripData?.route_name || 'N/A',
+                        date: appState.tripData?.departure_date || 'N/A',
+                        time: appState.tripData?.departure_time || 'N/A',
+                        bus: appState.tripData?.bus?.name || 'N/A',
+                    };
+                } else if (printBtn) {
+                    printBtn.style.display = 'none';
+                    window.currentTripPassengers = [];
+                }
+                
                 console.log('[loadTripPassengers] ✅✅✅ Passengers list rendered successfully! ✅✅✅');
                 console.log('[loadTripPassengers] Passengers count:', response.length);
                 console.log('[loadTripPassengers] HTML content length:', html.length, 'characters');
