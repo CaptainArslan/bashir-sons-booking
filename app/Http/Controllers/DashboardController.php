@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\Route;
 use App\Models\Enquiry;
+use App\Models\Terminal;
+use App\Models\RouteStop;
+use App\Enums\TerminalEnum;
 use Illuminate\Http\Request;
-use Illuminate\Contracts\View\View;
-use App\Http\Controllers\Controller;
+use App\Models\TimetableStop;
+use App\Models\GeneralSetting;
+use Illuminate\Http\JsonResponse;
 use App\Mail\EnquiryFormSubmitted;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Mail;
 
 // use Illuminate\Http\Request;
 
@@ -21,7 +29,19 @@ class DashboardController extends Controller
 
     public function home(): View
     {
-        return view('frontend.home');
+        $terminals = Terminal::where('status', TerminalEnum::ACTIVE->value)
+            ->with('city')
+            ->get();
+
+        $generalSettings = GeneralSetting::first();
+        $minDate = Carbon::today()->format('Y-m-d');
+        $maxDate = $minDate;
+
+        if ($generalSettings->advance_booking_enable ) {
+            $maxDate = Carbon::today()->addDays($generalSettings->advance_booking_days ?? 7)->format('Y-m-d');
+        }
+
+        return view('frontend.home', compact('terminals', 'minDate', 'maxDate'));
     }
 
     public function services(): View
@@ -76,5 +96,125 @@ class DashboardController extends Controller
     public function booking(): View
     {
         return view('frontend.booking');
+    }
+
+    public function getRouteStops(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+        ]);
+
+        try {
+            $routes = Route::query()
+                ->whereHas('routeStops', fn($q) => $q->where('terminal_id', $validated['from_terminal_id']))
+                ->where('status', 'active')
+                ->get();
+
+            $routeStops = collect();
+
+            foreach ($routes as $route) {
+                $stops = RouteStop::where('route_id', $route->id)
+                    ->with('terminal:id,name,code')
+                    ->orderBy('sequence')
+                    ->get();
+
+                // Get stops after the from terminal
+                $fromStopIndex = $stops->search(fn($stop) => $stop->terminal_id == $validated['from_terminal_id']);
+                if ($fromStopIndex !== false) {
+                    $filteredStops = $stops->slice($fromStopIndex + 1);
+                    $routeStops = $routeStops->merge($filteredStops);
+                }
+            }
+
+            // Remove duplicates using terminal_id
+            $uniqueStops = $routeStops
+                ->unique('terminal_id')
+                ->values()
+                ->map(function ($stop) {
+                    return [
+                        'id' => $stop->id,
+                        'terminal_id' => $stop->terminal_id,
+                        'terminal' => [
+                            'id' => $stop->terminal->id,
+                            'name' => $stop->terminal->name,
+                            'code' => $stop->terminal->code,
+                        ],
+                    ];
+                })
+                ->all();
+
+            return response()->json(['route_stops' => $uniqueStops]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function getDepartureTimes(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_terminal_id' => 'required|exists:terminals,id',
+            'to_terminal_id' => 'required|exists:terminals,id',
+            'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+        ]);
+
+        try {
+            if ($validated['from_terminal_id'] === $validated['to_terminal_id']) {
+                throw new \Exception('From and To terminals must be different');
+            }
+
+            $selectedDate = $validated['date'];
+            $now = now();
+
+            $timetableStops = [];
+
+            $timetableStopsQuery = TimetableStop::where('terminal_id', $validated['from_terminal_id'])
+                ->where('is_active', true)
+                ->with('timetable.route')
+                ->get();
+
+            foreach ($timetableStopsQuery as $ts) {
+                if (!$ts->timetable || !$ts->timetable->route) {
+                    continue;
+                }
+
+                $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
+                    ->orderBy('sequence')
+                    ->get();
+
+                $fromStop = $routeStops->firstWhere('terminal_id', $validated['from_terminal_id']);
+                $toStop = $routeStops->firstWhere('terminal_id', $validated['to_terminal_id']);
+
+                if (!$fromStop || !$toStop || $fromStop->sequence >= $toStop->sequence) {
+                    continue;
+                }
+
+                if ($ts->departure_time) {
+                    $fullDeparture = Carbon::parse(
+                        $selectedDate . ' ' . $ts->departure_time
+                    );
+
+                    if ($fullDeparture->greaterThanOrEqualTo($now)) {
+                        $timetableStops[] = [
+                            'id' => $ts->id,
+                            'departure_at' => $ts->departure_time,
+                            'arrival_at' => $ts->arrival_time,
+                            'terminal_id' => $ts->terminal_id,
+                            'timetable_id' => $ts->timetable_id,
+                            'route_id' => $ts->timetable->route->id,
+                            'route_name' => $ts->timetable->route->name,
+                            'full_departure' => $fullDeparture->toDateTimeString(),
+                        ];
+                    }
+                }
+            }
+
+            $timetableStops = collect($timetableStops)
+                ->sortBy('full_departure')
+                ->values();
+
+            return response()->json(['timetable_stops' => $timetableStops]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 }

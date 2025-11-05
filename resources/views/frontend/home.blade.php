@@ -108,7 +108,7 @@
                 <!-- Search Card -->
                 <div class="search-card-box">
                     <div class="card p-4 shadow-md border-0 rounded-4">
-                        <form action="{{ route('services') }}" method="GET">
+                        <form id="search-form" action="{{ route('bookings') }}" method="GET">
                             <div class="row g-3 align-items-end justify-content-center">
                                 <!-- From -->
                                 <div class="col-lg-3 col-md-6">
@@ -117,11 +117,11 @@
                                         <span class="input-group-text bg-white border-2">
                                             <i class="bi bi-geo-alt text-primary"></i>
                                         </span>
-                                        <select class="form-select">
-                                            <option selected disabled>Select City</option>
-                                            <option>Islamabad</option>
-                                            <option>Karachi</option>
-                                            <option>Lahore</option>
+                                        <select class="form-select" name="from_terminal_id" id="from_terminal_id" required>
+                                            <option value="" selected disabled>Select Terminal</option>
+                                            @foreach ($terminals as $terminal)
+                                                <option value="{{ $terminal->id }}">{{ $terminal->name }} ({{ $terminal->city->name }})</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -133,11 +133,8 @@
                                         <span class="input-group-text bg-white border-2">
                                             <i class="bi bi-geo text-primary"></i>
                                         </span>
-                                        <select class="form-select">
-                                            <option selected disabled>Select City</option>
-                                            <option>Islamabad</option>
-                                            <option>Karachi</option>
-                                            <option>Lahore</option>
+                                        <select class="form-select" name="to_terminal_id" id="to_terminal_id" required disabled>
+                                            <option value="" selected disabled>Select Destination</option>
                                         </select>
                                     </div>
                                 </div>
@@ -149,7 +146,7 @@
                                         <span class="input-group-text bg-white border-2">
                                             <i class="bi bi-calendar-event text-primary"></i>
                                         </span>
-                                        <input type="date" class="form-control">
+                                        <input type="date" class="form-control" name="date" id="travel_date" required value="{{ $minDate }}" min="{{ $minDate }}" max="{{ $maxDate }}">
                                     </div>
                                 </div>
 
@@ -160,18 +157,22 @@
                                         <span class="input-group-text bg-white border-2">
                                             <i class="bi bi-person text-primary"></i>
                                         </span>
-                                        <select class="form-select">
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4</option>
-                                        </select>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            name="passengers"
+                                            id="passengers"
+                                            min="1"
+                                            max="10"
+                                            value="1"
+                                            required
+                                        >
                                     </div>
                                 </div>
 
                                 <!-- Search Button -->
                                 <div class="col-lg-2 col-md-12 d-grid">
-                                    <button type="submit" class="btn bg-blue text-white fw-semibold rounded-3 py-2">
+                                    <button type="submit" class="btn bg-blue text-white fw-semibold rounded-3 py-2" id="search-btn">
                                         <i class="bi bi-search me-2"></i> Search
                                     </button>
                                 </div>
@@ -520,6 +521,103 @@
 
 @section('scripts')
     <script>
-        console.log('Home');
+        $(document).ready(function() {
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            $('#travel_date').attr('min', today);
+
+            // Handle From Terminal Change
+            $('#from_terminal_id').on('change', function() {
+                const fromTerminalId = $(this).val();
+                const toSelect = $('#to_terminal_id');
+                
+                // Reset To Terminal
+                toSelect.html('<option value="" selected disabled>Select Destination</option>');
+                toSelect.prop('disabled', true);
+
+                if (fromTerminalId) {
+                    fetchRouteStops(fromTerminalId);
+                }
+            });
+
+            // Fetch Route Stops (To Terminals)
+            function fetchRouteStops(fromTerminalId) {
+                $.ajax({
+                    url: "{{ route('frontend.route-stops') }}",
+                    type: 'GET',
+                    data: {
+                        from_terminal_id: fromTerminalId
+                    },
+                    success: function(response) {
+                        const toSelect = $('#to_terminal_id');
+                        
+                        if (response.route_stops && response.route_stops.length > 0) {
+                            toSelect.html('<option value="" selected disabled>Select Destination</option>');
+                            
+                            response.route_stops.forEach(function(stop) {
+                                toSelect.append(
+                                    `<option value="${stop.terminal_id}">${stop.terminal.name} (${stop.terminal.code})</option>`
+                                );
+                            });
+                            
+                            toSelect.prop('disabled', false);
+                        } else {
+                            toSelect.html('<option value="" selected disabled>No destinations available</option>');
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'No Routes Found',
+                                text: 'No active routes found for the selected terminal.',
+                                confirmButtonColor: '#0d6efd'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        const toSelect = $('#to_terminal_id');
+                        toSelect.html('<option value="" selected disabled>Error loading destinations</option>');
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Load Destinations',
+                            text: xhr.responseJSON?.error || 'Unable to fetch available destinations. Please try again.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+
+            // Handle Form Submission - Basic validation only
+            $('#search-form').on('submit', function(e) {
+                const fromTerminalId = $('#from_terminal_id').val();
+                const toTerminalId = $('#to_terminal_id').val();
+                const date = $('#travel_date').val();
+                
+                // Basic validation
+                if (!fromTerminalId || !toTerminalId || !date) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Please select From, To, and Date before searching.',
+                        confirmButtonColor: '#ffc107'
+                    });
+                    return false;
+                }
+
+                // Check if terminals are different
+                if (fromTerminalId === toTerminalId) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid Selection',
+                        text: 'From and To terminals must be different.',
+                        confirmButtonColor: '#ffc107'
+                    });
+                    return false;
+                }
+
+                // Allow form to submit normally
+                return true;
+            });
+        });
     </script>
 @endsection

@@ -82,11 +82,6 @@
         color: #495057;
     }
     
-    .distance-info {
-        font-size: 0.75rem;
-        color: #6c757d;
-    }
-    
     .fare-input {
         min-width: 100px;
     }
@@ -125,44 +120,6 @@
                 </div>
                 
                 <div class="card-body">
-                    <!-- Route Information -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card route-info-card">
-                                <div class="card-body" style="padding: 0.75rem;">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <strong>Route Code:</strong> 
-                                                <span class="badge bg-secondary">{{ $route->code }}</span>
-                                            </p>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <strong>Direction:</strong> 
-                                                <span class="badge bg-{{ $route->direction === 'forward' ? 'success' : 'warning' }} stats-badge">
-                                                    {{ ucfirst($route->direction) }}
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <strong>Total Stops:</strong> 
-                                                <span class="badge bg-info stats-badge">{{ $stops->count() }}</span>
-                                            </p>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <p class="mb-1" style="font-size: 0.85rem;">
-                                                <strong>Currency:</strong> 
-                                                <span class="badge bg-primary stats-badge">{{ $route->base_currency }}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Info Box -->
                     <div class="info-box">
                         <p><i class="bx bx-info-circle me-1"></i><strong>Instructions:</strong> Set fares for all possible combinations of stops on this route. The system will automatically calculate final fares based on discounts. Existing fares will be updated, and new combinations will be created.</p>
@@ -206,12 +163,11 @@
                                     <tr>
                                         <th width="5%">#</th>
                                         <th width="25%">Route Segment</th>
-                                        <th width="10%">Distance</th>
                                         <th width="15%">Base Fare</th>
                                         <th width="10%">Discount Type</th>
                                         <th width="10%">Discount Value</th>
                                         <th width="15%">Final Fare</th>
-                                        <th width="10%">Status</th>
+                                        {{-- <th width="10%">Status</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -226,14 +182,6 @@
                                                 <div class="route-path">
                                                     {{ $combination['from_terminal']->name }} → {{ $combination['to_terminal']->name }}
                                                 </div>
-                                                <div class="distance-info">
-                                                    {{ $combination['from_terminal']->city->name }} → {{ $combination['to_terminal']->city->name }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-light text-dark">
-                                                    {{ $combination['distance'] }} km
-                                                </span>
                                             </td>
                                             <td>
                                                 <div class="input-group">
@@ -258,7 +206,7 @@
                                                 <input type="number" 
                                                        class="form-control discount-input discount-value" 
                                                        name="fares[{{ $index }}][discount_value]" 
-                                                       value="{{ old('fares.' . $index . '.discount_value', $existingFare?->discount_value ?? '') }}"
+                                                       value="{{ old('fares.' . $index . '.discount_value', $existingFare?->discount_value ?? 0) }}"
                                                        step="0.01" 
                                                        min="0">
                                             </td>
@@ -271,12 +219,12 @@
                                                            readonly>
                                                 </div>
                                             </td>
-                                            <td>
+                                            {{-- <td>
                                                 <select class="form-select" name="fares[{{ $index }}][status]">
                                                     <option value="active" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'active' ? 'selected' : '' }}>Active</option>
                                                     <option value="inactive" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                                                 </select>
-                                            </td>
+                                            </td> --}}
                                         </tr>
                                         
                                         <!-- Hidden fields for terminal IDs -->

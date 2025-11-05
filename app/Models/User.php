@@ -41,6 +41,7 @@ class User extends Authenticatable
         'email',
         'password',
         'terminal_id',
+        'status',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
@@ -69,6 +70,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => \App\Enums\UserStatusEnum::class,
             // 'two_factor_secret' => 'encrypted',
             // 'two_factor_recovery_codes' => 'encrypted',
             // 'two_factor_confirmed_at' => 'datetime',
@@ -109,7 +111,7 @@ class User extends Authenticatable
     // =============================
     public function profile(): HasOne
     {
-        return $this->hasOne(profile::class);
+        return $this->hasOne(Profile::class);
     }
 
     public function terminal(): BelongsTo
@@ -169,6 +171,11 @@ class User extends Authenticatable
     // =============================
     // Helper Methods
     // =============================
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
     public function isEmployee(): bool
     {
         return $this->hasRole('Employee');

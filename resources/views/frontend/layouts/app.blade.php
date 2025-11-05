@@ -33,6 +33,7 @@
     <script src="{{ asset('frontend/assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('frontend/assets/js/script.js') }}"></script>
     <script src="{{ asset('frontend/assets/js/sweetalert2.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
     @yield('scripts')
     <script>
         @if (Session::has('message'))
@@ -77,6 +78,36 @@
         @endif
     </script>
 
+    <script>
+        // Initialize Input Masking for CNIC and Phone in Frontend
+        $(document).ready(function() {
+            // CNIC Mask: Format 34101-1111111-1 (5 digits - 7 digits - 1 digit)
+            $('input[name="cnic"], input[id="cnic"], input[name="driver_cnic"], input[id="driverCnic"]').each(function() {
+                if ($(this).attr('type') === 'number') {
+                    $(this).attr('type', 'text');
+                }
+                $(this).inputmask('99999-9999999-9', {
+                    placeholder: '_',
+                    clearMaskOnLostFocus: false,
+                    showMaskOnHover: true,
+                    showMaskOnFocus: true
+                });
+            });
+
+            // Phone Mask: Format 0317-7777777 (4 digits - 7 digits)
+            $('input[name="phone"], input[id="phone"], input[name="driver_phone"], input[id="driverPhone"], input[name="host_phone"], input[id="hostPhone"]').each(function() {
+                if ($(this).attr('type') === 'number' || $(this).attr('type') === 'tel') {
+                    $(this).attr('type', 'text');
+                }
+                $(this).inputmask('9999-9999999', {
+                    placeholder: '_',
+                    clearMaskOnLostFocus: false,
+                    showMaskOnHover: true,
+                    showMaskOnFocus: true
+                });
+            });
+        });
+    </script>
 
 </body>
 

@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\BusLayout;
-use Illuminate\Support\Str;
 use App\Enums\BusLayoutEnum;
-use App\Enums\SeatTypeEnum;
-use App\Enums\GenderEnum;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\BusLayout;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
 class BusLayoutController extends Controller
@@ -26,59 +24,67 @@ class BusLayoutController extends Controller
 
             return DataTables::eloquent($busLayouts)
                 ->addColumn('formatted_name', function ($busLayout) {
-                    return '<span class="fw-bold text-primary">' . e($busLayout->name) . '</span>';
+                    return '<span class="fw-bold text-primary">'.e($busLayout->name).'</span>';
                 })
                 ->addColumn('description_preview', function ($busLayout) {
-                    return '<span class="text-muted">' . e(Str::limit($busLayout->description, 100)) . '</span>';
+                    return '<span class="text-muted">'.e(Str::limit($busLayout->description, 100)).'</span>';
                 })
                 ->addColumn('seats_info', function ($busLayout) {
                     $seatsInfo = '<div class="d-flex flex-column">';
-                    $seatsInfo .= '<span class="fw-bold">' . $busLayout->total_seats . ' seats</span>';
-                    $seatsInfo .= '<small class="text-muted">' . $busLayout->total_rows . ' rows × ' . $busLayout->total_columns . ' columns</small>';
+                    $seatsInfo .= '<span class="fw-bold">'.$busLayout->total_seats.' seats</span>';
+                    $seatsInfo .= '<small class="text-muted">'.$busLayout->total_rows.' rows × '.$busLayout->total_columns.' columns</small>';
                     $seatsInfo .= '</div>';
+
                     return $seatsInfo;
                 })
                 ->addColumn('status_badge', function ($busLayout) {
                     $statusValue = $busLayout->status instanceof BusLayoutEnum ? $busLayout->status->value : $busLayout->status;
                     $statusName = BusLayoutEnum::getStatusName($statusValue);
                     $statusColor = BusLayoutEnum::getStatusColor($statusValue);
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 })
                 ->addColumn('buses_count', function ($busLayout) {
                     $count = $busLayout->buses()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
-                    return '<span class="badge ' . $badgeClass . '">' . $count . ' bus' . ($count !== 1 ? 'es' : '') . '</span>';
+
+                    return '<span class="badge '.$badgeClass.'">'.$count.' bus'.($count !== 1 ? 'es' : '').'</span>';
                 })
                 ->addColumn('actions', function ($busLayout) {
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="' . route('admin.bus-layouts.edit', $busLayout->id) . '">
-                                        <i class="bx bx-edit me-2"></i>Edit Bus Layout
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteBusLayout(' . $busLayout->id . ')">
-                                        <i class="bx bx-trash me-2"></i>Delete Bus Layout
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
+
+                    if (auth()->user()->can('edit bus layouts')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.bus-layouts.edit', $busLayout->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit Bus Layout
+                            </a>
+                        </li>';
+                    }
+
+                    if (auth()->user()->can('delete bus layouts')) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteBusLayout('.$busLayout->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete Bus Layout
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($busLayout) => $busLayout->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($busLayout) => $busLayout->created_at->format('d M Y'))
                 ->escapeColumns([])
                 ->rawColumns(['formatted_name', 'description_preview', 'seats_info', 'status_badge', 'buses_count', 'actions'])
                 ->make(true);
@@ -88,51 +94,97 @@ class BusLayoutController extends Controller
     public function create()
     {
         $statuses = BusLayoutEnum::getStatuses();
+
         return view('admin.bus-layouts.create', compact('statuses'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:bus_layouts,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'description' => 'nullable|string|max:1000',
-            'total_rows' => 'required|integer|min:1|max:50',
-            'total_columns' => 'required|integer|min:1|max:10',
-            'status' => 'required|string|in:' . implode(',', BusLayoutEnum::getStatuses()),
-        ], [
-            'name.required' => 'Bus layout name is required',
-            'name.string' => 'Bus layout name must be a string',
-            'name.max' => 'Bus layout name must be less than 255 characters',
-            'name.unique' => 'Bus layout name already exists',
-            'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
-            'description.string' => 'Description must be a string',
-            'description.max' => 'Description must be less than 1000 characters',
-            'total_rows.required' => 'Total rows is required',
-            'total_rows.integer' => 'Total rows must be a number',
-            'total_rows.min' => 'Total rows must be at least 1',
-            'total_rows.max' => 'Total rows cannot exceed 50',
-            'total_columns.required' => 'Total columns is required',
-            'total_columns.integer' => 'Total columns must be a number',
-            'total_columns.min' => 'Total columns must be at least 1',
-            'total_columns.max' => 'Total columns cannot exceed 10',
-            'status.required' => 'Status is required',
-            'status.string' => 'Status must be a string',
-            'status.in' => 'Status must be a valid status',
-        ]);
+        // Determine which method is being used
+        $configMethod = $request->input('config_method', 'grid');
 
-        // Calculate total seats
-        $totalSeats = $validated['total_rows'] * $validated['total_columns'];
+        if ($configMethod === 'custom') {
+            // Custom total seats method
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:bus_layouts,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
+                'description' => 'nullable|string|max:1000',
+                'total_seats_custom' => 'required|integer|min:1|max:500',
+                'total_rows' => 'required|integer|min:1|max:50',
+                'total_columns' => 'required|integer|min:1|max:10',
+                'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
+            ], [
+                'name.required' => 'Bus layout name is required',
+                'name.string' => 'Bus layout name must be a string',
+                'name.max' => 'Bus layout name must be less than 255 characters',
+                'name.unique' => 'Bus layout name already exists',
+                'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
+                'description.string' => 'Description must be a string',
+                'description.max' => 'Description must be less than 1000 characters',
+                'total_seats_custom.required' => 'Total seats is required',
+                'total_seats_custom.integer' => 'Total seats must be a number',
+                'total_seats_custom.min' => 'Total seats must be at least 1',
+                'total_seats_custom.max' => 'Total seats cannot exceed 500',
+                'total_rows.required' => 'Suggested rows are required',
+                'total_rows.integer' => 'Rows must be a number',
+                'total_rows.min' => 'Rows must be at least 1',
+                'total_rows.max' => 'Rows cannot exceed 50',
+                'total_columns.required' => 'Suggested columns are required',
+                'total_columns.integer' => 'Columns must be a number',
+                'total_columns.min' => 'Columns must be at least 1',
+                'total_columns.max' => 'Columns cannot exceed 10',
+                'status.required' => 'Status is required',
+                'status.string' => 'Status must be a string',
+                'status.in' => 'Status must be a valid status',
+            ]);
 
-        // Create bus layout instance to generate seat map
+            // Use custom total seats
+            $totalSeats = $validated['total_seats_custom'];
+            $totalRows = $validated['total_rows'];
+            $totalColumns = $validated['total_columns'];
+        } else {
+            // Grid layout method
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:bus_layouts,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
+                'description' => 'nullable|string|max:1000',
+                'total_rows' => 'required|integer|min:1|max:50',
+                'total_columns' => 'required|integer|min:1|max:10',
+                'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
+            ], [
+                'name.required' => 'Bus layout name is required',
+                'name.string' => 'Bus layout name must be a string',
+                'name.max' => 'Bus layout name must be less than 255 characters',
+                'name.unique' => 'Bus layout name already exists',
+                'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
+                'description.string' => 'Description must be a string',
+                'description.max' => 'Description must be less than 1000 characters',
+                'total_rows.required' => 'Total rows is required',
+                'total_rows.integer' => 'Total rows must be a number',
+                'total_rows.min' => 'Total rows must be at least 1',
+                'total_rows.max' => 'Total rows cannot exceed 50',
+                'total_columns.required' => 'Total columns is required',
+                'total_columns.integer' => 'Total columns must be a number',
+                'total_columns.min' => 'Total columns must be at least 1',
+                'total_columns.max' => 'Total columns cannot exceed 10',
+                'status.required' => 'Status is required',
+                'status.string' => 'Status must be a string',
+                'status.in' => 'Status must be a valid status',
+            ]);
+
+            // Calculate total seats from rows and columns
+            $totalSeats = $validated['total_rows'] * $validated['total_columns'];
+            $totalRows = $validated['total_rows'];
+            $totalColumns = $validated['total_columns'];
+        }
+
+        // Create bus layout instance
         $busLayout = new BusLayout([
             'name' => $validated['name'],
-            'description' => $validated['description'],
-            'total_rows' => $validated['total_rows'],
-            'total_columns' => $validated['total_columns'],
+            'description' => $validated['description'] ?? null,
+            'total_rows' => $totalRows,
+            'total_columns' => $totalColumns,
             'total_seats' => $totalSeats,
             'status' => $validated['status'],
         ]);
-
 
         $busLayout->save();
 
@@ -143,6 +195,7 @@ class BusLayoutController extends Controller
     {
         $busLayout = BusLayout::findOrFail($id);
         $statuses = BusLayoutEnum::getStatuses();
+
         return view('admin.bus-layouts.edit', compact('busLayout', 'statuses'));
     }
 
@@ -150,44 +203,89 @@ class BusLayoutController extends Controller
     {
         $busLayout = BusLayout::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:bus_layouts,name,' . $busLayout->id . '|regex:/^[a-zA-Z0-9\s\-_]+$/',
-            'description' => 'nullable|string|max:1000',
-            'total_rows' => 'required|integer|min:1|max:50',
-            'total_columns' => 'required|integer|min:1|max:10',
-            'status' => 'required|string|in:' . implode(',', BusLayoutEnum::getStatuses()),
-        ], [
-            'name.required' => 'Bus layout name is required',
-            'name.string' => 'Bus layout name must be a string',
-            'name.max' => 'Bus layout name must be less than 255 characters',
-            'name.unique' => 'Bus layout name already exists',
-            'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
-            'description.string' => 'Description must be a string',
-            'description.max' => 'Description must be less than 1000 characters',
-            'total_rows.required' => 'Total rows is required',
-            'total_rows.integer' => 'Total rows must be a number',
-            'total_rows.min' => 'Total rows must be at least 1',
-            'total_rows.max' => 'Total rows cannot exceed 50',
-            'total_columns.required' => 'Total columns is required',
-            'total_columns.integer' => 'Total columns must be a number',
-            'total_columns.min' => 'Total columns must be at least 1',
-            'total_columns.max' => 'Total columns cannot exceed 10',
-            'status.required' => 'Status is required',
-            'status.string' => 'Status must be a string',
-            'status.in' => 'Status must be a valid status',
-        ]);
+        // Determine which method is being used
+        $configMethod = $request->input('config_method', 'grid');
 
-        // Calculate total seats
-        $totalSeats = $validated['total_rows'] * $validated['total_columns'];
+        if ($configMethod === 'custom') {
+            // Custom total seats method
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:bus_layouts,name,'.$busLayout->id.'|regex:/^[a-zA-Z0-9\s\-_]+$/',
+                'description' => 'nullable|string|max:1000',
+                'total_seats_custom' => 'required|integer|min:1|max:500',
+                'total_rows' => 'required|integer|min:1|max:50',
+                'total_columns' => 'required|integer|min:1|max:10',
+                'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
+            ], [
+                'name.required' => 'Bus layout name is required',
+                'name.string' => 'Bus layout name must be a string',
+                'name.max' => 'Bus layout name must be less than 255 characters',
+                'name.unique' => 'Bus layout name already exists',
+                'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
+                'description.string' => 'Description must be a string',
+                'description.max' => 'Description must be less than 1000 characters',
+                'total_seats_custom.required' => 'Total seats is required',
+                'total_seats_custom.integer' => 'Total seats must be a number',
+                'total_seats_custom.min' => 'Total seats must be at least 1',
+                'total_seats_custom.max' => 'Total seats cannot exceed 500',
+                'total_rows.required' => 'Suggested rows are required',
+                'total_rows.integer' => 'Rows must be a number',
+                'total_rows.min' => 'Rows must be at least 1',
+                'total_rows.max' => 'Rows cannot exceed 50',
+                'total_columns.required' => 'Suggested columns are required',
+                'total_columns.integer' => 'Columns must be a number',
+                'total_columns.min' => 'Columns must be at least 1',
+                'total_columns.max' => 'Columns cannot exceed 10',
+                'status.required' => 'Status is required',
+                'status.string' => 'Status must be a string',
+                'status.in' => 'Status must be a valid status',
+            ]);
+
+            // Use custom total seats
+            $totalSeats = $validated['total_seats_custom'];
+            $totalRows = $validated['total_rows'];
+            $totalColumns = $validated['total_columns'];
+        } else {
+            // Grid layout method
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:bus_layouts,name,'.$busLayout->id.'|regex:/^[a-zA-Z0-9\s\-_]+$/',
+                'description' => 'nullable|string|max:1000',
+                'total_rows' => 'required|integer|min:1|max:50',
+                'total_columns' => 'required|integer|min:1|max:10',
+                'status' => 'required|string|in:'.implode(',', BusLayoutEnum::getStatuses()),
+            ], [
+                'name.required' => 'Bus layout name is required',
+                'name.string' => 'Bus layout name must be a string',
+                'name.max' => 'Bus layout name must be less than 255 characters',
+                'name.unique' => 'Bus layout name already exists',
+                'name.regex' => 'Bus layout name can only contain letters, numbers, spaces, hyphens, and underscores',
+                'description.string' => 'Description must be a string',
+                'description.max' => 'Description must be less than 1000 characters',
+                'total_rows.required' => 'Total rows is required',
+                'total_rows.integer' => 'Total rows must be a number',
+                'total_rows.min' => 'Total rows must be at least 1',
+                'total_rows.max' => 'Total rows cannot exceed 50',
+                'total_columns.required' => 'Total columns is required',
+                'total_columns.integer' => 'Total columns must be a number',
+                'total_columns.min' => 'Total columns must be at least 1',
+                'total_columns.max' => 'Total columns cannot exceed 10',
+                'status.required' => 'Status is required',
+                'status.string' => 'Status must be a string',
+                'status.in' => 'Status must be a valid status',
+            ]);
+
+            // Calculate total seats from rows and columns
+            $totalSeats = $validated['total_rows'] * $validated['total_columns'];
+            $totalRows = $validated['total_rows'];
+            $totalColumns = $validated['total_columns'];
+        }
 
         // Update bus layout properties
         $busLayout->name = $validated['name'];
-        $busLayout->description = $validated['description'];
-        $busLayout->total_rows = $validated['total_rows'];
-        $busLayout->total_columns = $validated['total_columns'];
+        $busLayout->description = $validated['description'] ?? null;
+        $busLayout->total_rows = $totalRows;
+        $busLayout->total_columns = $totalColumns;
         $busLayout->total_seats = $totalSeats;
         $busLayout->status = $validated['status'];
-
 
         $busLayout->save();
 
@@ -203,21 +301,21 @@ class BusLayoutController extends Controller
             if ($busLayout->buses()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete bus layout. It has buses assigned to it.'
+                    'message' => 'Cannot delete bus layout. It has buses assigned to it.',
                 ], 400);
             }
 
             $busLayout->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Bus layout deleted successfully.'
+                'message' => 'Bus layout deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting bus layout: ' . $e->getMessage()
+                'message' => 'Error deleting bus layout: '.$e->getMessage(),
             ], 500);
         }
     }
-
 }

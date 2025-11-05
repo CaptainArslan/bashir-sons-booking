@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class profile extends Model
+class Profile extends Model
 {
     /** @use HasFactory<\Database\Factories\UserProfileFactory> */
     use HasFactory;
@@ -22,10 +22,13 @@ class profile extends Model
         'address',
     ];
 
-    protected $casts = [
-        'date_of_birth' => 'date',
-        'gender' => GenderEnum::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date_of_birth' => 'date',
+            'gender' => GenderEnum::class,
+        ];
+    }
 
     // =============================
     // Relationships

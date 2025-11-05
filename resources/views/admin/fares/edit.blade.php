@@ -7,6 +7,7 @@
     .fare-card {
         border-left: 4px solid #0d6efd;
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        overflow: hidden;
     }
     
     .card-header-info {
@@ -35,6 +36,12 @@
         border-radius: 6px;
     }
     
+    .form-control:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
     .card-body {
         padding: 1rem !important;
     }
@@ -46,35 +53,6 @@
     .btn {
         border-radius: 6px;
         font-weight: 500;
-    }
-    
-    .info-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-        border-left: 4px solid #2196f3;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin-bottom: 1rem;
-    }
-    
-    .info-box p {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #1976d2;
-    }
-    
-    .section-divider {
-        border-top: 1px solid #e9ecef;
-        margin: 1rem 0;
-        padding-top: 1rem;
-    }
-    
-    .section-title {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
     }
     
     .form-text {
@@ -107,26 +85,37 @@
         text-align: center;
     }
     
-    .current-info-box {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-left: 4px solid #6c757d;
+    .fare-alert-box {
         padding: 0.75rem;
         border-radius: 6px;
-        margin-top: 0.5rem;
+        border-left: 4px solid;
     }
     
-    .info-item {
-        margin-bottom: 0.5rem;
+    .fare-alert-box.info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-left-color: #2196f3;
+        color: #1976d2;
     }
     
-    .info-label {
-        font-weight: 600;
-        color: #495057;
+    .fare-alert-box.warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+        border-left-color: #ffc107;
+        color: #856404;
+    }
+    
+    .fare-alert-box.danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border-left-color: #dc3545;
+        color: #721c24;
+    }
+    
+    .fare-alert-box p {
+        margin: 0;
         font-size: 0.875rem;
     }
     
-    .info-value {
-        color: #6c757d;
+    .fare-alert-box .btn {
+        margin-top: 0.5rem;
         font-size: 0.875rem;
     }
 </style>
@@ -149,7 +138,7 @@
     <!--end breadcrumb-->
 
     <div class="row">
-        <div class="col-xl-8 mx-auto">
+        <div class="col-xl-6 mx-auto">
             <div class="card fare-card">
                 <div class="card-header-info">
                     <h5><i class="bx bx-edit me-2"></i>Edit Fare: {{ $fare->fromTerminal->name }} → {{ $fare->toTerminal->name }}</h5>
@@ -160,56 +149,6 @@
                     @method('PUT')
                     
                     <div class="card-body">
-                        <!-- Info Box -->
-                        <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating fare information will affect all bookings using this fare. Please review carefully before saving changes.</p>
-                        </div>
-                        
-                        <!-- Current Fare Information -->
-                        <div class="current-info-box">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Base Fare:</div>
-                                        <div class="info-value text-primary">{{ $fare->currency }} {{ number_format($fare->base_fare, 2) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Discount:</div>
-                                        <div class="info-value text-info">
-                                            @if($fare->discount_type && $fare->discount_value > 0)
-                                                {{ $fare->discount_type === 'percent' ? $fare->discount_value . '%' : $fare->currency . ' ' . number_format($fare->discount_value, 2) }}
-                                            @else
-                                                No Discount
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Final Fare:</div>
-                                        <div class="info-value text-success">{{ $fare->currency }} {{ number_format($fare->final_fare, 2) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="info-item">
-                                        <div class="info-label">Status:</div>
-                                        <div class="info-value">
-                                            <span class="badge {{ $fare->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
-                                                {{ ucfirst($fare->status->value) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Terminal Selection -->
-                        <div class="section-title">
-                            <i class="bx bx-map-pin me-1"></i>Terminal Selection
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="from_terminal_id" class="form-label">
@@ -252,13 +191,7 @@
                             </div>
                         </div>
 
-                        <!-- Fare Information -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-money me-1"></i>Fare Information
-                        </div>
-                        
-                        <div class="row">
+                        <div class="row mt-3">
                             <div class="col-md-6">
                                 <label for="base_fare" class="form-label">
                                     Base Fare <span class="text-danger">*</span>
@@ -278,10 +211,6 @@
                                 @error('base_fare')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    Enter the base fare amount
-                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -303,13 +232,7 @@
                             </div>
                         </div>
 
-                        <!-- Discount Information -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-percentage me-1"></i>Discount Information
-                        </div>
-                        
-                        <div class="row">
+                        <div class="row mt-3">
                             <div class="col-md-6">
                                 <label for="discount_type" class="form-label">Discount Type</label>
                                 <select class="form-select @error('discount_type') is-invalid @enderror" 
@@ -338,53 +261,24 @@
                                            value="{{ old('discount_value', $fare->discount_value) }}" 
                                            step="0.01" 
                                            min="0" 
-                                           max="100000">
+                                           max="100000"
+                                           {{ !old('discount_type', $fare->discount_type) ? 'disabled' : '' }}>
                                 </div>
                                 @error('discount_value')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    Enter discount amount or percentage
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Status & Preview -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-toggle-right me-1"></i>Status & Preview
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="status" class="form-label">
-                                    Status <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status" name="status" required>
-                                    @foreach($statuses as $value => $label)
-                                        <option value="{{ $value }}" 
-                                                {{ old('status', $fare->status) == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('status')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Final Fare Preview</label>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
                                 <div class="preview-box">
                                     <div class="fare-display" id="final-fare-display">{{ $fare->currency }} {{ number_format($fare->final_fare, 2) }}</div>
-                                    <small class="text-muted">Calculated automatically</small>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Route Preview -->
+                        <!-- Route Preview & Fare Status -->
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="route-preview-box">
@@ -393,6 +287,13 @@
                                         <small class="text-muted">{{ $fare->fromTerminal->city->name }} → {{ $fare->toTerminal->city->name }}</small>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Fare Alert -->
+                        <div class="row mt-3" id="fare-alert-container" style="display: none;">
+                            <div class="col-12">
+                                <div id="fare-alert"></div>
                             </div>
                         </div>
                     </div>
@@ -409,7 +310,7 @@
                                 <a href="{{ route('admin.fares.index') }}" class="btn btn-secondary px-4">
                                     <i class="bx bx-x me-1"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-primary px-4" id="submit-btn">
                                     <i class="bx bx-save me-1"></i>Update Fare
                                 </button>
                             </div>
@@ -431,11 +332,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const fromTerminalSelect = document.getElementById('from_terminal_id');
     const toTerminalSelect = document.getElementById('to_terminal_id');
 
+    // Function to toggle discount value field based on discount type
+    function toggleDiscountValue() {
+        const discountType = discountTypeSelect.value;
+        if (!discountType || discountType === '') {
+            discountValueInput.disabled = true;
+            discountValueInput.value = '';
+        } else {
+            discountValueInput.disabled = false;
+        }
+        calculateFinalFare();
+    }
+
     // Update currency symbol when currency changes
     currencySelect.addEventListener('change', function() {
         const currency = this.value;
         document.getElementById('currency-symbol').textContent = currency;
-        document.getElementById('discount-symbol').textContent = currency;
+        if (!discountTypeSelect.value || discountTypeSelect.value !== 'percent') {
+            document.getElementById('discount-symbol').textContent = currency;
+        }
         calculateFinalFare();
     });
 
@@ -445,21 +360,114 @@ document.addEventListener('DOMContentLoaded', function() {
         element.addEventListener('change', calculateFinalFare);
     });
 
-    // Update discount symbol based on discount type
+    // Update discount symbol and enable/disable discount value based on discount type
     discountTypeSelect.addEventListener('change', function() {
         const discountType = this.value;
         const symbol = discountType === 'percent' ? '%' : currencySelect.value;
         document.getElementById('discount-symbol').textContent = symbol;
-        calculateFinalFare();
+        toggleDiscountValue();
     });
 
-    // Show route preview when terminals are selected
+    // Show route preview and check for existing fare when terminals are selected
     [fromTerminalSelect, toTerminalSelect].forEach(element => {
-        element.addEventListener('change', updateRoutePreview);
+        element.addEventListener('change', function() {
+            updateRoutePreview();
+            checkExistingFare();
+        });
     });
 
-    // Initial calculation
+    // Function to check if fare exists for selected terminals (excluding current fare)
+    function checkExistingFare() {
+        const fromTerminalId = fromTerminalSelect.value;
+        const toTerminalId = toTerminalSelect.value;
+        const currentFareId = {{ $fare->id }};
+        const alertContainer = document.getElementById('fare-alert-container');
+        const alertDiv = document.getElementById('fare-alert');
+
+        // Don't check if terminals haven't changed from original
+        const originalFromId = {{ $fare->from_terminal_id }};
+        const originalToId = {{ $fare->to_terminal_id }};
+        
+        if (!fromTerminalId || !toTerminalId || fromTerminalId === toTerminalId) {
+            alertContainer.style.display = 'none';
+            // Show submit button when terminals are cleared
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+            return;
+        }
+
+        // Don't show alert if terminals haven't changed
+        if (fromTerminalId == originalFromId && toTerminalId == originalToId) {
+            alertContainer.style.display = 'none';
+            // Show submit button when terminals match original
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+            return;
+        }
+
+        // Show loading state
+        alertContainer.style.display = 'block';
+        alertDiv.innerHTML = '<p><i class="bx bx-loader-alt bx-spin me-1"></i>Checking for existing fare...</p>';
+
+        fetch(`{{ route('admin.fares.check') }}?from_terminal_id=${fromTerminalId}&to_terminal_id=${toTerminalId}&exclude_fare_id=${currentFareId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.exists) {
+                // Fare exists for this terminal pair - hide update button
+                const fare = data.fare;
+                alertDiv.className = 'fare-alert-box danger';
+                alertDiv.innerHTML = `
+                    <p><i class="bx bx-error me-1"></i><strong>Warning!</strong> A fare already exists for this terminal pair.</p>
+                    <p class="mb-2">Base Fare: ${fare.currency} ${parseFloat(fare.base_fare).toFixed(2)} | Final Fare: ${fare.currency} ${parseFloat(fare.final_fare).toFixed(2)}</p>
+                    <a href="${window.location.origin}/admin/fares/${fare.id}/edit" class="btn btn-sm btn-primary">
+                        <i class="bx bx-edit me-1"></i>Edit Existing Fare Instead
+                    </a>
+                `;
+
+                // Hide submit button since fare already exists
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn) {
+                    submitBtn.style.display = 'none';
+                }
+            } else {
+                // No fare exists - allow update and show submit button
+                alertDiv.className = 'fare-alert-box info';
+                alertDiv.innerHTML = `
+                    <p><i class="bx bx-check-circle me-1"></i><strong>No Conflict</strong></p>
+                    <p class="mb-0">${data.message || 'No fare exists for this terminal pair. You can update this fare with the new terminals.'}</p>
+                `;
+
+                // Show submit button
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn) {
+                    submitBtn.style.display = '';
+                }
+            }
+        })
+        .catch(error => {
+            alertDiv.className = 'fare-alert-box warning';
+            alertDiv.innerHTML = `<p><i class="bx bx-error me-1"></i>Error checking fare: ${error.message}</p>`;
+            // Show submit button on error (allow user to proceed)
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.style.display = '';
+            }
+        });
+    }
+
+    // Initial setup
+    toggleDiscountValue();
     calculateFinalFare();
+    updateRoutePreview();
 });
 
 function calculateFinalFare() {

@@ -60,9 +60,11 @@
                 <p>Manage cities and their information</p>
             </div>
             <div>
-                <a href="{{ route('admin.cities.create') }}" class="add-city-btn">
-                    <i class="bx bx-plus me-1"></i>Add New City
-                </a>
+                @can('create cities')
+                    <a href="{{ route('admin.cities.create') }}" class="add-city-btn">
+                        <i class="bx bx-plus me-1"></i>Add New City
+                    </a>
+                @endcan
             </div>
         </div>
     </div>
@@ -78,7 +80,9 @@
                             <th>City Name</th>
                             <th>Status</th>
                             <th>Created Date</th>
-                            <th>Actions</th>
+                            @if(auth()->user()->can('edit cities') || auth()->user()->can('delete cities'))
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                 </table>
@@ -113,24 +117,86 @@
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
+                    }
+                    @if(auth()->user()->can('edit cities') || auth()->user()->can('delete cities'))
+                    ,{
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
                     }
+                    @endif
                 ],
             });
         });
 
-        // Delete city function
+        // Delete city function with SweetAlert
         function deleteCity(cityId) {
-            if (confirm('Are you sure you want to delete this city?')) {
-                // You can implement the delete functionality here
-                // For now, just show an alert
-                alert('Delete functionality for city ID: ' + cityId + ' would be implemented here');
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Make AJAX delete request
+                    $.ajax({
+                        url: "{{ url('admin/cities') }}/" + cityId,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'City has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    // Reload DataTable
+                                    $('#cities-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete city.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the city.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'City not found.';
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete cities.';
+                            }
+
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection

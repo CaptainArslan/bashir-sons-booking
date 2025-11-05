@@ -1,30 +1,33 @@
 <?php
 
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BannerController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\CounterTerminalController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TwoFactorController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\BusAssignmentController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -39,6 +42,10 @@ Route::get('/about-us', [DashboardController::class, 'aboutUs'])->name('about-us
 Route::get('/contact', [DashboardController::class, 'contact'])->name('contact');
 Route::post('/enquiry', [DashboardController::class, 'submitEnquiry'])->name('enquiry.submit');
 
+// Frontend AJAX Routes
+Route::get('/api/route-stops', [DashboardController::class, 'getRouteStops'])->name('frontend.route-stops');
+Route::get('/api/departure-times', [DashboardController::class, 'getDepartureTimes'])->name('frontend.departure-times');
+
 // Frontend Routes
 
 Route::middleware(['guest', '2fa.pending'])->group(function () {
@@ -47,6 +54,12 @@ Route::middleware(['guest', '2fa.pending'])->group(function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
+// User activation route (for banned users, before authentication - guest only)
+Route::middleware('guest')->group(function () {
+    Route::get('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'show'])->name('user.activate');
+    Route::post('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'activate'])->name('user.activate.post');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -99,16 +112,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{id}/edit', [UserController::class, 'edit'])->can('edit users')->name('users.edit');
         Route::put('/users/{id}', [UserController::class, 'update'])->can('edit users')->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->can('delete users')->name('users.destroy');
+        Route::post('/users/{id}/ban', [UserController::class, 'ban'])->can('ban users')->name('users.ban');
+        Route::post('/users/{id}/activate', [UserController::class, 'activate'])->can('activate users')->name('users.activate');
 
         // Employees Routes
         Route::get('/employees', [EmployeeController::class, 'index'])->can('manage users')->name('employees.index');
         Route::get('/employees/data', [EmployeeController::class, 'getData'])->can('manage users')->name('employees.data');
         Route::get('/employees/stats', [EmployeeController::class, 'stats'])->can('manage users')->name('employees.stats');
         Route::get('/employees/create', [EmployeeController::class, 'create'])->can('manage users')->name('employees.create');
+        Route::get('/employees/routes-by-terminal', [EmployeeController::class, 'getRoutesByTerminal'])->can('manage users')->name('employees.routes-by-terminal');
         Route::post('/employees', [EmployeeController::class, 'store'])->can('manage users')->name('employees.store');
         Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->can('manage users')->name('employees.edit');
         Route::put('/employees/{id}', [EmployeeController::class, 'update'])->can('manage users')->name('employees.update');
         Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->can('manage users')->name('employees.destroy');
+        Route::post('/employees/{id}/ban', [EmployeeController::class, 'ban'])->can('ban users')->name('employees.ban');
+        Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate'])->can('activate users')->name('employees.activate');
 
         // Bus Types Routes
         Route::get('/bus-types', [BusTypeController::class, 'index'])->can('view bus types')->name('bus-types.index');
@@ -183,8 +201,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/routes/{id}', [RouteController::class, 'destroy'])->can('delete routes')->name('routes.destroy');
         Route::get('/routes/{id}/stops', [RouteController::class, 'stops'])->can('view routes')->name('routes.stops');
         Route::post('/routes/{id}/stops', [RouteController::class, 'storeStop'])->can('create routes')->name('routes.stops.store');
+        Route::put('/routes/{id}/stops', [RouteController::class, 'updateStops'])->can('edit routes')->name('routes.stops.update');
         Route::get('/routes/{id}/stops/{stopId}/data', [RouteController::class, 'getStopData'])->can('view routes')->name('routes.stops.data');
-        Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update');
+        Route::put('/routes/{id}/stops/{stopId}', [RouteController::class, 'updateStop'])->can('edit routes')->name('routes.stops.update-single');
         Route::delete('/routes/{id}/stops/{stopId}', [RouteController::class, 'destroyStop'])->can('delete routes')->name('routes.stops.destroy');
         Route::get('/routes/{id}/manage-fares', [RouteController::class, 'manageFares'])->can('edit routes')->name('routes.manage-fares');
         Route::post('/routes/{id}/fares', [RouteController::class, 'storeFares'])->can('edit routes')->name('routes.fares.store');
@@ -192,13 +211,11 @@ Route::middleware('auth')->group(function () {
         // Route Stops Management
         Route::get('/route-stops', [RouteStopController::class, 'index'])->can('view route stops')->name('route-stops.index');
         Route::get('/route-stops/data', [RouteStopController::class, 'getData'])->can('view route stops')->name('route-stops.data');
-        Route::get('/route-stops/{id}/edit', [RouteStopController::class, 'edit'])->can('edit route stops')->name('route-stops.edit');
-        Route::put('/route-stops/{id}', [RouteStopController::class, 'update'])->can('edit route stops')->name('route-stops.update');
-        Route::delete('/route-stops/{id}', [RouteStopController::class, 'destroy'])->can('delete route stops')->name('route-stops.destroy');
 
         // Fares Management
         Route::get('/fares', [FareController::class, 'index'])->can('view fares')->name('fares.index');
         Route::get('/fares/data', [FareController::class, 'getData'])->can('view fares')->name('fares.data');
+        Route::get('/fares/check', [FareController::class, 'checkFare'])->can('view fares')->name('fares.check');
         Route::get('/fares/create', [FareController::class, 'create'])->can('create fares')->name('fares.create');
         Route::post('/fares', [FareController::class, 'store'])->can('create fares')->name('fares.store');
         Route::get('/fares/{id}/edit', [FareController::class, 'edit'])->can('edit fares')->name('fares.edit');
@@ -214,8 +231,53 @@ Route::middleware('auth')->group(function () {
         Route::get('/timetables/{timetable}/edit', [TimetableController::class, 'edit'])->can('edit timetables')->name('timetables.edit');
         Route::put('/timetables/{timetable}', [TimetableController::class, 'update'])->can('edit timetables')->name('timetables.update');
         Route::patch('/timetables/{timetable}/toggle-status', [TimetableController::class, 'toggleStatus'])->can('edit timetables')->name('timetables.toggle-status');
+        Route::patch('/timetables/{timetable}/stops/{timetableStop}/toggle-status', [TimetableController::class, 'toggleStopStatus'])->can('edit timetables')->name('timetables.stops.toggle-status');
+        Route::patch('/timetables/{timetable}/stops/toggle-all', [TimetableController::class, 'toggleAllStops'])->can('edit timetables')->name('timetables.stops.toggle-all');
         Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy'])->can('delete timetables')->name('timetables.destroy');
         Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
+
+        // bookings Routes
+        Route::get('/bookings', [BookingController::class, 'index'])->can('view bookings')->name('bookings.index');
+        Route::get('/bookings/data', [BookingController::class, 'getData'])->can('view bookings')->name('bookings.data');
+        Route::get('/bookings/create', [BookingController::class, 'create'])->can('create bookings')->name('bookings.create');
+        Route::post('/bookings', [BookingController::class, 'store'])->can('create bookings')->name('bookings.store');
+        Route::get('/bookings/{booking}', [BookingController::class, 'show'])->can('view bookings')->name('bookings.show');
+        Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->can('edit bookings')->name('bookings.edit');
+        Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
+        Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
+        Route::get('/bookings/{booking}/print', [BookingController::class, 'printTicket'])->can('view bookings')->name('bookings.print');
+        Route::post('/bookings/{booking}/seats/{seat}/cancel', [BookingController::class, 'cancelSeat'])->can('edit bookings')->name('bookings.seats.cancel');
+        Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
+
+        // Booking Console Routes (Live Seat Map)
+        Route::get('/bookings/console/load', function () {
+            return view('admin.bookings.console-wrapper');
+        })->can('create bookings')->name('bookings.console');
+        Route::get('/bookings/console/terminals', [BookingController::class, 'getTerminals'])->can('view bookings')->name('bookings.terminals');
+        Route::get('/bookings/console/routes', [BookingController::class, 'getRoutes'])->can('view bookings')->name('bookings.routes');
+        Route::get('/bookings/console/stops', [BookingController::class, 'getStops'])->can('view bookings')->name('bookings.stops');
+        Route::get('/bookings/console/route-stops', [BookingController::class, 'getRouteStops'])->can('view bookings')->name('bookings.route-stops');
+        Route::get('/bookings/console/departure-times', [BookingController::class, 'getDepartureTimes'])->can('view bookings')->name('bookings.departure-times');
+        Route::get('/bookings/console/fare', [BookingController::class, 'getFare'])->can('view bookings')->name('bookings.fare');
+        Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTripUpdated'])->can('view bookings')->name('bookings.load-trip');
+        Route::post('/bookings/console/lock-seats', [BookingController::class, 'lockSeats'])->can('create bookings')->name('bookings.lock-seats');
+        Route::post('/bookings/console/unlock-seats', [BookingController::class, 'unlockSeats'])->can('create bookings')->name('bookings.unlock-seats');
+        Route::get('/bookings/console/trip-passengers/{tripId}', [BookingController::class, 'getTripPassengers'])->can('view bookings')->name('bookings.trip-passengers');
+        Route::get('/bookings/console/booking-details/{bookingId}', [BookingController::class, 'getBookingDetailsForConsole'])->can('view bookings')->name('bookings.console-details');
+        Route::get('/bookings/console/list-buses', [BookingController::class, 'listBuses'])->can('view bookings')->name('bookings.list-buses');
+        Route::get('/bookings/console/expense-types', [BookingController::class, 'getExpenseTypes'])->can('view bookings')->name('bookings.expense-types');
+        Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
+        Route::post('/bookings/console/add-expenses/{tripId}', [BookingController::class, 'addTripExpenses'])->can('create bookings')->name('bookings.add-expenses');
+
+        // Bus Assignments Routes (Terminal-wise segment assignments)
+        Route::get('/bus-assignments', [BusAssignmentController::class, 'index'])->can('view bookings')->name('bus-assignments.index');
+        Route::get('/bus-assignments/create', [BusAssignmentController::class, 'create'])->can('create bookings')->name('bus-assignments.create');
+        Route::post('/bus-assignments', [BusAssignmentController::class, 'store'])->can('create bookings')->name('bus-assignments.store');
+        Route::get('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'show'])->can('view bookings')->name('bus-assignments.show');
+        Route::get('/bus-assignments/{busAssignment}/edit', [BusAssignmentController::class, 'edit'])->can('edit bookings')->name('bus-assignments.edit');
+        Route::put('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'update'])->can('edit bookings')->name('bus-assignments.update');
+        Route::delete('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'destroy'])->can('delete bookings')->name('bus-assignments.destroy');
+        Route::get('/bus-assignments/trip/{tripId}/stops', [BusAssignmentController::class, 'getTripStops'])->can('view bookings')->name('bus-assignments.trip-stops');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
@@ -236,6 +298,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('/advance-booking/toggle-status', [AdvanceBookingController::class, 'toggleStatus'])->can('edit general settings')->name('advance-booking.toggle-status');
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
 
+        // Terminal Reports Routes
+        Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
+        Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
+
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');
         Route::get('/discounts/data', [DiscountController::class, 'getData'])->can('view discounts')->name('discounts.data');
@@ -246,7 +312,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->can('edit discounts')->name('discounts.update');
         Route::patch('/discounts/{discount}/toggle-status', [DiscountController::class, 'toggleStatus'])->can('edit discounts')->name('discounts.toggle-status');
         Route::delete('/discounts/{discount}', [DiscountController::class, 'destroy'])->can('delete discounts')->name('discounts.destroy');
-
     });
 });
 

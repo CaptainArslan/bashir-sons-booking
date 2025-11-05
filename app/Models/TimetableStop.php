@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimetableStop extends Model
 {
@@ -21,9 +21,12 @@ class TimetableStop extends Model
         'is_active',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -48,16 +51,14 @@ class TimetableStop extends Model
     protected function arrivalTime(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => Carbon::parse($value)->format('H:i:s'),
-            set: fn($value) => Carbon::parse($value)->format('H:i:s'),
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 
     protected function departureTime(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
-            set: fn($value) => $value ? Carbon::parse($value)->format('H:i:s') : null,
+            get: fn($value) => $value ? Carbon::parse($value)->format('h:i A') : null,
         );
     }
 
@@ -66,18 +67,19 @@ class TimetableStop extends Model
     | Helper Methods
     |--------------------------------------------------------------------------
     */
-    
+
     public function isFirstStop()
     {
         return $this->sequence === 1;
     }
-    
+
     public function isLastStop()
     {
         $maxSequence = $this->timetable->timetableStops()->max('sequence');
+
         return $this->sequence === $maxSequence;
     }
-    
+
     public function getNextStop()
     {
         return $this->timetable->timetableStops()
@@ -85,7 +87,7 @@ class TimetableStop extends Model
             ->orderBy('sequence')
             ->first();
     }
-    
+
     public function getPreviousStop()
     {
         return $this->timetable->timetableStops()
@@ -93,12 +95,15 @@ class TimetableStop extends Model
             ->orderByDesc('sequence')
             ->first();
     }
-    
+
+    // =============================
+    // Scopes
+    // =============================
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
-    
+
     public function scopeOrdered($query)
     {
         return $query->orderBy('sequence');

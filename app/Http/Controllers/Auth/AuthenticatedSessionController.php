@@ -30,9 +30,22 @@ class AuthenticatedSessionController extends Controller
         // Step 2: Regenerate session to prevent fixation
         $request->session()->regenerate();
 
-        // Step 3: Check if the user has 2FA enabled
+        // Step 3: Check user status
         $user = Auth::user();
 
+        // If user is banned, redirect to activation page (only on login, not while active)
+        if ($user && $user->status === \App\Enums\UserStatusEnum::BANNED) {
+            // Store user ID in session for activation
+            session(['banned_user_id' => $user->id]);
+
+            // Logout to prevent access
+            Auth::logout();
+
+            // Redirect to activation page
+            return redirect()->route('user.activate');
+        }
+
+        // Step 4: Check if the user has 2FA enabled
         if ($user && $user->hasTwoFactorEnabled()) {
             // Logout temporarily until they pass 2FA challenge
             Auth::logout();

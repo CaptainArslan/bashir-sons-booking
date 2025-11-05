@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAnnouncementRequest extends FormRequest
 {
@@ -38,8 +38,8 @@ class StoreAnnouncementRequest extends FormRequest
             'audience_payload' => ['nullable', 'array'],
             'audience_users' => ['nullable', 'array'],
             'audience_users.*' => ['exists:users,id'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after:start_date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after:start_date'],
             'is_pinned' => ['boolean'],
             'is_featured' => ['boolean'],
             'is_active' => ['boolean'],
@@ -63,9 +63,7 @@ class StoreAnnouncementRequest extends FormRequest
             'display_type.required' => 'The display type field is required.',
             'priority.required' => 'The priority field is required.',
             'audience_type.required' => 'The audience type field is required.',
-            'start_date.required' => 'The start date field is required.',
             'start_date.date' => 'The start date must be a valid date.',
-            'end_date.required' => 'The end date field is required.',
             'end_date.date' => 'The end date must be a valid date.',
             'end_date.after' => 'The end date must be after the start date.',
             'audience_users.*.exists' => 'One or more selected users do not exist.',

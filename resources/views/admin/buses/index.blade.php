@@ -59,9 +59,11 @@
                 <p>Manage bus fleet and vehicle information</p>
             </div>
             <div>
-                <a href="{{ route('admin.buses.create') }}" class="add-bus-btn">
-                    <i class="bx bx-plus me-1"></i>Add New Bus
-                </a>
+                @can('create buses')
+                    <a href="{{ route('admin.buses.create') }}" class="add-bus-btn">
+                        <i class="bx bx-plus me-1"></i>Add New Bus
+                    </a>
+                @endcan
             </div>
         </div>
     </div>
@@ -156,29 +158,77 @@
             });
         });
 
-        // Delete bus function
+        // Delete bus function with SweetAlert
         function deleteBus(busId) {
-            if (confirm('Are you sure you want to delete this bus?')) {
-                $.ajax({
-                    url: "{{ route('admin.buses.destroy', ':id') }}".replace(':id', busId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#buses-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the bus.');
-                    }
-                });
-            }
+                    });
+
+                    $.ajax({
+                        url: "{{ route('admin.buses.destroy', ':id') }}".replace(':id', busId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Bus has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#buses-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete bus.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            let errorMessage = 'An error occurred while deleting the bus.';
+
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete buses.';
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Bus not found.';
+                            } else if (xhr.status === 400) {
+                                // Handle association errors
+                                errorMessage = response.message || 'Cannot delete bus due to associated data.';
+                            }
+
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection

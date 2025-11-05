@@ -47,49 +47,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             overflow: hidden;
         }
-        
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            margin-bottom: 1rem;
-        }
-        
-        .dataTables_wrapper .dataTables_length label,
-        .dataTables_wrapper .dataTables_filter label {
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .dataTables_wrapper .dataTables_length select,
-        .dataTables_wrapper .dataTables_filter input {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-        }
-        
-        .dataTables_wrapper .dataTables_info {
-            font-size: 0.875rem;
-            color: #6c757d;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            margin: 0 2px;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border: none;
-            color: white;
-        }
-        
-        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-            background: linear-gradient(45deg, #0056b3, #004085);
-            border: none;
-            color: white;
-        }
     </style>
 @endsection
 
@@ -120,8 +77,6 @@
                         <tr>
                             <th>ID</th>
                             <th>Route</th>
-                            <th>Direction</th>
-                            <th>Return Route</th>
                             <th>Stops</th>
                             <th>Total Fare</th>
                             <th>Status</th>
@@ -155,16 +110,6 @@
                         name: 'name',
                     },
                     {
-                        data: 'direction_badge',
-                        name: 'direction',
-                    },
-                    {
-                        data: 'return_route',
-                        name: 'return_route',
-                        orderable: false,
-                        searchable: false,
-                    },
-                    {
                         data: 'stops_count',
                         name: 'stops_count',
                         orderable: false,
@@ -183,40 +128,81 @@
                     {
                         data: 'created_at',
                         name: 'created_at',
-                    },
-                    {
+                    }
+                    @if(auth()->user()->can('edit routes') || auth()->user()->can('delete routes') || auth()->user()->can('view routes'))
+                    ,{
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
                     }
+                    @endif
                 ],
             });
         });
 
-        // Delete route function
+        // Delete route function with SweetAlert
         function deleteRoute(routeId) {
-            if (confirm('Are you sure you want to delete this route?')) {
-                $.ajax({
-                    url: "{{ route('admin.routes.destroy', ':id') }}".replace(':id', routeId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#routes-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the route.');
-                    }
-                });
-            }
+                    });
+                    $.ajax({
+                        url: "{{ url('admin/routes') }}/" + routeId,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Route has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#routes-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete route.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'An error occurred while deleting the route.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Route not found.';
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete routes.';
+                            }
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection

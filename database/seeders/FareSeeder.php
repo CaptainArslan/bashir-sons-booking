@@ -17,7 +17,7 @@ class FareSeeder extends Seeder
     {
         $this->faker = Faker::create();
     }
-    
+
     /**
      * Run the database seeds.
      */
@@ -36,7 +36,7 @@ class FareSeeder extends Seeder
         // Calculate total possible pairs
         $totalPairs = 0;
         $terminalPairs = [];
-        
+
         foreach ($terminals as $fromTerminal) {
             foreach ($terminals as $toTerminal) {
                 if ($fromTerminal->id === $toTerminal->id) {
@@ -82,7 +82,7 @@ class FareSeeder extends Seeder
 
                 // Update progress bar status
                 $progressBar->setMessage(
-                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}", 
+                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}",
                     'status'
                 );
 
@@ -111,7 +111,7 @@ class FareSeeder extends Seeder
                             'discount_value' => $discountValue ?? 0,
                             'final_fare' => $finalFare,
                             'currency' => 'PKR',
-                            'status' => $this->faker->randomElement(FareStatusEnum::getStatuses()),
+                            'status' => FareStatusEnum::ACTIVE->value,
                         ]
                     );
 
@@ -120,7 +120,6 @@ class FareSeeder extends Seeder
                     } else {
                         $faresSkipped++;
                     }
-
                 } catch (\Exception $e) {
                     $this->command->error("Error creating fare for {$fromTerminal->city->name} → {$toTerminal->city->name}: " . $e->getMessage());
                 }

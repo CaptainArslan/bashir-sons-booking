@@ -13,18 +13,12 @@ class RouteStop extends Model
         'route_id',
         'terminal_id',
         'sequence',
-        'distance_from_previous',
-        'approx_travel_time',
-        'is_pickup_allowed',
-        'is_dropoff_allowed',
+        'online_booking_allowed',
     ];
 
     protected $casts = [
-        'distance_from_previous' => 'float',
-        'approx_travel_time' => 'integer',
         'sequence' => 'integer',
-        'is_pickup_allowed' => 'boolean',
-        'is_dropoff_allowed' => 'boolean',
+        'online_booking_allowed' => 'boolean',
     ];
 
     /*

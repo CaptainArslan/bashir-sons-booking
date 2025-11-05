@@ -80,9 +80,11 @@
             </nav>
         </div>
         <div class="ms-auto">
-            <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Role
-            </a>
+            @can('create roles')
+                <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
+                    <i class="bx bx-plus"></i> Add New Role
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->

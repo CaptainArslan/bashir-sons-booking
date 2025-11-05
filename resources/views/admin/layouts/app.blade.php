@@ -30,6 +30,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>@yield('title' ?? config('app.name'))</title>
+    
+    @livewireStyles
 
     <!-- Compact Admin UI Styles -->
     <style>
@@ -117,7 +119,7 @@
         }
 
         /* Compact DataTables */
-        .dataTables_wrapper .dataTables_length,
+        /* .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter,
         .dataTables_wrapper .dataTables_info,
         .dataTables_wrapper .dataTables_paginate {
@@ -129,7 +131,7 @@
         .dataTables_wrapper .dataTables_filter input {
             font-size: 0.875rem;
             padding: 0.25rem 0.5rem;
-        }
+        } */
 
         /* Compact Dropdowns */
         .dropdown-menu {
@@ -313,11 +315,90 @@
     <script src="{{ asset('admin/assets/plugins/chartjs/js/chart.js') }}"></script> --}}
     <script src="{{ asset('admin/assets/js/index.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
     @include('admin.layouts.select2')
     @include('admin.layouts.datatables')
     @yield('scripts')
+    @livewireScripts
     <!--app JS-->
     <script src="{{ asset('admin/assets/js/app.js') }}"></script>
+    
+    <!-- Laravel Echo for Real-time Updates -->
+    @vite(['resources/js/app.js'])
+    
+    <script>
+        function showLoader(show = true, message = "Please wait...") {
+            if (show) {
+                Swal.fire({
+                    title: message,
+                    allowEscapeKey: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            } else {
+                Swal.close();
+            }
+        }
+
+        // Initialize Input Masking for CNIC and Phone
+        $(document).ready(function() {
+            function applyCnicMask() {
+                // CNIC Mask: Format 34101-1111111-1 (5 digits - 7 digits - 1 digit)
+                $('input[name="cnic"], input[id="cnic"], input[name*="cnic"], input.cnic-input').not('[data-inputmask-applied]').each(function() {
+                    if ($(this).attr('type') === 'number') {
+                        $(this).attr('type', 'text');
+                    }
+                    if (typeof $.fn.inputmask !== 'undefined') {
+                        $(this).inputmask('99999-9999999-9', {
+                            placeholder: '_',
+                            clearMaskOnLostFocus: false,
+                            showMaskOnHover: true,
+                            showMaskOnFocus: true
+                        }).attr('data-inputmask-applied', 'true');
+                    }
+                });
+            }
+
+            function applyPhoneMask() {
+                // Phone Mask: Format 0317-7777777 (4 digits - 7 digits)
+                $('input[name="phone"], input[id="phone"], input[name*="phone"], input.phone-input').not('[data-inputmask-applied]').each(function() {
+                    if ($(this).attr('type') === 'number' || $(this).attr('type') === 'tel') {
+                        $(this).attr('type', 'text');
+                    }
+                    if (typeof $.fn.inputmask !== 'undefined') {
+                        $(this).inputmask('9999-9999999', {
+                            placeholder: '_',
+                            clearMaskOnLostFocus: false,
+                            showMaskOnHover: true,
+                            showMaskOnFocus: true
+                        }).attr('data-inputmask-applied', 'true');
+                    }
+                });
+            }
+
+            // Apply masks on page load
+            applyCnicMask();
+            applyPhoneMask();
+
+            // Re-apply masks when new elements are added (for dynamic content)
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        applyCnicMask();
+                        applyPhoneMask();
+                    }
+                });
+            });
+
+            // Observe the entire document for new inputs
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
     {{-- <script>
         new PerfectScrollbar(".app-container");
     </script> --}}

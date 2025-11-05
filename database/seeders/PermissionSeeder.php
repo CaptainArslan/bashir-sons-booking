@@ -11,140 +11,145 @@ class PermissionSeeder extends Seeder
     {
         $permissions = [
             // Dashboard
-            'access admin panel',
-            'view dashboard',
+            ['name' => 'access admin panel', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard', 'module' => 'Dashboard'],
 
             // User Management
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            'manage user profiles',
+            ['name' => 'view users', 'module' => 'User Management'],
+            ['name' => 'create users', 'module' => 'User Management'],
+            ['name' => 'edit users', 'module' => 'User Management'],
+            ['name' => 'delete users', 'module' => 'User Management'],
+            ['name' => 'ban users', 'module' => 'User Management'],
+            ['name' => 'activate users', 'module' => 'User Management'],
+            ['name' => 'manage user profiles', 'module' => 'User Management'],
+            ['name' => 'manage users', 'module' => 'User Management'],
 
             // Role Management
-            'view roles',
-            'create roles',
-            'edit roles',
-            'delete roles',
-            'assign roles',
+            ['name' => 'view roles', 'module' => 'Role Management'],
+            ['name' => 'create roles', 'module' => 'Role Management'],
+            ['name' => 'edit roles', 'module' => 'Role Management'],
+            ['name' => 'delete roles', 'module' => 'Role Management'],
+            ['name' => 'assign roles', 'module' => 'Role Management'],
 
             // Permission Management
-            'view permissions',
-            'create permissions',
-            'edit permissions',
-            'delete permissions',
-            'assign permissions',
+            ['name' => 'view permissions', 'module' => 'Permission Management'],
+            ['name' => 'create permissions', 'module' => 'Permission Management'],
+            ['name' => 'edit permissions', 'module' => 'Permission Management'],
+            ['name' => 'delete permissions', 'module' => 'Permission Management'],
+            ['name' => 'assign permissions', 'module' => 'Permission Management'],
 
             // City Management
-            'view cities',
-            'create cities',
-            'edit cities',
-            'delete cities',
+            ['name' => 'view cities', 'module' => 'City Management'],
+            ['name' => 'create cities', 'module' => 'City Management'],
+            ['name' => 'edit cities', 'module' => 'City Management'],
+            ['name' => 'delete cities', 'module' => 'City Management'],
 
             // Terminal Management
-            'view terminals',
-            'create terminals',
-            'edit terminals',
-            'delete terminals',
+            ['name' => 'view terminals', 'module' => 'Terminal Management'],
+            ['name' => 'create terminals', 'module' => 'Terminal Management'],
+            ['name' => 'edit terminals', 'module' => 'Terminal Management'],
+            ['name' => 'delete terminals', 'module' => 'Terminal Management'],
 
             // Bus Type Management
-            'view bus types',
-            'create bus types',
-            'edit bus types',
-            'delete bus types',
+            ['name' => 'view bus types', 'module' => 'Bus Type Management'],
+            ['name' => 'create bus types', 'module' => 'Bus Type Management'],
+            ['name' => 'edit bus types', 'module' => 'Bus Type Management'],
+            ['name' => 'delete bus types', 'module' => 'Bus Type Management'],
 
             // Bus Layout Management
-            'view bus layouts',
-            'create bus layouts',
-            'edit bus layouts',
-            'delete bus layouts',
+            ['name' => 'view bus layouts', 'module' => 'Bus Layout Management'],
+            ['name' => 'create bus layouts', 'module' => 'Bus Layout Management'],
+            ['name' => 'edit bus layouts', 'module' => 'Bus Layout Management'],
+            ['name' => 'delete bus layouts', 'module' => 'Bus Layout Management'],
 
             // Facility Management
-            'view facilities',
-            'create facilities',
-            'edit facilities',
-            'delete facilities',
+            ['name' => 'view facilities', 'module' => 'Facility Management'],
+            ['name' => 'create facilities', 'module' => 'Facility Management'],
+            ['name' => 'edit facilities', 'module' => 'Facility Management'],
+            ['name' => 'delete facilities', 'module' => 'Facility Management'],
 
             // Bus Management
-            'view buses',
-            'create buses',
-            'edit buses',
-            'delete buses',
-            'manage bus facilities',
+            ['name' => 'view buses', 'module' => 'Bus Management'],
+            ['name' => 'create buses', 'module' => 'Bus Management'],
+            ['name' => 'edit buses', 'module' => 'Bus Management'],
+            ['name' => 'delete buses', 'module' => 'Bus Management'],
+            ['name' => 'manage bus facilities', 'module' => 'Bus Management'],
 
             // Banner Management
-            'view banners',
-            'create banners',
-            'edit banners',
-            'delete banners',
+            ['name' => 'view banners', 'module' => 'Banner Management'],
+            ['name' => 'create banners', 'module' => 'Banner Management'],
+            ['name' => 'edit banners', 'module' => 'Banner Management'],
+            ['name' => 'delete banners', 'module' => 'Banner Management'],
 
             // Announcement Management
-            'view announcements',
-            'create announcements',
-            'edit announcements',
-            'delete announcements',
+            ['name' => 'view announcements', 'module' => 'Announcement Management'],
+            ['name' => 'create announcements', 'module' => 'Announcement Management'],
+            ['name' => 'edit announcements', 'module' => 'Announcement Management'],
+            ['name' => 'delete announcements', 'module' => 'Announcement Management'],
 
             // Discount Management
-            'view discounts',
-            'create discounts',
-            'edit discounts',
-            'delete discounts',
+            ['name' => 'view discounts', 'module' => 'Discount Management'],
+            ['name' => 'create discounts', 'module' => 'Discount Management'],
+            ['name' => 'edit discounts', 'module' => 'Discount Management'],
+            ['name' => 'delete discounts', 'module' => 'Discount Management'],
 
             // General Settings
-            'view general settings',
-            'create general settings',
-            'edit general settings',
-            'delete general settings',
+            ['name' => 'view general settings', 'module' => 'General Settings'],
+            ['name' => 'create general settings', 'module' => 'General Settings'],
+            ['name' => 'edit general settings', 'module' => 'General Settings'],
+            ['name' => 'delete general settings', 'module' => 'General Settings'],
 
             // Route Management
-            'view routes',
-            'create routes',
-            'edit routes',
-            'delete routes',
+            ['name' => 'view routes', 'module' => 'Route Management'],
+            ['name' => 'create routes', 'module' => 'Route Management'],
+            ['name' => 'edit routes', 'module' => 'Route Management'],
+            ['name' => 'delete routes', 'module' => 'Route Management'],
 
             // Route Stop Management
-            'view route stops',
-            'create route stops',
-            'edit route stops',
-            'delete route stops',
+            ['name' => 'view route stops', 'module' => 'Route Stop Management'],
+            ['name' => 'create route stops', 'module' => 'Route Stop Management'],
+            ['name' => 'edit route stops', 'module' => 'Route Stop Management'],
+            ['name' => 'delete route stops', 'module' => 'Route Stop Management'],
 
             // Fare Management
-            'view fares',
-            'create fares',
-            'edit fares',
-            'delete fares',
+            ['name' => 'view fares', 'module' => 'Fare Management'],
+            ['name' => 'create fares', 'module' => 'Fare Management'],
+            ['name' => 'edit fares', 'module' => 'Fare Management'],
+            ['name' => 'delete fares', 'module' => 'Fare Management'],
 
-            // Route Timetable Management
-            'view route timetables',
-            'create route timetables',
-            'edit route timetables',
-            'delete route timetables',
+            // Timetable Management
+            ['name' => 'view timetables', 'module' => 'Timetable Management'],
+            ['name' => 'create timetables', 'module' => 'Timetable Management'],
+            ['name' => 'edit timetables', 'module' => 'Timetable Management'],
+            ['name' => 'delete timetables', 'module' => 'Timetable Management'],
 
-            // Route Stop Time Management
-            'view route stop times',
-            'create route stop times',
-            'edit route stop times',
-            'delete route stop times',
-
+            // Booking Management
+            ['name' => 'view bookings', 'module' => 'Booking Management'],
+            ['name' => 'create bookings', 'module' => 'Booking Management'],
+            ['name' => 'edit bookings', 'module' => 'Booking Management'],
+            ['name' => 'delete bookings', 'module' => 'Booking Management'],
 
             // Enquiry Management
-            'view enquiries',
-            'delete enquiries',
-            'reply to enquiries',
+            ['name' => 'view enquiries', 'module' => 'Enquiry Management'],
+            ['name' => 'delete enquiries', 'module' => 'Enquiry Management'],
+            ['name' => 'reply to enquiries', 'module' => 'Enquiry Management'],
 
             // Reports
-            'view reports',
-            'export reports',
+            ['name' => 'view reports', 'module' => 'Reports'],
+            ['name' => 'export reports', 'module' => 'Reports'],
 
             // System
-            'manage system settings',
-            'view system logs',
-            'backup system',
+            ['name' => 'manage system settings', 'module' => 'System'],
+            ['name' => 'view system logs', 'module' => 'System'],
+            ['name' => 'backup system', 'module' => 'System'],
         ];
 
-        // Create permissions
-        foreach ($permissions as $permissionName) {
-            Permission::firstOrCreate(['name' => $permissionName]);
+        // Create permissions with module
+        foreach ($permissions as $permissionData) {
+            Permission::updateOrCreate(
+                ['name' => $permissionData['name']],
+                ['module' => $permissionData['module'], 'guard_name' => 'web']
+            );
         }
     }
 }

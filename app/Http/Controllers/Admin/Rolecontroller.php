@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
-use Spatie\Permission\Models\Permission;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class Rolecontroller extends Controller
 {
@@ -20,8 +18,8 @@ class Rolecontroller extends Controller
         $this->breadcrumbs = [
             [
                 'title' => 'Roles',
-                'url' => route('admin.roles.index')
-            ]
+                'url' => route('admin.roles.index'),
+            ],
         ];
     }
 
@@ -39,7 +37,7 @@ class Rolecontroller extends Controller
 
             return DataTables::eloquent($roles)
                 ->addColumn('formatted_name', function ($role) {
-                    return '<span class="fw-bold text-primary">' . e(ucwords(str_replace('_', ' ', $role->name))) . '</span>';
+                    return '<span class="fw-bold text-primary">'.e(ucwords(str_replace('_', ' ', $role->name))).'</span>';
                 })
                 ->addColumn('permissions_list', function ($role) {
                     if ($role->permissions->isEmpty()) {
@@ -47,56 +45,54 @@ class Rolecontroller extends Controller
                     }
 
                     return $role->permissions->map(function ($p) {
-                        return '<span class="badge bg-info me-1 mb-1">' . e(ucfirst($p->name)) . '</span>';
+                        return '<span class="badge bg-info me-1 mb-1">'.e(ucfirst($p->name)).'</span>';
                     })->implode('');
                 })
                 ->addColumn('permissions_count', function ($role) {
                     $count = $role->permissions->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-warning';
-                    return '<span class="badge ' . $badgeClass . '">' . $count . ' permission' . ($count !== 1 ? 's' : '') . '</span>';
+
+                    return '<span class="badge '.$badgeClass.'">'.$count.' permission'.($count !== 1 ? 's' : '').'</span>';
                 })
                 ->addColumn('actions', function ($role) {
-                    // Define default roles that should not be deletable
-                    $defaultRoles = User::DEFAULT_ROLES;
-                    $isDefaultRole = in_array($role->name, $defaultRoles);
-                    $superAdmin = auth()->user()->hasRole('super_admin');
+                    // Only super_admin role is not editable/deletable
+                    $isSuperAdmin = $role->name === 'super_admin';
 
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="' . route('admin.roles.edit', $role->id) . '">
-                                        <i class="bx bx-edit me-2"></i>Edit Role
-                                    </a>
-                                </li>';
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
 
-                    // Only show delete option for non-default roles
-                    if (!$isDefaultRole) {
-                        $actions .= '
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteRole(' . $role->id . ')">
-                                        <i class="bx bx-trash me-2"></i>Delete Role
-                                    </a>
-                                </li>';
+                    if (auth()->user()->can('edit roles')) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.roles.edit', $role->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit Role
+                            </a>
+                        </li>';
                     }
 
-                    $actions .= '
-                            </ul>
-                        </div>';
+                    // Only show delete option for non-super_admin roles
+                    if (! $isSuperAdmin && auth()->user()->can('delete roles')) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteRole('.$role->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete Role
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($r) => $r->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($r) => $r->created_at->format('d M Y'))
                 ->escapeColumns([]) // <– ensures HTML isn’t escaped
                 ->rawColumns(['formatted_name', 'permissions_list', 'actions', 'permissions_count'])
                 ->make(true);
@@ -105,9 +101,10 @@ class Rolecontroller extends Controller
 
     public function create()
     {
-        $permissions = Permission::all();
+        $permissions = Permission::orderBy('module')->orderBy('name')->get();
+        $permissionsByModule = $permissions->groupBy('module');
 
-        return view('admin.roles.create', get_defined_vars());
+        return view('admin.roles.create', compact('permissions', 'permissionsByModule'));
     }
 
     public function store(Request $request)
@@ -140,26 +137,27 @@ class Rolecontroller extends Controller
 
             // ✅ 4. Return success response
             return redirect()->route('admin.roles.index')
-                ->with('success', 'Role "' . $role->name . '" created successfully with ' . count($validated['permissions']) . ' permission(s)!');
+                ->with('success', 'Role "'.$role->name.'" created successfully with '.count($validated['permissions']).' permission(s)!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             // ✅ 5. Handle any errors during creation
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create role: ' . $e->getMessage());
+                ->with('error', 'Failed to create role: '.$e->getMessage());
         }
     }
 
     public function edit($id)
     {
         $role = Role::findOrFail($id);
-        $permissions = Permission::all();
+        $permissions = Permission::orderBy('module')->orderBy('name')->get();
+        $permissionsByModule = $permissions->groupBy('module');
 
-        // Check if this is a default role that shouldn't be editable
-        $defaultRoles = User::DEFAULT_ROLES;
-        $isDefaultRole = in_array($role->name, $defaultRoles);
+        // Only super_admin role is not editable
+        $isDefaultRole = $role->name === 'super_admin';
 
-        return view('admin.roles.edit', get_defined_vars());
+        return view('admin.roles.edit', compact('role', 'permissions', 'permissionsByModule', 'isDefaultRole'));
     }
 
     public function update(Request $request, $id)
@@ -167,7 +165,7 @@ class Rolecontroller extends Controller
         $role = Role::findOrFail($id);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name,' . $role->id],
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name,'.$role->id],
             'permissions' => ['required', 'array', 'min:1'],
             'permissions.*' => ['exists:permissions,id'],
         ], [
@@ -178,10 +176,8 @@ class Rolecontroller extends Controller
             'permissions.*.exists' => 'One or more selected permissions are invalid.',
         ]);
 
-        $defaultRoles = User::DEFAULT_ROLES;
-        $isDefaultRole = in_array($role->name, $defaultRoles);
-
-        abort_if($isDefaultRole, 403, 'Cannot edit default role.');
+        // Only super_admin role is not editable
+        abort_if($role->name === 'super_admin', 403, 'Cannot edit super_admin role.');
 
         try {
             DB::beginTransaction();
@@ -194,12 +190,13 @@ class Rolecontroller extends Controller
             DB::commit();
 
             return redirect()->route('admin.roles.index')
-                ->with('success', 'Role "' . $role->name . '" updated successfully with ' . count($validated['permissions']) . ' permission(s)!');
+                ->with('success', 'Role "'.$role->name.'" updated successfully with '.count($validated['permissions']).' permission(s)!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update role: ' . $e->getMessage());
+                ->with('error', 'Failed to update role: '.$e->getMessage());
         }
     }
 
@@ -208,11 +205,19 @@ class Rolecontroller extends Controller
         try {
             $role = Role::findOrFail($id);
 
+            // Prevent deletion of super_admin role
+            if ($role->name === 'super_admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete super_admin role.',
+                ], 403);
+            }
+
             // Check if role has users assigned
             if ($role->users()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete role. It has users assigned to it.'
+                    'message' => 'Cannot delete role. It has users assigned to it.',
                 ], 400);
             }
 
@@ -220,12 +225,12 @@ class Rolecontroller extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Role deleted successfully.'
+                'message' => 'Role deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting role: ' . $e->getMessage()
+                'message' => 'Error deleting role: '.$e->getMessage(),
             ], 500);
         }
     }

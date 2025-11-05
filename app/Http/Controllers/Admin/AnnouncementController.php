@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use App\Models\Announcement;
-use App\Enums\AnnouncementStatusEnum;
-use App\Enums\AnnouncementPriorityEnum;
-use App\Enums\AnnouncementDisplayTypeEnum;
 use App\Enums\AnnouncementAudienceTypeEnum;
+use App\Enums\AnnouncementDisplayTypeEnum;
+use App\Enums\AnnouncementPriorityEnum;
+use App\Enums\AnnouncementStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAnnouncementRequest;
 use App\Http\Requests\UpdateAnnouncementRequest;
-use Illuminate\Http\Request;
+use App\Models\Announcement;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
 class AnnouncementController extends Controller
@@ -43,7 +43,8 @@ class AnnouncementController extends Controller
                     AnnouncementStatusEnum::INACTIVE => 'warning',
                     default => 'secondary',
                 };
-                return '<span class="badge bg-' . $statusClass . '">' . $announcement->status->value . '</span>';
+
+                return '<span class="badge bg-'.$statusClass.'">'.$announcement->status->value.'</span>';
             })
             ->addColumn('display_type_badge', function ($announcement) {
                 $typeClass = match ($announcement->display_type) {
@@ -52,7 +53,8 @@ class AnnouncementController extends Controller
                     AnnouncementDisplayTypeEnum::NOTIFICATION => 'warning',
                     default => 'secondary',
                 };
-                return '<span class="badge bg-' . $typeClass . '">' . $announcement->display_type->value . '</span>';
+
+                return '<span class="badge bg-'.$typeClass.'">'.$announcement->display_type->value.'</span>';
             })
             ->addColumn('priority_badge', function ($announcement) {
                 $priorityClass = match ($announcement->priority) {
@@ -61,7 +63,8 @@ class AnnouncementController extends Controller
                     AnnouncementPriorityEnum::LOW => 'success',
                     default => 'secondary',
                 };
-                return '<span class="badge bg-' . $priorityClass . '">' . $announcement->priority->value . '</span>';
+
+                return '<span class="badge bg-'.$priorityClass.'">'.$announcement->priority->value.'</span>';
             })
             ->addColumn('audience_type_badge', function ($announcement) {
                 $audienceClass = match ($announcement->audience_type) {
@@ -70,7 +73,8 @@ class AnnouncementController extends Controller
                     AnnouncementAudienceTypeEnum::USERS => 'warning',
                     default => 'secondary',
                 };
-                return '<span class="badge bg-' . $audienceClass . '">' . $announcement->audience_type->value . '</span>';
+
+                return '<span class="badge bg-'.$audienceClass.'">'.$announcement->audience_type->value.'</span>';
             })
             ->addColumn('flags', function ($announcement) {
                 $flags = [];
@@ -83,39 +87,45 @@ class AnnouncementController extends Controller
                 if ($announcement->is_active) {
                     $flags[] = '<span class="badge bg-success">Active</span>';
                 }
+
                 return implode(' ', $flags);
             })
             ->addColumn('date_range', function ($announcement) {
                 $startDate = $announcement->start_date ? $announcement->start_date->format('M d, Y') : 'N/A';
                 $endDate = $announcement->end_date ? $announcement->end_date->format('M d, Y') : 'N/A';
-                return $startDate . ' - ' . $endDate;
+
+                return $startDate.' - '.$endDate;
             })
             ->addColumn('actions', function ($announcement) {
                 $actions = '<div class="btn-group" role="group">';
 
-                // View button
-                $actions .= '<a href="' . route('admin.announcements.show', $announcement->id) . '" class="btn btn-sm btn-outline-primary" title="View">
-                    <i class="bx bx-show"></i>
-                </a>';
+                if (auth()->user()->can('view announcements')) {
+                    $actions .= '<a href="'.route('admin.announcements.show', $announcement->id).'" class="btn btn-sm btn-outline-primary" title="View">
+                        <i class="bx bx-show"></i>
+                    </a>';
+                }
 
-                // Edit button
-                $actions .= '<a href="' . route('admin.announcements.edit', $announcement->id) . '" class="btn btn-sm btn-outline-warning" title="Edit">
-                    <i class="bx bx-edit"></i>
-                </a>';
+                if (auth()->user()->can('edit announcements')) {
+                    $actions .= '<a href="'.route('admin.announcements.edit', $announcement->id).'" class="btn btn-sm btn-outline-warning" title="Edit">
+                        <i class="bx bx-edit"></i>
+                    </a>';
 
-                // Toggle status button
-                $statusText = $announcement->is_active ? 'Deactivate' : 'Activate';
-                $statusClass = $announcement->is_active ? 'btn-outline-danger' : 'btn-outline-success';
-                $actions .= '<button class="btn btn-sm ' . $statusClass . '" onclick="toggleStatus(' . $announcement->id . ', ' . ($announcement->is_active ? 'true' : 'false') . ')" title="' . $statusText . '">
-                    <i class="bx ' . ($announcement->is_active ? 'bx-pause' : 'bx-play') . '"></i>
-                </button>';
+                    // Toggle status button
+                    $statusText = $announcement->is_active ? 'Deactivate' : 'Activate';
+                    $statusClass = $announcement->is_active ? 'btn-outline-danger' : 'btn-outline-success';
+                    $actions .= '<button class="btn btn-sm '.$statusClass.'" onclick="toggleStatus('.$announcement->id.', '.($announcement->is_active ? 'true' : 'false').')" title="'.$statusText.'">
+                        <i class="bx '.($announcement->is_active ? 'bx-pause' : 'bx-play').'"></i>
+                    </button>';
+                }
 
-                // Delete button
-                $actions .= '<button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement(' . $announcement->id . ')" title="Delete">
-                    <i class="bx bx-trash"></i>
-                </button>';
+                if (auth()->user()->can('delete announcements')) {
+                    $actions .= '<button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement('.$announcement->id.')" title="Delete">
+                        <i class="bx bx-trash"></i>
+                    </button>';
+                }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['status_badge', 'display_type_badge', 'priority_badge', 'audience_type_badge', 'flags', 'actions'])
@@ -150,6 +160,11 @@ class AnnouncementController extends Controller
         $data['display_type'] = AnnouncementDisplayTypeEnum::from($data['display_type']);
         $data['priority'] = AnnouncementPriorityEnum::from($data['priority']);
         $data['audience_type'] = AnnouncementAudienceTypeEnum::from($data['audience_type']);
+
+        // If no start_date or end_date, set is_active to true by default (stay active)
+        if (empty($data['start_date']) && empty($data['end_date'])) {
+            $data['is_active'] = $data['is_active'] ?? true;
+        }
 
         // Handle image upload if present
         if ($request->hasFile('image')) {
@@ -202,6 +217,11 @@ class AnnouncementController extends Controller
         $data['priority'] = AnnouncementPriorityEnum::from($data['priority']);
         $data['audience_type'] = AnnouncementAudienceTypeEnum::from($data['audience_type']);
 
+        // If no start_date or end_date, set is_active to true by default (stay active)
+        if (empty($data['start_date']) && empty($data['end_date'])) {
+            $data['is_active'] = $data['is_active'] ?? true;
+        }
+
         // Handle image upload if present
         if ($request->hasFile('image')) {
             // Delete old image if exists
@@ -239,12 +259,12 @@ class AnnouncementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Announcement deleted successfully.'
+                'message' => 'Announcement deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting announcement: ' . $e->getMessage()
+                'message' => 'Error deleting announcement: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -256,20 +276,20 @@ class AnnouncementController extends Controller
     {
         try {
             $announcement->update([
-                'is_active' => !$announcement->is_active,
-                'updated_by' => auth()->id()
+                'is_active' => ! $announcement->is_active,
+                'updated_by' => auth()->id(),
             ]);
 
             $status = $announcement->is_active ? 'activated' : 'deactivated';
 
             return response()->json([
                 'success' => true,
-                'message' => "Announcement {$status} successfully!"
+                'message' => "Announcement {$status} successfully!",
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating announcement status: ' . $e->getMessage()
+                'message' => 'Error updating announcement status: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -281,20 +301,20 @@ class AnnouncementController extends Controller
     {
         try {
             $announcement->update([
-                'is_pinned' => !$announcement->is_pinned,
-                'updated_by' => auth()->id()
+                'is_pinned' => ! $announcement->is_pinned,
+                'updated_by' => auth()->id(),
             ]);
 
             $status = $announcement->is_pinned ? 'pinned' : 'unpinned';
 
             return response()->json([
                 'success' => true,
-                'message' => "Announcement {$status} successfully!"
+                'message' => "Announcement {$status} successfully!",
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating announcement pinned status: ' . $e->getMessage()
+                'message' => 'Error updating announcement pinned status: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -306,20 +326,20 @@ class AnnouncementController extends Controller
     {
         try {
             $announcement->update([
-                'is_featured' => !$announcement->is_featured,
-                'updated_by' => auth()->id()
+                'is_featured' => ! $announcement->is_featured,
+                'updated_by' => auth()->id(),
             ]);
 
             $status = $announcement->is_featured ? 'featured' : 'unfeatured';
 
             return response()->json([
                 'success' => true,
-                'message' => "Announcement {$status} successfully!"
+                'message' => "Announcement {$status} successfully!",
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating announcement featured status: ' . $e->getMessage()
+                'message' => 'Error updating announcement featured status: '.$e->getMessage(),
             ], 500);
         }
     }

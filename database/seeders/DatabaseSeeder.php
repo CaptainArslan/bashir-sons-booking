@@ -10,16 +10,8 @@ use Database\Seeders\UserSeeder;
 use Database\Seeders\FacilitySeeder;
 use Database\Seeders\BusLayoutSeeder;
 use Database\Seeders\BusTypeSeeder;
-use Database\Seeders\BusSeeder;
 use Database\Seeders\CitySeeder;
-use Database\Seeders\TerminalSeeder;
-use Database\Seeders\RouteSeeder;
-use Database\Seeders\TimetableSeeder;
-use Database\Seeders\TimetableStopSeeder;
-use Database\Seeders\BannerSeeder;
-use Database\Seeders\GeneralSettingSeeder;
-use Database\Seeders\AnnouncementSeeder;
-use Database\Seeders\DiscountSeeder;
+use Database\Seeders\FareSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -34,20 +26,22 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
-            CitySeeder::class,
-            BusLayoutSeeder::class,
-            BusTypeSeeder::class,
-            FacilitySeeder::class,
-            AnnouncementSeeder::class,
-            DiscountSeeder::class,
-            TerminalSeeder::class,
-            RouteSeeder::class,
-            // TimetableSeeder::class,
-            // TimetableStopSeeder::class,
+            GeneralSettingSeeder::class,
+            // CitySeeder::class,
+            // BusLayoutSeeder::class,
+            // BusTypeSeeder::class,
+            // FacilitySeeder::class,
+            // DefaultTerminalSeeder::class,
+            // DefaultRouteSeeder::class,
             // FareSeeder::class,
             // BusSeeder::class,
+            // AnnouncementSeeder::class,
+            // DiscountSeeder::class,
+            // TerminalSeeder::class,
+            // RouteSeeder::class,
+            // TimetableSeeder::class,
+            // TimetableStopSeeder::class,
             // BannerSeeder::class,
-            // GeneralSettingSeeder::class,
         ]);
     }
 }

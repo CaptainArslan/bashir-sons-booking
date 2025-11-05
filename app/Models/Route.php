@@ -6,7 +6,9 @@ use App\Enums\RouteStatusEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Route extends Model
 {
@@ -22,9 +24,12 @@ class Route extends Model
         'status',
     ];
 
-    protected $casts = [
-        'status' => RouteStatusEnum::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => RouteStatusEnum::class,
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -37,34 +42,40 @@ class Route extends Model
             ->withTimestamps();
     }
 
-    public function operator()
+    public function operator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'operator_id');
     }
 
-    public function returnRoute()
+    public function returnRoute(): BelongsTo
     {
         return $this->belongsTo(self::class, 'is_return_of');
     }
 
-    public function routeStops()
+    public function routeStops(): HasMany
     {
         return $this->hasMany(RouteStop::class)->orderBy('sequence');
+    }
+
+    public function timetables(): HasMany
+    {
+        return $this->hasMany(Timetable::class);
+    }
+
+    public function trips(): HasMany
+    {
+        return $this->hasMany(Trip::class);
+    }
+
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class);
     }
 
     public function terminals()
     {
         return $this->belongsToMany(Terminal::class, 'route_stops')
-            ->withPivot([
-                'sequence',
-                'distance_from_previous',
-                'approx_travel_time',
-                'is_pickup_allowed',
-                'is_dropoff_allowed',
-                'arrival_time',
-                'departure_time',
-                'is_online_booking_allowed',
-            ])
+            ->withPivot(['sequence'])
             ->orderBy('pivot_sequence');
     }
 
@@ -76,11 +87,6 @@ class Route extends Model
     public function lastStop()
     {
         return $this->routeStops()->orderByDesc('sequence')->first();
-    }
-
-    public function discounts()
-    {
-        return $this->hasMany(Discount::class);
     }
 
     public function activeDiscounts()
@@ -113,14 +119,14 @@ class Route extends Model
     protected function totalTravelTime(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('approx_travel_time')->sum('approx_travel_time') ?? 0,
+            get: fn ($value) => 0, // Distance and travel time are no longer tracked at route_stops level
         );
     }
 
     protected function totalDistance(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('distance_from_previous')->sum('distance_from_previous') ?? 0,
+            get: fn ($value) => 0, // Distance and travel time are no longer tracked at route_stops level
         );
     }
 
@@ -128,20 +134,6 @@ class Route extends Model
     {
         return Attribute::make(
             get: fn ($value) => $this->routeStops()->count(),
-        );
-    }
-
-    protected function totalDropoffAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_dropoff_allowed')->count(),
-        );
-    }
-
-    protected function totalPickupAllowed(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $this->routeStops()->whereNotNull('is_pickup_allowed')->count(),
         );
     }
 

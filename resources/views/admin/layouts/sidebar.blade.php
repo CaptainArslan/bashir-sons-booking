@@ -114,7 +114,8 @@
               'view bus types',
               'view bus layouts',
               'view facilities',
-              'view routes',
+              'view
+              routes',
               'view route stops',
               'view timetables',
               'view schedules',
@@ -218,11 +219,11 @@
                                       style="font-size: 0.7rem;"></i>Add New Route</a>
                           </li>
                       @endcan
-                      @can('view route stops')
+                      {{-- @can('view route stops')
                           <li> <a href="{{ route('admin.route-stops.index') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Route Stops</a></li>
-                      @endcan
+                      @endcan --}}
                   </ul>
               </li>
           @endcan
@@ -273,11 +274,45 @@
               </li>
           @endcan
 
+          <li>
+              <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                  <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                          class='bx bx-book'></i>
+                  </div>
+                  <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bookings Management</div>
+              </a>
+              <ul style="padding-left: 0;">
+                  @can('view bookings')
+                      <li> <a href="{{ route('admin.bookings.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i>All Bookings</a></li>
+                  @endcan
+                  @can('create bookings')
+                      <li> <a href="{{ route('admin.bookings.console') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i>Live Booking Console</a></li>
+                  @endcan
+                  @can('view bookings')
+                      <li> <a href="{{ route('admin.terminal-reports.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i> Terminal Reports</a></li>
+                  @endcan
+                  {{-- @can('view bookings')
+                      <li> <a href="{{ route('admin.bus-assignments.index') }}"
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                  style="font-size: 0.7rem;"></i> Bus Assignments (Segments)</a></li>
+                  @endcan --}}
+              </ul>
+          </li>
+
+
+
+
           @can('view discounts')
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                       <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-discount'></i>
+                              class='bx bx-money'></i>
                       </div>
                       <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Discount Management</div>
                   </a>
@@ -329,7 +364,7 @@
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                       <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-megaphone'></i>
+                              class='bx bx-calendar-check'></i>
                       </div>
                       <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Announcement Management</div>
                   </a>

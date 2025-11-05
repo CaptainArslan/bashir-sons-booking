@@ -289,6 +289,10 @@
 <script>
 $(document).ready(function() {
     let currentStops = [];
+
+    $('#route_id').select2({
+        width: 'resolve',
+    });
     
     // Route selection change handler
     $('#route_id').change(function() {

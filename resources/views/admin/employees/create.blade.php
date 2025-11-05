@@ -7,10 +7,11 @@
         .employee-card {
             border-left: 4px solid #28a745;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            overflow: hidden;
         }
 
         .card-header-info {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: #28a745;
             color: white;
             padding: 0.75rem 1rem;
             border-radius: 8px 8px 0 0;
@@ -187,23 +188,18 @@
                             <div class="col-md-12">
                                 <label for="routes" class="form-label">Route Assignments</label>
                                 <select class="form-select @error('routes') is-invalid @enderror" id="routes"
-                                    name="routes[]" multiple>
-                                    @foreach ($routes as $route)
-                                        <option value="{{ $route->id }}"
-                                            {{ in_array($route->id, old('routes', [])) ? 'selected' : '' }}>
-                                            {{ $route->code }} - {{ $route->name }}
-                                            @if ($route->firstTerminal && $route->lastTerminal)
-                                                ({{ $route->firstTerminal->name }} → {{ $route->lastTerminal->name }})
-                                            @endif
-                                        </option>
-                                    @endforeach
+                                    name="routes[]" multiple disabled>
+                                    <option value="">Select a terminal first to load routes</option>
                                 </select>
                                 @error('routes')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text text-muted">
                                     <i class="bx bx-info-circle me-1"></i>
-                                    Select routes to assign to this employee (optional)
+                                    Select a terminal first, then routes for that terminal will be loaded
+                                </div>
+                                <div id="routes-loading" class="form-text text-primary d-none">
+                                    <i class="bx bx-loader bx-spin me-1"></i>Loading routes...
                                 </div>
                             </div>
                         </div>
@@ -215,16 +211,24 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="phone" class="form-label required-field">Phone Number</label>
-                                <input type="number" class="form-control @error('phone') is-invalid @enderror"
-                                    id="phone" name="phone" value="{{ old('phone') }}" required maxlength="11">
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror"
+                                    id="phone" name="phone" value="{{ old('phone') }}" placeholder="0317-7777777" required maxlength="12">
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Format: XXXX-XXXXXXX (e.g., 0317-7777777)
+                                </div>
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6">
                                 <label for="cnic" class="form-label required-field">CNIC</label>
-                                <input type="number" class="form-control @error('cnic') is-invalid @enderror"
-                                    id="cnic" name="cnic" value="{{ old('cnic') }}" required maxlength="13">
+                                <input type="text" class="form-control @error('cnic') is-invalid @enderror"
+                                    id="cnic" name="cnic" value="{{ old('cnic') }}" placeholder="34101-1111111-1" required maxlength="15">
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Format: XXXXX-XXXXXXX-X (e.g., 34101-1111111-1)
+                                </div>
                                 @error('cnic')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -306,12 +310,91 @@
     <script>
         $(document).ready(function() {
             // Initialize Select2 for routes
+            $('#terminal_id').select2({
+                placeholder: 'Select Terminal',
+                width: 'resolve',
+            });
+
             $('#routes').select2({
                 placeholder: 'Select routes (optional)',
                 allowClear: true,
-                width: '100%',
+                width: 'resolve',
                 dropdownCssClass: 'select2-dropdown-compact'
             });
+
+            // Load routes when terminal is selected
+            $('#terminal_id').on('change', function() {
+                const terminalId = $(this).val();
+                const routesSelect = $('#routes');
+                const loadingIndicator = $('#routes-loading');
+
+                if (!terminalId) {
+                    routesSelect.html('<option value="">Select a terminal first to load routes</option>');
+                    routesSelect.prop('disabled', true).trigger('change');
+                    return;
+                }
+
+                // Show loading
+                loadingIndicator.removeClass('d-none');
+                routesSelect.prop('disabled', true);
+
+                // Fetch routes for selected terminal
+                $.ajax({
+                    url: '{{ route('admin.employees.routes-by-terminal') }}',
+                    method: 'GET',
+                    data: {
+                        terminal_id: terminalId
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        routesSelect.empty();
+
+                        if (response.routes && response.routes.length > 0) {
+                            routesSelect.append(
+                                '<option value="">Select routes (optional)</option>');
+                            response.routes.forEach(function(route) {
+                                let routeText = route.code + ' - ' + route.name;
+                                if (route.first_terminal && route.last_terminal) {
+                                    routeText += ' (' + route.first_terminal + ' → ' +
+                                        route.last_terminal + ')';
+                                }
+                                routesSelect.append($('<option></option>')
+                                    .attr('value', route.id)
+                                    .text(routeText));
+                            });
+                            routesSelect.prop('disabled', false);
+                        } else {
+                            routesSelect.append(
+                                '<option value="">No routes available for this terminal</option>'
+                            );
+                        }
+
+                        routesSelect.trigger('change');
+                        loadingIndicator.addClass('d-none');
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading routes:', xhr);
+                        routesSelect.html(
+                            '<option value="">Error loading routes. Please try again.</option>'
+                        );
+                        routesSelect.prop('disabled', true);
+                        loadingIndicator.addClass('d-none');
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            toastr.error(xhr.responseJSON.message);
+                        } else {
+                            toastr.error('Failed to load routes for selected terminal');
+                        }
+                    }
+                });
+            });
+
+            // Trigger change on page load if terminal is already selected (for old input)
+            @if (old('terminal_id'))
+                $('#terminal_id').trigger('change');
+            @endif
 
             // Add compact styling to Select2
             $('<style>')

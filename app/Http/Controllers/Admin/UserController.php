@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\GenderEnum;
+use App\Enums\UserStatusEnum;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\profile;
 use App\Models\Terminal;
-use App\Enums\GenderEnum;
-use Spatie\Permission\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
@@ -27,74 +29,75 @@ class UserController extends Controller
         if ($request->ajax()) {
             $users = User::query()
                 ->with(['roles:id,name', 'profile', 'terminal.city'])
-                ->select('id', 'name', 'email', 'terminal_id', 'created_at');
+                ->select('id', 'name', 'email', 'terminal_id', 'status', 'created_at');
 
             return DataTables::eloquent($users)
                 ->addColumn('user_info', function ($user) {
                     // User name and email only
                     $userInfo = '<div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1 fw-bold text-primary">' . e($user->name) . '</h6>
-                            <small class="text-muted"><i class="bx bx-envelope me-1"></i>' . e($user->email) . '</small>
+                            <h6 class="mb-1 fw-bold text-primary">'.e($user->name).'</h6>
+                            <small class="text-muted"><i class="bx bx-envelope me-1"></i>'.e($user->email).'</small>
                         </div>
                     </div>';
+
                     return $userInfo;
                 })
                 ->addColumn('contact_info', function ($user) {
                     $profile = $user->profile;
-                    if (!$profile) {
+                    if (! $profile) {
                         return '<span class="text-muted">No profile</span>';
                     }
-                    
+
                     $contactInfo = '';
                     if ($profile->phone) {
-                        $contactInfo .= '<div><i class="bx bx-phone me-1"></i>' . e($profile->phone) . '</div>';
+                        $contactInfo .= '<div><i class="bx bx-phone me-1"></i>'.e($profile->phone).'</div>';
                     }
                     if ($profile->cnic) {
-                        $contactInfo .= '<div><i class="bx bx-id-card me-1"></i>' . e($profile->cnic) . '</div>';
+                        $contactInfo .= '<div><i class="bx bx-id-card me-1"></i>'.e($profile->cnic).'</div>';
                     }
-                    
+
                     return $contactInfo ?: '<span class="text-muted">No contact info</span>';
                 })
                 ->addColumn('personal_info', function ($user) {
                     $profile = $user->profile;
-                    if (!$profile) {
+                    if (! $profile) {
                         return '<span class="text-muted">No profile</span>';
                     }
-                    
+
                     $personalInfo = '';
-                    
+
                     // Gender
                     if ($profile->gender) {
                         $genderColor = $profile->gender->value === 'male' ? 'primary' : ($profile->gender->value === 'female' ? 'danger' : 'secondary');
-                        $personalInfo .= '<div><span class="badge bg-' . $genderColor . '">' . e(GenderEnum::getGenderName($profile->gender->value)) . '</span></div>';
+                        $personalInfo .= '<div><span class="badge bg-'.$genderColor.'">'.e(GenderEnum::getGenderName($profile->gender->value)).'</span></div>';
                     }
-                    
+
                     // Date of Birth
                     if ($profile->date_of_birth) {
-                        $personalInfo .= '<div class="mt-1"><i class="bx bx-calendar me-1"></i>' . e($profile->date_of_birth->format('d M Y')) . '</div>';
+                        $personalInfo .= '<div class="mt-1"><i class="bx bx-calendar me-1"></i>'.e($profile->date_of_birth->format('d M Y')).'</div>';
                     }
-                    
+
                     return $personalInfo ?: '<span class="text-muted">No personal info</span>';
                 })
                 ->addColumn('address_info', function ($user) {
                     $profile = $user->profile;
-                    if (!$profile) {
+                    if (! $profile) {
                         return '<span class="text-muted">No profile</span>';
                     }
-                    
+
                     $addressInfo = '';
-                    
+
                     // Address
                     if ($profile->address) {
-                        $addressInfo .= '<div><i class="bx bx-map me-1"></i>' . e(Str::limit($profile->address, 60)) . '</div>';
+                        $addressInfo .= '<div><i class="bx bx-map me-1"></i>'.e(Str::limit($profile->address, 60)).'</div>';
                     }
-                    
+
                     // Notes
                     if ($profile->notes) {
-                        $addressInfo .= '<div class="mt-1"><i class="bx bx-notepad me-1"></i>' . e($profile->notes) . '</div>';
+                        $addressInfo .= '<div class="mt-1"><i class="bx bx-notepad me-1"></i>'.e($profile->notes).'</div>';
                     }
-                    
+
                     return $addressInfo ?: '<span class="text-muted">No notes</span>';
                 })
                 ->addColumn('roles_info', function ($user) {
@@ -112,51 +115,110 @@ class UserController extends Controller
                             'customer' => 'success',
                             default => 'secondary'
                         };
-                        $badges .= '<span class="badge bg-' . $color . ' me-1 mb-1">' . e(ucfirst($role)) . '</span>';
+                        $badges .= '<span class="badge bg-'.$color.' me-1 mb-1">'.e(ucfirst($role)).'</span>';
                     }
+
                     return $badges;
                 })
                 ->addColumn('terminal_info', function ($user) {
                     if ($user->terminal) {
                         return '<div>
-                            <div class="fw-bold text-primary">' . e($user->terminal->name) . '</div>
-                            <small class="text-muted">' . e($user->terminal->city->name) . '</small>
+                            <div class="fw-bold text-primary">'.e($user->terminal->name).'</div>
+                            <small class="text-muted">'.e($user->terminal->city->name).'</small>
                         </div>';
                     }
+
                     return '<span class="text-muted">No Terminal</span>';
                 })
+                ->addColumn('status_badge', function ($user) {
+                    // Get raw status value from database to ensure we get the actual stored value
+                    $statusValue = $user->getRawOriginal('status') ?? 'active';
+
+                    // If getRawOriginal returns null, fall back to accessing the attribute
+                    if ($statusValue === null || $statusValue === '') {
+                        if ($user->status instanceof UserStatusEnum) {
+                            $statusValue = $user->status->value;
+                        } elseif (is_string($user->status)) {
+                            $statusValue = $user->status;
+                        } else {
+                            $statusValue = 'active';
+                        }
+                    }
+
+                    $statusName = UserStatusEnum::getStatusName($statusValue);
+                    $statusColor = UserStatusEnum::getStatusColor($statusValue);
+
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
+                })
                 ->addColumn('actions', function ($user) {
-                    $actions = '
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bx bx-dots-horizontal-rounded"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" 
-                                       href="' . route('admin.users.edit', $user->id) . '">
-                                        <i class="bx bx-edit me-2"></i>Edit User
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" 
-                                       href="javascript:void(0)" 
-                                       onclick="deleteUser(' . $user->id . ')">
-                                        <i class="bx bx-trash me-2"></i>Delete User
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>';
+                    $hasEditPermission = auth()->user()->can('edit users');
+                    $hasDeletePermission = auth()->user()->can('delete users');
+                    $hasBanPermission = auth()->user()->can('ban users');
+                    $hasActivatePermission = auth()->user()->can('activate users');
+                    $hasAnyPermission = $hasEditPermission || $hasDeletePermission || $hasBanPermission || $hasActivatePermission;
+
+                    if (! $hasAnyPermission) {
+                        return '<span class="text-muted">No actions available</span>';
+                    }
+
+                    $actions = '<div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bx bx-dots-horizontal-rounded"></i>
+                        </button>
+                        <ul class="dropdown-menu">';
+
+                    if ($hasEditPermission) {
+                        $actions .= '<li>
+                            <a class="dropdown-item" 
+                               href="'.route('admin.users.edit', $user->id).'">
+                                <i class="bx bx-edit me-2"></i>Edit User
+                            </a>
+                        </li>';
+                    }
+
+                    if ($hasBanPermission && $user->status !== UserStatusEnum::BANNED) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="banUser('.$user->id.')">
+                                <i class="bx bx-block me-2"></i>Ban User
+                            </a>
+                        </li>';
+                    }
+
+                    if ($hasActivatePermission && $user->status === UserStatusEnum::BANNED) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-success" 
+                               href="javascript:void(0)" 
+                               onclick="activateUser('.$user->id.')">
+                                <i class="bx bx-check-circle me-2"></i>Activate User
+                            </a>
+                        </li>';
+                    }
+
+                    if ($hasDeletePermission) {
+                        $actions .= '<li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" 
+                               href="javascript:void(0)" 
+                               onclick="deleteUser('.$user->id.')">
+                                <i class="bx bx-trash me-2"></i>Delete User
+                            </a>
+                        </li>';
+                    }
+
+                    $actions .= '</ul></div>';
 
                     return $actions;
                 })
-                ->editColumn('created_at', fn($user) => $user->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($user) => $user->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns(['user_info', 'contact_info', 'personal_info', 'address_info', 'roles_info', 'terminal_info', 'actions'])
+                ->rawColumns(['user_info', 'contact_info', 'personal_info', 'address_info', 'roles_info', 'terminal_info', 'status_badge', 'actions'])
                 ->make(true);
         }
     }
@@ -166,6 +228,7 @@ class UserController extends Controller
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
         $terminals = Terminal::with('city')->get();
+
         return view('admin.users.create', get_defined_vars());
     }
 
@@ -181,7 +244,7 @@ class UserController extends Controller
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
             'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic'],
-            'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
+            'gender' => ['required', 'string', 'in:'.implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -242,12 +305,13 @@ class UserController extends Controller
             DB::commit();
 
             return redirect()->route('admin.users.index')
-                ->with('success', 'User created successfully with ' . count($validated['roles']) . ' role(s)!');
+                ->with('success', 'User created successfully with '.count($validated['roles']).' role(s)!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create user: ' . $e->getMessage());
+                ->with('error', 'Failed to create user: '.$e->getMessage());
         }
     }
 
@@ -257,6 +321,7 @@ class UserController extends Controller
         $roles = Role::all();
         $genders = GenderEnum::getGenders();
         $terminals = Terminal::with('city')->get();
+
         return view('admin.users.edit', get_defined_vars());
     }
 
@@ -266,15 +331,15 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],
             'terminal_id' => ['nullable', 'exists:terminals,id'],
             // Profile fields
             'phone' => ['required', 'string', 'max:20'],
-            'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic,' . ($user->profile->id ?? 0)],
-            'gender' => ['required', 'string', 'in:' . implode(',', GenderEnum::getGenders())],
+            'cnic' => ['required', 'string', 'max:15', 'unique:profiles,cnic,'.($user->profile->id ?? 0)],
+            'gender' => ['required', 'string', 'in:'.implode(',', GenderEnum::getGenders())],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'address' => ['required', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -316,7 +381,7 @@ class UserController extends Controller
             ];
 
             // Only update password if provided
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $updateData['password'] = Hash::make($validated['password']);
             }
 
@@ -349,9 +414,10 @@ class UserController extends Controller
                 ->with('success', 'User updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update user: ' . $e->getMessage());
+                ->with('error', 'Failed to update user: '.$e->getMessage());
         }
     }
 
@@ -364,7 +430,7 @@ class UserController extends Controller
             if ($user->hasRole('super_admin')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete super admin user.'
+                    'message' => 'Cannot delete super admin user.',
                 ], 400);
             }
 
@@ -372,13 +438,112 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'User deleted successfully.'
+                'message' => 'User deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting user: ' . $e->getMessage()
+                'message' => 'Error deleting user: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Ban a user (requires 'ban users' permission)
+     */
+    public function ban($id)
+    {
+        try {
+            $this->authorize('ban users');
+
+            $user = User::findOrFail($id);
+
+            // Prevent banning super_admin
+            if ($user->hasRole('super_admin')) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot ban super_admin user.',
+                    ], 403);
+                }
+
+                return redirect()->back()->with('error', 'Cannot ban super_admin user.');
+            }
+
+            // Prevent banning yourself while active
+            if ($user->id === auth()->id() && $user->status === UserStatusEnum::ACTIVE) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You cannot ban yourself while active. Please have another admin do it.',
+                    ], 403);
+                }
+
+                return redirect()->back()->with('error', 'You cannot ban yourself while active.');
+            }
+
+            $user->update([
+                'status' => UserStatusEnum::BANNED->value,
+            ]);
+
+            // Logout the user if they are currently logged in
+            if ($user->id === auth()->id()) {
+                Auth::logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
+            }
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User banned successfully.',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'User banned successfully.');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error banning user: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Error banning user: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Activate a user (requires 'activate users' permission)
+     */
+    public function activate($id)
+    {
+        try {
+            $this->authorize('activate users');
+
+            $user = User::findOrFail($id);
+
+            $user->update([
+                'status' => UserStatusEnum::ACTIVE->value,
+            ]);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User activated successfully.',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'User activated successfully.');
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error activating user: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Error activating user: '.$e->getMessage());
         }
     }
 }

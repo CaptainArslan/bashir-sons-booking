@@ -4,8 +4,8 @@
 
 @section('styles')
     <link href="{{ asset('admin/assets/plugins/datatable/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
-    <!-- SweetAlert2 CSS -->
-
+    <link href="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.css" rel="stylesheet">
+    
     <style>
         /* Compact Stops Management Styling */
         .stops-header {
@@ -59,11 +59,38 @@
             border-left: 4px solid #007bff;
         }
         
-        .route-summary-card {
-            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        .stop-item {
+            background: white;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
             padding: 1rem;
-            border-left: 4px solid #28a745;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .stop-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #007bff;
+        }
+        
+        .stop-item.sortable-ghost {
+            opacity: 0.4;
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: #6c757d;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+        }
+        
+        .drag-handle:hover {
+            color: #007bff;
+        }
+        
+        .stop-sequence-badge {
+            min-width: 40px;
+            text-align: center;
         }
     </style>
 @endsection
@@ -74,7 +101,7 @@
         <div class="d-flex align-items-center justify-content-between">
             <div>
                 <h4><i class="bx bx-map me-2"></i>Manage Route Stops</h4>
-                <p>View, add, and edit stops for route: {{ $route->name }}</p>
+                <p>Manage stops, sequences, and online booking settings for route: {{ $route->name }}</p>
             </div>
             <div>
                 @can('create routes')
@@ -120,82 +147,125 @@
         </div>
     </div>
 
-    <!-- Route Summary Card -->
-    @if($route->routeStops->count() > 0)
-    <div class="route-summary-card mb-3">
-        <h6 class="mb-2"><i class="bx bx-stats me-1"></i>Route Summary</h6>
-        <div class="row">
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-map text-primary fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Stops</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->count() }} stops</span>
-                    </div>
+    <!-- Route Stops Form -->
+    @can('edit routes')
+    <form id="routeStopsForm" method="POST" action="{{ route('admin.routes.stops.update', $route->id) }}">
+        @csrf
+        @method('PUT')
+        <div class="table-container">
+            <div class="p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="bx bx-list-ul me-1"></i>Route Stops</h6>
+                    <small class="text-muted">
+                        <i class="bx bx-info-circle me-1"></i>
+                        Drag stops to reorder. Sequences will be updated automatically.
+                    </small>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-tachometer text-success fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Distance</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('distance_from_previous') }} km</span>
-                    </div>
+                
+                <div id="stops-list">
+                    @forelse($route->routeStops->sortBy('sequence') as $index => $stop)
+                        <div class="stop-item" data-stop-id="{{ $stop->id }}">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <i class="bx bx-menu drag-handle"></i>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge bg-primary stop-sequence-badge" data-sequence-display>{{ $stop->sequence }}</span>
+                                    <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
+                                    <input type="hidden" name="stops[{{ $index }}][sequence]" class="sequence-input" value="{{ $stop->sequence }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted mb-1">Terminal</label>
+                                    <select name="stops[{{ $index }}][terminal_id]" class="form-select form-select-sm" required>
+                                        <option value="">Select Terminal</option>
+                                        @foreach ($terminals as $terminal)
+                                            <option value="{{ $terminal->id }}" 
+                                                {{ $stop->terminal_id == $terminal->id ? 'selected' : '' }}>
+                                                {{ $terminal->name }} - {{ $terminal->city->name }} ({{ $terminal->code }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Sequence</label>
+                                    <input type="number" 
+                                           name="stops[{{ $index }}][sequence]" 
+                                           class="form-control form-control-sm sequence-number" 
+                                           value="{{ $stop->sequence }}" 
+                                           min="1" 
+                                           required
+                                           readonly>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Online Booking</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="stops[{{ $index }}][online_booking_allowed]" 
+                                               value="1"
+                                               {{ $stop->online_booking_allowed ? 'checked' : '' }}>
+                                        <label class="form-check-label small">
+                                            {{ $stop->online_booking_allowed ? 'Allowed' : 'Not Allowed' }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small text-muted mb-1">Terminal Info</label>
+                                    <div>
+                                        <strong class="small">{{ $stop->terminal->name ?? 'N/A' }}</strong><br>
+                                        <small class="text-muted">{{ $stop->terminal->code ?? 'N/A' }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    @can('delete routes')
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger delete-stop-btn" 
+                                                data-stop-id="{{ $stop->id }}">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    @endcan
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-4">
+                            <i class="bx bx-map me-2"></i>No stops added to this route yet.
+                            <br>
+                            <small>Click "Add Stop" to start building your route.</small>
+                        </div>
+                    @endforelse
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-time text-warning fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Total Travel Time</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">{{ $route->routeStops->sum('approx_travel_time') }} min</span>
-                    </div>
+
+                @if($route->routeStops->count() > 0)
+                <div class="mt-3 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bx bx-save me-1"></i>Save All Changes
+                    </button>
+                    <a href="{{ route('admin.routes.index') }}" class="btn btn-secondary">
+                        <i class="bx bx-arrow-back me-1"></i>Back to Routes
+                    </a>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <i class="bx bx-map-pin text-info fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-2">
-                        <h6 class="mb-0" style="font-size: 0.875rem;">Route Path</h6>
-                        <span class="text-muted" style="font-size: 0.8rem;">
-                            {{ $route->routeStops->first()->terminal->city->name ?? 'N/A' }} → 
-                            {{ $route->routeStops->last()->terminal->city->name ?? 'N/A' }}
-                        </span>
-                    </div>
-                </div>
+                @endif
             </div>
         </div>
-    </div>
-    @endif
-
-    <!-- Route Stops Card -->
+    </form>
+    @else
     <div class="table-container">
         <div class="p-3">
             <h6 class="mb-3"><i class="bx bx-list-ul me-1"></i>Route Stops</h6>
             <div class="table-responsive">
-                <table id="route-stops-table" class="table table-striped table-bordered">
+                <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>Sequence</th>
                             <th>Terminal</th>
                             <th>City</th>
-                            <th>Distance</th>
-                            <th>Travel Time</th>
-                            <th>Services</th>
-                            <th>Actions</th>
+                            <th>Online Booking</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($route->routeStops->sortBy('sequence') as $stop)
-                            <tr data-stop-id="{{ $stop->id }}">
+                            <tr>
                                 <td>
                                     <span class="badge bg-primary">{{ $stop->sequence }}</span>
                                 </td>
@@ -209,57 +279,17 @@
                                     <span class="badge bg-info">{{ $stop->terminal->city->name }}</span>
                                 </td>
                                 <td>
-                                    {{ $stop->distance_from_previous ? $stop->distance_from_previous . ' km' : '-' }}
-                                </td>
-                                <td>
-                                    {{ $stop->approx_travel_time ? $stop->approx_travel_time . ' min' : '-' }}
-                                </td>
-                                <td>
-                                    @if($stop->is_pickup_allowed)
-                                        <span class="badge bg-success me-1">Pickup</span>
+                                    @if($stop->online_booking_allowed)
+                                        <span class="badge bg-success">Allowed</span>
+                                    @else
+                                        <span class="badge bg-danger">Not Allowed</span>
                                     @endif
-                                    @if($stop->is_dropoff_allowed)
-                                        <span class="badge bg-info">Dropoff</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                                type="button" 
-                                                data-bs-toggle="dropdown" 
-                                                aria-expanded="false">
-                                            <i class="bx bx-dots-horizontal-rounded"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            @can('edit routes')
-                                            <li>
-                                                <a class="dropdown-item" 
-                                                   href="javascript:void(0)" 
-                                                   onclick="editStop({{ $stop->id }}, {{ $stop->sequence }}, {{ $stop->distance_from_previous ?? 'null' }}, {{ $stop->approx_travel_time ?? 'null' }}, {{ $stop->is_pickup_allowed ? 'true' : 'false' }}, {{ $stop->is_dropoff_allowed ? 'true' : 'false' }})">
-                                                    <i class="bx bx-edit me-2"></i>Edit Stop
-                                                </a>
-                                            </li>
-                                            @endcan
-                                            @can('delete routes')
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item text-danger" 
-                                                   href="javascript:void(0)" 
-                                                   onclick="deleteStop({{ $stop->id }})">
-                                                    <i class="bx bx-trash me-2"></i>Delete Stop
-                                                </a>
-                                            </li>
-                                            @endcan
-                                        </ul>
-                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bx bx-map me-2"></i>No stops added to this route yet.
-                                    <br>
-                                    <small>Click "Add Stop" to start building your route.</small>
                                 </td>
                             </tr>
                         @endforelse
@@ -268,6 +298,7 @@
             </div>
         </div>
     </div>
+    @endcan
 
     <!-- Add Stop Modal -->
     @can('create routes')
@@ -297,32 +328,13 @@
                                 <label for="sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="sequence" name="sequence" 
                                        placeholder="Enter sequence number" min="1" required>
+                                <small class="text-muted">Will be automatically adjusted if conflicts exist.</small>
                             </div>
-                            <div class="col-md-6">
-                                <label for="distance_from_previous" class="form-label">Distance from Previous (km)</label>
-                                <input type="number" class="form-control" id="distance_from_previous" 
-                                       name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="approx_travel_time" class="form-label">Travel Time (minutes)</label>
-                                <input type="number" class="form-control" id="approx_travel_time" 
-                                       name="approx_travel_time" placeholder="Enter travel time" min="0">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_pickup_allowed" 
-                                           name="is_pickup_allowed" value="1" checked>
-                                    <label class="form-check-label" for="is_pickup_allowed">
-                                        Pickup Allowed
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_dropoff_allowed" 
-                                           name="is_dropoff_allowed" value="1" checked>
-                                    <label class="form-check-label" for="is_dropoff_allowed">
-                                        Dropoff Allowed
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="online_booking_allowed" name="online_booking_allowed" value="1" checked>
+                                    <label class="form-check-label" for="online_booking_allowed">
+                                        Allow Online Booking from this stop
                                     </label>
                                 </div>
                             </div>
@@ -337,122 +349,132 @@
         </div>
     </div>
     @endcan
-
-    <!-- Edit Stop Modal -->
-    @can('edit routes')
-    <div class="modal fade" id="editStopModal" tabindex="-1" aria-labelledby="editStopModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editStopModalLabel">Edit Stop</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editStopForm">
-                    @csrf
-                    @method('PUT')
-                     <div class="modal-body">
-                         <div class="row g-3">
-                             <div class="col-md-6">
-                                 <label for="edit_terminal_id" class="form-label">Terminal <span class="text-danger">*</span></label>
-                                 <select class="form-select" id="edit_terminal_id" name="terminal_id" required>
-                                     <option value="">Select Terminal</option>
-                                     @foreach ($terminals as $terminal)
-                                         <option value="{{ $terminal->id }}">
-                                             {{ $terminal->name }} - {{ $terminal->city->name }} ({{ $terminal->code }})
-                                         </option>
-                                     @endforeach
-                                 </select>
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="edit_sequence" class="form-label">Sequence <span class="text-danger">*</span></label>
-                                 <input type="number" class="form-control" id="edit_sequence" name="sequence" 
-                                        placeholder="Enter sequence number" min="1" required>
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="edit_distance_from_previous" class="form-label">Distance from Previous (km)</label>
-                                 <input type="number" class="form-control" id="edit_distance_from_previous" 
-                                        name="distance_from_previous" placeholder="Enter distance" step="0.1" min="0">
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="edit_approx_travel_time" class="form-label">Travel Time (minutes)</label>
-                                 <input type="number" class="form-control" id="edit_approx_travel_time" 
-                                        name="approx_travel_time" placeholder="Enter travel time" min="0">
-                             </div>
-                             <div class="col-md-6">
-                                 <div class="form-check">
-                                     <input class="form-check-input" type="checkbox" id="edit_is_pickup_allowed" 
-                                            name="is_pickup_allowed" value="1">
-                                     <label class="form-check-label" for="edit_is_pickup_allowed">
-                                         Pickup Allowed
-                                     </label>
-                                 </div>
-                             </div>
-                             <div class="col-md-6">
-                                 <div class="form-check">
-                                     <input class="form-check-input" type="checkbox" id="edit_is_dropoff_allowed" 
-                                            name="is_dropoff_allowed" value="1">
-                                     <label class="form-check-label" for="edit_is_dropoff_allowed">
-                                         Dropoff Allowed
-                                     </label>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Stop</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    @endcan
 @endsection
 
 @section('scripts')
-    <!-- SweetAlert2 JS -->
-    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
-        let currentStopId = null;
+        let currentStopIndex = {{ $route->routeStops->count() }};
 
-        // Auto-calculate next sequence number
-        document.addEventListener('DOMContentLoaded', function() {
-            const sequenceInput = document.getElementById('sequence');
-            const maxSequence = {{ $route->routeStops->max('sequence') ?? 0 }};
-            sequenceInput.value = maxSequence + 1;
+        // Initialize Sortable for stops list
+        @can('edit routes')
+        const stopsList = document.getElementById('stops-list');
+        if (stopsList) {
+            new Sortable(stopsList, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function(evt) {
+                    // Update sequence numbers based on new order
+                    updateSequences();
+                }
+            });
+        }
+
+        // Update sequence numbers after drag
+        function updateSequences() {
+            const stopItems = document.querySelectorAll('.stop-item');
+            stopItems.forEach((item, index) => {
+                const sequence = index + 1;
+                const sequenceInput = item.querySelector('.sequence-input');
+                const sequenceNumber = item.querySelector('.sequence-number');
+                const sequenceDisplay = item.querySelector('[data-sequence-display]');
+                
+                if (sequenceInput) sequenceInput.value = sequence;
+                if (sequenceNumber) sequenceNumber.value = sequence;
+                if (sequenceDisplay) sequenceDisplay.textContent = sequence;
+            });
+        }
+
+        // Handle sequence number manual input
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('sequence-number') && !e.target.readOnly) {
+                const value = parseInt(e.target.value);
+                if (value && value > 0) {
+                    const stopItem = e.target.closest('.stop-item');
+                    const sequenceInput = stopItem.querySelector('.sequence-input');
+                    const sequenceDisplay = stopItem.querySelector('[data-sequence-display]');
+                    
+                    if (sequenceInput) sequenceInput.value = value;
+                    if (sequenceDisplay) sequenceDisplay.textContent = value;
+                }
+            }
         });
 
-
-         // Edit Stop Function
-         function editStop(stopId, sequence, distance, travelTime, pickupAllowed, dropoffAllowed) {
-             currentStopId = stopId;
-             
-             // Get stop data via AJAX to populate terminal information
-             fetch(`{{ route('admin.routes.stops.data', [$route->id, ':stopId']) }}`.replace(':stopId', stopId), {
-                 method: 'GET',
-                 headers: {
-                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                 }
-             })
-             .then(response => response.json())
-             .then(data => {
-                 if (data.success) {
-                     // Populate edit form with current values
-                     document.getElementById('edit_terminal_id').value = data.data.terminal.id;
-                     document.getElementById('edit_sequence').value = sequence;
-                     document.getElementById('edit_distance_from_previous').value = distance || '';
-                     document.getElementById('edit_approx_travel_time').value = travelTime || '';
-                     document.getElementById('edit_is_pickup_allowed').checked = pickupAllowed;
-                     document.getElementById('edit_is_dropoff_allowed').checked = dropoffAllowed;
-                     
-                     // Show edit modal
-                     const editModal = new bootstrap.Modal(document.getElementById('editStopModal'));
-                     editModal.show();
+        // Handle form submission
+        document.getElementById('routeStopsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Update sequences before submission
+            updateSequences();
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Saving...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const formData = new FormData(this);
+            formData.append('_method', 'PUT');
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(async response => {
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An unexpected error occurred. Please try again.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
+                }
+                
+                if (!response.ok) {
+                    let errorMessage = data.message || 'Failed to update stops';
+                    if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join(', ');
+                        errorMessage = errorMessages || errorMessage;
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMessage,
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
+                }
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: data.message || 'Route stops updated successfully.',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error!',
-                        text: 'Failed to load stop data',
+                        text: data.message || 'Failed to update stops',
                         confirmButtonColor: '#dc3545'
                     });
                 }
@@ -462,14 +484,24 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Error!',
-                    text: 'An error occurred while loading stop data',
+                    text: 'An error occurred while updating stops. Please try again.',
                     confirmButtonColor: '#dc3545'
                 });
             });
-         }
+        });
+        @endcan
 
+        // Auto-calculate next sequence number
+        document.addEventListener('DOMContentLoaded', function() {
+            const sequenceInput = document.getElementById('sequence');
+            if (sequenceInput) {
+                const maxSequence = {{ $route->routeStops->max('sequence') ?? 0 }};
+                sequenceInput.value = maxSequence + 1;
+            }
+        });
 
         // Delete Stop Function
+        @can('delete routes')
         function deleteStop(stopId) {
             Swal.fire({
                 title: 'Are you sure?',
@@ -481,6 +513,15 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
                     fetch(`{{ route('admin.routes.stops.destroy', [$route->id, ':stopId']) }}`.replace(':stopId', stopId), {
                         method: 'DELETE',
                         headers: {
@@ -498,7 +539,7 @@
                                 timer: 2000,
                                 timerProgressBar: true
                             }).then(() => {
-                                location.reload(); // Reload to remove deleted stop
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
@@ -522,121 +563,95 @@
             });
         }
 
-        // Auto-calculate travel time based on distance
-        document.getElementById('distance_from_previous').addEventListener('input', function() {
-            const distance = parseFloat(this.value);
-            const travelTimeInput = document.getElementById('approx_travel_time');
-            
-            if (distance && !travelTimeInput.value) {
-                // Calculate travel time based on 60 km/h average speed
-                const travelTime = Math.round(distance / 60 * 60); // Convert to minutes
-                travelTimeInput.value = travelTime;
+        // Attach delete handlers
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-stop-btn')) {
+                const stopId = e.target.closest('.delete-stop-btn').getAttribute('data-stop-id');
+                deleteStop(stopId);
             }
         });
-
-        document.getElementById('edit_distance_from_previous').addEventListener('input', function() {
-            const distance = parseFloat(this.value);
-            const travelTimeInput = document.getElementById('edit_approx_travel_time');
-            
-            if (distance && !travelTimeInput.value) {
-                // Calculate travel time based on 60 km/h average speed
-                const travelTime = Math.round(distance / 60 * 60); // Convert to minutes
-                travelTimeInput.value = travelTime;
-            }
-        });
+        @endcan
 
         // Reset form when modal is closed
-        document.getElementById('addStopModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('addStopModal')?.addEventListener('hidden.bs.modal', function() {
             document.getElementById('addStopForm').reset();
             const maxSequence = {{ $route->routeStops->max('sequence') ?? 0 }};
-            document.getElementById('sequence').value = maxSequence + 1;
+            const sequenceInput = document.getElementById('sequence');
+            if (sequenceInput) {
+                sequenceInput.value = maxSequence + 1;
+            }
         });
 
-        document.getElementById('editStopModal').addEventListener('hidden.bs.modal', function() {
-            document.getElementById('editStopForm').reset();
-            currentStopId = null;
-        });
-
-         // Form validation
-         function validateStopForm(formId) {
-             const form = document.getElementById(formId);
-             const sequence = form.querySelector('input[name="sequence"]').value;
-             const terminalId = form.querySelector('select[name="terminal_id"]')?.value;
-             
-             if (!sequence || sequence < 1) {
-                 Swal.fire({
-                     icon: 'warning',
-                     title: 'Validation Error!',
-                     text: 'Please enter a valid sequence number.',
-                     confirmButtonColor: '#ffc107'
-                 });
-                 return false;
-             }
-             
-             if (!terminalId) {
-                 Swal.fire({
-                     icon: 'warning',
-                     title: 'Validation Error!',
-                     text: 'Please select a terminal.',
-                     confirmButtonColor: '#ffc107'
-                 });
-                 return false;
-             }
-             
-             return true;
-         }
-
-        // Enhanced form submission with validation
+        // Add Stop Form Submission
+        @can('create routes')
         document.getElementById('addStopForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            if (!validateStopForm('addStopForm')) {
-                return;
-            }
-            
             const formData = new FormData(this);
+            
+            Swal.fire({
+                title: 'Adding...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
             
             fetch(`{{ route('admin.routes.stops.store', $route->id) }}`, {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 }
             })
-            .then(response => {
+            .then(async response => {
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An unexpected error occurred. Please try again.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
+                }
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    let errorMessage = data.message || 'Failed to add stop';
+                    if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join(', ');
+                        errorMessage = errorMessages || errorMessage;
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMessage,
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
+                
                 if (data.success) {
-                    // Close modal first
                     const modalElement = document.getElementById('addStopModal');
                     const modal = bootstrap.Modal.getInstance(modalElement);
                     if (modal) {
                         modal.hide();
-                    } else {
-                        // Fallback: hide modal manually
-                        modalElement.classList.remove('show');
-                        modalElement.style.display = 'none';
-                        document.body.classList.remove('modal-open');
-                        const backdrop = document.querySelector('.modal-backdrop');
-                        if (backdrop) {
-                            backdrop.remove();
-                        }
                     }
                     
-                    // Show success message
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
-                        text: data.message,
+                        text: data.message || 'Stop added successfully.',
                         confirmButtonColor: '#28a745',
                         timer: 2000,
                         timerProgressBar: true
                     }).then(() => {
-                        location.reload(); // Reload page to show new stop
+                        location.reload();
                     });
                 } else {
                     Swal.fire({
@@ -657,79 +672,16 @@
                 });
             });
         });
+        @endcan
 
-        // Enhanced edit form submission with validation
-        document.getElementById('editStopForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (!validateStopForm('editStopForm')) {
-                return;
+        // Update checkbox labels on change
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.name && e.target.name.includes('online_booking_allowed')) {
+                const label = e.target.nextElementSibling;
+                if (label) {
+                    label.textContent = e.target.checked ? 'Allowed' : 'Not Allowed';
+                }
             }
-            
-            if (!currentStopId) return;
-            
-            const formData = new FormData(this);
-            
-            fetch(`{{ route('admin.routes.stops.update', [$route->id, ':stopId']) }}`.replace(':stopId', currentStopId), {
-                method: 'PUT',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Close modal first
-                    const modalElement = document.getElementById('editStopModal');
-                    const modal = bootstrap.Modal.getInstance(modalElement);
-                    if (modal) {
-                        modal.hide();
-                    } else {
-                        // Fallback: hide modal manually
-                        modalElement.classList.remove('show');
-                        modalElement.style.display = 'none';
-                        document.body.classList.remove('modal-open');
-                        const backdrop = document.querySelector('.modal-backdrop');
-                        if (backdrop) {
-                            backdrop.remove();
-                        }
-                    }
-                    
-                    // Show success message
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Updated!',
-                        text: data.message,
-                        confirmButtonColor: '#28a745',
-                        timer: 2000,
-                        timerProgressBar: true
-                    }).then(() => {
-                        location.reload(); // Reload page to show updated stop
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: data.message || 'Failed to update stop',
-                        confirmButtonColor: '#dc3545'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'An error occurred while updating the stop. Please try again.',
-                    confirmButtonColor: '#dc3545'
-                });
-            });
         });
     </script>
 @endsection

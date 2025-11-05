@@ -15,9 +15,11 @@
             </nav>
         </div>
         <div class="ms-auto">
-            <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus"></i> Add New Banner
-            </a>
+            @can('create banners')
+                <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">
+                    <i class="bx bx-plus"></i> Add New Banner
+                </a>
+            @endcan
         </div>
     </div>
     <!--end breadcrumb-->
@@ -91,27 +93,69 @@
 
         // Delete banner function
         function deleteBanner(bannerId) {
-            if (confirm('Are you sure you want to delete this banner?')) {
-                $.ajax({
-                    url: "{{ route('admin.banners.destroy', ':id') }}".replace(':id', bannerId),
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#banners-table').DataTable().ajax.reload();
-                            toastr.success(response.message);
-                        } else {
-                            toastr.error(response.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        toastr.error(response.message || 'An error occurred while deleting the banner.');
-                    }
-                });
-            }
+                    });
+
+                    $.ajax({
+                        url: "{{ route('admin.banners.destroy', ':id') }}".replace(':id', bannerId),
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    response.message || 'Banner has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    $('#banners-table').DataTable().ajax.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    response.message || 'Failed to delete banner.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            let errorMessage = 'An error occurred while deleting the banner.';
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to delete banners.';
+                            } else if (xhr.status === 404) {
+                                errorMessage = 'Banner not found.';
+                            }
+                            Swal.fire(
+                                'Error!',
+                                errorMessage,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endsection
