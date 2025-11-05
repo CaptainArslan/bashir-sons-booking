@@ -250,7 +250,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 
         // Booking Console Routes (Live Seat Map)
-        Route::get('/bookings/console/load', [BookingController::class, 'consoleIndex'])->can('create bookings')->name('bookings.console');
+        Route::get('/bookings/console/load', function () {
+            return view('admin.bookings.console-wrapper');
+        })->can('create bookings')->name('bookings.console');
         Route::get('/bookings/console/terminals', [BookingController::class, 'getTerminals'])->can('view bookings')->name('bookings.terminals');
         Route::get('/bookings/console/routes', [BookingController::class, 'getRoutes'])->can('view bookings')->name('bookings.routes');
         Route::get('/bookings/console/stops', [BookingController::class, 'getStops'])->can('view bookings')->name('bookings.stops');

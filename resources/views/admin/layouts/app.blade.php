@@ -30,6 +30,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>@yield('title' ?? config('app.name'))</title>
+    
+    @livewireStyles
 
     <!-- Compact Admin UI Styles -->
     <style>
@@ -317,8 +319,13 @@
     @include('admin.layouts.select2')
     @include('admin.layouts.datatables')
     @yield('scripts')
+    @livewireScripts
     <!--app JS-->
     <script src="{{ asset('admin/assets/js/app.js') }}"></script>
+    
+    <!-- Laravel Echo for Real-time Updates -->
+    @vite(['resources/js/app.js'])
+    
     <script>
         function showLoader(show = true, message = "Please wait...") {
             if (show) {

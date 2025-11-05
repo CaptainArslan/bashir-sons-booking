@@ -108,8 +108,8 @@ class BookingService
                 'currency' => $data['currency'] ?? ($trip->route->base_currency ?? 'PKR'),
                 'total_passengers' => $need,
                 'notes' => $data['notes'] ?? null,
-                'payment_received_from_customer' => $data['payment_received_from_customer'] ?? null,
-                'return_after_deduction_from_customer' => $data['return_after_deduction_from_customer'] ?? null,
+                'payment_received_from_customer' => $data['payment_received_from_customer'] ?? 0,
+                'return_after_deduction_from_customer' => $data['return_after_deduction_from_customer'] ?? 0,
                 'confirmed_at' => $status === 'confirmed' ? now() : null,
             ]);
 
