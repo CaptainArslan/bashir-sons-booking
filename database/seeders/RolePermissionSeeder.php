@@ -28,15 +28,16 @@ class RolePermissionSeeder extends Seeder
         // Ensure PermissionSeeder has run first
         $this->command->info('Assuming PermissionSeeder has already run. If not, run it first.');
 
-        // Super Admin - All permissions
+        // Super Admin - All permissions (including access admin panel)
         $superAdminRole = Role::where('name', 'super_admin')->first();
         if ($superAdminRole) {
             $allPermissions = Permission::all();
             $superAdminRole->syncPermissions($allPermissions);
-            $this->command->info('Super Admin role assigned all '.$allPermissions->count().' permissions.');
+            $this->command->info('Super Admin role assigned all '.$allPermissions->count().' permissions (including access admin panel).');
         }
 
         // Admin - Most permissions except system management and super admin restrictions
+        // Admin role automatically gets 'access admin panel' since it's included in all permissions
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminPermissions = Permission::whereNotIn('name', [
@@ -47,14 +48,15 @@ class RolePermissionSeeder extends Seeder
                 'delete permissions',
             ])->get();
             $adminRole->syncPermissions($adminPermissions);
-            $this->command->info('Admin role assigned '.$adminPermissions->count().' permissions.');
+            $this->command->info('Admin role assigned '.$adminPermissions->count().' permissions (including access admin panel).');
         }
 
         // Employee - Full booking management and viewing permissions
+        // Employee role explicitly gets 'access admin panel' permission to access admin dashboard
         $employeeRole = Role::where('name', 'employee')->first();
         if ($employeeRole) {
             $employeePermissions = Permission::whereIn('name', [
-                'access admin panel',
+                'access admin panel', // Required to access admin dashboard
                 'view dashboard',
                 'view cities',
                 'view terminals',

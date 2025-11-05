@@ -45,6 +45,16 @@
                                     <i class="bi bi-shield-check me-2"></i>Two-Factor Authentication
                                 </a>
                             </li>
+                            @can('access admin panel')
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                                </a>
+                            </li>
+                            @endcan
                             <li>
                                 <hr class="dropdown-divider">
                             </li>

@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
@@ -23,12 +23,13 @@ class RoleSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName]);
         }
 
-        // Super Admin - All permissions
+        // Super Admin - All permissions (including access admin panel)
         $superAdminRole = Role::where('name', 'Super Admin')->first();
         $allPermissions = Permission::all();
         $superAdminRole->syncPermissions($allPermissions);
 
         // Admin - Most permissions except system management
+        // Admin role automatically gets 'access admin panel' since it's included in all permissions
         $adminRole = Role::where('name', 'Admin')->first();
         $adminPermissions = Permission::whereNotIn('name', [
             'manage system settings',
@@ -41,9 +42,10 @@ class RoleSeeder extends Seeder
         $adminRole->syncPermissions($adminPermissions);
 
         // Manager - Business operations management
+        // Manager role explicitly gets 'access admin panel' permission to access admin dashboard
         $managerRole = Role::where('name', 'Manager')->first();
         $managerPermissions = Permission::whereIn('name', [
-            'access admin panel',
+            'access admin panel', // Required to access admin dashboard
             'view dashboard',
             'view users',
             'view cities',
@@ -93,9 +95,10 @@ class RoleSeeder extends Seeder
         $managerRole->syncPermissions($managerPermissions);
 
         // Employee - Limited operational permissions
+        // Employee role explicitly gets 'access admin panel' permission to access admin dashboard
         $employeeRole = Role::where('name', 'Employee')->first();
         $employeePermissions = Permission::whereIn('name', [
-            'access admin panel',
+            'access admin panel', // Required to access admin dashboard
             'view dashboard',
             'view cities',
             'view terminals',
