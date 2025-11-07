@@ -436,59 +436,96 @@
 
                             <!-- Fare Calculation -->
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare</h6>
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation</h6>
+                                
+                                @php
+                                    $seatCount = count($selectedSeats);
+                                    $totalDiscount = $discountAmount * $seatCount;
+                                    $fareAfterDiscount = $totalFare - $totalDiscount;
+                                @endphp
+                                
                                 <div class="row g-2 mb-2">
                                     <div class="col-6">
-                                        <label class="form-label small mb-1">Base Fare</label>
-                                        <input type="number" 
+                                        <label class="form-label small mb-1">Base Fare (Per Seat)</label>
+                                        <input type="text" 
                                                class="form-control form-control-sm" 
-                                               value="{{ number_format($baseFare, 2) }}" 
+                                               value="PKR {{ number_format($baseFare, 2) }}" 
                                                readonly>
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label small mb-1">Discount</label>
+                                        <label class="form-label small mb-1">Discount (Per Seat)</label>
                                         <input type="text" 
                                                class="form-control form-control-sm" 
                                                value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 2) : 'None' }}" 
                                                readonly>
                                     </div>
                                 </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <label class="form-label small mb-1">Total Fare (Before Tax)</label>
-                                        <input type="number" 
-                                               class="form-control form-control-sm fw-bold" 
-                                               value="{{ number_format($totalFare, 2) }}" 
-                                               readonly>
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small mb-1">Tax/Charge
-                                            <small class="text-muted">
-                                                @if($paymentMethod === 'mobile_wallet')
-                                                    (Suggested: PKR 40 per seat)
-                                                @else
-                                                    (Optional)
-                                                @endif
-                                            </small>
-                                        </label>
-                                        <input type="number" 
-                                               class="form-control form-control-sm" 
-                                               wire:model.live="taxAmount"
-                                               wire:loading.attr="disabled"
-                                               placeholder="0.00" 
-                                               min="0" 
-                                               step="0.01">
-                                        @error('taxAmount') 
-                                            <small class="text-danger">{{ $message }}</small> 
-                                        @enderror
-                                        <div wire:loading wire:target="taxAmount" class="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
+                                
+                                @if($seatCount > 0)
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Total Fare ({{ $seatCount }} seat{{ $seatCount > 1 ? 's' : '' }})</label>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm fw-bold" 
+                                                   value="PKR {{ number_format($totalFare, 2) }}" 
+                                                   readonly>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Total Discount</label>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm text-danger fw-bold" 
+                                                   value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 2) : 'PKR 0.00' }}" 
+                                                   readonly>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="alert alert-primary border-1 mb-0 p-2 small text-center">
-                                    <strong class="d-block mb-0">Final: PKR <span class="text-success">{{ number_format($finalAmount, 2) }}</span></strong>
-                                </div>
+                                    
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Fare After Discount</label>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm fw-bold text-primary" 
+                                                   value="PKR {{ number_format($fareAfterDiscount, 2) }}" 
+                                                   readonly>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Tax/Charge
+                                                <small class="text-muted">
+                                                    @if($paymentMethod === 'mobile_wallet')
+                                                        (Suggested: PKR 40 per seat)
+                                                    @else
+                                                        (Optional)
+                                                    @endif
+                                                </small>
+                                            </label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   wire:model.live="taxAmount"
+                                                   wire:loading.attr="disabled"
+                                                   placeholder="0.00" 
+                                                   min="0" 
+                                                   step="0.01">
+                                            @error('taxAmount') 
+                                                <small class="text-danger">{{ $message }}</small> 
+                                            @enderror
+                                            <div wire:loading wire:target="taxAmount" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="alert alert-info mb-2 p-2 small text-center">
+                                        <i class="fas fa-info-circle"></i> Select seats to calculate fare
+                                    </div>
+                                @endif
+                                
+                                @if($seatCount > 0)
+                                    <div class="alert alert-success border-2 mb-0 p-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">Final Amount:</span>
+                                            <span class="fs-5 fw-bold text-success">PKR {{ number_format($finalAmount, 2) }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Booking Type & Payment -->
@@ -548,7 +585,7 @@
                                             <label class="form-label small">Amount Received (PKR)</label>
                                             <input type="number" 
                                                    class="form-control form-control-sm" 
-                                                   wire:model.live="amountReceived"
+                                                   wire:model.blur="amountReceived"
                                                    wire:loading.attr="disabled"
                                                    min="0" 
                                                    step="0.01" 
@@ -1198,54 +1235,94 @@
 
         let lastBookingId = null;
 
-        $wire.on('booking-success', (...args) => {
-            console.log('Booking success event received - full args:', args);
-            console.log('Args length:', args.length);
+        $wire.on('booking-success', (event) => {
+            console.log('Booking success event received:', event);
             
-            // Livewire v3 passes event data as arguments
-            // The data can be in args[0] or args[0][0] depending on how it's dispatched
-            let bookingData;
+            // Livewire v3 can pass data in different formats
+            // Try to extract booking data from event
+            let bookingData = null;
             
-            if (args.length > 0) {
-                // Check if first arg is an array with data
-                if (Array.isArray(args[0]) && args[0].length > 0) {
-                    bookingData = args[0][0];
-                } else if (args[0] && typeof args[0] === 'object') {
-                    bookingData = args[0];
-                } else if (args.length > 1 && args[1] && typeof args[1] === 'object') {
-                    bookingData = args[1];
+            // Handle different event formats
+            if (event && typeof event === 'object') {
+                // If event is the data object directly
+                if (event.bookingNumber || event.bookingId) {
+                    bookingData = event;
+                }
+                // If event has detail property
+                else if (event.detail && typeof event.detail === 'object') {
+                    bookingData = event.detail;
+                }
+                // If event is an array
+                else if (Array.isArray(event) && event.length > 0) {
+                    bookingData = event[0];
+                }
+            }
+            
+            // Fallback: try to get from component property
+            if (!bookingData) {
+                const lastBooking = $wire.get('lastBookingData');
+                if (lastBooking) {
+                    bookingData = {
+                        bookingNumber: lastBooking.booking_number,
+                        bookingId: lastBooking.booking_id,
+                        seats: lastBooking.seats,
+                        status: lastBooking.status,
+                        totalFare: lastBooking.total_fare,
+                        discountAmount: lastBooking.discount_amount,
+                        taxAmount: lastBooking.tax_amount,
+                        finalAmount: lastBooking.final_amount,
+                        paymentMethod: lastBooking.payment_method,
+                    };
                 }
             }
             
             if (!bookingData) {
-                console.error('Could not parse booking data. Args:', args);
-                return;
+                console.error('Could not parse booking data. Event:', event);
+                // Try to get from component
+                bookingData = {
+                    bookingNumber: $wire.get('lastBookingData')?.booking_number || '',
+                    bookingId: $wire.get('lastBookingId') || null,
+                    seats: '-',
+                    status: 'confirmed',
+                    totalFare: $wire.get('baseFare') * ($wire.get('selectedSeats')?.length || 0),
+                    discountAmount: $wire.get('discountAmount') * ($wire.get('selectedSeats')?.length || 0),
+                    taxAmount: $wire.get('taxAmount') || 0,
+                    finalAmount: $wire.get('finalAmount') || 0,
+                    paymentMethod: $wire.get('paymentMethod') || 'cash',
+                };
             }
             
-            console.log('Parsed booking data:', bookingData);
+            console.log('Using booking data:', bookingData);
             
-            // Store booking ID for reprint
-            lastBookingId = bookingData.bookingId || bookingData[0]?.bookingId;
+            // Extract booking details
+            const bookingNumber = bookingData.bookingNumber || bookingData.booking_number || '';
+            const bookingId = bookingData.bookingId || bookingData.booking_id || null;
+            const seats = bookingData.seats || '-';
+            const status = bookingData.status || 'confirmed';
+            const totalFare = bookingData.totalFare || bookingData.total_fare || 0;
+            const discountAmount = bookingData.discountAmount || bookingData.discount_amount || 0;
+            const taxAmount = bookingData.taxAmount || bookingData.tax_amount || 0;
+            const finalAmount = bookingData.finalAmount || bookingData.final_amount || 0;
+            const paymentMethod = bookingData.paymentMethod || bookingData.payment_method || 'cash';
             
-            // Extract booking details - try multiple property formats
-            const bookingNumber = bookingData.bookingNumber || bookingData[0]?.bookingNumber || '';
-            const bookingId = bookingData.bookingId || bookingData[0]?.bookingId;
-            const seats = bookingData.seats || bookingData[0]?.seats || '-';
-            const status = bookingData.status || bookingData[0]?.status || 'confirmed';
-            const totalFare = bookingData.totalFare || bookingData[0]?.totalFare || 0;
-            const discountAmount = bookingData.discountAmount || bookingData[0]?.discountAmount || 0;
-            const taxAmount = bookingData.taxAmount || bookingData[0]?.taxAmount || 0;
-            const finalAmount = bookingData.finalAmount || bookingData[0]?.finalAmount || 0;
-            const paymentMethod = bookingData.paymentMethod || bookingData[0]?.paymentMethod || 'cash';
-            
-            console.log('Extracted booking number:', bookingNumber);
+            console.log('Extracted values:', {
+                bookingNumber,
+                bookingId,
+                seats,
+                status,
+                totalFare,
+                discountAmount,
+                taxAmount,
+                finalAmount,
+                paymentMethod
+            });
             
             // Populate booking details
             const bookingNumberEl = document.getElementById('bookingNumberDisplay');
             if (bookingNumberEl) {
                 const displayText = bookingNumber ? '#' + bookingNumber : '-';
                 bookingNumberEl.textContent = displayText;
-                bookingNumberEl.innerHTML = displayText; // Also set innerHTML as fallback
+                bookingNumberEl.innerHTML = displayText;
                 console.log('Set booking number to:', displayText);
             } else {
                 console.error('bookingNumberDisplay element not found');
@@ -1254,11 +1331,14 @@
             const bookedSeatsEl = document.getElementById('bookedSeatsDisplay');
             if (bookedSeatsEl) {
                 bookedSeatsEl.textContent = seats || '-';
+                bookedSeatsEl.innerHTML = seats || '-';
             }
             
             const statusEl = document.getElementById('bookingStatusDisplay');
             if (statusEl) {
-                statusEl.textContent = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Confirmed';
+                const statusText = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Confirmed';
+                statusEl.textContent = statusText;
+                statusEl.innerHTML = statusText;
             }
             
             const fareEl = document.getElementById('confirmedFare');
@@ -1284,23 +1364,27 @@
             // Payment method display
             const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
             if (paymentMethodDisplay) {
-                const paymentText = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1).replace('_', ' ');
+                const paymentText = paymentMethod ? (paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1).replace(/_/g, ' ')) : 'Cash';
                 paymentMethodDisplay.textContent = paymentText;
+                paymentMethodDisplay.innerHTML = paymentText;
             }
             
             // Setup print button
             const printBtn = document.getElementById('printTicketBtn');
-            if (printBtn && bookingId) {
+            if (printBtn) {
                 printBtn.onclick = function() {
-                    printBooking(bookingId);
+                    printBooking(bookingId || lastBookingId);
                 };
             }
             
             // Show modal
             const successModalElement = document.getElementById('successModal');
             if (successModalElement) {
-                const successModal = new bootstrap.Modal(successModalElement);
+                const successModal = bootstrap.Modal.getInstance(successModalElement) || new bootstrap.Modal(successModalElement);
                 successModal.show();
+                console.log('Modal shown');
+            } else {
+                console.error('successModal element not found');
             }
         });
 

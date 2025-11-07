@@ -380,7 +380,13 @@ class BookingConsole extends Component
             $this->discountAmount = $fare->getDiscountAmount();
             $this->fareValid = true;
             $this->fareError = null;
-            $this->totalFare = 0; // Will be calculated when seats are selected
+
+            // Reset fare-related values
+            $this->totalFare = 0;
+            $this->taxAmount = 0;
+            $this->finalAmount = 0;
+
+            // Recalculate if seats are already selected
             $this->calculateFinal();
         } catch (\Exception $e) {
             $this->fareError = $e->getMessage();
@@ -691,14 +697,9 @@ class BookingConsole extends Component
 
     public function updatedPaymentMethod(): void
     {
-        // Reset tax if changing from mobile_wallet
-        if ($this->paymentMethod !== 'mobile_wallet') {
-            $seatCount = count($this->selectedSeats);
-            if ($this->taxAmount == 40 * $seatCount) {
-                $this->taxAmount = 0;
-            }
-        }
+        // Recalculate fare (which will handle tax based on payment method)
         $this->calculateFinal();
+
         if ($this->paymentMethod === 'cash') {
             $this->transactionId = null;
         } else {
@@ -716,28 +717,52 @@ class BookingConsole extends Component
     {
         $seatCount = count($this->selectedSeats);
 
-        // Ensure baseFare is set from fareData if available
-        if ($this->fareData && $this->baseFare == 0) {
+        // Always ensure baseFare is set from fareData if available
+        if ($this->fareData) {
             $this->baseFare = (float) $this->fareData->final_fare;
+            $this->discountAmount = $this->fareData->getDiscountAmount();
         }
 
+        // Calculate total fare (base fare * number of seats)
         $this->totalFare = $this->baseFare * $seatCount;
-        $discount = $this->discountAmount * $seatCount;
 
-        // Apply mobile wallet tax if payment method is mobile_wallet (only if taxAmount is 0 or not manually set)
+        // Calculate total discount (discount per seat * number of seats)
+        $totalDiscount = $this->discountAmount * $seatCount;
+
+        // Handle tax calculation
         if ($seatCount > 0) {
-            if ($this->paymentMethod === 'mobile_wallet' && $this->taxAmount == 0) {
-                $this->taxAmount = 40 * $seatCount;
-            } elseif ($this->paymentMethod !== 'mobile_wallet' && $this->taxAmount == 40 * $seatCount) {
-                // Reset tax if payment method changed from mobile_wallet
-                $this->taxAmount = 0;
+            // Auto-apply mobile wallet tax if payment method is mobile_wallet
+            if ($this->paymentMethod === 'mobile_wallet') {
+                // Only auto-set if tax is 0 or matches the auto-calculated value
+                $autoTax = 40 * $seatCount;
+                if ($this->taxAmount == 0 || $this->taxAmount == $autoTax) {
+                    $this->taxAmount = $autoTax;
+                }
+                // If user manually changed tax, keep their value
+            } else {
+                // For non-mobile_wallet, only reset if it's the auto-calculated mobile_wallet tax
+                $autoMobileWalletTax = 40 * $seatCount;
+                if ($this->taxAmount == $autoMobileWalletTax) {
+                    $this->taxAmount = 0;
+                }
+                // Otherwise keep user's manual tax value
             }
         } else {
-            // Reset tax if no seats selected
+            // No seats selected, reset everything
+            $this->totalFare = 0;
             $this->taxAmount = 0;
+            $this->finalAmount = 0;
+
+            return;
         }
 
-        $this->finalAmount = $this->totalFare - $discount + $this->taxAmount;
+        // Calculate final amount: Total Fare - Discount + Tax
+        $this->finalAmount = $this->totalFare - $totalDiscount + $this->taxAmount;
+
+        // Ensure final amount is never negative
+        if ($this->finalAmount < 0) {
+            $this->finalAmount = 0;
+        }
     }
 
     public function updatedTaxAmount(): void
@@ -882,12 +907,15 @@ class BookingConsole extends Component
             ];
 
             // Store booking data before resetting
+            $seatCount = count($seatNumbers);
+            $totalDiscount = $this->discountAmount * $seatCount;
+
             $bookingData = [
                 'bookingNumber' => $booking->booking_number,
                 'bookingId' => $booking->id,
                 'seats' => implode(', ', $seatNumbers),
-                'totalFare' => $this->baseFare * count($seatNumbers),
-                'discountAmount' => $this->discountAmount * count($seatNumbers),
+                'totalFare' => $this->totalFare,
+                'discountAmount' => $totalDiscount,
                 'taxAmount' => $this->taxAmount,
                 'finalAmount' => $this->finalAmount,
                 'paymentMethod' => $this->paymentMethod ?? 'cash',
