@@ -36,7 +36,7 @@ A comprehensive, production-ready bus ticketing and management system built with
 - **Payment processing** with cash/card support and transaction tracking
 - **Role-based permissions** with granular access control
 - **Advance booking** support with configurable booking windows
-- **Bus assignment** for multi-segment routes with different buses
+- **Bus assignment** for trips
 
 ### System Capabilities
 
@@ -113,8 +113,7 @@ A comprehensive, production-ready bus ticketing and management system built with
 - RouteStop sequence management
 
 ### 6. Bus Assignment System
-- Multi-segment route support
-- Different bus assignment per segment
+- Direct bus assignment to trips
 - Driver and host assignment
 - Bus facility management
 
@@ -536,20 +535,6 @@ buses
 bus_facility (many-to-many)
 ├── bus_id (FK) ──> buses.id
 └── facility_id (FK) ──> facilities.id
-
-bus_assignments
-├── id (PK)
-├── trip_id (FK) ──> trips.id
-├── from_trip_stop_id (FK) ──> trip_stops.id
-├── to_trip_stop_id (FK) ──> trip_stops.id
-├── bus_id (FK) ──> buses.id
-├── segment_label (e.g., "Segment 1-3")
-├── driver_name
-├── driver_phone
-├── host_name
-├── host_phone
-├── assigned_by_user_id (FK) ──> users.id
-└── timestamps
 ```
 
 #### **Fare Management**
@@ -625,8 +610,7 @@ Trip
 ├── belongsTo Route
 ├── belongsTo Bus
 ├── hasMany TripStops
-├── hasMany Bookings
-└── hasMany BusAssignments
+└── hasMany Bookings
 
 Booking
 ├── belongsTo Trip
@@ -653,13 +637,6 @@ RouteStop
 TripStop
 ├── belongsTo Trip
 └── belongsTo Terminal
-
-BusAssignment
-├── belongsTo Trip
-├── belongsTo Bus
-├── belongsTo TripStop (from_trip_stop_id)
-├── belongsTo TripStop (to_trip_stop_id)
-└── belongsTo User (assigned_by)
 ```
 
 ### Important Design Decisions
@@ -674,11 +651,7 @@ BusAssignment
    - This ensures bookings are tied to route structure, not specific trip instances
    - Allows for consistent fare calculation and route visualization
 
-3. **Multi-Segment Support**:
-   - `BusAssignment` allows different buses for different segments of the same trip
-   - Example: Bus A handles stops 1-3, Bus B handles stops 3-5
-
-4. **Soft Deletes**:
+3. **Soft Deletes**:
    - `trips`, `bookings`, and related models use soft deletes
    - Preserves data integrity while allowing "deletion"
 
@@ -1282,7 +1255,7 @@ This section covers the **entire journey** of a trip from initial booking throug
 ```
 1. Booking Creation      → Customer/Employee creates booking
 2. Trip Scheduling       → Trip auto-created from timetable
-3. Bus Assignment        → Assign bus, driver, host/hostess to segments
+3. Bus Assignment        → Assign bus, driver, host/hostess to trip
 4. Trip Execution        → Trip runs, expenses recorded
 5. Expense Tracking      → Track all terminal-wise expenses
 6. Reporting             → Generate terminal reports
@@ -1356,112 +1329,7 @@ Trip Stops Created:
 
 ---
 
-### 🚌 Phase 3: Bus Assignment to Trip Segments
-
-**What happens**: Assign different buses, drivers, and host/hostess to different segments of the same trip. This is crucial for multi-segment routes where buses change at intermediate terminals.
-
-**Use Cases**:
-- **Multi-Segment Routes**: Different buses for different segments
-- **Bus Changeover**: Bus A handles Karachi→Lahore, Bus B handles Lahore→Islamabad
-- **Driver Rotation**: Different drivers for long routes
-- **Host/Hostess Assignment**: Assign host/hostess per segment
-
-**Algorithm**:
-```
-1. Admin selects trip for bus assignment:
-   - Trip ID: 200
-   - Route: Karachi → Lahore → Islamabad
-
-2. View trip segments:
-   - Segment 1: Karachi (Stop 1) → Lahore (Stop 2)
-   - Segment 2: Lahore (Stop 2) → Islamabad (Stop 3)
-
-3. Assign Bus for Segment 1:
-   a. Select segment:
-      - From TripStop: Stop 1 (Karachi)
-      - To TripStop: Stop 2 (Lahore)
-   
-   b. Select bus:
-      - Available buses (status = 'active')
-      - Choose: Bus A (ID: 10)
-   
-   c. Enter driver details:
-      - driver_name: "Ahmed Khan"
-      - driver_phone: "03001234567"
-      - driver_cnic: "42101-1234567-1"
-      - driver_license: "PK-DL-2023-001"
-      - driver_address: "Karachi, Pakistan"
-   
-   d. Enter host/hostess details (optional):
-      - host_name: "Sara Ali"
-      - host_phone: "03001234568"
-   
-   e. System validates:
-      - From stop sequence < To stop sequence ✅
-      - Both stops belong to same trip ✅
-      - No overlapping assignments for this segment ✅
-   
-   f. Create bus_assignment:
-      INSERT INTO bus_assignments:
-      - trip_id: 200
-      - from_trip_stop_id: 501 (Karachi stop)
-      - to_trip_stop_id: 502 (Lahore stop)
-      - bus_id: 10
-      - driver_name, driver_phone, driver_cnic, driver_license, driver_address
-      - host_name, host_phone
-      - assigned_by_user_id: current admin user
-      - assigned_at: now()
-      - segment_label: "KHI → LHR" (auto-generated)
-
-4. Assign Bus for Segment 2:
-   - From TripStop: Stop 2 (Lahore)
-   - To TripStop: Stop 3 (Islamabad)
-   - Bus: Bus B (ID: 15)
-   - Driver: Different driver for segment 2
-   - Host: Different host/hostess
-   - Repeat validation and creation
-
-5. Multiple Assignments per Trip:
-   - Trip 200 now has:
-     * Assignment 1: Karachi→Lahore (Bus A, Driver Ahmed)
-     * Assignment 2: Lahore→Islamabad (Bus B, Driver Hassan)
-```
-
-**Visual Example**:
-```
-Trip: Karachi → Lahore → Islamabad
-Stops: [Karachi(1), Lahore(2), Islamabad(3)]
-
-Bus Assignments:
-┌─────────────────────────────────────────────────┐
-│ Segment 1: Karachi → Lahore                     │
-│ ├─ Bus: Bus A (Registration: KHI-123)           │
-│ ├─ Driver: Ahmed Khan (CNIC: 42101-1234567-1)  │
-│ └─ Host: Sara Ali (Phone: 03001234568)         │
-└─────────────────────────────────────────────────┘
-           ↓
-┌─────────────────────────────────────────────────┐
-│ Segment 2: Lahore → Islamabad                   │
-│ ├─ Bus: Bus B (Registration: LHR-456)           │
-│ ├─ Driver: Hassan Ali (CNIC: 35201-9876543-2)   │
-│ └─ Host: Fatima Khan (Phone: 03009876543)      │
-└─────────────────────────────────────────────────┘
-```
-
-**Overlap Prevention**:
-- System checks for overlapping assignments
-- Cannot assign two buses to the same segment
-- Validates segment boundaries
-- Prevents conflicts
-
-**Assignment Display in Booking Console**:
-- When loading trip, system shows all bus assignments
-- Display: Bus name, driver, host for each segment
-- Helps booking agents inform customers about bus changes
-
----
-
-### 💰 Phase 4: Expense Tracking (Terminal-Wise)
+### 💰 Phase 3: Expense Tracking (Terminal-Wise)
 
 **What happens**: Track all expenses related to trips, categorized by type and terminal. Expenses are tracked from the source terminal (where expense originates).
 
@@ -1563,7 +1431,7 @@ Total Expenses: 7,500 PKR
 
 ---
 
-### 📊 Phase 5: Terminal Reports
+### 📊 Phase 4: Terminal Reports
 
 **What happens**: Generate comprehensive reports for terminals showing bookings, revenue, expenses, and profit for a date range.
 
@@ -1746,23 +1614,7 @@ Booking Channels:
 └─────────────────────────────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ PHASE 3: BUS & DRIVER ASSIGNMENT                             │
-├─────────────────────────────────────────────────────────────┤
-│ Admin views trip → Selects segments                          │
-│  ↓                                                           │
-│ For each segment:                                            │
-│  ├─ Assign Bus (from active buses)                          │
-│  ├─ Enter Driver Details (name, phone, CNIC, license)      │
-│  ├─ Enter Host/Hostess Details (name, phone)               │
-│  └─ Save Assignment                                         │
-│  ↓                                                           │
-│ Bus Assignment created                                       │
-│  ↓                                                           │
-│ Trip Status: 'assigned' (can be updated)                    │
-└─────────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│ PHASE 4: EXPENSE TRACKING                                    │
+│ PHASE 3: EXPENSE TRACKING                                    │
 ├─────────────────────────────────────────────────────────────┤
 │ Admin/Employee records expenses for trip                     │
 │  ↓                                                           │
@@ -1826,10 +1678,9 @@ Booking Channels:
 
 ### 🎯 Key Points Summary
 
-1. **Multi-Segment Bus Assignment**:
-   - Different buses for different segments of same trip
-   - Driver and host/hostess assigned per segment
-   - Prevents overlapping assignments
+1. **Bus Assignment**:
+   - Direct bus assignment to trips
+   - Driver and host/hostess assignment
 
 2. **Terminal-Wise Expense Tracking**:
    - Expenses tracked by source terminal (`from_terminal_id`)
@@ -1842,7 +1693,7 @@ Booking Channels:
    - Detailed breakdowns by payment method, channel, expense type
 
 4. **Complete Lifecycle Management**:
-   - Booking → Trip Creation → Bus Assignment → Expense Tracking → Reporting
+   - Booking → Trip Creation → Bus & Driver Assignment → Expense Tracking → Reporting
    - All phases integrated and tracked
    - Full audit trail from booking to trip completion
 

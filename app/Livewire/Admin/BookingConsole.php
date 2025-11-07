@@ -3,12 +3,15 @@
 namespace App\Livewire\Admin;
 
 use App\Enums\ChannelEnum;
+use App\Enums\ExpenseTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\TerminalEnum;
 use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
 use App\Events\SeatUnlocked;
 use App\Models\Booking;
+use App\Models\Bus;
+use App\Models\Expense;
 use App\Models\Fare;
 use App\Models\GeneralSetting;
 use App\Models\Route;
@@ -60,8 +63,6 @@ class BookingConsole extends Component
 
     public $availableSeats = [];
 
-    public $busAssignments = [];
-
     // Seat Selection
     public $selectedSeats = [];
 
@@ -75,6 +76,8 @@ class BookingConsole extends Component
     public $discountAmount = 0;
 
     public $taxAmount = 0;
+
+    public $totalFare = 0;
 
     public $finalAmount = 0;
 
@@ -117,6 +120,31 @@ class BookingConsole extends Component
 
     public $lockedSeats = [];
 
+    // Bus Assignment Modal
+    public $showBusAssignmentModal = false;
+
+    public $availableBuses = [];
+
+    public $selectedBusId = null;
+
+    public $driverName = '';
+
+    public $driverPhone = '';
+
+    public $driverCnic = '';
+
+    public $driverLicense = '';
+
+    public $driverAddress = '';
+
+    public $hostName = '';
+
+    public $hostPhone = '';
+
+    public $expenses = [];
+
+    public $expenseTypes = [];
+
     // Options
     public $terminals = [];
 
@@ -144,6 +172,7 @@ class BookingConsole extends Component
         }
 
         $this->paymentMethods = PaymentMethodEnum::options();
+        $this->expenseTypes = ExpenseTypeEnum::options();
 
         $user = Auth::user();
         $this->terminals = Terminal::query()
@@ -299,7 +328,12 @@ class BookingConsole extends Component
             if ($ts->departure_time) {
                 $fullDeparture = Carbon::parse($selectedDate.' '.$ts->departure_time);
 
-                if ($fullDeparture->greaterThanOrEqualTo($now)) {
+                // Allow past times for admin users, or if it's today's date
+                $user = Auth::user();
+                $isAdmin = $user->hasRole('admin');
+                $isToday = Carbon::parse($selectedDate)->isToday();
+
+                if ($isAdmin || $isToday || $fullDeparture->greaterThanOrEqualTo($now)) {
                     $timetableStops[] = [
                         'id' => $ts->id,
                         'timetable_id' => $ts->timetable_id,
@@ -346,6 +380,7 @@ class BookingConsole extends Component
             $this->discountAmount = $fare->getDiscountAmount();
             $this->fareValid = true;
             $this->fareError = null;
+            $this->totalFare = 0; // Will be calculated when seats are selected
             $this->calculateFinal();
         } catch (\Exception $e) {
             $this->fareError = $e->getMessage();
@@ -395,7 +430,7 @@ class BookingConsole extends Component
                 $trip = $tripFactory->createFromTimetable($timetable->id, $this->travelDate);
             }
 
-            $trip->load('stops');
+            $trip->load(['stops', 'originStop']);
 
             $routeStops = RouteStop::where('route_id', $route->id)
                 ->with('terminal:id,name,code')
@@ -429,10 +464,6 @@ class BookingConsole extends Component
 
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
-            $busAssignments = $trip->busAssignments()
-                ->with(['fromTripStop.terminal', 'toTripStop.terminal', 'bus', 'assignedBy'])
-                ->get();
-
             $this->tripId = $trip->id;
             $this->tripData = $trip;
             $this->routeData = [
@@ -460,35 +491,16 @@ class BookingConsole extends Component
             ];
             $this->seatMap = $seatMap;
             $this->availableSeats = $availableSeats;
-            $this->busAssignments = $busAssignments->map(function ($assignment) {
-                $fromTerminal = $assignment->fromTripStop?->terminal;
-                $toTerminal = $assignment->toTripStop?->terminal;
-                $segmentLabel = ($fromTerminal?->code ?? 'N/A').' → '.($toTerminal?->code ?? 'N/A');
-                
-                return [
-                    'id' => $assignment->id,
-                    'from_trip_stop_id' => $assignment->from_trip_stop_id,
-                    'to_trip_stop_id' => $assignment->to_trip_stop_id,
-                    'from_terminal' => $fromTerminal?->name ?? 'N/A',
-                    'from_code' => $fromTerminal?->code ?? 'N/A',
-                    'to_terminal' => $toTerminal?->name ?? 'N/A',
-                    'to_code' => $toTerminal?->code ?? 'N/A',
-                    'segment_label' => $segmentLabel,
-                    'bus' => $assignment->bus ? [
-                        'id' => $assignment->bus->id,
-                        'name' => $assignment->bus->name,
-                        'registration_number' => $assignment->bus->registration_number,
-                    ] : null,
-                    'driver_name' => $assignment->driver_name,
-                    'driver_phone' => $assignment->driver_phone,
-                    'host_name' => $assignment->host_name,
-                ];
-            })->toArray();
+
+            // Recalculate fare if seats are already selected
+            if (count($this->selectedSeats) > 0) {
+                $this->calculateFinal();
+            }
 
             $this->tripLoaded = true;
             $this->showTripContent = true;
             $this->loadTripPassengers();
-            
+
             // Dispatch trip-loaded event with tripId for Echo subscription
             $this->dispatch('trip-loaded', ['tripId' => $this->tripId]);
         } catch (\Exception $e) {
@@ -564,12 +576,12 @@ class BookingConsole extends Component
         if (isset($this->selectedSeats[$seatNumber])) {
             // Deselecting seat
             unset($this->selectedSeats[$seatNumber]);
-            
+
             // Broadcast seat unlocked event for other users
             if ($this->tripId) {
                 SeatUnlocked::dispatch($this->tripId, [$seatNumber], Auth::user());
             }
-            
+
             // Clear passengers if no seats selected
             if (count($this->selectedSeats) === 0) {
                 $this->passengers = [];
@@ -581,12 +593,12 @@ class BookingConsole extends Component
                 'gender' => null,
             ];
             $this->pendingSeat = $seatNumber;
-            
+
             // Broadcast seat locked event for other users
             if ($this->tripId) {
                 SeatLocked::dispatch($this->tripId, [$seatNumber], Auth::user());
             }
-            
+
             $this->dispatch('show-gender-modal', seatNumber: $seatNumber);
         }
 
@@ -606,6 +618,7 @@ class BookingConsole extends Component
             ];
         }
 
+        // Recalculate fare when seats change
         $this->calculateFinal();
     }
 
@@ -613,14 +626,14 @@ class BookingConsole extends Component
     {
         if (isset($this->selectedSeats[$seatNumber])) {
             $this->selectedSeats[$seatNumber]['gender'] = $gender;
-            
+
             // Auto-fill first passenger's gender if not set
-            if (!empty($this->passengers) && empty($this->passengers[0]['gender'])) {
+            if (! empty($this->passengers) && empty($this->passengers[0]['gender'])) {
                 $this->passengers[0]['gender'] = $gender;
             }
         }
         $this->pendingSeat = null;
-        
+
         // Dispatch event to close modal
         $this->dispatch('gender-selected');
     }
@@ -630,17 +643,19 @@ class BookingConsole extends Component
         // Limit to number of selected seats
         $selectedSeatCount = count($this->selectedSeats);
         $currentPassengerCount = count($this->passengers);
-        
+
         if ($selectedSeatCount === 0) {
             $this->dispatch('show-error', message: 'Please select at least one seat first');
+
             return;
         }
-        
+
         if ($currentPassengerCount >= $selectedSeatCount) {
             $this->dispatch('show-error', message: "You can add up to {$selectedSeatCount} passenger(s) for {$selectedSeatCount} selected seat(s)");
+
             return;
         }
-        
+
         $this->passengerCounter++;
         $this->passengers[] = [
             'id' => $this->passengerCounter,
@@ -660,14 +675,15 @@ class BookingConsole extends Component
             // Don't allow removing if it's the only passenger and seats are selected
             if ($this->passengers[$index]['is_required'] && count($this->passengers) === 1 && count($this->selectedSeats) > 0) {
                 $this->dispatch('show-error', message: 'At least one passenger is required');
+
                 return;
             }
-            
+
             unset($this->passengers[$index]);
             $this->passengers = array_values($this->passengers);
-            
+
             // Ensure first passenger is marked as required
-            if (!empty($this->passengers)) {
+            if (! empty($this->passengers)) {
                 $this->passengers[0]['is_required'] = true;
             }
         }
@@ -675,6 +691,13 @@ class BookingConsole extends Component
 
     public function updatedPaymentMethod(): void
     {
+        // Reset tax if changing from mobile_wallet
+        if ($this->paymentMethod !== 'mobile_wallet') {
+            $seatCount = count($this->selectedSeats);
+            if ($this->taxAmount == 40 * $seatCount) {
+                $this->taxAmount = 0;
+            }
+        }
         $this->calculateFinal();
         if ($this->paymentMethod === 'cash') {
             $this->transactionId = null;
@@ -692,14 +715,34 @@ class BookingConsole extends Component
     public function calculateFinal(): void
     {
         $seatCount = count($this->selectedSeats);
-        $this->baseFare = $this->fareData ? (float) $this->fareData->final_fare : 0;
-        $totalFare = $this->baseFare * $seatCount;
+
+        // Ensure baseFare is set from fareData if available
+        if ($this->fareData && $this->baseFare == 0) {
+            $this->baseFare = (float) $this->fareData->final_fare;
+        }
+
+        $this->totalFare = $this->baseFare * $seatCount;
         $discount = $this->discountAmount * $seatCount;
 
-        // Apply mobile wallet tax if payment method is mobile_wallet
-        $this->taxAmount = ($this->paymentMethod === 'mobile_wallet') ? 40 * $seatCount : 0;
+        // Apply mobile wallet tax if payment method is mobile_wallet (only if taxAmount is 0 or not manually set)
+        if ($seatCount > 0) {
+            if ($this->paymentMethod === 'mobile_wallet' && $this->taxAmount == 0) {
+                $this->taxAmount = 40 * $seatCount;
+            } elseif ($this->paymentMethod !== 'mobile_wallet' && $this->taxAmount == 40 * $seatCount) {
+                // Reset tax if payment method changed from mobile_wallet
+                $this->taxAmount = 0;
+            }
+        } else {
+            // Reset tax if no seats selected
+            $this->taxAmount = 0;
+        }
 
-        $this->finalAmount = $totalFare - $discount + $this->taxAmount;
+        $this->finalAmount = $this->totalFare - $discount + $this->taxAmount;
+    }
+
+    public function updatedTaxAmount(): void
+    {
+        $this->calculateFinal();
     }
 
     public function calculateReturn(): void
@@ -714,10 +757,11 @@ class BookingConsole extends Component
     public function confirmBooking(): void
     {
         $selectedSeatCount = count($this->selectedSeats);
-        
+
         // Validate seats are selected
         if ($selectedSeatCount === 0) {
             $this->dispatch('show-error', message: 'Please select at least one seat');
+
             return;
         }
 
@@ -726,6 +770,7 @@ class BookingConsole extends Component
             $this->updatePassengerForms();
             if (count($this->passengers) === 0) {
                 $this->dispatch('show-error', message: 'Please provide at least one passenger information');
+
                 return;
             }
         }
@@ -734,10 +779,11 @@ class BookingConsole extends Component
         foreach ($this->selectedSeats as $seatNumber => $seatData) {
             if (empty($seatData['gender'])) {
                 $this->dispatch('show-error', message: "Please select gender for seat {$seatNumber}");
+
                 return;
             }
         }
-        
+
         $this->validate([
             'passengers' => 'required|array|min:1|max:'.$selectedSeatCount,
             'passengers.*.name' => 'required|string|max:100',
@@ -756,6 +802,7 @@ class BookingConsole extends Component
 
         if ($this->bookingType === 'counter' && $this->paymentMethod !== 'cash' && empty($this->transactionId)) {
             $this->dispatch('show-error', message: 'Transaction ID is required for non-cash payments');
+
             return;
         }
 
@@ -849,7 +896,7 @@ class BookingConsole extends Component
 
             $this->resetBookingForm();
             $this->loadTrip(); // Reload trip to update seat map and passengers
-            
+
             // Dispatch event with booking data
             $this->dispatch('booking-success', $bookingData);
 
@@ -868,7 +915,7 @@ class BookingConsole extends Component
                 SeatUnlocked::dispatch($this->tripId, [$seat], Auth::user());
             }
         }
-        
+
         $this->selectedSeats = [];
         $this->passengers = [
             [
@@ -898,7 +945,6 @@ class BookingConsole extends Component
         $this->toStop = null;
         $this->seatMap = [];
         $this->availableSeats = [];
-        $this->busAssignments = [];
         $this->selectedSeats = [];
         $this->tripPassengers = [];
         $this->totalEarnings = 0;
@@ -909,6 +955,7 @@ class BookingConsole extends Component
         // If no seats selected, clear all passengers
         if (count($this->selectedSeats) === 0) {
             $this->passengers = [];
+
             return;
         }
 
@@ -929,7 +976,7 @@ class BookingConsole extends Component
         }
 
         // Ensure first passenger is marked as required
-        if (!empty($this->passengers)) {
+        if (! empty($this->passengers)) {
             $this->passengers[0]['is_required'] = true;
         }
     }
@@ -938,12 +985,12 @@ class BookingConsole extends Component
     {
         // Find the index of this seat in selectedSeats array
         $seatIndex = array_search($seatNumber, array_keys($this->selectedSeats));
-        
+
         // If seat was found and removed, remove corresponding passenger
         // Note: updatePassengerForms() will handle the actual removal by matching count
         // This method is called before updatePassengerForms(), so the seat is already removed
         // from selectedSeats, so we need to find which passenger index corresponds to removed seat
-        
+
         // Since seats are removed before this is called, we need to find it differently
         // The updatePassengerForms() will handle the synchronization
     }
@@ -1046,7 +1093,7 @@ class BookingConsole extends Component
         // Check if seat is held (from database/bookings) or locked by another user
         $isHeldInMap = isset($this->seatMap[$seatNumber]) && $this->seatMap[$seatNumber]['status'] === 'held';
         $isLockedByOtherUser = isset($this->lockedSeats[$seatNumber]) && $this->lockedSeats[$seatNumber] != Auth::id();
-        
+
         return $isHeldInMap || $isLockedByOtherUser;
     }
 
@@ -1064,7 +1111,7 @@ class BookingConsole extends Component
         foreach ($seatNumbers as $seat) {
             $this->lockedSeats[$seat] = $userId;
         }
-        
+
         // Force Livewire to update the UI
         $this->dispatch('seat-locked-updated');
     }
@@ -1083,7 +1130,7 @@ class BookingConsole extends Component
         foreach ($seatNumbers as $seat) {
             unset($this->lockedSeats[$seat]);
         }
-        
+
         // Force Livewire to update the UI
         $this->dispatch('seat-unlocked-updated');
     }
@@ -1095,6 +1142,233 @@ class BookingConsole extends Component
         }
 
         $this->loadTrip();
+    }
+
+    public function openBusAssignmentModal(): void
+    {
+        if (! $this->tripId) {
+            $this->dispatch('show-error', message: 'Please load a trip first');
+
+            return;
+        }
+
+        // Check if current stop is the origin
+        if (! $this->isOriginStop()) {
+            $this->dispatch('show-error', message: 'Bus assignment can only be done at the starting point of the trip');
+
+            return;
+        }
+
+        // Load available buses
+        $this->availableBuses = Bus::where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'registration_number', 'model']);
+
+        // Load existing trip data if bus is already assigned
+        if ($this->tripData?->bus_id) {
+            $this->selectedBusId = $this->tripData->bus_id;
+            $this->driverName = $this->tripData->driver_name ?? '';
+            $this->driverPhone = $this->tripData->driver_phone ?? '';
+            $this->driverCnic = $this->tripData->driver_cnic ?? '';
+            $this->driverLicense = $this->tripData->driver_license ?? '';
+            $this->driverAddress = $this->tripData->driver_address ?? '';
+        }
+
+        // Initialize expenses array with one empty expense
+        $this->expenses = [
+            [
+                'expense_type' => '',
+                'amount' => '',
+                'description' => '',
+            ],
+        ];
+
+        $this->showBusAssignmentModal = true;
+
+        // Dispatch event to show modal
+        $this->dispatch('open-bus-assignment-modal');
+    }
+
+    public function closeBusAssignmentModal(): void
+    {
+        $this->showBusAssignmentModal = false;
+        $this->resetBusAssignmentForm();
+
+        // Dispatch event to close modal
+        $this->dispatch('close-bus-assignment-modal');
+    }
+
+    public function addExpense(): void
+    {
+        $this->expenses[] = [
+            'expense_type' => '',
+            'amount' => '',
+            'description' => '',
+        ];
+    }
+
+    public function removeExpense($index): void
+    {
+        if (isset($this->expenses[$index])) {
+            unset($this->expenses[$index]);
+            $this->expenses = array_values($this->expenses);
+        }
+    }
+
+    public function assignBus(): void
+    {
+        $this->validate([
+            'selectedBusId' => 'required|exists:buses,id',
+            'driverName' => 'required|string|max:255',
+            'driverPhone' => 'required|string|max:20',
+            'driverCnic' => 'required|string|max:50',
+            'driverLicense' => 'required|string|max:100',
+            'driverAddress' => 'nullable|string|max:500',
+            'hostName' => 'nullable|string|max:255',
+            'hostPhone' => 'nullable|string|max:20',
+            'expenses' => 'nullable|array',
+            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+            'expenses.*.amount' => 'required_with:expenses.*.expense_type|numeric|min:0',
+            'expenses.*.description' => 'nullable|string|max:500',
+        ], [
+            'selectedBusId.required' => 'Please select a bus',
+            'driverName.required' => 'Driver name is required',
+            'driverPhone.required' => 'Driver phone is required',
+            'driverCnic.required' => 'Driver CNIC is required',
+            'driverLicense.required' => 'Driver license is required',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $trip = Trip::findOrFail($this->tripId);
+
+            // Update trip with bus and driver information
+            $trip->update([
+                'bus_id' => $this->selectedBusId,
+                'driver_name' => $this->driverName,
+                'driver_phone' => $this->driverPhone,
+                'driver_cnic' => $this->driverCnic,
+                'driver_license' => $this->driverLicense,
+                'driver_address' => $this->driverAddress ?? null,
+            ]);
+
+            // Store host information in notes (since there's no host field in trips table)
+            // Or we could add it to notes as JSON
+            if ($this->hostName || $this->hostPhone) {
+                $hostInfo = [];
+                if ($this->hostName) {
+                    $hostInfo['host_name'] = $this->hostName;
+                }
+                if ($this->hostPhone) {
+                    $hostInfo['host_phone'] = $this->hostPhone;
+                }
+                // Append to existing notes
+                $existingNotes = $trip->notes ?? '';
+                $hostNotes = 'Host: '.($this->hostName ?? 'N/A').($this->hostPhone ? ' ('.$this->hostPhone.')' : '');
+                $trip->notes = $existingNotes ? $existingNotes."\n".$hostNotes : $hostNotes;
+                $trip->save();
+            }
+
+            // Get next stop for expenses
+            $nextStop = $this->getNextStop();
+            $fromTerminalId = $this->fromStop['terminal_id'] ?? null;
+            $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
+
+            // Create expenses if provided
+            if (! empty($this->expenses)) {
+                foreach ($this->expenses as $expenseData) {
+                    // Skip empty expenses
+                    if (empty($expenseData['expense_type']) || empty($expenseData['amount'])) {
+                        continue;
+                    }
+
+                    Expense::create([
+                        'trip_id' => $trip->id,
+                        'user_id' => Auth::id(),
+                        'expense_type' => $expenseData['expense_type'],
+                        'amount' => $expenseData['amount'],
+                        'from_terminal_id' => $fromTerminalId,
+                        'to_terminal_id' => $toTerminalId,
+                        'description' => $expenseData['description'] ?? null,
+                        'expense_date' => $trip->departure_date,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            // Reload trip data
+            $this->loadTrip();
+
+            $this->closeBusAssignmentModal();
+
+            $this->dispatch('show-success', message: 'Bus, driver, host, and expenses assigned successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('show-error', message: $e->getMessage());
+        }
+    }
+
+    private function resetBusAssignmentForm(): void
+    {
+        $this->selectedBusId = null;
+        $this->driverName = '';
+        $this->driverPhone = '';
+        $this->driverCnic = '';
+        $this->driverLicense = '';
+        $this->driverAddress = '';
+        $this->hostName = '';
+        $this->hostPhone = '';
+        $this->expenses = [];
+    }
+
+    private function isOriginStop(): bool
+    {
+        if (! $this->tripData || ! $this->fromStop) {
+            return false;
+        }
+
+        // Check if current fromStop is the origin stop
+        $originStop = $this->tripData->originStop;
+        if (! $originStop) {
+            return false;
+        }
+
+        return $originStop->id === ($this->fromStop['trip_stop_id'] ?? null);
+    }
+
+    private function getNextStop(): ?TripStop
+    {
+        if (! $this->tripData || ! $this->fromStop) {
+            return null;
+        }
+
+        $currentSequence = $this->fromStop['sequence'] ?? null;
+        if ($currentSequence === null) {
+            return null;
+        }
+
+        // Get the next stop after current stop
+        return TripStop::where('trip_id', $this->tripId)
+            ->where('sequence', '>', $currentSequence)
+            ->orderBy('sequence')
+            ->first();
+    }
+
+    public function updatedBaseFare(): void
+    {
+        $this->calculateFinal();
+    }
+
+    public function updatedDiscountAmount(): void
+    {
+        $this->calculateFinal();
+    }
+
+    public function updatedSelectedSeats(): void
+    {
+        $this->calculateFinal();
     }
 
     public function render()

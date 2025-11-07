@@ -164,80 +164,15 @@
                         </div>
                         <div class="col-md-3">
                             @php
-                                // Check for segment-based bus assignments
-                                $currentSegmentAssignment = null;
-                                $hasSegmentAssignments = count($busAssignments) > 0;
-                                $currentFromStopId = $fromStop['trip_stop_id'] ?? null;
-                                $currentToStopId = $toStop['trip_stop_id'] ?? null;
-                                
-                                if ($currentFromStopId && $currentToStopId && $hasSegmentAssignments) {
-                                    $currentSegmentAssignment = collect($busAssignments)->first(function ($assignment) use ($currentFromStopId, $currentToStopId) {
-                                        return $assignment['from_trip_stop_id'] == $currentFromStopId &&
-                                               $assignment['to_trip_stop_id'] == $currentToStopId;
-                                    });
-                                }
-                                
-                                $isLegacyBusAssigned = $tripData?->bus_id ?? false;
+                                $isOrigin = $tripData?->originStop && $fromStop && $tripData->originStop->id === $fromStop['trip_stop_id'];
                             @endphp
-                            
-                            @if ($currentSegmentAssignment)
-                                {{-- Show current segment assignment --}}
+                            @if ($tripData?->bus_id && $tripData?->bus)
+                                {{-- Bus assigned --}}
                                 <div class="d-flex align-items-center">
                                     <div class="me-3" style="font-size: 2.5rem;">
                                         <i class="fas fa-bus"></i>
                                     </div>
                                     <div style="flex: 1;">
-                                        <small class="d-block opacity-75"
-                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
-                                        <h6 class="mb-1 fw-bold">{{ $currentSegmentAssignment['bus']['name'] ?? 'No Bus Assigned' }}</h6>
-                                        <div style="font-size: 0.75rem; opacity: 0.9;">
-                                            <div><i class="fas fa-route"></i> {{ $currentSegmentAssignment['segment_label'] ?? '' }}</div>
-                                            @if ($currentSegmentAssignment['driver_name'])
-                                                <div><i class="fas fa-user-tie"></i> Driver: {{ $currentSegmentAssignment['driver_name'] }}</div>
-                                            @endif
-                                            @if ($currentSegmentAssignment['driver_phone'])
-                                                <div><i class="fas fa-phone"></i> {{ $currentSegmentAssignment['driver_phone'] }}</div>
-                                            @endif
-                                            @if ($currentSegmentAssignment['host_name'])
-                                                <div><i class="fas fa-user"></i> Host: {{ $currentSegmentAssignment['host_name'] }}</div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @elseif ($hasSegmentAssignments)
-                                {{-- Show other segment assignments summary --}}
-                                <div>
-                                    <small class="d-block opacity-75"
-                                        style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">
-                                        <i class="fas fa-route"></i> Other Segment Assignments ({{ count($busAssignments) }})
-                                    </small>
-                                    @php
-                                        $otherAssignments = collect($busAssignments)->filter(function ($assignment) use ($currentFromStopId, $currentToStopId) {
-                                            return !($assignment['from_trip_stop_id'] == $currentFromStopId &&
-                                                    $assignment['to_trip_stop_id'] == $currentToStopId);
-                                        })->take(2);
-                                    @endphp
-                                    @foreach ($otherAssignments as $assignment)
-                                        <div class="mb-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.2); border-radius: 4px;">
-                                            <strong>{{ $assignment['segment_label'] ?? '' }}</strong> - {{ $assignment['bus']['name'] ?? 'No Bus' }}
-                                            @if ($assignment['driver_name'])
-                                                | Driver: {{ $assignment['driver_name'] }}
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                    @if ($otherAssignments->isEmpty())
-                                        <small class="text-white-50">No other segment assignments</small>
-                                    @elseif ($otherAssignments->count() < count($busAssignments))
-                                        <small class="text-white-50">+{{ count($busAssignments) - $otherAssignments->count() }} more segment(s)...</small>
-                                    @endif
-                                </div>
-                            @elseif ($isLegacyBusAssigned && $tripData?->bus)
-                                {{-- Legacy bus assignment --}}
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3" style="font-size: 2.5rem;">
-                                        <i class="fas fa-bus"></i>
-                                    </div>
-                                    <div>
                                         <small class="d-block opacity-75"
                                             style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
                                         <h6 class="mb-1 fw-bold">{{ $tripData->bus->name ?? 'N/A' }}</h6>
@@ -249,10 +184,37 @@
                                                 | <i class="fas fa-phone"></i> {{ $tripData->driver_phone }}
                                             @endif
                                         </small>
+                                        @if ($isOrigin)
+                                            <div class="mt-2">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-light fw-bold" 
+                                                        wire:click="openBusAssignmentModal"
+                                                        title="Edit Bus Assignment">
+                                                    <i class="fas fa-edit"></i> Edit Assignment
+                                                </button>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @elseif ($isOrigin)
+                                {{-- No bus assigned - show assign button at origin --}}
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3" style="font-size: 2.5rem; opacity: 0.7;">
+                                        <i class="fas fa-bus"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <small class="d-block opacity-75"
+                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
+                                        <p class="mb-2 fw-bold">Not Assigned</p>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-light fw-bold w-100" 
+                                                wire:click="openBusAssignmentModal">
+                                            <i class="fas fa-bus"></i> Assign Bus & Driver
+                                        </button>
                                     </div>
                                 </div>
                             @else
-                                {{-- No bus assigned --}}
+                                {{-- No bus assigned - not at origin --}}
                                 <div class="d-flex align-items-center">
                                     <div class="me-3" style="font-size: 2.5rem; opacity: 0.7;">
                                         <i class="fas fa-bus"></i>
@@ -261,7 +223,7 @@
                                         <small class="d-block opacity-75"
                                             style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
                                         <p class="mb-0 fw-bold">Not Assigned</p>
-                                        <small class="opacity-75" style="font-size: 0.7rem;">Manage via Bus Assignments</small>
+                                        <small class="opacity-75" style="font-size: 0.7rem;">Assign at origin terminal</small>
                                     </div>
                                 </div>
                             @endif
@@ -493,26 +455,35 @@
                                 </div>
                                 <div class="row g-2 mb-2">
                                     <div class="col-6">
-                                        <label class="form-label small mb-1">Total Fare</label>
+                                        <label class="form-label small mb-1">Total Fare (Before Tax)</label>
                                         <input type="number" 
-                                               class="form-control form-control-sm fw-bold text-success" 
-                                               value="{{ number_format($baseFare * count($selectedSeats) - ($discountAmount * count($selectedSeats)), 2) }}" 
+                                               class="form-control form-control-sm fw-bold" 
+                                               value="{{ number_format($totalFare, 2) }}" 
                                                readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label small mb-1">Tax/Charge
                                             <small class="text-muted">
                                                 @if($paymentMethod === 'mobile_wallet')
-                                                    (Auto: PKR 40 per seat)
+                                                    (Suggested: PKR 40 per seat)
                                                 @else
-                                                    (None)
+                                                    (Optional)
                                                 @endif
                                             </small>
                                         </label>
                                         <input type="number" 
                                                class="form-control form-control-sm" 
-                                               value="{{ number_format($taxAmount, 2) }}" 
-                                               readonly>
+                                               wire:model.live="taxAmount"
+                                               wire:loading.attr="disabled"
+                                               placeholder="0.00" 
+                                               min="0" 
+                                               step="0.01">
+                                        @error('taxAmount') 
+                                            <small class="text-danger">{{ $message }}</small> 
+                                        @enderror
+                                        <div wire:loading wire:target="taxAmount" class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="alert alert-primary border-1 mb-0 p-2 small text-center">
@@ -526,21 +497,31 @@
                                 <div class="row g-2">
                                     <div class="col-md-6 mb-2">
                                         <label class="form-label small fw-bold">Booking Type</label>
-                                        <select class="form-select form-select-sm" wire:model.live="bookingType">
+                                        <select class="form-select form-select-sm" 
+                                                wire:model.live="bookingType"
+                                                wire:loading.attr="disabled">
                                             <option value="counter">🏪 Counter</option>
                                             <option value="phone">📞 Phone (Hold till before 60 mins of departure)</option>
                                         </select>
+                                        <div wire:loading wire:target="bookingType" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
                                     </div>
                                     @if($bookingType === 'counter')
                                         <div class="col-md-6 mb-2">
                                             <label class="form-label small fw-bold">Payment Method</label>
-                                            <select class="form-select form-select-sm" wire:model.live="paymentMethod">
+                                            <select class="form-select form-select-sm" 
+                                                    wire:model.live="paymentMethod"
+                                                    wire:loading.attr="disabled">
                                                 @foreach ($paymentMethods as $method)
                                                     @if($method['value'] !== 'other')
                                                         <option value="{{ $method['value'] }}">{{ $method['label'] }}</option>
                                                     @endif
                                                 @endforeach
                                             </select>
+                                            <div wire:loading wire:target="paymentMethod" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
                                         </div>
                                     @endif
                                 </div>
@@ -568,9 +549,13 @@
                                             <input type="number" 
                                                    class="form-control form-control-sm" 
                                                    wire:model.live="amountReceived"
+                                                   wire:loading.attr="disabled"
                                                    min="0" 
                                                    step="0.01" 
                                                    placeholder="0.00">
+                                            <div wire:loading wire:target="amountReceived" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
                                         </div>
                                         @if($returnAmount > 0)
                                             <div class="alert alert-success border-1 mb-0 p-2 small">
@@ -585,10 +570,14 @@
                             <div class="mb-2">
                                 <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
                                 <textarea class="form-control form-control-sm" 
-                                          wire:model="notes" 
+                                          wire:model.live="notes" 
+                                          wire:loading.attr="disabled"
                                           rows="2" 
                                           maxlength="500"
                                           placeholder="Optional notes..."></textarea>
+                                <div wire:loading wire:target="notes" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
                             </div>
 
                             <!-- Passenger Information Section -->
@@ -722,43 +711,8 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Assign Bus & Trip Passengers List (4 columns) -->
+                <!-- Right Column: Trip Passengers List (4 columns) -->
                 <div class="col-lg-4 col-md-12">
-                    <!-- Assign Bus Card -->
-                    @php
-                        $currentSegmentAssignment = null;
-                        $hasSegmentAssignments = count($busAssignments) > 0;
-                        $currentFromStopId = $fromStop['trip_stop_id'] ?? null;
-                        $currentToStopId = $toStop['trip_stop_id'] ?? null;
-                        
-                        if ($currentFromStopId && $currentToStopId && $hasSegmentAssignments) {
-                            $currentSegmentAssignment = collect($busAssignments)->first(function ($assignment) use ($currentFromStopId, $currentToStopId) {
-                                return $assignment['from_trip_stop_id'] == $currentFromStopId &&
-                                       $assignment['to_trip_stop_id'] == $currentToStopId;
-                            });
-                        }
-                        
-                        $isLegacyBusAssigned = $tripData?->bus_id ?? false;
-                        $showAssignBusCard = !$currentSegmentAssignment && !$isLegacyBusAssigned;
-                    @endphp
-                    
-                    @if ($showAssignBusCard)
-                        <div class="card shadow-sm mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0 small">
-                                    <i class="fas fa-bus"></i> Bus Assignment
-                                </h6>
-                            </div>
-                            <div class="card-body p-2">
-                                <p class="text-muted small mb-2">Assign a bus and driver for this trip.</p>
-                                <a href="{{ route('admin.bus-assignments.create', ['trip_id' => $tripId]) }}" 
-                                   class="btn btn-primary btn-sm w-100 fw-bold">
-                                    <i class="fas fa-bus"></i> Assign Bus & Driver
-                                </a>
-                            </div>
-                        </div>
-                    @endif
-
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
@@ -894,6 +848,221 @@
                             onclick="window.setGender('female')"
                             data-gender="female">
                         👩 Female
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bus Assignment Modal -->
+    <div class="modal fade" id="busAssignmentModal" tabindex="-1" wire:ignore.self data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-bus"></i> Assign Bus & Driver
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="closeBusAssignmentModal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    @if ($showBusAssignmentModal)
+                        <!-- Bus Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-bus"></i> Select Bus <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" wire:model="selectedBusId">
+                                <option value="">-- Select Bus --</option>
+                                @foreach ($availableBuses as $bus)
+                                    <option value="{{ $bus->id }}">
+                                        {{ $bus->name }} ({{ $bus->registration_number }}) - {{ $bus->model }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('selectedBusId') 
+                                <small class="text-danger">{{ $message }}</small> 
+                            @enderror
+                        </div>
+
+                        <!-- Driver Information -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-user-tie"></i> Driver Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Driver Name <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverName"
+                                           placeholder="Enter driver name" 
+                                           maxlength="255">
+                                    @error('driverName') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Driver Phone <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverPhone"
+                                           placeholder="03001234567" 
+                                           maxlength="20">
+                                    @error('driverPhone') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Driver CNIC <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverCnic"
+                                           placeholder="42101-1234567-1" 
+                                           maxlength="50">
+                                    @error('driverCnic') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Driver License <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverLicense"
+                                           placeholder="PK-DL-2023-001" 
+                                           maxlength="100">
+                                    @error('driverLicense') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Driver Address</label>
+                                    <textarea class="form-control form-control-sm" 
+                                              wire:model="driverAddress"
+                                              rows="2" 
+                                              placeholder="Enter driver address" 
+                                              maxlength="500"></textarea>
+                                    @error('driverAddress') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Host Information -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-user"></i> Host/Hostess Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Host Name</label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="hostName"
+                                           placeholder="Enter host name" 
+                                           maxlength="255">
+                                    @error('hostName') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Host Phone</label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="hostPhone"
+                                           placeholder="03001234567" 
+                                           maxlength="20">
+                                    @error('hostPhone') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expenses Section -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">
+                                    <i class="fas fa-receipt"></i> Expenses (From {{ $fromStop['terminal_name'] ?? 'Current' }} to Next Stop)
+                                </h6>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        wire:click="addExpense">
+                                    <i class="fas fa-plus"></i> Add Expense
+                                </button>
+                            </div>
+                            @foreach ($expenses as $index => $expense)
+                                <div class="card mb-3 border-2">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
+                                            @if (count($expenses) > 1)
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        wire:click="removeExpense({{ $index }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Expense Type</label>
+                                                <select class="form-select form-select-sm" 
+                                                        wire:model="expenses.{{ $index }}.expense_type">
+                                                    <option value="">-- Select Type --</option>
+                                                    @foreach ($expenseTypes as $type)
+                                                        <option value="{{ $type['value'] }}">{{ $type['label'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error("expenses.{$index}.expense_type") 
+                                                    <small class="text-danger">{{ $message }}</small> 
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Amount (PKR)</label>
+                                                <input type="number" 
+                                                       class="form-control form-control-sm" 
+                                                       wire:model="expenses.{{ $index }}.amount"
+                                                       placeholder="0.00" 
+                                                       min="0" 
+                                                       step="0.01">
+                                                @error("expenses.{$index}.amount") 
+                                                    <small class="text-danger">{{ $message }}</small> 
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Description</label>
+                                                <input type="text" 
+                                                       class="form-control form-control-sm" 
+                                                       wire:model="expenses.{{ $index }}.description"
+                                                       placeholder="Optional description" 
+                                                       maxlength="500">
+                                                @error("expenses.{$index}.description") 
+                                                    <small class="text-danger">{{ $message }}</small> 
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> Expenses will be recorded from {{ $fromStop['terminal_name'] ?? 'current terminal' }} to the next stop.
+                            </small>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer d-flex gap-2">
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            wire:click="closeBusAssignmentModal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" 
+                            class="btn btn-primary fw-bold" 
+                            wire:click="assignBus"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove>
+                            <i class="fas fa-check"></i> Assign Bus
+                        </span>
+                        <span wire:loading>
+                            <i class="fas fa-spinner fa-spin"></i> Processing...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -1356,6 +1525,72 @@
                 text: event.message,
                 confirmButtonColor: '#d33'
             });
+        });
+
+        $wire.on('show-success', (event) => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: event.message,
+                confirmButtonColor: '#28a745'
+            });
+        });
+
+        // Handle bus assignment modal
+        let busAssignmentModalInstance = null;
+
+        // Function to show modal
+        function showBusAssignmentModal() {
+            const modalElement = document.getElementById('busAssignmentModal');
+            if (modalElement) {
+                busAssignmentModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                busAssignmentModalInstance.show();
+            }
+        }
+
+        // Function to hide modal
+        function hideBusAssignmentModal() {
+            const modalElement = document.getElementById('busAssignmentModal');
+            if (modalElement) {
+                if (busAssignmentModalInstance) {
+                    busAssignmentModalInstance.hide();
+                } else {
+                    const instance = bootstrap.Modal.getInstance(modalElement);
+                    if (instance) {
+                        instance.hide();
+                    }
+                }
+            }
+        }
+
+        // Listen for Livewire events
+        $wire.on('open-bus-assignment-modal', () => {
+            console.log('Opening bus assignment modal');
+            setTimeout(() => showBusAssignmentModal(), 200);
+        });
+
+        $wire.on('close-bus-assignment-modal', () => {
+            console.log('Closing bus assignment modal');
+            hideBusAssignmentModal();
+        });
+
+        // Also watch for property changes as fallback
+        $wire.watch('showBusAssignmentModal', (value) => {
+            console.log('showBusAssignmentModal changed to:', value);
+            if (value) {
+                setTimeout(() => showBusAssignmentModal(), 200);
+            } else {
+                hideBusAssignmentModal();
+            }
+        });
+
+        // Initialize modal on page load if already open
+        document.addEventListener('livewire:init', () => {
+            setTimeout(() => {
+                if ($wire.get('showBusAssignmentModal')) {
+                    showBusAssignmentModal();
+                }
+            }, 500);
         });
 
         // WebSocket integration for real-time updates
