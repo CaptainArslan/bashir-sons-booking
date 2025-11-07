@@ -1,33 +1,32 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\EnquiryController;
-use App\Http\Controllers\Admin\DiscountController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\BusController;
 use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BusAssignmentController;
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\Citycontroller;
 use App\Http\Controllers\Admin\CounterTerminalController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TwoFactorController;
+use Illuminate\Support\Facades\Route;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -284,16 +283,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/console/expense-types', [BookingController::class, 'getExpenseTypes'])->can('view bookings')->name('bookings.expense-types');
         Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
         Route::post('/bookings/console/add-expenses/{tripId}', [BookingController::class, 'addTripExpenses'])->can('create bookings')->name('bookings.add-expenses');
-
-        // Bus Assignments Routes (Terminal-wise segment assignments)
-        Route::get('/bus-assignments', [BusAssignmentController::class, 'index'])->can('view bookings')->name('bus-assignments.index');
-        Route::get('/bus-assignments/create', [BusAssignmentController::class, 'create'])->can('create bookings')->name('bus-assignments.create');
-        Route::post('/bus-assignments', [BusAssignmentController::class, 'store'])->can('create bookings')->name('bus-assignments.store');
-        Route::get('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'show'])->can('view bookings')->name('bus-assignments.show');
-        Route::get('/bus-assignments/{busAssignment}/edit', [BusAssignmentController::class, 'edit'])->can('edit bookings')->name('bus-assignments.edit');
-        Route::put('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'update'])->can('edit bookings')->name('bus-assignments.update');
-        Route::delete('/bus-assignments/{busAssignment}', [BusAssignmentController::class, 'destroy'])->can('delete bookings')->name('bus-assignments.destroy');
-        Route::get('/bus-assignments/trip/{tripId}/stops', [BusAssignmentController::class, 'getTripStops'])->can('view bookings')->name('bus-assignments.trip-stops');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');

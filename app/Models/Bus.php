@@ -54,22 +54,4 @@ class Bus extends Model
     {
         return $this->hasMany(Trip::class);
     }
-
-    public function busAssignments(): HasMany
-    {
-        return $this->hasMany(BusAssignment::class);
-    }
-
-
-    // =============================
-    // Accessors & Mutators
-    // =============================
-    protected function seatCount(): Attribute
-    {
-        return Attribute::make(
-            get: function () {
-                return $this->busLayout?->total_seats ?? 44;
-            },
-        );
-    }
 }

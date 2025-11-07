@@ -364,7 +364,7 @@
                                 <tr>
                                     <th width="10%">#</th>
                                     <th width="25%">Terminal</th>
-                                    <th width="25%">Arrival Time</th>
+                                    <th width="25%">Arrival Time <small class="text-muted">(Optional for first stop)</small></th>
                                     <th width="25%">Departure Time</th>
                                     <th width="15%">Actions</th>
                                 </tr>
@@ -384,28 +384,23 @@
                                         <input type="hidden" name="stops[{{ $index }}][id]" value="{{ $stop->id }}">
                                     </td>
                                     <td>
-                                        @if($index === 0)
-                                            <input type="hidden" name="stops[{{ $index }}][arrival_time]" value="">
-                                            <input type="time" 
-                                                   class="form-control" 
-                                                   value=""
-                                                   disabled
-                                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                                        @php
+                                            // Get raw database value to avoid accessor formatting
+                                            $rawArrivalTime = $stop->getRawOriginal('arrival_time');
+                                            $arrivalTimeFormatted = $rawArrivalTime ? \Carbon\Carbon::parse($rawArrivalTime)->format('H:i') : '';
+                                            $isFirstStop = $index === 0;
+                                        @endphp
+                                        <input type="time" 
+                                               name="stops[{{ $index }}][arrival_time]" 
+                                               class="form-control stop-arrival-time {{ $isFirstStop ? 'first-stop-arrival' : '' }}" 
+                                               data-stop-index="{{ $index }}"
+                                               value="{{ old('stops.' . $index . '.arrival_time', $arrivalTimeFormatted) }}"
+                                               {{ !$stop->is_active ? 'disabled' : '' }}
+                                               {{ !$isFirstStop ? 'required' : '' }}>
+                                        @if($isFirstStop)
                                             <div class="form-text text-muted">
-                                                <i class="bx bx-info-circle me-1"></i>First stop - no arrival time
+                                                <i class="bx bx-info-circle me-1"></i>Optional - leave empty if not needed
                                             </div>
-                                        @else
-                                            @php
-                                                // Get raw database value to avoid accessor formatting
-                                                $rawArrivalTime = $stop->getRawOriginal('arrival_time');
-                                                $arrivalTimeFormatted = $rawArrivalTime ? \Carbon\Carbon::parse($rawArrivalTime)->format('H:i') : '';
-                                            @endphp
-                                            <input type="time" 
-                                                   name="stops[{{ $index }}][arrival_time]" 
-                                                   class="form-control stop-arrival-time" 
-                                                   data-stop-index="{{ $index }}"
-                                                   value="{{ old('stops.' . $index . '.arrival_time', $arrivalTimeFormatted) }}"
-                                                   {{ !$stop->is_active ? 'disabled' : '' }}>
                                         @endif
                                     </td>
                                     <td>
@@ -526,15 +521,32 @@ $(document).ready(function() {
             $('input[name="stops[0][departure_time]"]').removeClass('is-invalid');
         }
         
-        // Validate that times are logical (arrival before departure for intermediate stops)
+        // Validate that times are logical (arrival before departure)
+        // First stop's arrival time is optional, but if provided, should be before departure
         $('.stop-arrival-time, .stop-departure-time, input[name*="[departure_time]"]').each(function() {
             const stopIndex = $(this).data('stop-index');
-            if (stopIndex !== undefined && stopIndex > 0 && stopIndex < {{ $timetableStops->count() - 1 }}) {
+            if (stopIndex !== undefined) {
                 const arrivalTime = $(`input[name="stops[${stopIndex}][arrival_time]"]`).val();
                 const departureTime = $(`input[name="stops[${stopIndex}][departure_time]"]`).val();
+                const isFirstStop = stopIndex === 0;
+                const isLastStop = stopIndex === {{ $timetableStops->count() - 1 }};
                 
-                if (arrivalTime && departureTime) {
+                // For first stop: arrival is optional, but if provided, must be before departure
+                if (isFirstStop && arrivalTime && departureTime) {
                     if (arrivalTime >= departureTime) {
+                        errors.push(`First stop: Arrival time must be before departure time.`);
+                        isValid = false;
+                        $(`input[name="stops[${stopIndex}][arrival_time]"]`).addClass('is-invalid');
+                        $(`input[name="stops[${stopIndex}][departure_time]"]`).addClass('is-invalid');
+                    }
+                }
+                // For intermediate stops: arrival is required and must be before departure
+                else if (!isFirstStop && !isLastStop) {
+                    if (!arrivalTime) {
+                        errors.push(`Stop ${parseInt(stopIndex) + 1}: Arrival time is required.`);
+                        isValid = false;
+                        $(`input[name="stops[${stopIndex}][arrival_time]"]`).addClass('is-invalid');
+                    } else if (arrivalTime && departureTime && arrivalTime >= departureTime) {
                         errors.push(`Stop ${parseInt(stopIndex) + 1}: Arrival time must be before departure time.`);
                         isValid = false;
                         $(`input[name="stops[${stopIndex}][arrival_time]"]`).addClass('is-invalid');

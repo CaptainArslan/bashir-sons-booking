@@ -515,7 +515,6 @@
     @include('admin.bookings.console._state-init')
     @include('admin.bookings.console._terminal-route-functions')
     @include('admin.bookings.console._fare-functions')
-    @include('admin.bookings.console._bus-assignment-functions')
     @include('admin.bookings.console._trip-seat-functions')
     @include('admin.bookings.console._passenger-functions')
     @include('admin.bookings.console._booking-payment-functions')

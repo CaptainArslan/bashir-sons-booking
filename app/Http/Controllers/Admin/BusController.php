@@ -365,14 +365,10 @@ class BusController extends Controller
 
             // Check for associated data
             $tripsCount = $bus->trips()->count();
-            $busAssignmentsCount = $bus->busAssignments()->count();
 
             $associations = [];
             if ($tripsCount > 0) {
                 $associations[] = "{$tripsCount} trip".($tripsCount !== 1 ? 's' : '');
-            }
-            if ($busAssignmentsCount > 0) {
-                $associations[] = "{$busAssignmentsCount} bus assignment".($busAssignmentsCount !== 1 ? 's' : '');
             }
 
             if (! empty($associations)) {
@@ -383,7 +379,6 @@ class BusController extends Controller
                     'success' => false,
                     'message' => $message,
                     'trips_count' => $tripsCount,
-                    'bus_assignments_count' => $busAssignmentsCount,
                 ], 400);
             }
 

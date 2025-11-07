@@ -410,7 +410,7 @@ function displayTimetables(timetables) {
                                 <th width="6%">#</th>
                                 <th width="25%">Stop Name</th>
                                 <th width="12%">Type</th>
-                                <th width="12%">Arrival Time</th>
+                                <th width="12%">Arrival Time <small class="text-muted">(Optional for first stop)</small></th>
                                 <th width="12%">Departure Time</th>
                                 <th width="10%">Sequence</th>
                                 <th width="13%">Status</th>
@@ -456,7 +456,7 @@ function generateStopsTableRows(stops, timetableId) {
                     </span>
                 </td>
                 <td class="time-value">
-                    ${!isStartStop ? (stop.arrival_time || '--:--') : '-'}
+                    ${stop.arrival_time ? stop.arrival_time : (isStartStop ? '<span class="text-muted">--:--</span> <small class="text-muted">(Optional)</small>' : '--:--')}
                 </td>
                 <td class="time-value">
                     ${!isEndStop ? (stop.departure_time || '--:--') : '-'}
@@ -525,8 +525,10 @@ function toggleTimetableStatus(timetableId, currentStatus) {
         if (result.isConfirmed) {
             Swal.fire({
                 title: `${actionText === 'activate' ? 'Activating' : 'Deactivating'}...`,
-                text: 'Please wait',
+                text: 'Please wait while we process your request',
                 allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
@@ -593,8 +595,10 @@ function deleteTimetable(timetableId) {
         if (result.isConfirmed) {
             Swal.fire({
                 title: 'Deleting...',
-                text: 'Please wait',
+                text: 'Please wait while we delete the timetable',
                 allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
@@ -663,6 +667,7 @@ $(document).on('click', '.toggle-stop-btn', function() {
         cancelButtonText: 'Cancel',
         confirmButtonColor: isActive ? '#dc3545' : '#28a745',
         showLoaderOnConfirm: true,
+        allowOutsideClick: () => !Swal.isLoading(),
         preConfirm: () => {
             const url = `/admin/timetables/${timetableId}/stops/${stopId}/toggle-status`;
             return fetch(url, {
@@ -685,10 +690,11 @@ $(document).on('click', '.toggle-stop-btn', function() {
                 return response.json();
             })
             .catch(error => {
+                Swal.hideLoading();
                 Swal.showValidationMessage(`Request failed: ${error.message}`);
+                return false;
             });
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             const data = result.value;
@@ -756,6 +762,7 @@ function toggleAllStops(timetableId, status) {
         cancelButtonText: 'Cancel',
         confirmButtonColor: status === 'active' ? '#28a745' : '#ffc107',
         showLoaderOnConfirm: true,
+        allowOutsideClick: () => !Swal.isLoading(),
         preConfirm: () => {
             const url = `/admin/timetables/${timetableId}/stops/toggle-all`;
             return fetch(url, {
@@ -779,10 +786,11 @@ function toggleAllStops(timetableId, status) {
                 return response.json();
             })
             .catch(error => {
+                Swal.hideLoading();
                 Swal.showValidationMessage(`Request failed: ${error.message}`);
+                return false;
             });
-        },
-        allowOutsideClick: () => !Swal.isLoading()
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             const data = result.value;
