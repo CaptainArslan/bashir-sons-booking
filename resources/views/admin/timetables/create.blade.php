@@ -356,17 +356,15 @@ $(document).ready(function() {
                                 <div class="row">
                 `;
                 
-                // Add arrival time input first (not for start stop)
-                if (!isStartStop) {
-                    timetableHtml += `
+                // Add arrival time input (optional for first stop)
+                timetableHtml += `
                         <div class="col-md-6">
                             <div class="time-input-group">
-                                <label class="form-label">Arrival Time</label>
-                                <input type="time" name="timetables[${i-1}][stops][${index}][arrival_time]" class="form-control" required>
+                                <label class="form-label">Arrival Time${isStartStop ? ' <span class="text-muted">(Optional)</span>' : ''}</label>
+                                <input type="time" name="timetables[${i-1}][stops][${index}][arrival_time]" class="form-control" ${isStartStop ? '' : 'required'}>
                             </div>
                         </div>
                     `;
-                }
                 
                 // Add departure time input second (not for end stop)
                 if (!isEndStop) {
@@ -415,11 +413,12 @@ $(document).ready(function() {
             return false;
         }
         
-        // Validate that all time inputs are filled
-        const timeInputs = $('input[type="time"]');
+        // Validate that all required time inputs are filled
+        // First stop's arrival time is optional (no required attribute), so we skip it
+        const requiredTimeInputs = $('input[type="time"][required]');
         let allFilled = true;
         
-        timeInputs.each(function() {
+        requiredTimeInputs.each(function() {
             if (!$(this).val()) {
                 allFilled = false;
                 return false;
@@ -428,7 +427,7 @@ $(document).ready(function() {
         
         if (!allFilled) {
             e.preventDefault();
-            alert('Please fill in all arrival and departure times.');
+            alert('Please fill in all required arrival and departure times. (Note: Arrival time for the first stop is optional)');
             return false;
         }
         

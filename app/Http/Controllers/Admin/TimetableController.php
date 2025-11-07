@@ -151,12 +151,17 @@ class TimetableController extends Controller
 
                 foreach ($timetableData['stops'] as $stopIndex => $stopData) {
                     // Format times properly (add :00 seconds if needed)
+                    // First stop's arrival time is optional - normalize empty strings to null
                     $arrivalTime = $stopData['arrival_time'] ?? null;
                     $departureTime = $stopData['departure_time'] ?? null;
 
-                    if ($arrivalTime && str_contains($arrivalTime, ':') && substr_count($arrivalTime, ':') === 1) {
+                    // Normalize empty strings to null for optional first stop arrival time
+                    if ($arrivalTime === '' || $arrivalTime === null) {
+                        $arrivalTime = null;
+                    } elseif (str_contains($arrivalTime, ':') && substr_count($arrivalTime, ':') === 1) {
                         $arrivalTime = $arrivalTime.':00';
                     }
+
                     if ($departureTime && str_contains($departureTime, ':') && substr_count($departureTime, ':') === 1) {
                         $departureTime = $departureTime.':00';
                     }
@@ -165,7 +170,7 @@ class TimetableController extends Controller
                         'timetable_id' => $timetable->id,
                         'terminal_id' => $stopData['stop_id'],
                         'sequence' => $stopData['sequence'],
-                        'arrival_time' => $arrivalTime,
+                        'arrival_time' => $arrivalTime, // null for empty first stop arrival time
                         'departure_time' => $departureTime,
                         'is_active' => true,
                     ]);
@@ -227,18 +232,23 @@ class TimetableController extends Controller
                 $timetableStop = TimetableStop::find($stopData['id']);
                 if ($timetableStop && $timetableStop->timetable_id === $timetable->id) {
                     // Format time properly (add :00 seconds if H:i format)
+                    // First stop's arrival time is optional - normalize empty strings to null
                     $arrivalTime = $stopData['arrival_time'] ?? null;
                     $departureTime = $stopData['departure_time'] ?? null;
 
-                    if ($arrivalTime && str_contains($arrivalTime, ':') && substr_count($arrivalTime, ':') === 1) {
+                    // Normalize empty strings to null for optional first stop arrival time
+                    if ($arrivalTime === '' || $arrivalTime === null) {
+                        $arrivalTime = null;
+                    } elseif (str_contains($arrivalTime, ':') && substr_count($arrivalTime, ':') === 1) {
                         $arrivalTime = $arrivalTime.':00';
                     }
+
                     if ($departureTime && str_contains($departureTime, ':') && substr_count($departureTime, ':') === 1) {
                         $departureTime = $departureTime.':00';
                     }
 
                     $timetableStop->update([
-                        'arrival_time' => $arrivalTime,
+                        'arrival_time' => $arrivalTime, // null for empty first stop arrival time
                         'departure_time' => $departureTime,
                     ]);
                 }

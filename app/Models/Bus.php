@@ -53,9 +53,4 @@ class Bus extends Model
     {
         return $this->hasMany(Trip::class);
     }
-
-    public function busAssignments(): HasMany
-    {
-        return $this->hasMany(BusAssignment::class);
-    }
 }

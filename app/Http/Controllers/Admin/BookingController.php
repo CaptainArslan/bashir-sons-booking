@@ -1153,11 +1153,6 @@ class BookingController extends Controller
 
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
-            // Load bus assignments with relationships
-            $busAssignments = $trip->busAssignments()
-                ->with(['fromTripStop.terminal', 'toTripStop.terminal', 'bus', 'assignedBy'])
-                ->get();
-
             return response()->json([
                 'trip' => $trip->load('bus'),
                 'route' => [
@@ -1194,27 +1189,6 @@ class BookingController extends Controller
                 ],
                 'seat_map' => $seatMap,
                 'available_count' => count($availableSeats),
-                'bus_assignments' => $busAssignments->map(function ($assignment) {
-                    return [
-                        'id' => $assignment->id,
-                        'from_trip_stop_id' => $assignment->from_trip_stop_id,
-                        'to_trip_stop_id' => $assignment->to_trip_stop_id,
-                        'from_terminal' => $assignment->fromTripStop?->terminal?->name ?? 'N/A',
-                        'from_code' => $assignment->fromTripStop?->terminal?->code ?? 'N/A',
-                        'to_terminal' => $assignment->toTripStop?->terminal?->name ?? 'N/A',
-                        'to_code' => $assignment->toTripStop?->terminal?->code ?? 'N/A',
-                        'segment_label' => $assignment->segment_label ?? 'N/A',
-                        'bus' => $assignment->bus ? [
-                            'id' => $assignment->bus->id ?? null,
-                            'name' => $assignment->bus->name ?? null,
-                            'registration_number' => $assignment->bus->registration_number ?? null,
-                        ] : null,
-                        'driver_name' => $assignment->driver_name ?? null,
-                        'driver_phone' => $assignment->driver_phone ?? null,
-                        'host_name' => $assignment->host_name ?? null,
-                        'host_phone' => $assignment->host_phone ?? null,
-                    ];
-                }),
             ]);
         } catch (\Exception $e) {
             return response()->json([
