@@ -94,7 +94,7 @@
                     <div class="col-md-1 d-flex align-items-end gap-2">
                         <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" 
                                 wire:click="loadTrip"
-                                @if (!$departureTimeId) disabled @endif>
+                                @if(!$departureTimeId) disabled @endif>
                             <i class="fas fa-play"></i> Load
                         </button>
                     </div>
@@ -1117,31 +1117,41 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body py-4">
-                    <div class="mb-4 p-3 bg-light rounded text-center">
-                        <h6 class="text-muted mb-2">Booking Number</h6>
-                        <h3 class="fw-bold text-primary" id="bookingNumberDisplay">-</h3>
-                    </div>
+                    @if($lastBookingData)
+                        <div class="mb-4 p-3 bg-light rounded text-center">
+                            <h6 class="text-muted mb-2">Booking Number</h6>
+                            <h3 class="fw-bold text-primary">#{{ $lastBookingData['booking_number'] }}</h3>
+                        </div>
 
-                    <div class="mb-4">
-                        <p class="mb-2"><strong>Seats:</strong> <span id="bookedSeatsDisplay" class="badge bg-info ms-2">-</span></p>
-                        <p class="mb-0"><strong>Status:</strong> <span id="bookingStatusDisplay" class="badge bg-success ms-2">-</span></p>
-                    </div>
+                        <div class="mb-4">
+                            <p class="mb-2"><strong>Seats:</strong> <span class="badge bg-info ms-2">{{ $lastBookingData['seats'] }}</span></p>
+                            <p class="mb-0"><strong>Status:</strong> <span class="badge bg-success ms-2">{{ ucfirst($lastBookingData['status']) }}</span></p>
+                        </div>
 
-                    <div class="alert alert-light border-2 mb-4">
-                        <h6 class="fw-bold mb-3">Fare Breakdown</h6>
-                        <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR <span id="confirmedFare">0.00</span></span></p>
-                        <p class="mb-2"><strong>Discount:</strong> <span class="float-end">-PKR <span id="confirmedDiscount">0.00</span></span></p>
-                        <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR <span id="confirmedTax">0.00</span></span></p>
-                        <hr>
-                        <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR <span id="confirmedFinal">0.00</span></span></p>
-                    </div>
+                        <div class="alert alert-light border-2 mb-4">
+                            <h6 class="fw-bold mb-3">Fare Breakdown</h6>
+                            <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR {{ number_format($lastBookingData['total_fare'], 2) }}</span></p>
+                            @if($lastBookingData['discount_amount'] > 0)
+                            <p class="mb-2"><strong>Discount:</strong> <span class="float-end text-danger">-PKR {{ number_format($lastBookingData['discount_amount'], 2) }}</span></p>
+                            @endif
+                            @if($lastBookingData['tax_amount'] > 0)
+                            <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR {{ number_format($lastBookingData['tax_amount'], 2) }}</span></p>
+                            @endif
+                            <hr>
+                            <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR {{ number_format($lastBookingData['final_amount'], 2) }}</span></p>
+                        </div>
 
-                    <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2" id="paymentMethodDisplay">-</span></p>
+                        <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2">{{ ucfirst(str_replace('_', ' ', $lastBookingData['payment_method'])) }}</span></p>
+                    @else
+                        <div class="text-center py-4">
+                            <p class="text-muted">No booking data available</p>
+                        </div>
+                    @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
                     <button type="button" 
                             class="btn btn-primary btn-lg fw-bold flex-fill" 
-                            id="printTicketBtn">
+                            @if($lastBookingId) onclick="printBooking({{ $lastBookingId }})" @else disabled @endif>
                         <i class="fas fa-print"></i> Print Ticket (80mm)
                     </button>
                     <button type="button" 
@@ -1235,160 +1245,27 @@
 
         let lastBookingId = null;
 
-        $wire.on('booking-success', (event) => {
-            console.log('Booking success event received:', event);
-            
-            // Livewire v3 can pass data in different formats
-            // Try to extract booking data from event
-            let bookingData = null;
-            
-            // Handle different event formats
-            if (event && typeof event === 'object') {
-                // If event is the data object directly
-                if (event.bookingNumber || event.bookingId) {
-                    bookingData = event;
+        $wire.on('booking-success', () => {
+            // Show modal after a small delay to ensure DOM is ready
+            setTimeout(() => {
+                const successModalElement = document.getElementById('successModal');
+                if (successModalElement) {
+                    // Hide any existing modal instance first
+                    const existingModal = bootstrap.Modal.getInstance(successModalElement);
+                    if (existingModal) {
+                        existingModal.hide();
+                    }
+                    
+                    // Create new modal instance and show
+                    const successModal = new bootstrap.Modal(successModalElement);
+                    successModal.show();
+                } else {
+                    console.error('successModal element not found');
                 }
-                // If event has detail property
-                else if (event.detail && typeof event.detail === 'object') {
-                    bookingData = event.detail;
-                }
-                // If event is an array
-                else if (Array.isArray(event) && event.length > 0) {
-                    bookingData = event[0];
-                }
-            }
-            
-            // Fallback: try to get from component property
-            if (!bookingData) {
-                const lastBooking = $wire.get('lastBookingData');
-                if (lastBooking) {
-                    bookingData = {
-                        bookingNumber: lastBooking.booking_number,
-                        bookingId: lastBooking.booking_id,
-                        seats: lastBooking.seats,
-                        status: lastBooking.status,
-                        totalFare: lastBooking.total_fare,
-                        discountAmount: lastBooking.discount_amount,
-                        taxAmount: lastBooking.tax_amount,
-                        finalAmount: lastBooking.final_amount,
-                        paymentMethod: lastBooking.payment_method,
-                    };
-                }
-            }
-            
-            if (!bookingData) {
-                console.error('Could not parse booking data. Event:', event);
-                // Try to get from component
-                bookingData = {
-                    bookingNumber: $wire.get('lastBookingData')?.booking_number || '',
-                    bookingId: $wire.get('lastBookingId') || null,
-                    seats: '-',
-                    status: 'confirmed',
-                    totalFare: $wire.get('baseFare') * ($wire.get('selectedSeats')?.length || 0),
-                    discountAmount: $wire.get('discountAmount') * ($wire.get('selectedSeats')?.length || 0),
-                    taxAmount: $wire.get('taxAmount') || 0,
-                    finalAmount: $wire.get('finalAmount') || 0,
-                    paymentMethod: $wire.get('paymentMethod') || 'cash',
-                };
-            }
-            
-            console.log('Using booking data:', bookingData);
-            
-            // Extract booking details
-            const bookingNumber = bookingData.bookingNumber || bookingData.booking_number || '';
-            const bookingId = bookingData.bookingId || bookingData.booking_id || null;
-            const seats = bookingData.seats || '-';
-            const status = bookingData.status || 'confirmed';
-            const totalFare = bookingData.totalFare || bookingData.total_fare || 0;
-            const discountAmount = bookingData.discountAmount || bookingData.discount_amount || 0;
-            const taxAmount = bookingData.taxAmount || bookingData.tax_amount || 0;
-            const finalAmount = bookingData.finalAmount || bookingData.final_amount || 0;
-            const paymentMethod = bookingData.paymentMethod || bookingData.payment_method || 'cash';
-            
-            console.log('Extracted values:', {
-                bookingNumber,
-                bookingId,
-                seats,
-                status,
-                totalFare,
-                discountAmount,
-                taxAmount,
-                finalAmount,
-                paymentMethod
-            });
-            
-            // Populate booking details
-            const bookingNumberEl = document.getElementById('bookingNumberDisplay');
-            if (bookingNumberEl) {
-                const displayText = bookingNumber ? '#' + bookingNumber : '-';
-                bookingNumberEl.textContent = displayText;
-                bookingNumberEl.innerHTML = displayText;
-                console.log('Set booking number to:', displayText);
-            } else {
-                console.error('bookingNumberDisplay element not found');
-            }
-            
-            const bookedSeatsEl = document.getElementById('bookedSeatsDisplay');
-            if (bookedSeatsEl) {
-                bookedSeatsEl.textContent = seats || '-';
-                bookedSeatsEl.innerHTML = seats || '-';
-            }
-            
-            const statusEl = document.getElementById('bookingStatusDisplay');
-            if (statusEl) {
-                const statusText = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Confirmed';
-                statusEl.textContent = statusText;
-                statusEl.innerHTML = statusText;
-            }
-            
-            const fareEl = document.getElementById('confirmedFare');
-            if (fareEl) {
-                fareEl.textContent = parseFloat(totalFare || 0).toFixed(2);
-            }
-            
-            const discountEl = document.getElementById('confirmedDiscount');
-            if (discountEl) {
-                discountEl.textContent = parseFloat(discountAmount || 0).toFixed(2);
-            }
-            
-            const taxEl = document.getElementById('confirmedTax');
-            if (taxEl) {
-                taxEl.textContent = parseFloat(taxAmount || 0).toFixed(2);
-            }
-            
-            const finalEl = document.getElementById('confirmedFinal');
-            if (finalEl) {
-                finalEl.textContent = parseFloat(finalAmount || 0).toFixed(2);
-            }
-            
-            // Payment method display
-            const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
-            if (paymentMethodDisplay) {
-                const paymentText = paymentMethod ? (paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1).replace(/_/g, ' ')) : 'Cash';
-                paymentMethodDisplay.textContent = paymentText;
-                paymentMethodDisplay.innerHTML = paymentText;
-            }
-            
-            // Setup print button
-            const printBtn = document.getElementById('printTicketBtn');
-            if (printBtn) {
-                printBtn.onclick = function() {
-                    printBooking(bookingId || lastBookingId);
-                };
-            }
-            
-            // Show modal
-            const successModalElement = document.getElementById('successModal');
-            if (successModalElement) {
-                const successModal = bootstrap.Modal.getInstance(successModalElement) || new bootstrap.Modal(successModalElement);
-                successModal.show();
-                console.log('Modal shown');
-            } else {
-                console.error('successModal element not found');
-            }
+            }, 100);
         });
 
-        function printBooking(bookingId) {
+        function printBooking(bookingId, ticketType = null) {
             if (!bookingId) {
                 Swal.fire({
                     icon: 'error',
@@ -1399,8 +1276,31 @@
                 return;
             }
 
+            // If ticket type is not provided, show dialog to select
+            if (!ticketType) {
+                Swal.fire({
+                    title: 'Select Ticket Type',
+                    text: 'Which ticket would you like to print?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-user"></i> Customer Ticket',
+                    cancelButtonText: '<i class="fas fa-bus"></i> Host Ticket',
+                    showDenyButton: true,
+                    denyButtonText: '<i class="fas fa-times"></i> Cancel',
+                    confirmButtonColor: '#007bff',
+                    cancelButtonColor: '#28a745',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        printBooking(bookingId, 'customer');
+                    } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+                        printBooking(bookingId, 'host');
+                    }
+                });
+                return;
+            }
+
             try {
-                const printWindow = window.open(`/admin/bookings/${bookingId}/print`, '_blank');
+                const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}`, '_blank');
                 
                 if (!printWindow) {
                     Swal.fire({
@@ -1561,6 +1461,14 @@
                                 <td>To Terminal:</td>
                                 <td>${toTerminal}</td>
                             </tr>
+                            ${tripData?.bus ? `
+                            <tr>
+                                <td>Bus:</td>
+                                <td><strong>${tripData.bus.name || 'N/A'}</strong></td>
+                                <td>Driver:</td>
+                                <td>${tripData.driver_name || 'N/A'}${tripData.driver_phone ? ' (' + tripData.driver_phone + ')' : ''}</td>
+                            </tr>
+                            ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${totalPassengers}</strong></td>

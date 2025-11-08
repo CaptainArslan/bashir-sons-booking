@@ -241,6 +241,10 @@ class BookingConsole extends Component
 
     public function updatedTravelDate(): void
     {
+        // Reset departure time when date changes
+        $this->departureTimeId = null;
+        $this->arrivalTime = null;
+
         if ($this->fromTerminalId && $this->toTerminalId) {
             $this->loadDepartureTimes();
         }
@@ -892,41 +896,28 @@ class BookingConsole extends Component
                 }
             }
 
-            // Store last booking data for reprint
+            // Store last booking data for reprint and modal display
+            $seatCount = count($seatNumbers);
+            $totalDiscount = $this->discountAmount * $seatCount;
+
             $this->lastBookingId = $booking->id;
             $this->lastBookingData = [
                 'booking_number' => $booking->booking_number,
                 'booking_id' => $booking->id,
                 'seats' => implode(', ', $seatNumbers),
-                'total_fare' => $this->baseFare * count($seatNumbers),
-                'discount_amount' => $this->discountAmount * count($seatNumbers),
+                'total_fare' => $this->totalFare,
+                'discount_amount' => $totalDiscount,
                 'tax_amount' => $this->taxAmount,
                 'final_amount' => $this->finalAmount,
                 'payment_method' => $this->paymentMethod ?? 'cash',
                 'status' => $booking->status,
             ];
 
-            // Store booking data before resetting
-            $seatCount = count($seatNumbers);
-            $totalDiscount = $this->discountAmount * $seatCount;
-
-            $bookingData = [
-                'bookingNumber' => $booking->booking_number,
-                'bookingId' => $booking->id,
-                'seats' => implode(', ', $seatNumbers),
-                'totalFare' => $this->totalFare,
-                'discountAmount' => $totalDiscount,
-                'taxAmount' => $this->taxAmount,
-                'finalAmount' => $this->finalAmount,
-                'paymentMethod' => $this->paymentMethod ?? 'cash',
-                'status' => $booking->status,
-            ];
-
             $this->resetBookingForm();
             $this->loadTrip(); // Reload trip to update seat map and passengers
 
-            // Dispatch event with booking data
-            $this->dispatch('booking-success', $bookingData);
+            // Dispatch event to show modal - data is already stored in lastBookingData
+            $this->dispatch('booking-success');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1028,19 +1019,27 @@ class BookingConsole extends Component
         $seatMap = [];
         $bookedSeats = $this->getBookedSeats($trip, $fromStop, $toStop);
 
+        // Create a set of available seats for faster lookup
+        $availableSet = array_flip($available);
+
         for ($i = 1; $i <= $total; $i++) {
             $seatMap[$i] = [
                 'number' => $i,
                 'status' => 'available',
             ];
 
+            // If seat is booked for this segment, show booking details
             if (isset($bookedSeats[$i])) {
                 $seatMap[$i]['status'] = $bookedSeats[$i]['status'];
                 $seatMap[$i]['booking_id'] = $bookedSeats[$i]['booking_id'];
                 $seatMap[$i]['gender'] = $bookedSeats[$i]['gender'];
-            } elseif (! in_array($i, $available)) {
-                $seatMap[$i]['status'] = 'held';
             }
+            // If seat is not in available list, it means it's booked for an overlapping segment
+            // Mark it as booked (not available for this segment)
+            elseif (! isset($availableSet[$i])) {
+                $seatMap[$i]['status'] = 'booked';
+            }
+            // Otherwise, seat is available
         }
 
         return $seatMap;
@@ -1048,12 +1047,12 @@ class BookingConsole extends Component
 
     private function getBookedSeats(Trip $trip, TripStop $fromStop, TripStop $toStop): array
     {
-        $bookings = Booking::with(['seats', 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
+        // Use the same scope as AvailabilityService for consistency
+        $bookings = Booking::with(['seats' => function ($query) {
+            $query->whereNull('cancelled_at');
+        }, 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $trip->id)
-            ->whereIn('status', array_merge(
-                array_column(\App\Enums\BookingStatusEnum::cases(), 'value'),
-                ['checked_in', 'boarded']
-            ))
+            ->activeForAvailability()
             ->get();
 
         $bookedSeats = [];

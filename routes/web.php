@@ -52,7 +52,7 @@ Route::prefix('bookings')->name('frontend.bookings.')->group(function () {
     Route::get('/seats', [\App\Http\Controllers\FrontendBookingController::class, 'selectSeats'])->name('select-seats')->middleware('auth');
     Route::get('/trip-details', [\App\Http\Controllers\FrontendBookingController::class, 'loadTripDetails'])->name('load-trip-details')->middleware('auth');
     Route::post('/store', [\App\Http\Controllers\FrontendBookingController::class, 'store'])->name('store')->middleware('auth');
-    
+
     // Payment Routes
     Route::middleware('auth')->group(function () {
         Route::get('/{booking}/payment', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payment');
@@ -260,7 +260,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->can('edit bookings')->name('bookings.edit');
         Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
-        Route::get('/bookings/{booking}/print', [BookingController::class, 'printTicket'])->can('view bookings')->name('bookings.print');
+        Route::get('/bookings/{booking}/print/{type?}', [BookingController::class, 'printTicket'])->can('view bookings')->name('bookings.print');
         Route::post('/bookings/{booking}/seats/{seat}/cancel', [BookingController::class, 'cancelSeat'])->can('edit bookings')->name('bookings.seats.cancel');
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 

@@ -294,13 +294,14 @@ class BookingController extends Controller
         return view('admin.bookings.show', compact('booking'));
     }
 
-    public function printTicket(Booking $booking): View
+    public function printTicket(Booking $booking, ?string $type = 'customer'): View
     {
         $this->authorize('view bookings');
 
         $booking->load([
             'trip.route',
             'trip.bus',
+            'trip.bus.driver',
             'fromStop.terminal.city',
             'toStop.terminal.city',
             'seats',
@@ -309,7 +310,15 @@ class BookingController extends Controller
             'cancelledByUser',
         ]);
 
-        return view('admin.bookings.print-ticket', compact('booking'));
+        // Validate type
+        if (! in_array($type, ['customer', 'host'])) {
+            $type = 'customer';
+        }
+
+        return view('admin.bookings.print-ticket', [
+            'booking' => $booking,
+            'ticketType' => $type,
+        ]);
     }
 
     public function edit(Booking $booking): View
