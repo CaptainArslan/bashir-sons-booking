@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Enums\BusEnum;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Bus extends Model
 {
@@ -53,5 +53,27 @@ class Bus extends Model
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    // =============================
+    // Accessors & Mutators
+    // =============================
+    protected function seatCount(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // Load busLayout relationship if not already loaded
+                if (! $this->relationLoaded('busLayout')) {
+                    $this->load('busLayout');
+                }
+
+                // Get seat count from busLayout
+                if ($this->busLayout) {
+                    return $this->busLayout->total_seats ?? BusLayout::DEFAULT_SEATS;
+                }
+
+                return BusLayout::DEFAULT_SEATS;
+            },
+        );
     }
 }

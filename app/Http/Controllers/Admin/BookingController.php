@@ -17,7 +17,6 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\Expense;
 use App\Models\Fare;
-use App\Models\GeneralSetting;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
@@ -45,22 +44,6 @@ class BookingController extends Controller
         protected TripFactoryService $tripFactory,
         protected AvailabilityService $availabilityService,
     ) {}
-
-    public function consoleIndex(): View
-    {
-        $this->authorize('create bookings');
-
-        $generalSettings = GeneralSetting::first();
-        $mindate = Carbon::today();
-        $maxdate = $mindate;
-
-        if ($generalSettings->advance_booking_enable) {
-            $maxdate = Carbon::today()->addDays($generalSettings->advance_booking_days ?? 7);
-        }
-        $paymentMethods = PaymentMethodEnum::options();
-
-        return view('admin.bookings.console', compact('paymentMethods', 'mindate', 'maxdate'));
-    }
 
     public function index(): View
     {
@@ -1163,7 +1146,7 @@ class BookingController extends Controller
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
             return response()->json([
-                'trip' => $trip->load('bus'),
+                'trip' => $trip->load('bus.busLayout'),
                 'route' => [
                     'id' => $route->id ?? null,
                     'name' => $route->name ?? null,
@@ -1594,12 +1577,39 @@ class BookingController extends Controller
             });
 
             // Load relationships
-            $trip->load(['bus', 'expenses.fromTerminal', 'expenses.toTerminal']);
+            $trip->load(['bus.busLayout', 'expenses.fromTerminal', 'expenses.toTerminal', 'stops']);
+
+            // If trip is loaded in console, regenerate seat map with new bus seat count
+            $seatMap = null;
+            $seatCount = null;
+            if ($trip->bus) {
+                $seatCount = $this->availabilityService->seatCount($trip);
+
+                // Get current from/to stops from request if available (for console context)
+                $fromTerminalId = $request->input('from_terminal_id');
+                $toTerminalId = $request->input('to_terminal_id');
+
+                if ($fromTerminalId && $toTerminalId && $trip->stops->isNotEmpty()) {
+                    $tripFromStop = $trip->stops->firstWhere('terminal_id', $fromTerminalId);
+                    $tripToStop = $trip->stops->firstWhere('terminal_id', $toTerminalId);
+
+                    if ($tripFromStop && $tripToStop) {
+                        $availableSeats = $this->availabilityService->availableSeats(
+                            $trip->id,
+                            $tripFromStop->id,
+                            $tripToStop->id
+                        );
+                        $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
+                    }
+                }
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Bus, driver, and expenses assigned successfully!',
                 'trip' => $trip,
+                'seat_map' => $seatMap,
+                'seat_count' => $seatCount,
             ]);
         } catch (ValidationException $e) {
             return response()->json([

@@ -299,9 +299,14 @@
                                     Select Your Seat</h6>
                                 <div class="seat-grid">
                                     @php
-                                        $totalSeats = count($seatMap) > 0 ? max(array_keys($seatMap)) : 44;
+                                        // Use seatCount from bus (if assigned) or calculate from seatMap
+                                        $totalSeats = $seatCount ?? (count($seatMap) > 0 ? max(array_keys($seatMap)) : 44);
+                                        // Calculate number of full rows (4 seats per row: 2 left + 2 right)
+                                        $seatsPerRow = 4;
+                                        $fullRows = floor(($totalSeats - 1) / $seatsPerRow);
+                                        $lastRowSeats = $totalSeats - ($fullRows * $seatsPerRow);
                                     @endphp
-                                    @for ($row = 1; $row <= 11; $row++)
+                                    @for ($row = 1; $row <= $fullRows; $row++)
                                         <div class="seat-row-container">
                                             <!-- Left Pair -->
                                             <div class="seat-pair-left">
@@ -399,6 +404,52 @@
                                             </div>
                                         </div>
                                     @endfor
+                                    
+                                    {{-- Last row with remaining seats (if any) --}}
+                                    @if ($lastRowSeats > 0)
+                                        <div class="seat-row-container" style="gap: 0.5rem;">
+                                            @for ($seat = $fullRows * 4 + 1; $seat <= $totalSeats; $seat++)
+                                                @php
+                                                    $seatData = $seatMap[$seat] ?? ['number' => $seat, 'status' => 'available'];
+                                                    $isSelected = isset($selectedSeats[$seat]);
+                                                    $seatGender = $isSelected ? ($selectedSeats[$seat]['gender'] ?? null) : ($seatData['gender'] ?? null);
+                                                    $status = $seatData['status'] ?? 'available';
+                                                    $isLockedByOtherUser = isset($lockedSeats[$seat]) && $lockedSeats[$seat] != auth()->id();
+                                                    
+                                                    // Override status if locked by another user
+                                                    if ($isLockedByOtherUser) {
+                                                        $status = 'held';
+                                                    }
+                                                @endphp
+                                                <button type="button"
+                                                        wire:click="selectSeat({{ $seat }})"
+                                                        class="seat-btn 
+                                                            @if($status === 'booked')
+                                                                @if($seatGender === 'male') seat-booked-male
+                                                                @elseif($seatGender === 'female') seat-booked-female
+                                                                @else seat-booked-male
+                                                                @endif
+                                                            @elseif($status === 'held' || $isLockedByOtherUser)
+                                                                seat-held
+                                                            @elseif($isSelected) seat-selected
+                                                            @else seat-available
+                                                            @endif"
+                                                        @if($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
+                                                    {{ $seat }}
+                                                    @if($isSelected && $seatGender)
+                                                        <span class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
+                                                            {{ $seatGender === 'male' ? '👨' : '👩' }}
+                                                        </span>
+                                                    @endif
+                                                    @if($isLockedByOtherUser)
+                                                        <span class="seat-locked-badge" title="Locked by another user">
+                                                            🔒
+                                                        </span>
+                                                    @endif
+                                                </button>
+                                            @endfor
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

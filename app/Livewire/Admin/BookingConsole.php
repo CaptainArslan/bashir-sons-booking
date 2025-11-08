@@ -63,6 +63,8 @@ class BookingConsole extends Component
 
     public $availableSeats = [];
 
+    public $seatCount = 44; // Default seat count, will be updated from bus
+
     // Seat Selection
     public $selectedSeats = [];
 
@@ -471,6 +473,9 @@ class BookingConsole extends Component
                 $tripFromStop->id,
                 $tripToStop->id
             );
+
+            // Store seat count from bus (if assigned) or use default
+            $this->seatCount = $seatCount;
 
             $seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
 
@@ -964,6 +969,7 @@ class BookingConsole extends Component
         $this->toStop = null;
         $this->seatMap = [];
         $this->availableSeats = [];
+        $this->seatCount = 44; // Reset to default
         $this->selectedSeats = [];
         $this->tripPassengers = [];
         $this->totalEarnings = 0;
@@ -1325,7 +1331,7 @@ class BookingConsole extends Component
 
             DB::commit();
 
-            // Reload trip data
+            // Reload trip data (this will update seat map with new bus seat count)
             $this->loadTrip();
 
             $this->closeBusAssignmentModal();
