@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Fare;
-use App\Models\Terminal;
 use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
-use Illuminate\Database\Seeder;
+use App\Models\Fare;
+use App\Models\Route;
+use App\Models\RouteStop;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class FareSeeder extends Seeder
 {
@@ -23,33 +23,23 @@ class FareSeeder extends Seeder
      */
     public function run(): void
     {
-        $terminals = Terminal::where('status', 'active')->get();
+        $routes = Route::where('status', 'active')->with('routeStops.terminal.city')->get();
 
-        if ($terminals->count() < 2) {
-            $this->command->warn('Not enough terminals to create fares. Please seed terminals first.');
+        if ($routes->isEmpty()) {
+            $this->command->warn('No active routes found. Please seed routes first.');
+
             return;
         }
 
-        $this->command->info('Creating fares between terminals...');
+        $this->command->info('Creating fares for all route stop combinations...');
         $this->command->newLine();
 
-        // Calculate total possible pairs
+        // Calculate total possible fare pairs
         $totalPairs = 0;
-        $terminalPairs = [];
-
-        foreach ($terminals as $fromTerminal) {
-            foreach ($terminals as $toTerminal) {
-                if ($fromTerminal->id === $toTerminal->id) {
-                    continue; // Skip same terminal
-                }
-
-                $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
-
-                if (!in_array($pairKey, $terminalPairs)) {
-                    $terminalPairs[] = $pairKey;
-                    $totalPairs++;
-                }
-            }
+        foreach ($routes as $route) {
+            $stopCount = $route->routeStops->count();
+            // For each route, calculate combinations: from any stop to any later stop
+            $totalPairs += ($stopCount * ($stopCount - 1)) / 2;
         }
 
         $this->command->info("Total fare pairs to create: {$totalPairs}");
@@ -65,67 +55,91 @@ class FareSeeder extends Seeder
         $faresSkipped = 0;
         $processedPairs = [];
 
-        // Create fares between different terminals
-        foreach ($terminals as $fromTerminal) {
-            foreach ($terminals as $toTerminal) {
-                if ($fromTerminal->id === $toTerminal->id) {
-                    continue; // Skip same terminal
-                }
+        // Create fares for each route
+        foreach ($routes as $route) {
+            $routeStops = $route->routeStops->sortBy('sequence')->values();
 
-                $pairKey = min($fromTerminal->id, $toTerminal->id) . '_' . max($fromTerminal->id, $toTerminal->id);
+            if ($routeStops->count() < 2) {
+                $this->command->warn("Route '{$route->name}' has less than 2 stops. Skipping...");
 
-                if (in_array($pairKey, $processedPairs)) {
-                    continue; // Skip duplicate pairs
-                }
+                continue;
+            }
 
-                $processedPairs[] = $pairKey;
+            // Create fares between all stop combinations in sequence order
+            for ($i = 0; $i < $routeStops->count(); $i++) {
+                $fromStop = $routeStops[$i];
 
-                // Update progress bar status
-                $progressBar->setMessage(
-                    "Creating fare: {$fromTerminal->city->name} → {$toTerminal->city->name}",
-                    'status'
-                );
+                // Only create fares to stops that come after this stop in the sequence
+                for ($j = $i + 1; $j < $routeStops->count(); $j++) {
+                    $toStop = $routeStops[$j];
 
-                $baseFare = $this->calculateBaseFare($fromTerminal, $toTerminal);
-                $discountType = $this->faker->randomElement(['flat', 'percent', null]);
-                $discountValue = null;
-                $finalFare = $baseFare;
+                    $pairKey = $fromStop->terminal_id.'_'.$toStop->terminal_id;
 
-                if ($discountType) {
-                    $discountValue = $discountType === 'percent'
-                        ? $this->faker->randomFloat(2, 5, 20)
-                        : $this->faker->randomFloat(2, 50, min(200, $baseFare * 0.2));
+                    // Skip if we've already processed this terminal pair
+                    if (in_array($pairKey, $processedPairs)) {
+                        $progressBar->advance();
 
-                    $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
-                }
+                        continue;
+                    }
 
-                try {
-                    $fare = Fare::firstOrCreate(
-                        [
-                            'from_terminal_id' => $fromTerminal->id,
-                            'to_terminal_id' => $toTerminal->id,
-                        ],
-                        [
-                            'base_fare' => $baseFare,
-                            'discount_type' => $discountType ?? 'flat',
-                            'discount_value' => $discountValue ?? 0,
-                            'final_fare' => $finalFare,
-                            'currency' => 'PKR',
-                            'status' => FareStatusEnum::ACTIVE->value,
-                        ]
+                    $processedPairs[] = $pairKey;
+
+                    // Update progress bar status
+                    $fromTerminalName = $fromStop->terminal->name ?? 'Unknown';
+                    $toTerminalName = $toStop->terminal->name ?? 'Unknown';
+                    $fromCityName = $fromStop->terminal->city->name ?? 'Unknown';
+                    $toCityName = $toStop->terminal->city->name ?? 'Unknown';
+
+                    $progressBar->setMessage(
+                        "Route: {$route->name} | {$fromCityName} → {$toCityName}",
+                        'status'
                     );
 
-                    if ($fare->wasRecentlyCreated) {
-                        $faresCreated++;
-                    } else {
-                        $faresSkipped++;
-                    }
-                } catch (\Exception $e) {
-                    $this->command->error("Error creating fare for {$fromTerminal->city->name} → {$toTerminal->city->name}: " . $e->getMessage());
-                }
+                    // Calculate base fare based on sequence difference (more stops = higher fare)
+                    $sequenceDiff = $toStop->sequence - $fromStop->sequence;
+                    $baseFare = $this->calculateBaseFare($fromStop, $toStop, $sequenceDiff);
 
-                // Advance progress bar
-                $progressBar->advance();
+                    // Randomly decide if this fare has a discount
+                    $discountType = $this->faker->randomElement(['flat', 'percent', null]);
+                    $discountValue = null;
+                    $finalFare = $baseFare;
+
+                    if ($discountType) {
+                        $discountValue = $discountType === 'percent'
+                            ? $this->faker->randomFloat(2, 5, 20)
+                            : $this->faker->randomFloat(2, 50, min(200, $baseFare * 0.2));
+
+                        $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
+                    }
+
+                    try {
+                        $fare = Fare::firstOrCreate(
+                            [
+                                'from_terminal_id' => $fromStop->terminal_id,
+                                'to_terminal_id' => $toStop->terminal_id,
+                            ],
+                            [
+                                'base_fare' => $baseFare,
+                                'discount_type' => $discountType ?? 'flat',
+                                'discount_value' => $discountValue ?? 0,
+                                'final_fare' => $finalFare,
+                                'currency' => 'PKR',
+                                'status' => FareStatusEnum::ACTIVE->value,
+                            ]
+                        );
+
+                        if ($fare->wasRecentlyCreated) {
+                            $faresCreated++;
+                        } else {
+                            $faresSkipped++;
+                        }
+                    } catch (\Exception $e) {
+                        $this->command->error("Error creating fare for {$fromCityName} → {$toCityName}: ".$e->getMessage());
+                    }
+
+                    // Advance progress bar
+                    $progressBar->advance();
+                }
             }
         }
 
@@ -135,50 +149,45 @@ class FareSeeder extends Seeder
         $this->command->newLine(2);
 
         // Display summary
-        $this->command->info("✅ Fare Seeding Summary:");
+        $this->command->info('✅ Fare Seeding Summary:');
         $this->command->table(
             ['Metric', 'Count'],
             [
+                ['Total Routes Processed', $routes->count()],
                 ['Total Pairs Processed', $totalPairs],
                 ['New Fares Created', $faresCreated],
                 ['Existing Fares Skipped', $faresSkipped],
-                ['Total Active Terminals', $terminals->count()],
             ]
         );
 
         if ($faresCreated > 0) {
             $this->command->info("🎉 Successfully created {$faresCreated} new fares!");
         } else {
-            $this->command->warn("⚠️  No new fares were created. All fare pairs already exist.");
+            $this->command->warn('⚠️  No new fares were created. All fare pairs already exist.');
         }
 
         $this->command->newLine();
     }
 
     /**
-     * Calculate base fare based on terminal distance/city
+     * Calculate base fare based on route stop sequence difference
      */
-    private function calculateBaseFare(Terminal $fromTerminal, Terminal $toTerminal): float
+    private function calculateBaseFare(RouteStop $fromStop, RouteStop $toStop, int $sequenceDiff): float
     {
-        // Simple calculation based on city names (you can enhance this with actual distance)
-        $fromCity = $fromTerminal->city->name;
-        $toCity = $toTerminal->city->name;
+        // Base fare calculation based on sequence difference
+        // More stops between = higher fare
+        $baseFarePerStop = $this->faker->randomFloat(2, 200, 500);
+        $baseFare = $baseFarePerStop * $sequenceDiff;
 
-        // Base fare ranges
-        $baseFares = [
-            'Karachi' => ['Lahore' => 2500, 'Islamabad' => 2000, 'Peshawar' => 1800],
-            'Lahore' => ['Karachi' => 2500, 'Islamabad' => 800, 'Peshawar' => 1200],
-            'Islamabad' => ['Karachi' => 2000, 'Lahore' => 800, 'Peshawar' => 400],
-            'Peshawar' => ['Karachi' => 1800, 'Lahore' => 1200, 'Islamabad' => 400],
-        ];
+        // Add some randomness to make it more realistic
+        $variation = $this->faker->randomFloat(2, 0.8, 1.2);
+        $baseFare = $baseFare * $variation;
 
-        // Check if we have predefined fares
-        if (isset($baseFares[$fromCity][$toCity])) {
-            return $baseFares[$fromCity][$toCity];
-        }
+        // Ensure minimum fare
+        $minFare = 300;
+        $maxFare = 5000;
 
-        // Default fare calculation
-        return $this->faker->randomFloat(2, 500, 3000);
+        return max($minFare, min($maxFare, round($baseFare, 2)));
     }
 
     /**
@@ -186,7 +195,7 @@ class FareSeeder extends Seeder
      */
     private function calculateFinalFare(float $baseFare, string $discountType, float $discountValue): float
     {
-        if (!$discountType || !$discountValue) {
+        if (! $discountType || ! $discountValue) {
             return $baseFare;
         }
 
