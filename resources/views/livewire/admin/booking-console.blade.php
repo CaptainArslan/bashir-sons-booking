@@ -56,6 +56,7 @@
                         <label class="form-label fw-bold">To Terminal</label>
                         <select class="form-select form-select-lg select2" 
                                 wire:model.live="toTerminalId"
+                                wire:key="to-terminal-select-{{ count($toTerminals) }}"
                                 @if (!$fromTerminalId) disabled @endif>
                             <option value="">Select Destination</option>
                             @foreach ($toTerminals as $terminal)
@@ -71,6 +72,7 @@
                         <label class="form-label fw-bold">Departure Time</label>
                         <select class="form-select form-select-lg select2" 
                                 wire:model.live="departureTimeId"
+                                wire:key="departure-time-select-{{ count($departureTimes) }}-{{ $travelDate }}"
                                 @if (!$toTerminalId) disabled @endif>
                             <option value="">Select Departure Time</option>
                             @foreach ($departureTimes as $time)
@@ -1204,6 +1206,25 @@
 
     @script
     <script>
+        // Re-initialize Select2 after every Livewire update
+        document.addEventListener('livewire:update', () => {
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                // Destroy existing Select2 instances
+                $('.select2').each(function() {
+                    if ($(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2('destroy');
+                    }
+                });
+                
+                // Re-initialize Select2
+                setTimeout(() => {
+                    $('.select2').select2({
+                        width: 'resolve'
+                    });
+                }, 100);
+            }
+        });
+        
         let pendingSeatNumber = null;
         let genderModalInstance = null;
 
@@ -1648,8 +1669,9 @@
             
             setupEchoChannel(tripId);
             
-            // Initialize Select2 if needed
+            // Re-initialize Select2 after Livewire updates
             if (typeof $ !== 'undefined' && $.fn.select2) {
+                $('.select2').select2('destroy');
                 $('.select2').select2({
                     width: 'resolve'
                 });

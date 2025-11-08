@@ -211,10 +211,14 @@ class BookingConsole extends Component
         $this->toTerminalId = null;
         $this->departureTimeId = null;
         $this->arrivalTime = null;
+        $this->toTerminals = [];
+        $this->departureTimes = [];
         $this->showTripContent = false;
         $this->tripLoaded = false;
         $this->resetTripData();
         $this->fareError = null;
+        $this->fareData = null;
+        $this->fareValid = false;
 
         if ($this->fromTerminalId) {
             $this->loadToTerminals();
@@ -225,14 +229,19 @@ class BookingConsole extends Component
     {
         $this->departureTimeId = null;
         $this->arrivalTime = null;
+        $this->departureTimes = [];
         $this->showTripContent = false;
         $this->tripLoaded = false;
         $this->resetTripData();
         $this->fareError = null;
+        $this->fareData = null;
+        $this->fareValid = false;
 
         if ($this->fromTerminalId && $this->toTerminalId) {
             $this->loadDepartureTimes();
             $this->loadFare();
+        } else {
+            $this->departureTimes = [];
         }
     }
 
@@ -246,9 +255,15 @@ class BookingConsole extends Component
         // Reset departure time when date changes
         $this->departureTimeId = null;
         $this->arrivalTime = null;
+        $this->showTripContent = false;
+        $this->tripLoaded = false;
+        $this->resetTripData();
+        $this->fareError = null;
 
         if ($this->fromTerminalId && $this->toTerminalId) {
             $this->loadDepartureTimes();
+        } else {
+            $this->departureTimes = [];
         }
     }
 
