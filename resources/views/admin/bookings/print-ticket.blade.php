@@ -275,18 +275,30 @@
         <!-- Trip Information -->
         <div class="section">
             <div class="section-title">Trip Details</div>
+            @php
+                // Get TripStops for the specific segment (from and to terminals)
+                $fromTripStop = $booking->trip->stops->firstWhere('terminal_id', $booking->fromStop->terminal_id);
+                $toTripStop = $booking->trip->stops->firstWhere('terminal_id', $booking->toStop->terminal_id);
+                
+                // Use segment-specific times if available, otherwise fall back to trip times
+                $departureDate = $fromTripStop?->departure_at?->format('d M Y') ?? $booking->trip->departure_datetime->format('d M Y');
+                $departureTime = $fromTripStop?->departure_at?->format('h:i A') ?? $booking->trip->departure_datetime->format('h:i A');
+                
+                // Only use segment-specific arrival time, don't fall back to trip estimated arrival
+                $arrivalTime = $toTripStop?->arrival_at?->format('h:i A');
+            @endphp
             <div class="info-row">
                 <span class="label">Date:</span>
-                <span class="value">{{ $booking->trip->departure_datetime->format('d M Y') }}</span>
+                <span class="value">{{ $departureDate }}</span>
             </div>
             <div class="info-row">
                 <span class="label">Departure:</span>
-                <span class="value">{{ $booking->trip->departure_datetime->format('h:i A') }}</span>
+                <span class="value">{{ $departureTime }}</span>
             </div>
-            @if($booking->trip->estimated_arrival_datetime)
+            @if($arrivalTime)
             <div class="info-row">
                 <span class="label">Arrival:</span>
-                <span class="value">{{ $booking->trip->estimated_arrival_datetime->format('h:i A') }}</span>
+                <span class="value">{{ $arrivalTime }}</span>
             </div>
             @endif
             @if($booking->trip->bus)

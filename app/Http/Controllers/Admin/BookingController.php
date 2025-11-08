@@ -283,8 +283,8 @@ class BookingController extends Controller
 
         $booking->load([
             'trip.route',
-            'trip.bus',
-            'trip.bus.driver',
+            'trip.bus.busLayout',
+            'trip.stops',
             'fromStop.terminal.city',
             'toStop.terminal.city',
             'seats',
