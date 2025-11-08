@@ -638,7 +638,7 @@
                                             <label class="form-label small">Amount Received (PKR)</label>
                                             <input type="number" 
                                                    class="form-control form-control-sm" 
-                                                   wire:model.blur="amountReceived"
+                                                   wire:model.debounce.500ms="amountReceived"
                                                    wire:loading.attr="disabled"
                                                    min="0" 
                                                    step="0.01" 
@@ -837,9 +837,10 @@
                                                 <th class="small">Booking #</th>
                                                 <th class="small">Seat</th>
                                                 <th class="small">Name</th>
+                                                <th class="small">CNIC</th>
+                                                <th class="small">Phone</th>
                                                 <th class="small">From</th>
                                                 <th class="small">To</th>
-                                                <th class="small">Amount</th>
                                                 <th class="small text-center">Actions</th>
                                             </tr>
                                         </thead>
@@ -850,19 +851,22 @@
                                                         <span class="badge bg-dark">{{ $passenger['booking_number'] }}</span>
                                                     </td>
                                                     <td class="small">
-                                                        <span class="badge bg-info">{{ $passenger['seats_display'] }}</span>
+                                                        <span class="badge bg-info">{{ $passenger['seat_number'] }}</span>
                                                     </td>
                                                     <td class="small">
                                                         <strong>{{ $passenger['name'] }}</strong>
+                                                    </td>
+                                                    <td class="small">
+                                                        <small>{{ $passenger['cnic'] ?? 'N/A' }}</small>
+                                                    </td>
+                                                    <td class="small">
+                                                        <small>{{ $passenger['phone'] ?? 'N/A' }}</small>
                                                     </td>
                                                     <td class="small">
                                                         <small>{{ $passenger['from_code'] }}</small>
                                                     </td>
                                                     <td class="small">
                                                         <small>{{ $passenger['to_code'] }}</small>
-                                                    </td>
-                                                    <td class="small">
-                                                        <strong class="text-success">PKR {{ number_format($passenger['final_amount'], 2) }}</strong>
                                                     </td>
                                                     <td class="small">
                                                         <div class="d-flex gap-1 justify-content-center">
@@ -889,7 +893,7 @@
                                                     <strong>Total Passengers:</strong> <span class="badge bg-info">{{ count($tripPassengers) }}</span>
                                                 </td>
                                                 <td colspan="2" class="text-end fw-bold small">Total Earnings:</td>
-                                                <td class="fw-bold text-success small">PKR {{ number_format($totalEarnings, 2) }}</td>
+                                                <td colspan="2" class="fw-bold text-success small">PKR {{ number_format($totalEarnings, 2) }}</td>
                                                 <td></td>
                                             </tr>
                                         </tfoot>
@@ -1393,10 +1397,34 @@
 
         // Define printVoucher function for police records
         window.printVoucher = function() {
-            const tripPassengers = @json($tripPassengers ?? []);
-            const tripData = @json($tripData ?? null);
-            const travelDate = @json($travelDate ?? '');
-            const routeData = @json($routeData ?? null);
+            // Get current data from Livewire component dynamically
+            const tripPassengers = $wire.get('tripPassengers') || [];
+            const tripData = $wire.get('tripData') || null;
+            const travelDate = $wire.get('travelDate') || '';
+            const routeData = $wire.get('routeData') || null;
+            const fromStop = $wire.get('fromStop') || null;
+            const toStop = $wire.get('toStop') || null;
+            const tripStops = tripData?.stops || [];
+            
+            // Get departure and arrival times
+            let departureTime = 'N/A';
+            let arrivalTime = 'N/A';
+            
+            if (fromStop?.departure_at) {
+                const depDate = new Date(fromStop.departure_at);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.departure_datetime) {
+                const depDate = new Date(tripData.departure_datetime);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            if (toStop?.arrival_at) {
+                const arrDate = new Date(toStop.arrival_at);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.estimated_arrival_datetime) {
+                const arrDate = new Date(tripData.estimated_arrival_datetime);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
             
             if (!tripPassengers || tripPassengers.length === 0) {
                 Swal.fire({
@@ -1511,6 +1539,20 @@
                                 <td>Route:</td>
                                 <td><strong>${routeData?.name || 'N/A'}</strong></td>
                             </tr>
+                            <tr>
+                                <td>Departure Time:</td>
+                                <td><strong>${departureTime}</strong></td>
+                                <td>Arrival Time:</td>
+                                <td><strong>${arrivalTime}</strong></td>
+                            </tr>
+                            ${fromStop && toStop ? `
+                            <tr>
+                                <td>From Terminal:</td>
+                                <td><strong>${fromStop.terminal_name || 'N/A'}</strong></td>
+                                <td>To Terminal:</td>
+                                <td><strong>${toStop.terminal_name || 'N/A'}</strong></td>
+                            </tr>
+                            ` : ''}
                             ${tripData?.bus ? `
                             <tr>
                                 <td>Bus:</td>
@@ -1528,17 +1570,47 @@
                         </table>
                     </div>
                     
+                    ${tripStops && tripStops.length > 0 ? `
+                    <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
+                        <table style="margin-bottom: 0; font-size: 10px;">
+                            <thead>
+                                <tr style="background-color: #333; color: #fff;">
+                                    <th style="padding: 4px; width: 8%;">Seq</th>
+                                    <th style="padding: 4px; width: 40%;">Terminal</th>
+                                    <th style="padding: 4px; width: 26%;">Arrival Time</th>
+                                    <th style="padding: 4px; width: 26%;">Departure Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tripStops.map((stop, index) => {
+                                    const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                    const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                    return `
+                                        <tr>
+                                            <td style="text-align: center; padding: 4px; font-weight: bold;">${index + 1}</td>
+                                            <td style="padding: 4px;">${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
+                                            <td style="text-align: center; padding: 4px;">${arrTime}</td>
+                                            <td style="text-align: center; padding: 4px;">${depTime}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : ''}
+                    
                     <table>
                         <thead>
                             <tr>
                                 <th style="width: 5%;">#</th>
                                 <th style="width: 12%;">Booking #</th>
-                                <th style="width: 15%;">Passenger Name</th>
                                 <th style="width: 8%;">Seat</th>
+                                <th style="width: 18%;">Passenger Name</th>
                                 <th style="width: 18%;">CNIC</th>
                                 <th style="width: 15%;">Phone</th>
                                 <th style="width: 12%;">From</th>
-                                <th style="width: 15%;">To</th>
+                                <th style="width: 12%;">To</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1546,8 +1618,8 @@
                                 <tr>
                                     <td class="text-center">${index + 1}</td>
                                     <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                    <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
                                     <td><strong>${passenger.name || 'N/A'}</strong></td>
-                                    <td class="text-center">${passenger.seats_display || 'N/A'}</td>
                                     <td>${passenger.cnic || 'N/A'}</td>
                                     <td>${passenger.phone || 'N/A'}</td>
                                     <td>${passenger.from_code || 'N/A'}</td>
@@ -1604,13 +1676,14 @@
                 return;
             }
 
-            // Get trip information
-            const tripData = @json($tripData ?? null);
-            const travelDate = @json($travelDate ?? '');
-            const routeData = @json($routeData ?? null);
-            const tripStops = @json($tripData?->stops ?? []);
-            const totalPassengers = {{ count($tripPassengers) }};
-            const totalEarnings = {{ $totalEarnings }};
+            // Get trip information dynamically from Livewire component
+            const tripData = $wire.get('tripData') || null;
+            const travelDate = $wire.get('travelDate') || '';
+            const routeData = $wire.get('routeData') || null;
+            const tripPassengers = $wire.get('tripPassengers') || [];
+            const tripStops = tripData?.stops || [];
+            const totalPassengers = tripPassengers.length;
+            const totalEarnings = $wire.get('totalEarnings') || 0;
             
             // Build complete stop-to-stop information
             let stopsInfo = '';
@@ -1774,7 +1847,31 @@
                     ` : ''}
                     
                     <h3 style="font-size: 14px; margin-bottom: 10px;">Passenger Details</h3>
-                    ${table.outerHTML}
+                    ${(() => {
+                        // Clone the table and remove the Actions column (last column)
+                        const clonedTable = table.cloneNode(true);
+                        const rows = clonedTable.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('th, td');
+                            if (cells.length > 0) {
+                                // Remove the last cell (Actions column)
+                                cells[cells.length - 1].remove();
+                            }
+                        });
+                        // Update footer colspan if exists
+                        const footerRow = clonedTable.querySelector('tfoot tr');
+                        if (footerRow) {
+                            const footerCells = footerRow.querySelectorAll('td');
+                            if (footerCells.length > 0) {
+                                // Update the last footer cell colspan
+                                const lastCell = footerCells[footerCells.length - 1];
+                                if (lastCell.hasAttribute('colspan')) {
+                                    lastCell.setAttribute('colspan', '2');
+                                }
+                            }
+                        }
+                        return clonedTable.outerHTML;
+                    })()}
                     
                     <div class="print-date">
                         Printed on: ${new Date().toLocaleString()}
@@ -1806,7 +1903,96 @@
             };
         };
 
+        // Global loader variable
+        let currentLoader = null;
+
+        // Function to show SweetAlert loader
+        function showLoader(title = 'Loading...', text = 'Please wait while we process your request.') {
+            // Close existing loader if any
+            if (currentLoader) {
+                Swal.close();
+            }
+            
+            currentLoader = Swal.fire({
+                title: title,
+                text: text,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // Function to hide loader
+        function hideLoader() {
+            if (currentLoader) {
+                Swal.close();
+                currentLoader = null;
+            }
+        }
+
+        // Listen for loader events
+        $wire.on('show-loader', (event) => {
+            const title = event.title || 'Loading...';
+            const text = event.text || 'Please wait while we process your request.';
+            showLoader(title, text);
+        });
+
+        $wire.on('hide-loader', () => {
+            hideLoader();
+        });
+
+        // Use Livewire hooks to detect when actions start and end
+        document.addEventListener('livewire:init', () => {
+            let isLoading = false;
+            
+            // Show loader when component starts a request
+            Livewire.hook('request', ({ component, uri, payload, options, respond }) => {
+                // Check which method is being called
+                const method = payload?.fingerprint?.method || '';
+                
+                // Only show loader if not already showing
+                if (!isLoading && !currentLoader) {
+                    if (method === 'loadTrip') {
+                        isLoading = true;
+                        showLoader('Loading Trip', 'Fetching trip data and seat availability...');
+                    } else if (method === 'confirmBooking') {
+                        isLoading = true;
+                        showLoader('Processing Booking', 'Creating your booking, please wait...');
+                    } else if (method === 'assignBus') {
+                        isLoading = true;
+                        showLoader('Assigning Bus', 'Assigning bus and driver information...');
+                    } else if (method === 'loadTripPassengers') {
+                        // Don't show loader for this as it's usually quick
+                    } else if (method && (method.startsWith('load') || method.startsWith('update'))) {
+                        // Show generic loader for other load/update methods
+                        isLoading = true;
+                        showLoader('Loading', 'Please wait...');
+                    }
+                }
+            });
+
+            // Hide loader when request completes
+            Livewire.hook('message.processed', ({ component, message, respond }) => {
+                isLoading = false;
+                // Small delay to ensure UI updates are complete
+                setTimeout(() => {
+                    hideLoader();
+                }, 300);
+            });
+
+            // Also hide loader on errors
+            Livewire.hook('message.failed', ({ component, message, respond }) => {
+                isLoading = false;
+                hideLoader();
+            });
+        });
+
+
         $wire.on('show-error', (event) => {
+            hideLoader(); // Hide loader on error
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -1816,6 +2002,7 @@
         });
 
         $wire.on('show-success', (event) => {
+            hideLoader(); // Hide loader on success
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
@@ -1860,6 +2047,13 @@
         $wire.on('close-bus-assignment-modal', () => {
             console.log('Closing bus assignment modal');
             hideBusAssignmentModal();
+        });
+
+        // Listen for seat map update after bus assignment
+        $wire.on('seat-map-updated', () => {
+            console.log('Seat map updated after bus assignment');
+            // Livewire will automatically re-render the seat map
+            // This event is just for confirmation/logging
         });
 
         // Also watch for property changes as fallback

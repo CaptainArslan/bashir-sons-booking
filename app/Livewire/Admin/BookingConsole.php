@@ -540,58 +540,90 @@ class BookingConsole extends Component
 
     public function loadTripPassengers(): void
     {
-        if (! $this->tripId) {
+        if (! $this->tripId || ! $this->fromStop) {
             return;
         }
 
+        // Get the selected from terminal sequence for filtering
+        $selectedFromSequence = $this->fromStop['sequence'] ?? null;
+
+        if ($selectedFromSequence === null) {
+            return;
+        }
+
+        // Get all bookings for this trip
         $bookings = Booking::query()
             ->where('trip_id', $this->tripId)
             ->where('status', '!=', 'cancelled')
             ->with([
                 'passengers' => fn ($q) => $q->orderBy('id'),
                 'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
-                'fromStop.terminal',
-                'toStop.terminal',
+                'fromStop:id,sequence,terminal_id',
+                'toStop:id,sequence,terminal_id',
+                'fromStop.terminal:id,name,code',
+                'toStop.terminal:id,name,code',
             ])
             ->get();
 
         $passengers = [];
         $totalEarnings = 0;
+        $processedBookings = [];
 
         foreach ($bookings as $booking) {
-            foreach ($booking->passengers as $passenger) {
-                $seatNumbers = $booking->seats
-                    ->pluck('seat_number')
-                    ->sort()
-                    ->values()
-                    ->toArray();
+            // Filter: Only show bookings that start from the selected terminal onwards
+            // This means booking's from_stop sequence should be >= selected from sequence
+            $bookingFromSeq = $booking->fromStop?->sequence ?? null;
 
-                $passengers[] = [
-                    'id' => $passenger->id,
-                    'booking_id' => $booking->id,
-                    'name' => $passenger->name ?? 'N/A',
-                    'gender' => $passenger->gender?->value ?? $passenger->gender,
-                    'age' => $passenger->age,
-                    'cnic' => $passenger->cnic,
-                    'phone' => $passenger->phone,
-                    'email' => $passenger->email,
-                    'seat_numbers' => $seatNumbers,
-                    'seats_display' => implode(', ', $seatNumbers),
-                    'from_stop' => $booking->fromStop?->terminal?->name ?? 'N/A',
-                    'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
-                    'to_stop' => $booking->toStop?->terminal?->name ?? 'N/A',
-                    'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
-                    'status' => $booking->status,
-                    'payment_status' => $booking->payment_status,
-                    'payment_method' => $booking->payment_method,
-                    'booking_number' => $booking->booking_number,
-                    'channel' => $booking->channel,
-                    'final_amount' => $booking->final_amount,
-                ];
+            if ($bookingFromSeq === null || $bookingFromSeq < $selectedFromSequence) {
+                continue; // Skip bookings that start before the selected terminal
+            }
 
+            // Get all active seats for this booking
+            $seats = $booking->seats->sortBy('seat_number')->values();
+            $passengerList = $booking->passengers->sortBy('id')->values();
+
+            // Create one row per seat
+            foreach ($seats as $seatIndex => $seat) {
+                // Map seat to passenger by index (first seat = first passenger, etc.)
+                $passenger = $passengerList[$seatIndex] ?? $passengerList[0] ?? null;
+
+                if ($passenger) {
+                    $passengers[] = [
+                        'id' => $passenger->id,
+                        'seat_id' => $seat->id,
+                        'booking_id' => $booking->id,
+                        'seat_number' => $seat->seat_number,
+                        'name' => $passenger->name ?? 'N/A',
+                        'gender' => $passenger->gender?->value ?? $passenger->gender,
+                        'age' => $passenger->age,
+                        'cnic' => $passenger->cnic,
+                        'phone' => $passenger->phone,
+                        'email' => $passenger->email,
+                        'from_stop' => $booking->fromStop?->terminal?->name ?? 'N/A',
+                        'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
+                        'to_stop' => $booking->toStop?->terminal?->name ?? 'N/A',
+                        'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
+                        'status' => $booking->status,
+                        'payment_status' => $booking->payment_status,
+                        'payment_method' => $booking->payment_method,
+                        'booking_number' => $booking->booking_number,
+                        'channel' => $booking->channel,
+                        'final_amount' => $seat->final_amount ?? 0, // Per-seat amount
+                    ];
+                }
+            }
+
+            // Add to total earnings only once per booking (to avoid double counting)
+            if (! in_array($booking->id, $processedBookings)) {
                 $totalEarnings += $booking->final_amount;
+                $processedBookings[] = $booking->id;
             }
         }
+
+        // Sort by seat number
+        usort($passengers, function ($a, $b) {
+            return (int) $a['seat_number'] <=> (int) $b['seat_number'];
+        });
 
         $this->tripPassengers = $passengers;
         $this->totalEarnings = $totalEarnings;
@@ -1351,12 +1383,43 @@ class BookingConsole extends Component
 
             DB::commit();
 
-            // Reload trip data (this will update seat map with new bus seat count)
-            $this->loadTrip();
+            // Reload trip with new bus assignment
+            $trip->refresh();
+            $trip->load(['stops.terminal:id,name,code', 'originStop', 'bus.busLayout']);
+
+            // Get updated seat count from the newly assigned bus
+            $availabilityService = app(AvailabilityService::class);
+            $seatCount = $availabilityService->seatCount($trip);
+
+            // Get trip stops for seat map
+            $tripFromStop = $trip->stops->firstWhere('terminal_id', $this->fromStop['terminal_id'] ?? null);
+            $tripToStop = $trip->stops->firstWhere('terminal_id', $this->toStop['terminal_id'] ?? null);
+
+            if ($tripFromStop && $tripToStop) {
+                // Get available seats
+                $availableSeats = $availabilityService->availableSeats(
+                    $trip->id,
+                    $tripFromStop->id,
+                    $tripToStop->id
+                );
+
+                // Update seat count
+                $this->seatCount = $seatCount;
+
+                // Rebuild seat map with new bus seat count
+                $this->seatMap = $this->buildSeatMap($trip, $tripFromStop, $tripToStop, $seatCount, $availableSeats);
+                $this->availableSeats = $availableSeats;
+
+                // Update trip data
+                $this->tripData = $trip;
+            }
 
             $this->closeBusAssignmentModal();
 
-            $this->dispatch('show-success', message: 'Bus, driver, host, and expenses assigned successfully!');
+            // Dispatch event to refresh the seat map in the view
+            $this->dispatch('seat-map-updated');
+
+            $this->dispatch('show-success', message: 'Bus, driver, host, and expenses assigned successfully! Seat map updated.');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('show-error', message: $e->getMessage());
