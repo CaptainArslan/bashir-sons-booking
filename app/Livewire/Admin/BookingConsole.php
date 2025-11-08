@@ -457,7 +457,7 @@ class BookingConsole extends Component
                 $trip = $tripFactory->createFromTimetable($timetable->id, $this->travelDate);
             }
 
-            $trip->load(['stops', 'originStop', 'bus.busLayout']);
+            $trip->load(['stops.terminal:id,name,code', 'originStop', 'bus.busLayout']);
 
             $routeStops = RouteStop::where('route_id', $route->id)
                 ->with('terminal:id,name,code')

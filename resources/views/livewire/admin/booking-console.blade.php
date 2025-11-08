@@ -812,12 +812,20 @@
                                 <span class="badge bg-success ms-2">Total Earnings: PKR {{ number_format($totalEarnings, 2) }}</span>
                             </h6>
                             @if(count($tripPassengers) > 0)
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-dark" 
-                                        onclick="window.printPassengerList && window.printPassengerList()"
-                                        title="Print Passenger List">
-                                    <i class="bx bx-printer"></i> Print List
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-dark" 
+                                            onclick="window.printPassengerList && window.printPassengerList()"
+                                            title="Print Passenger List">
+                                        <i class="bx bx-printer"></i> Print List
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            onclick="window.printVoucher && window.printVoucher()"
+                                            title="Print Voucher (For Police Record)">
+                                        <i class="bx bx-file"></i> Print Voucher
+                                    </button>
+                                </div>
                             @endif
                         </div>
                         <div class="card-body p-2 scrollable-content">
@@ -1383,6 +1391,206 @@
         // Make printBooking available globally
         window.printBooking = printBooking;
 
+        // Define printVoucher function for police records
+        window.printVoucher = function() {
+            const tripPassengers = @json($tripPassengers ?? []);
+            const tripData = @json($tripData ?? null);
+            const travelDate = @json($travelDate ?? '');
+            const routeData = @json($routeData ?? null);
+            
+            if (!tripPassengers || tripPassengers.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No passengers found to print voucher.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
+
+            // Create voucher content (NO amount information)
+            const voucherContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Passenger Voucher - Police Record</title>
+                    <style>
+                        @media print {
+                            @page {
+                                margin: 1cm;
+                                size: A4;
+                            }
+                        }
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 11px;
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                            border-bottom: 3px solid #000;
+                            padding-bottom: 10px;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-transform: uppercase;
+                        }
+                        .header h2 {
+                            margin: 5px 0;
+                            font-size: 14px;
+                            color: #666;
+                        }
+                        .trip-info {
+                            margin-bottom: 15px;
+                            padding: 10px;
+                            background-color: #f5f5f5;
+                            border: 1px solid #ddd;
+                        }
+                        .trip-info table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        .trip-info td {
+                            padding: 5px;
+                            border: none;
+                        }
+                        .trip-info td:first-child {
+                            font-weight: bold;
+                            width: 150px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 10px;
+                        }
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 6px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #333;
+                            color: #fff;
+                            font-weight: bold;
+                            text-align: center;
+                        }
+                        .text-center {
+                            text-align: center;
+                        }
+                        .print-date {
+                            margin-top: 20px;
+                            font-size: 10px;
+                            text-align: right;
+                            color: #666;
+                        }
+                        .footer-note {
+                            margin-top: 15px;
+                            padding: 10px;
+                            background-color: #fff3cd;
+                            border: 1px solid #ffc107;
+                            font-size: 10px;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>PASSENGER VOUCHER</h1>
+                        <h2>For Police Record - ${routeData?.name || 'N/A'}</h2>
+                    </div>
+                    
+                    <div class="trip-info">
+                        <table>
+                            <tr>
+                                <td>Travel Date:</td>
+                                <td><strong>${travelDate || 'N/A'}</strong></td>
+                                <td>Route:</td>
+                                <td><strong>${routeData?.name || 'N/A'}</strong></td>
+                            </tr>
+                            ${tripData?.bus ? `
+                            <tr>
+                                <td>Bus:</td>
+                                <td><strong>${tripData.bus.name || 'N/A'}</strong></td>
+                                <td>Driver:</td>
+                                <td>${tripData.driver_name || 'N/A'}${tripData.driver_phone ? ' (' + tripData.driver_phone + ')' : ''}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <td>Total Passengers:</td>
+                                <td><strong>${tripPassengers.length}</strong></td>
+                                <td>Printed On:</td>
+                                <td>${new Date().toLocaleString()}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 12%;">Booking #</th>
+                                <th style="width: 15%;">Passenger Name</th>
+                                <th style="width: 8%;">Seat</th>
+                                <th style="width: 18%;">CNIC</th>
+                                <th style="width: 15%;">Phone</th>
+                                <th style="width: 12%;">From</th>
+                                <th style="width: 15%;">To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tripPassengers.map((passenger, index) => `
+                                <tr>
+                                    <td class="text-center">${index + 1}</td>
+                                    <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                    <td><strong>${passenger.name || 'N/A'}</strong></td>
+                                    <td class="text-center">${passenger.seats_display || 'N/A'}</td>
+                                    <td>${passenger.cnic || 'N/A'}</td>
+                                    <td>${passenger.phone || 'N/A'}</td>
+                                    <td>${passenger.from_code || 'N/A'}</td>
+                                    <td>${passenger.to_code || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer-note">
+                        <strong>NOTE:</strong> This voucher is for police record purposes only. No financial information is included.
+                    </div>
+                    
+                    <div class="print-date">
+                        Printed on: ${new Date().toLocaleString()}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Popup Blocked',
+                    text: 'Please allow popups for this site to print the voucher.',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+
+            printWindow.document.write(voucherContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                }, 250);
+            };
+        };
+
         // Define printPassengerList directly on window object
         window.printPassengerList = function() {
             const table = document.getElementById('passengerListTable');
@@ -1399,13 +1607,28 @@
             // Get trip information
             const tripData = @json($tripData ?? null);
             const travelDate = @json($travelDate ?? '');
-            const fromStop = @json($fromStop ?? null);
-            const toStop = @json($toStop ?? null);
-            const fromTerminal = fromStop?.terminal_name || 'N/A';
-            const toTerminal = toStop?.terminal_name || 'N/A';
-            const departureTime = tripData?.departure_datetime ? new Date(tripData.departure_datetime).toLocaleString() : 'N/A';
+            const routeData = @json($routeData ?? null);
+            const tripStops = @json($tripData?->stops ?? []);
             const totalPassengers = {{ count($tripPassengers) }};
             const totalEarnings = {{ $totalEarnings }};
+            
+            // Build complete stop-to-stop information
+            let stopsInfo = '';
+            if (tripStops && tripStops.length > 0) {
+                stopsInfo = '<tr><td colspan="4" style="background-color: #e9ecef; font-weight: bold; padding: 8px;">Complete Route Stops:</td></tr>';
+                tripStops.forEach((stop, index) => {
+                    const arrivalTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                    const departureTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                    stopsInfo += `
+                        <tr>
+                            <td style="text-align: center; font-weight: bold;">${index + 1}</td>
+                            <td>${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
+                            <td style="text-align: center;">${arrivalTime}</td>
+                            <td style="text-align: center;">${departureTime}</td>
+                        </tr>
+                    `;
+                });
+            }
 
             // Create print window content
             const printContent = `
@@ -1510,15 +1733,9 @@
                         <table>
                             <tr>
                                 <td>Travel Date:</td>
-                                <td>${travelDate || 'N/A'}</td>
-                                <td>Departure Time:</td>
-                                <td>${departureTime}</td>
-                            </tr>
-                            <tr>
-                                <td>From Terminal:</td>
-                                <td>${fromTerminal}</td>
-                                <td>To Terminal:</td>
-                                <td>${toTerminal}</td>
+                                <td><strong>${travelDate || 'N/A'}</strong></td>
+                                <td>Route:</td>
+                                <td><strong>${routeData?.name || 'N/A'}</strong></td>
                             </tr>
                             ${tripData?.bus ? `
                             <tr>
@@ -1537,6 +1754,26 @@
                         </table>
                     </div>
                     
+                    ${stopsInfo ? `
+                    <div style="margin-bottom: 15px;">
+                        <h3 style="font-size: 14px; margin-bottom: 10px;">Complete Route Information (Stop-to-Stop)</h3>
+                        <table style="margin-bottom: 20px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;">Seq</th>
+                                    <th style="width: 40%;">Terminal</th>
+                                    <th style="width: 26%;">Arrival Time</th>
+                                    <th style="width: 26%;">Departure Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stopsInfo}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : ''}
+                    
+                    <h3 style="font-size: 14px; margin-bottom: 10px;">Passenger Details</h3>
                     ${table.outerHTML}
                     
                     <div class="print-date">
