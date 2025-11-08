@@ -5,11 +5,12 @@
 @section('styles')
     <style>
         .booking-progress {
-            background-color: #0d6efd;
-            border-radius: 0.5rem;
+            background-color: #0A1D44;
+            border-radius: 0.75rem;
             padding: 1.5rem;
             color: white;
             margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(10, 29, 68, 0.15);
         }
 
         .progress-step {
@@ -17,79 +18,66 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
         }
 
         .progress-step.active {
+            background-color: rgba(255, 255, 255, 0.15);
             color: #ffd700;
         }
 
         .progress-step i {
-            font-size: 1.25rem;
+            font-size: 0.875rem;
         }
 
         .trip-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             cursor: pointer;
-            border: 2px solid transparent;
-            border-radius: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.75rem;
             overflow: hidden;
             background: white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: relative;
-        }
-
-        .trip-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background-color: #0d6efd;
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+            height: 100%;
         }
 
         .trip-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            border-color: #0d6efd;
-        }
-
-        .trip-card:hover::before {
-            transform: scaleX(1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: #0A1D44;
         }
 
         .trip-card.selected {
-            border-color: #0d6efd;
+            border-color: #0A1D44;
+            border-width: 2px;
             background-color: #f8f9fa;
-            box-shadow: 0 8px 24px rgba(13, 110, 253, 0.3);
-        }
-
-        .trip-card.selected::before {
-            transform: scaleX(1);
+            box-shadow: 0 8px 20px rgba(10, 29, 68, 0.2);
         }
 
         .trip-time-section {
-            background-color: #0d6efd;
+            background-color: #0A1D44;
             color: white;
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             border-radius: 0.5rem;
-            margin: 0.5rem 0;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(10, 29, 68, 0.2);
         }
 
         .trip-badge {
             font-size: 0.75rem;
             padding: 0.5rem 1rem;
-            border-radius: 2rem;
+            border-radius: 1.5rem;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .fare-highlight {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #0d6efd;
+            color: #0A1D44;
         }
 
         .loading-spinner {
@@ -103,26 +91,37 @@
         .route-info {
             font-size: 1.1rem;
             font-weight: 600;
-            color: #2d3748;
+            color: #212529;
+            margin-bottom: 0.5rem;
         }
 
         .bus-info {
             font-size: 0.9rem;
-            color: #718096;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .select-trip-btn {
             border-radius: 0.5rem;
-            padding: 0.5rem 1.5rem;
+            padding: 0.75rem 1.5rem;
             font-weight: 600;
             transition: all 0.3s ease;
-            background-color: #0d6efd;
+            background-color: #0A1D44;
             border: none;
+            color: white;
+            box-shadow: 0 2px 8px rgba(10, 29, 68, 0.3);
         }
 
         .select-trip-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            background-color: #08152f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(10, 29, 68, 0.4);
+        }
+
+        .select-trip-btn:active {
+            transform: translateY(0);
         }
 
         .no-trips-empty {
@@ -131,17 +130,64 @@
         }
 
         .no-trips-empty i {
-            font-size: 4rem;
+            /* font-size: 4rem; */
             opacity: 0.3;
             margin-bottom: 1rem;
+            color: #6c757d;
         }
 
         .route-banner {
-            background-color: #0d6efd;
+            background-color: #0A1D44;
             color: white;
-            border-radius: 1rem;
+            border-radius: 0.75rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(10, 29, 68, 0.15);
+        }
+
+        .duration-badge {
+            background-color: rgba(255, 255, 255, 0.25);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .time-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .time-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .trip-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem;
+        }
+
+        .trip-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .trip-detail-item i {
+            color: #0A1D44;
         }
 
         @keyframes fadeInUp {
@@ -158,6 +204,7 @@
 
         .trip-card {
             animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
         }
 
         .trip-card:nth-child(1) {
@@ -174,6 +221,31 @@
 
         .trip-card:nth-child(n+4) {
             animation-delay: 0.4s;
+        }
+
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-left: 4px solid #0A1D44;
+        }
+
+        @media (max-width: 768px) {
+            .trip-card {
+                margin-bottom: 1.5rem;
+            }
+
+            .route-banner {
+                padding: 1.25rem;
+            }
+
+            .booking-progress {
+                padding: 1.25rem 1rem;
+            }
         }
     </style>
 @endsection
@@ -210,24 +282,24 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
                         <h3 class="mb-2 fw-bold">
-                            <i class="bi bi-map me-2"></i>
+                            <i class="bi bi-map me-2" style="font-size: 0.875rem;"></i>
                             {{ $from_terminal->name }}
-                            <i class="bi bi-arrow-right mx-3"></i>
+                            <i class="bi bi-arrow-right mx-3" style="font-size: 0.875rem;"></i>
                             {{ $to_terminal->name }}
                         </h3>
                         <div class="d-flex align-items-center gap-4 flex-wrap">
                             <div>
-                                <i class="bi bi-calendar-event me-2"></i>
+                                <i class="bi bi-calendar-event me-2" style="font-size: 0.875rem;"></i>
                                 <strong>{{ \Carbon\Carbon::parse($date)->format('F d, Y') }}</strong>
                             </div>
                             <div>
-                                <i class="bi bi-people me-2"></i>
+                                <i class="bi bi-people me-2" style="font-size: 0.875rem;"></i>
                                 <strong>{{ $passengers }} Passenger{{ $passengers > 1 ? 's' : '' }}</strong>
                             </div>
                         </div>
                     </div>
                     <a href="{{ route('home') }}" class="btn btn-light btn-lg">
-                        <i class="bi bi-arrow-left me-2"></i>Change Search
+                        <i class="bi bi-arrow-left me-2" style="font-size: 0.875rem;"></i>Change Search
                     </a>
                 </div>
             </div>
@@ -238,10 +310,10 @@
                         <div class="card-header bg-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
-                                    <i class="bi bi-clock-history me-2"></i>Available Trips
+                                    <i class="bi bi-clock-history me-2" style="font-size: 0.875rem;"></i>Available Trips
                                 </h5>
                                 <div class="alert alert-info alert-sm mb-0 py-2 px-3" style="font-size: 0.875rem;">
-                                    <i class="bi bi-info-circle me-2"></i>
+                                    <i class="bi bi-info-circle me-2" style="font-size: 0.875rem;"></i>
                                     <strong>2-Hour Rule:</strong> Online bookings must be made at least 2 hours before
                                     departure
                                 </div>
@@ -260,17 +332,17 @@
                             </div>
 
                             <div id="no-trips" class="no-trips-empty" style="display: none;">
-                                <i class="bi bi-inbox text-muted"></i>
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
                                 <h4 class="mt-3 mb-2">No trips available</h4>
                                 <p class="text-muted mb-4">We couldn't find any trips for your selected route and date.
                                     Please try different dates or routes.</p>
                                 <div class="alert alert-info mb-3">
-                                    <i class="bi bi-info-circle me-2"></i>
+                                    <i class="bi bi-info-circle me-2" style="font-size: 0.875rem;"></i>
                                     <strong>Note:</strong> Online bookings must be made at least 2 hours before departure.
                                     Trips departing within 2 hours are not available for online booking.
                                 </div>
                                 <a href="{{ route('home') }}" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-arrow-left me-2"></i>Search Again
+                                    <i class="bi bi-arrow-left me-2" style="font-size: 0.875rem;"></i>Search Again
                                 </a>
                             </div>
                         </div>
@@ -333,6 +405,31 @@
                 });
             }
 
+            function calculateDuration(departure, arrival) {
+                if (!departure || !arrival || arrival === '--') return null;
+                
+                try {
+                    const dep = new Date('2000-01-01 ' + departure);
+                    const arr = new Date('2000-01-01 ' + arrival);
+                    
+                    // Handle next day arrival
+                    if (arr < dep) {
+                        arr.setDate(arr.getDate() + 1);
+                    }
+                    
+                    const diffMs = arr - dep;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    if (diffHours > 0) {
+                        return `${diffHours}h ${diffMinutes}m`;
+                    }
+                    return `${diffMinutes}m`;
+                } catch (e) {
+                    return null;
+                }
+            }
+
             function renderTrips(trips) {
                 const container = $('#trips-container');
                 container.html('');
@@ -342,15 +439,19 @@
                         `${trip.fare.currency} ${parseFloat(trip.fare.final_fare).toFixed(2)}` :
                         'Price on request';
 
-                    const timeDisplay = trip.departure_time;
-                    const arrivalDisplay = trip.arrival_time ?? '--';
+                    const timeDisplay = formatTime(trip.departure_time);
+                    const arrivalDisplay = trip.arrival_time ? formatTime(trip.arrival_time) : '--';
+                    const duration = calculateDuration(trip.departure_time, trip.arrival_time);
 
-                    const seatBadgeClass = trip.available_seats > 0 ? 'bg-success' :
-                        trip.available_seats === 0 ? 'bg-danger' : 'bg-warning';
+                    const seatBadgeClass = trip.available_seats > 10 ? 'bg-success' :
+                        trip.available_seats > 0 ? 'bg-warning' : 'bg-danger';
 
-                    const seatBadgeText = trip.available_seats > 0 ?
-                        `${trip.available_seats} Available` :
-                        trip.available_seats === 0 ? 'Sold Out' : 'Limited';
+                    const seatBadgeText = trip.available_seats > 10 ?
+                        `${trip.available_seats} Seats` :
+                        trip.available_seats > 0 ? `${trip.available_seats} Left` : 'Sold Out';
+
+                    const seatBadgeIcon = trip.available_seats > 10 ? 'bi-check-circle' :
+                        trip.available_seats > 0 ? 'bi-exclamation-triangle' : 'bi-x-circle';
 
                     const card = `
                         <div class="col-md-6 col-lg-4 mb-4">
@@ -358,12 +459,17 @@
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div class="flex-grow-1">
-                                            <h5 class="route-info mb-2">${trip.route_name || 'Route'}</h5>
+                                            <h5 class="route-info mb-2">
+                                                <i class="bi bi-route me-2" style="color: #0A1D44; font-size: 0.875rem;"></i>
+                                                ${trip.route_name || 'Route'}
+                                            </h5>
                                             <p class="bus-info mb-0">
-                                                <i class="bi bi-bus-front me-1"></i>${trip.bus_name}
+                                                <i class="bi bi-bus-front" style="font-size: 0.875rem;"></i>
+                                                <span>${trip.bus_name || 'Bus'}</span>
                                             </p>
                                         </div>
                                         <span class="badge trip-badge ${seatBadgeClass}">
+                                            <i class="bi ${seatBadgeIcon} me-1" style="font-size: 0.75rem;"></i>
                                             ${seatBadgeText}
                                         </span>
                                     </div>
@@ -371,26 +477,42 @@
                                     <div class="trip-time-section">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="text-center flex-grow-1">
-                                                <small class="d-block opacity-75 mb-1">Departure</small>
-                                                <strong class="fs-5">${timeDisplay}</strong>
+                                                <div class="time-label">Departure</div>
+                                                <div class="time-display">${timeDisplay}</div>
                                             </div>
-                                            <i class="bi bi-arrow-right fs-4 mx-3"></i>
+                                            <div class="text-center mx-2">
+                                                <i class="bi bi-arrow-right" style="font-size: 1.25rem;"></i>
+                                                ${duration ? `<div class="duration-badge">${duration}</div>` : ''}
+                                            </div>
                                             <div class="text-center flex-grow-1">
-                                                <small class="d-block opacity-75 mb-1">Arrival</small>
-                                                <strong class="fs-5">${arrivalDisplay}</strong>
+                                                <div class="time-label">Arrival</div>
+                                                <div class="time-display">${arrivalDisplay}</div>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <div class="trip-details">
+                                        <div class="trip-detail-item">
+                                            <i class="bi bi-clock" style="font-size: 0.875rem;"></i>
+                                            <span>${timeDisplay}</span>
+                                        </div>
+                                        ${duration ? `
+                                        <div class="trip-detail-item">
+                                            <i class="bi bi-hourglass-split" style="font-size: 0.875rem;"></i>
+                                            <span>${duration}</span>
+                                        </div>
+                                        ` : ''}
                                     </div>
 
                                     <div class="mt-3 pt-3 border-top">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div>
-                                                <small class="text-muted d-block mb-1">Price per seat</small>
+                                                <small class="text-muted d-block mb-1" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Price per seat</small>
                                                 <span class="fare-highlight">${fareDisplay}</span>
                                             </div>
                                         </div>
                                         <button class="btn select-trip-btn text-white w-100" data-trip-id="${trip.trip_id}" data-timetable-id="${trip.timetable_id}">
-                                            <i class="bi bi-check-circle me-2"></i>Select This Trip
+                                            <i class="bi bi-check-circle me-2" style="font-size: 0.875rem;"></i>Select This Trip
                                         </button>
                                     </div>
                                 </div>
@@ -479,3 +601,4 @@
         });
     </script>
 @endsection
+

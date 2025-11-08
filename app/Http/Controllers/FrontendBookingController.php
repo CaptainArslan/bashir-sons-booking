@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Fare;
 use App\Models\RouteStop;
+use App\Models\Terminal;
 use App\Models\TimetableStop;
 use App\Models\Trip;
 use App\Services\AvailabilityService;
@@ -35,8 +36,8 @@ class FrontendBookingController extends Controller
             'passengers' => 'nullable|integer|min:1|max:10',
         ]);
 
-        $fromTerminal = \App\Models\Terminal::with('city')->findOrFail($validated['from_terminal_id']);
-        $toTerminal = \App\Models\Terminal::with('city')->findOrFail($validated['to_terminal_id']);
+        $fromTerminal = Terminal::with('city')->findOrFail($validated['from_terminal_id']);
+        $toTerminal = Terminal::with('city')->findOrFail($validated['to_terminal_id']);
 
         return view('frontend.bookings.trips', [
             'from_terminal_id' => $validated['from_terminal_id'],

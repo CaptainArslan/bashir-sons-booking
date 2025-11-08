@@ -23,7 +23,10 @@ use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TerminalReportController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\UserActivationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FrontendBookingController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
 use Illuminate\Support\Facades\Route;
@@ -47,17 +50,17 @@ Route::get('/api/departure-times', [DashboardController::class, 'getDepartureTim
 
 // Frontend Booking Routes
 Route::prefix('bookings')->name('frontend.bookings.')->group(function () {
-    Route::get('/trips', [\App\Http\Controllers\FrontendBookingController::class, 'showTrips'])->name('trips');
-    Route::get('/trips/load', [\App\Http\Controllers\FrontendBookingController::class, 'loadTrips'])->name('load-trips');
-    Route::get('/seats', [\App\Http\Controllers\FrontendBookingController::class, 'selectSeats'])->name('select-seats')->middleware('auth');
-    Route::get('/trip-details', [\App\Http\Controllers\FrontendBookingController::class, 'loadTripDetails'])->name('load-trip-details')->middleware('auth');
-    Route::post('/store', [\App\Http\Controllers\FrontendBookingController::class, 'store'])->name('store')->middleware('auth');
+    Route::get('/trips', [FrontendBookingController::class, 'showTrips'])->name('trips');
+    Route::get('/trips/load', [FrontendBookingController::class, 'loadTrips'])->name('load-trips');
+    Route::get('/seats', [FrontendBookingController::class, 'selectSeats'])->name('select-seats')->middleware('auth');
+    Route::get('/trip-details', [FrontendBookingController::class, 'loadTripDetails'])->name('load-trip-details')->middleware('auth');
+    Route::post('/store', [FrontendBookingController::class, 'store'])->name('store')->middleware('auth');
 
     // Payment Routes
     Route::middleware('auth')->group(function () {
-        Route::get('/{booking}/payment', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payment');
-        Route::post('/{booking}/payment', [\App\Http\Controllers\PaymentController::class, 'process'])->name('payment.process');
-        Route::get('/{booking}/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('success');
+        Route::get('/{booking}/payment', [PaymentController::class, 'show'])->name('payment');
+        Route::post('/{booking}/payment', [PaymentController::class, 'process'])->name('payment.process');
+        Route::get('/{booking}/success', [PaymentController::class, 'success'])->name('success');
     });
 });
 
@@ -70,8 +73,8 @@ Route::middleware(['guest', '2fa.pending'])->group(function () {
 
 // User activation route (for banned users, before authentication - guest only)
 Route::middleware('guest')->group(function () {
-    Route::get('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'show'])->name('user.activate');
-    Route::post('/user/activate', [\App\Http\Controllers\Auth\UserActivationController::class, 'activate'])->name('user.activate.post');
+    Route::get('/user/activate', [UserActivationController::class, 'show'])->name('user.activate');
+    Route::post('/user/activate', [UserActivationController::class, 'activate'])->name('user.activate.post');
 });
 
 Route::middleware('auth')->group(function () {
