@@ -856,11 +856,11 @@
                                                     </td>
                                                     <td class="small">
                                                         <div class="d-flex gap-1 justify-content-center">
-                                                            <a href="{{ route('admin.bookings.show', $passenger['booking_id']) }}" 
-                                                               class="btn btn-sm btn-outline-primary" 
+                                                            <a href="{{ route('admin.bookings.edit', $passenger['booking_id']) }}" 
+                                                               class="btn btn-sm btn-outline-warning" 
                                                                target="_blank"
-                                                               title="View Booking Details">
-                                                                <i class="bx bx-show"></i>
+                                                               title="Edit Booking">
+                                                                <i class="bx bx-edit"></i>
                                                             </a>
                                                             <button type="button" 
                                                                     class="btn btn-sm btn-outline-info" 
