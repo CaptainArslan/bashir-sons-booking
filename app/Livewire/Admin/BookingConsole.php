@@ -383,7 +383,7 @@ class BookingConsole extends Component
 
             $this->fareData = $fare;
             $this->baseFare = (float) $fare->final_fare;
-            $this->discountAmount = $fare->getDiscountAmount();
+            $this->discountAmount = (float) $fare->getDiscountAmount();
             $this->fareValid = true;
             $this->fareError = null;
 
@@ -442,7 +442,7 @@ class BookingConsole extends Component
                 $trip = $tripFactory->createFromTimetable($timetable->id, $this->travelDate);
             }
 
-            $trip->load(['stops', 'originStop']);
+            $trip->load(['stops', 'originStop', 'bus.busLayout']);
 
             $routeStops = RouteStop::where('route_id', $route->id)
                 ->with('terminal:id,name,code')
@@ -729,8 +729,13 @@ class BookingConsole extends Component
         // Always ensure baseFare is set from fareData if available
         if ($this->fareData) {
             $this->baseFare = (float) $this->fareData->final_fare;
-            $this->discountAmount = $this->fareData->getDiscountAmount();
+            $this->discountAmount = (float) $this->fareData->getDiscountAmount();
         }
+
+        // Ensure all values are floats
+        $this->baseFare = (float) $this->baseFare;
+        $this->discountAmount = (float) $this->discountAmount;
+        $this->taxAmount = (float) $this->taxAmount;
 
         // Calculate total fare (base fare * number of seats)
         $this->totalFare = $this->baseFare * $seatCount;
@@ -766,7 +771,7 @@ class BookingConsole extends Component
         }
 
         // Calculate final amount: Total Fare - Discount + Tax
-        $this->finalAmount = $this->totalFare - $totalDiscount + $this->taxAmount;
+        $this->finalAmount = (float) $this->totalFare - (float) $totalDiscount + (float) $this->taxAmount;
 
         // Ensure final amount is never negative
         if ($this->finalAmount < 0) {

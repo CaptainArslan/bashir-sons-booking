@@ -550,7 +550,7 @@
                                             </label>
                                             <input type="number" 
                                                    class="form-control form-control-sm" 
-                                                   wire:model.live="taxAmount"
+                                                   wire:model.blur="taxAmount"
                                                    wire:loading.attr="disabled"
                                                    placeholder="0.00" 
                                                    min="0" 
@@ -805,16 +805,16 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 small">
-                                <i class="fas fa-list-check"></i> Booked Passengers
+                                <i class="bx bx-list-check"></i> Booked Passengers
                                 <span class="badge bg-info ms-2">Total Passengers: {{ count($tripPassengers) }}</span>
                                 <span class="badge bg-success ms-2">Total Earnings: PKR {{ number_format($totalEarnings, 2) }}</span>
                             </h6>
                             @if(count($tripPassengers) > 0)
                                 <button type="button" 
-                                        class="btn btn-light btn-sm fw-bold" 
+                                        class="btn btn-sm btn-outline-dark" 
                                         onclick="window.printPassengerList && window.printPassengerList()"
                                         title="Print Passenger List">
-                                    <i class="fas fa-print"></i> Print List
+                                    <i class="bx bx-printer"></i> Print List
                                 </button>
                             @endif
                         </div>
@@ -827,13 +827,10 @@
                                                 <th class="small">Booking #</th>
                                                 <th class="small">Seat</th>
                                                 <th class="small">Name</th>
-                                                <th class="small">Gender</th>
-                                                <th class="small">Age</th>
-                                                <th class="small">Phone</th>
                                                 <th class="small">From</th>
                                                 <th class="small">To</th>
                                                 <th class="small">Amount</th>
-                                                <th class="small">Status</th>
+                                                <th class="small text-center">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -849,21 +846,6 @@
                                                         <strong>{{ $passenger['name'] }}</strong>
                                                     </td>
                                                     <td class="small">
-                                                        @if($passenger['gender'])
-                                                            <span class="badge bg-secondary">{{ ucfirst($passenger['gender']) }}</span>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="small">{{ $passenger['age'] ?? '-' }}</td>
-                                                    <td class="small">
-                                                        @if($passenger['phone'])
-                                                            <i class="bx bx-phone"></i> {{ $passenger['phone'] }}
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="small">
                                                         <small>{{ $passenger['from_code'] }}</small>
                                                     </td>
                                                     <td class="small">
@@ -873,25 +855,30 @@
                                                         <strong class="text-success">PKR {{ number_format($passenger['final_amount'], 2) }}</strong>
                                                     </td>
                                                     <td class="small">
-                                                        @php
-                                                            $statusBadge = match($passenger['status']) {
-                                                                'confirmed' => 'bg-success',
-                                                                'hold' => 'bg-warning',
-                                                                'cancelled' => 'bg-danger',
-                                                                default => 'bg-secondary'
-                                                            };
-                                                        @endphp
-                                                        <span class="badge {{ $statusBadge }}">{{ ucfirst($passenger['status'] ?? 'N/A') }}</span>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <a href="{{ route('admin.bookings.show', $passenger['booking_id']) }}" 
+                                                               class="btn btn-sm btn-outline-primary" 
+                                                               target="_blank"
+                                                               title="View Booking Details">
+                                                                <i class="bx bx-show"></i>
+                                                            </a>
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info" 
+                                                                    onclick="printBooking({{ $passenger['booking_id'] }})"
+                                                                    title="Print Ticket">
+                                                                <i class="bx bx-printer"></i>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                         <tfoot class="table-light">
                                             <tr>
-                                                <td colspan="7" class="text-end fw-bold small">
+                                                <td colspan="3" class="text-end fw-bold small">
                                                     <strong>Total Passengers:</strong> <span class="badge bg-info">{{ count($tripPassengers) }}</span>
                                                 </td>
-                                                <td class="text-end fw-bold small">Total Earnings:</td>
+                                                <td colspan="2" class="text-end fw-bold small">Total Earnings:</td>
                                                 <td class="fw-bold text-success small">PKR {{ number_format($totalEarnings, 2) }}</td>
                                                 <td></td>
                                             </tr>

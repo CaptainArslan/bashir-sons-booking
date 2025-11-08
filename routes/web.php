@@ -267,25 +267,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/seats/{seat}/cancel', [BookingController::class, 'cancelSeat'])->can('edit bookings')->name('bookings.seats.cancel');
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 
-        // Booking Console Routes (Live Seat Map)
-        Route::get('/bookings/console/load', function () {
-            return view('admin.bookings.console-wrapper');
-        })->can('create bookings')->name('bookings.console');
-        Route::get('/bookings/console/terminals', [BookingController::class, 'getTerminals'])->can('view bookings')->name('bookings.terminals');
-        Route::get('/bookings/console/routes', [BookingController::class, 'getRoutes'])->can('view bookings')->name('bookings.routes');
-        Route::get('/bookings/console/stops', [BookingController::class, 'getStops'])->can('view bookings')->name('bookings.stops');
-        Route::get('/bookings/console/route-stops', [BookingController::class, 'getRouteStops'])->can('view bookings')->name('bookings.route-stops');
-        Route::get('/bookings/console/departure-times', [BookingController::class, 'getDepartureTimes'])->can('view bookings')->name('bookings.departure-times');
-        Route::get('/bookings/console/fare', [BookingController::class, 'getFare'])->can('view bookings')->name('bookings.fare');
-        Route::post('/bookings/console/load-trip', [BookingController::class, 'loadTripUpdated'])->can('view bookings')->name('bookings.load-trip');
-        Route::post('/bookings/console/lock-seats', [BookingController::class, 'lockSeats'])->can('create bookings')->name('bookings.lock-seats');
-        Route::post('/bookings/console/unlock-seats', [BookingController::class, 'unlockSeats'])->can('create bookings')->name('bookings.unlock-seats');
-        Route::get('/bookings/console/trip-passengers/{tripId}', [BookingController::class, 'getTripPassengers'])->can('view bookings')->name('bookings.trip-passengers');
-        Route::get('/bookings/console/booking-details/{bookingId}', [BookingController::class, 'getBookingDetailsForConsole'])->can('view bookings')->name('bookings.console-details');
-        Route::get('/bookings/console/list-buses', [BookingController::class, 'listBuses'])->can('view bookings')->name('bookings.list-buses');
-        Route::get('/bookings/console/expense-types', [BookingController::class, 'getExpenseTypes'])->can('view bookings')->name('bookings.expense-types');
-        Route::post('/bookings/console/assign-bus-driver/{tripId}', [BookingController::class, 'assignBusDriver'])->can('create bookings')->name('bookings.assign-bus-driver');
-        Route::post('/bookings/console/add-expenses/{tripId}', [BookingController::class, 'addTripExpenses'])->can('create bookings')->name('bookings.add-expenses');
+        // Booking Console Routes (Livewire Component)
+        Route::get('/bookings/console/load', fn () => view('admin.bookings.console-wrapper'))->can('create bookings')->name('bookings.console');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
