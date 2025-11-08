@@ -93,6 +93,12 @@ class BookingService
                     : now()->addMinutes(15); // 15 minutes for online bookings
             }
 
+            // Determine if this is an advance booking
+            // If trip departure date is greater than tomorrow, it's an advance booking
+            $tomorrow = now()->addDay()->startOfDay();
+            $tripDepartureDate = \Carbon\Carbon::parse($trip->departure_date)->startOfDay();
+            $isAdvance = $tripDepartureDate->gt($tomorrow);
+
             $booking = Booking::create([
                 'booking_number' => $this->pnr(),
                 'trip_id' => $trip->id,
@@ -114,6 +120,7 @@ class BookingService
                 'final_amount' => $data['final_amount'] ?? 0,
                 'currency' => $data['currency'] ?? ($trip->route->base_currency ?? 'PKR'),
                 'total_passengers' => $need,
+                'is_advance' => $isAdvance,
                 'notes' => $data['notes'] ?? null,
                 'payment_received_from_customer' => $data['payment_received_from_customer'] ?? 0,
                 'return_after_deduction_from_customer' => $data['return_after_deduction_from_customer'] ?? 0,

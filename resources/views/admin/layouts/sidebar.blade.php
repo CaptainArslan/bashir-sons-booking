@@ -305,8 +305,45 @@
               </ul>
           </li>
 
+          {{-- Reports Section --}}
+          @canany(['view bookings'])
+              <li class="menu-label"
+                  style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem 1rem; color: #6c757d;">
+                  Reports & Analytics</li>
+          @endcanany
 
-
+          @can('view bookings')
+              <li>
+                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-bar-chart-alt-2'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Sales Reports</div>
+                  </a>
+                  <ul style="padding-left: 0;">
+                      {{-- Admin Reports --}}
+                      @role('Admin|Super Admin')
+                          <li> <a href="{{ route('reports.index') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Admin Reports</a></li>
+                      @endrole
+                      
+                      {{-- Manager Reports --}}
+                      @role('Manager|Admin|Super Admin')
+                          <li> <a href="{{ route('manager.reports.index') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>Manager Reports</a></li>
+                      @endrole
+                      
+                      {{-- Employee Reports --}}
+                      @role('Employee|Manager|Admin|Super Admin')
+                          <li> <a href="{{ route('employee.reports.index') }}"
+                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
+                                      style="font-size: 0.7rem;"></i>My Reports</a></li>
+                      @endrole
+                  </ul>
+              </li>
+          @endcan
 
           @can('view discounts')
               <li>

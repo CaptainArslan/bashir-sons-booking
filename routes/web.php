@@ -20,9 +20,12 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\TerminalReportController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Manager\ReportController as ManagerReportController;
+use App\Http\Controllers\Employee\ReportController as EmployeeReportController;
 use App\Http\Controllers\Auth\UserActivationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendBookingController;
@@ -292,6 +295,18 @@ Route::middleware('auth')->group(function () {
         // Terminal Reports Routes
         Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
         Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
+
+        // Sales Reports Routes (Admin)
+        Route::get('/reports', [AdminReportController::class, 'index'])->can('view bookings')->name('reports.index');
+        Route::get('/reports/sales', [AdminReportController::class, 'sales'])->can('view bookings')->name('reports.sales');
+
+        // Manager Reports Routes
+        Route::get('/manager/reports', [ManagerReportController::class, 'index'])->middleware('role:Manager|Admin|Super Admin')->name('manager.reports.index');
+        Route::get('/manager/reports/sales', [ManagerReportController::class, 'sales'])->middleware('role:Manager|Admin|Super Admin')->name('manager.reports.sales');
+
+        // Employee Reports Routes
+        Route::get('/employee/reports', [EmployeeReportController::class, 'index'])->middleware('role:Employee|Manager|Admin|Super Admin')->name('employee.reports.index');
+        Route::get('/employee/reports/sales', [EmployeeReportController::class, 'sales'])->middleware('role:Employee|Manager|Admin|Super Admin')->name('employee.reports.sales');
 
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');

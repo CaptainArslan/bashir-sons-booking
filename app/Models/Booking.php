@@ -34,6 +34,7 @@ class Booking extends Model
         'final_amount',
         'currency',
         'total_passengers',
+        'is_advance',
         'notes',
         'payment_received_from_customer',
         'return_after_deduction_from_customer',
@@ -57,6 +58,7 @@ class Booking extends Model
             'payment_received_from_customer' => 'decimal:2',
             'return_after_deduction_from_customer' => 'decimal:2',
             'total_passengers' => 'integer',
+            'is_advance' => 'boolean',
         ];
     }
 
