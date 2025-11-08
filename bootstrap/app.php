@@ -29,6 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('app:expire-holds')->everyMinute();
         $schedule->command('bookings:expire')->everyMinute();
+
+        // Create trips for today automatically at 1:00 AM daily
+        $schedule->command('trips:create-for-day')
+            ->dailyAt('01:00')
+            ->timezone('Asia/Karachi')
+            ->withoutOverlapping()
+            ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
