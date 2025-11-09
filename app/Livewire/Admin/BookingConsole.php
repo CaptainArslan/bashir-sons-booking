@@ -1039,11 +1039,17 @@ class BookingConsole extends Component
                 'status' => $booking->status,
             ];
 
+
             // Reset booking form but keep passenger forms ready for next booking
             $this->resetBookingForm();
 
+            // Ensure amountReceived is reset after loadTrip (in case it was preserved)
+            $this->amountReceived = 0;
+            $this->returnAmount = 0;
+
             // Reload trip to update seat map and passengers
             $this->loadTrip();
+
 
             // Dispatch event to show modal - data is already stored in lastBookingData
             $this->dispatch('booking-success');
@@ -1072,13 +1078,13 @@ class BookingConsole extends Component
         // Reset: taxAmount (user-entered), totalFare and finalAmount will be recalculated
 
         // Reset payment fields - clear all payment information for next booking
-        $this->amountReceived = 0.00; // Reset amount received from customer to zero
-        $this->returnAmount = 0.00; // Reset return amount to zero
+        $this->amountReceived = 0; // Reset amount received from customer to zero
+        $this->returnAmount = 0; // Reset return amount to zero
         $this->transactionId = null; // Clear transaction ID
         $this->paymentMethod = 'cash'; // Reset to default payment method
         $this->bookingType = 'counter'; // Reset to default booking type
         $this->notes = ''; // Clear notes
-        $this->taxAmount = 0.00; // Reset tax/charges to zero (user-entered value)
+        $this->taxAmount = 0; // Reset tax/charges to zero (user-entered value)
 
         // dd($this->amountReceived, $this->returnAmount, $this->transactionId, $this->paymentMethod, $this->bookingType, $this->notes, $this->taxAmount);
         // Reset passenger information - completely clear all passengers and create fresh empty form
