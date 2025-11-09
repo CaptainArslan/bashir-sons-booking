@@ -607,8 +607,10 @@ seat-available
                                         <label class="form-label small fw-bold">Booking Type</label>
                                         <select class="form-select form-select-sm" wire:model.live="bookingType"
                                             wire:loading.attr="disabled">
-                                            <option value="counter">🏪 Counter</option>
-                                            <option value="phone">📞 Phone (Hold till before 60 mins of departure)
+                                            <option value="counter"
+                                                {{ $bookingType === 'counter' ? 'selected' : '' }}>🏪 Counter</option>
+                                            <option value="phone" {{ $bookingType === 'phone' ? 'selected' : '' }}>📞
+                                                Phone (Hold till before 60 mins of departure)
                                             </option>
                                         </select>
                                         <div wire:loading wire:target="bookingType"
@@ -681,8 +683,9 @@ seat-available
                                                 <i class="fas fa-money-bill"></i> Amount Received from Customer (PKR)
                                             </label>
                                             <input type="number" class="form-control form-control-lg fw-bold"
-                                                wire:model.blur="amountReceived" {{-- wire:loading.attr="disabled" --}} min="0"
-                                                step="0.01" placeholder="0.00" style="font-size: 1.1rem;">
+                                                wire:model.blur="amountReceived" wire:loading.attr="disabled"
+                                                min="0" step="0.01" placeholder="0.00"
+                                                style="font-size: 1.1rem;">
                                             <div wire:loading wire:target="amountReceived"
                                                 class="spinner-border spinner-border-sm text-primary mt-1"
                                                 role="status">
@@ -865,7 +868,8 @@ seat-available
                                                                 class="text-danger">*</span></label>
                                                         <input type="number" class="form-control form-control-sm"
                                                             wire:model="passengers.{{ $index }}.age"
-                                                            min="1" max="120" placeholder="Age">
+                                                            min="1" max="120" maxlength="3"
+                                                            placeholder="Age">
                                                         @error("passengers.{$index}.age")
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
@@ -1812,13 +1816,13 @@ seat-available
                                 <td><strong>${arrivalTime}</strong></td>
                             </tr>
                             ${fromStop && toStop ? `
-                                                    <tr>
-                                                        <td>From Terminal:</td>
-                                                        <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
-                                                        <td>To Terminal:</td>
-                                                        <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>From Terminal:</td>
+                                                                        <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
+                                                                        <td>To Terminal:</td>
+                                                                        <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
@@ -1862,17 +1866,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                    <tr>
-                                                        <td>Driver Address:</td>
-                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>Driver Address:</td>
+                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                             ${routeData ? `
-                                                    <tr>
-                                                        <td>Route:</td>
-                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>Route:</td>
+                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                         </table>
                     </div>
                     
@@ -1889,22 +1893,22 @@ seat-available
                     </div>
                     
                     ${tripStops && tripStops.length > 0 ? `
-                                            <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
-                                                <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
-                                                <table style="margin-bottom: 0; font-size: 10px;">
-                                                    <thead>
-                                                        <tr style="background-color: #333; color: #fff;">
-                                                            <th style="padding: 4px; width: 8%;">Seq</th>
-                                                            <th style="padding: 4px; width: 40%;">Terminal</th>
-                                                            <th style="padding: 4px; width: 26%;">Arrival Time</th>
-                                                            <th style="padding: 4px; width: 26%;">Departure Time</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        ${tripStops.map((stop, index) => {
-                                                            const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                            const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                            return `
+                                                            <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
+                                                                <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
+                                                                <table style="margin-bottom: 0; font-size: 10px;">
+                                                                    <thead>
+                                                                        <tr style="background-color: #333; color: #fff;">
+                                                                            <th style="padding: 4px; width: 8%;">Seq</th>
+                                                                            <th style="padding: 4px; width: 40%;">Terminal</th>
+                                                                            <th style="padding: 4px; width: 26%;">Arrival Time</th>
+                                                                            <th style="padding: 4px; width: 26%;">Departure Time</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        ${tripStops.map((stop, index) => {
+                                                                            const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                                                            const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                                                            return `
                                         <tr>
                                             <td style="text-align: center; padding: 4px; font-weight: bold;">${index + 1}</td>
                                             <td style="padding: 4px;">${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
@@ -1934,17 +1938,17 @@ seat-available
                         </thead>
                         <tbody>
                             ${tripPassengers.map((passenger, index) => `
-                                                        <tr>
-                                                            <td class="text-center">${index + 1}</td>
-                                                            <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
-                                                            <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
-                                                            <td><strong>${passenger.name || 'N/A'}</strong></td>
-                                                            <td>${passenger.cnic || 'N/A'}</td>
-                                                            <td>${passenger.phone || 'N/A'}</td>
-                                                            <td>${passenger.from_code || 'N/A'}</td>
-                                                            <td>${passenger.to_code || 'N/A'}</td>
-                                                        </tr>
-                                                    `).join('')}
+                                                                        <tr>
+                                                                            <td class="text-center">${index + 1}</td>
+                                                                            <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                                                            <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
+                                                                            <td><strong>${passenger.name || 'N/A'}</strong></td>
+                                                                            <td>${passenger.cnic || 'N/A'}</td>
+                                                                            <td>${passenger.phone || 'N/A'}</td>
+                                                                            <td>${passenger.from_code || 'N/A'}</td>
+                                                                            <td>${passenger.to_code || 'N/A'}</td>
+                                                                        </tr>
+                                                                    `).join('')}
                         </tbody>
                     </table>
                     
@@ -2205,17 +2209,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                    <tr>
-                                                        <td>Driver Address:</td>
-                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>Driver Address:</td>
+                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                             ${routeData ? `
-                                                    <tr>
-                                                        <td>Route:</td>
-                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>Route:</td>
+                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                         </table>
                     </div>
                     
@@ -2247,11 +2251,11 @@ seat-available
                                 <td class="text-success"><strong>PKR ${parseFloat(totalEarnings || 0).toFixed(2)}</strong></td>
                             </tr>
                             ${fareData && fareData.from_terminal ? `
-                                                    <tr>
-                                                        <td>Fare Route:</td>
-                                                        <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
-                                                    </tr>
-                                                    ` : ''}
+                                                                    <tr>
+                                                                        <td>Fare Route:</td>
+                                                                        <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
+                                                                    </tr>
+                                                                    ` : ''}
                         </table>
                     </div>
                     

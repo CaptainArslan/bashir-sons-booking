@@ -1107,6 +1107,8 @@ class BookingConsole extends Component
         // This will set totalFare = 0 and finalAmount = 0 automatically
         $this->calculateFinal();
 
+        
+
         // Force Livewire to update the view
         $this->dispatch('form-reset');
     }
