@@ -17,8 +17,7 @@
                 </h5>
                 @if ($lastBookingId)
                     <button type="button" class="btn btn-light btn-sm fw-bold"
-                        onclick="printBothTickets({{ $lastBookingId }}, '80mm')"
-                        title="Print Both Customer and Host Tickets">
+                        onclick="printBothTickets({{ $lastBookingId }})" title="Print Both Customer and Host Tickets">
                         <i class="fas fa-print"></i> Print Last Ticket
                     </button>
                 @endif
@@ -782,8 +781,7 @@ seat-available
                                             </div>
                                         @else
                                             <div class="alert alert-secondary border-1 mb-2 p-2 small">
-                                                <i class="fas fa-info-circle"></i> Enter amount received to see payment
-                                                summary
+                                                <i class="fas fa-info-circle"></i> Enter amount received to see payment summary
                                             </div>
                                         @endif
                                     @endif
@@ -1025,7 +1023,7 @@ seat-available
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-sm btn-outline-info"
-                                                                onclick="printBothTickets({{ $passenger['booking_id'] }}, '80mm')"
+                                                                onclick="printBothTickets({{ $passenger['booking_id'] }})"
                                                                 title="Print Both Customer and Host Tickets">
                                                                 <i class="bx bx-printer"></i>
                                                             </button>
@@ -1110,7 +1108,8 @@ seat-available
                                 <option value="">-- Select Bus --</option>
                                 @foreach ($availableBuses as $bus)
                                     <option value="{{ $bus->id }}">
-                                        {{ $bus->name }} ({{ $bus->registration_number }}) - {{ $bus->model }}
+                                        {{ $bus->name }} ({{ $bus->registration_number }}) -
+                                        {{ $bus->model }}
                                     </option>
                                 @endforeach
                             </select>
@@ -1333,7 +1332,7 @@ seat-available
                 </div>
                 <div class="modal-footer d-flex gap-2">
                     <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
-                        @if ($lastBookingId) onclick="printBothTickets({{ $lastBookingId }}, '80mm')" @else disabled @endif>
+                        @if ($lastBookingId) onclick="printBothTickets({{ $lastBookingId }})" @else disabled @endif>
                         <i class="fas fa-print"></i> Print Both Tickets (Customer & Host)
                     </button>
                     <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
@@ -1450,8 +1449,8 @@ seat-available
             $wire.on('form-reset', () => {
                 // Form reset handled by Livewire
                 // reset the amountReceived and returnAmount to 0
-                document.getElementById('amountReceived').value = 0;
-                document.getElementById('returnAmount').value = 0;
+                // document.getElementById('amountReceived').value = 0;
+                // document.getElementById('returnAmount').value = 0;
             });
 
             $wire.on('booking-success', () => {
@@ -1500,7 +1499,7 @@ seat-available
                 }, 100);
             });
 
-            function printBooking(bookingId, ticketType = null, ticketSize = null) {
+            function printBooking(bookingId, ticketType = null) {
                 if (!bookingId) {
                     Swal.fire({
                         icon: 'error',
@@ -1512,54 +1511,16 @@ seat-available
                 }
 
                 // Default behavior: automatically print both customer and host tickets
-                // If no ticket type is specified, print both with default size (80mm) or selected size
-                if (!ticketType) {
-                    const defaultSize = ticketSize || '80mm';
-                    printBothTickets(bookingId, defaultSize);
-                    return;
-                }
-
-                // If ticket type is 'both', print both customer and host tickets
-                if (ticketType === 'both') {
-                    const defaultSize = ticketSize || '80mm';
-                    printBothTickets(bookingId, defaultSize);
-                    return;
-                }
-
-                // If ticket size is not provided and ticket type is specified, show dialog to select size
-                if (!ticketSize) {
-                    Swal.fire({
-                        title: 'Select Ticket Size',
-                        text: 'Which printer size would you like to use?',
-                        icon: 'question',
-                        input: 'select',
-                        inputOptions: {
-                            'a4': 'A4 Paper',
-                            '80mm': '80mm Thermal Printer',
-                            '50mm': '50mm Thermal Printer'
-                        },
-                        inputPlaceholder: 'Select ticket size',
-                        showCancelButton: true,
-                        confirmButtonText: 'Print',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#007bff',
-                        inputValidator: (value) => {
-                            if (!value) {
-                                return 'You need to select a ticket size!';
-                            }
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed && result.value) {
-                            printBooking(bookingId, ticketType, result.value);
-                        }
-                    });
+                // If no ticket type is specified, print both tickets
+                if (!ticketType || ticketType === 'both') {
+                    printBothTickets(bookingId);
                     return;
                 }
 
                 // If ticket type is specified (customer or host), print single ticket
                 if (ticketType) {
                     try {
-                        const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}/${ticketSize}`,
+                        const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}/80mm`,
                             '_blank');
 
                         if (!printWindow) {
@@ -1583,7 +1544,7 @@ seat-available
             }
 
             // Function to print both customer and host tickets automatically
-            function printBothTickets(bookingId, ticketSize) {
+            function printBothTickets(bookingId) {
                 if (!bookingId) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -1599,9 +1560,8 @@ seat-available
                 }
 
                 try {
-                    const size = ticketSize || '80mm';
-                    // Open a single window with both tickets combined
-                    const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/${size}`;
+                    // Open a single window with both tickets combined (always 80mm)
+                    const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/80mm`;
                     const printWindow = window.open(bothTicketsUrl, 'bothTickets');
 
                     // Check if window was blocked
@@ -1816,13 +1776,13 @@ seat-available
                                 <td><strong>${arrivalTime}</strong></td>
                             </tr>
                             ${fromStop && toStop ? `
-                                                                    <tr>
-                                                                        <td>From Terminal:</td>
-                                                                        <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
-                                                                        <td>To Terminal:</td>
-                                                                        <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>From Terminal:</td>
+                                                                                <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
+                                                                                <td>To Terminal:</td>
+                                                                                <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
@@ -1866,17 +1826,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                                    <tr>
-                                                                        <td>Driver Address:</td>
-                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>Driver Address:</td>
+                                                                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                             ${routeData ? `
-                                                                    <tr>
-                                                                        <td>Route:</td>
-                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>Route:</td>
+                                                                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                         </table>
                     </div>
                     
@@ -1893,22 +1853,22 @@ seat-available
                     </div>
                     
                     ${tripStops && tripStops.length > 0 ? `
-                                                            <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
-                                                                <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
-                                                                <table style="margin-bottom: 0; font-size: 10px;">
-                                                                    <thead>
-                                                                        <tr style="background-color: #333; color: #fff;">
-                                                                            <th style="padding: 4px; width: 8%;">Seq</th>
-                                                                            <th style="padding: 4px; width: 40%;">Terminal</th>
-                                                                            <th style="padding: 4px; width: 26%;">Arrival Time</th>
-                                                                            <th style="padding: 4px; width: 26%;">Departure Time</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        ${tripStops.map((stop, index) => {
-                                                                            const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                                            const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                                            return `
+                                                                    <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
+                                                                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
+                                                                        <table style="margin-bottom: 0; font-size: 10px;">
+                                                                            <thead>
+                                                                                <tr style="background-color: #333; color: #fff;">
+                                                                                    <th style="padding: 4px; width: 8%;">Seq</th>
+                                                                                    <th style="padding: 4px; width: 40%;">Terminal</th>
+                                                                                    <th style="padding: 4px; width: 26%;">Arrival Time</th>
+                                                                                    <th style="padding: 4px; width: 26%;">Departure Time</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                ${tripStops.map((stop, index) => {
+                                                                                    const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                                                                    const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                                                                    return `
                                         <tr>
                                             <td style="text-align: center; padding: 4px; font-weight: bold;">${index + 1}</td>
                                             <td style="padding: 4px;">${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
@@ -1938,17 +1898,17 @@ seat-available
                         </thead>
                         <tbody>
                             ${tripPassengers.map((passenger, index) => `
-                                                                        <tr>
-                                                                            <td class="text-center">${index + 1}</td>
-                                                                            <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
-                                                                            <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
-                                                                            <td><strong>${passenger.name || 'N/A'}</strong></td>
-                                                                            <td>${passenger.cnic || 'N/A'}</td>
-                                                                            <td>${passenger.phone || 'N/A'}</td>
-                                                                            <td>${passenger.from_code || 'N/A'}</td>
-                                                                            <td>${passenger.to_code || 'N/A'}</td>
-                                                                        </tr>
-                                                                    `).join('')}
+                                                                                <tr>
+                                                                                    <td class="text-center">${index + 1}</td>
+                                                                                    <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                                                                    <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
+                                                                                    <td><strong>${passenger.name || 'N/A'}</strong></td>
+                                                                                    <td>${passenger.cnic || 'N/A'}</td>
+                                                                                    <td>${passenger.phone || 'N/A'}</td>
+                                                                                    <td>${passenger.from_code || 'N/A'}</td>
+                                                                                    <td>${passenger.to_code || 'N/A'}</td>
+                                                                                </tr>
+                                                                            `).join('')}
                         </tbody>
                     </table>
                     
@@ -2209,17 +2169,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                                    <tr>
-                                                                        <td>Driver Address:</td>
-                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>Driver Address:</td>
+                                                                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                             ${routeData ? `
-                                                                    <tr>
-                                                                        <td>Route:</td>
-                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>Route:</td>
+                                                                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                         </table>
                     </div>
                     
@@ -2251,11 +2211,11 @@ seat-available
                                 <td class="text-success"><strong>PKR ${parseFloat(totalEarnings || 0).toFixed(2)}</strong></td>
                             </tr>
                             ${fareData && fareData.from_terminal ? `
-                                                                    <tr>
-                                                                        <td>Fare Route:</td>
-                                                                        <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
-                                                                    </tr>
-                                                                    ` : ''}
+                                                                            <tr>
+                                                                                <td>Fare Route:</td>
+                                                                                <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
+                                                                            </tr>
+                                                                            ` : ''}
                         </table>
                     </div>
                     

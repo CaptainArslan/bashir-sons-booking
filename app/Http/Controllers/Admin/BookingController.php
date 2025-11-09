@@ -293,17 +293,14 @@ class BookingController extends Controller
             'cancelledByUser',
         ]);
 
+        // Always use 80mm ticket size
+        $size = '80mm';
+
         // If type is 'both', print both customer and host tickets
         if ($type === 'both') {
-            // Validate size and set template
-            $validSizes = ['a4', '80mm', '50mm'];
-            if (! in_array(strtolower($size), $validSizes)) {
-                $size = '80mm';
-            }
-
             return view('admin.bookings.tickets.print-both', [
                 'booking' => $booking,
-                'size' => strtolower($size),
+                'size' => '80mm',
             ]);
         }
 
@@ -312,13 +309,7 @@ class BookingController extends Controller
             $type = 'customer';
         }
 
-        // Validate size and set template
-        $validSizes = ['a4', '80mm', '50mm'];
-        if (! in_array(strtolower($size), $validSizes)) {
-            $size = '80mm';
-        }
-
-        $template = 'admin.bookings.tickets.ticket-'.strtolower($size);
+        $template = 'admin.bookings.tickets.ticket-80mm';
 
         return view($template, [
             'booking' => $booking,

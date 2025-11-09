@@ -13,7 +13,7 @@
         
         @media print {
             @page {
-                size: {{ $size === 'a4' ? 'A4' : ($size === '80mm' ? '80mm auto' : '50mm auto') }};
+                size: 80mm auto;
                 margin: 0;
                 padding: 0;
             }
@@ -40,7 +40,7 @@
             }
             
             .ticket-container {
-                margin-bottom: {{ $size === 'a4' ? '15mm' : ($size === '80mm' ? '8mm' : '5mm') }};
+                margin-bottom: 8mm;
                 page-break-inside: avoid;
                 width: 100%;
             }
@@ -55,7 +55,7 @@
                 max-width: 100% !important;
                 min-width: auto !important;
                 margin: 0 !important;
-                padding: {{ $size === 'a4' ? '5mm' : ($size === '80mm' ? '3mm' : '2mm') }} !important;
+                padding: 3mm !important;
             }
             
             /* Hide print buttons from included templates */
@@ -73,7 +73,7 @@
             }
             
             .tickets-wrapper {
-                max-width: {{ $size === 'a4' ? '210mm' : ($size === '80mm' ? '80mm' : '50mm') }};
+                max-width: 80mm;
                 margin: 0 auto;
                 background: #fff;
                 padding: 20px;
@@ -107,7 +107,7 @@
         }
         
         .ticket-container {
-            margin-bottom: {{ $size === 'a4' ? '15mm' : ($size === '80mm' ? '8mm' : '5mm') }};
+            margin-bottom: 8mm;
             position: relative;
         }
         
@@ -138,7 +138,7 @@
         .ticket-divider {
             height: 2px;
             background: #ddd;
-            margin: {{ $size === 'a4' ? '10mm' : ($size === '80mm' ? '5mm' : '3mm') }} 0;
+            margin: 5mm 0;
             border: none;
         }
         
@@ -158,7 +158,7 @@
     <div class="tickets-wrapper">
         <!-- Customer Ticket -->
         <div class="ticket-container">
-            @include('admin.bookings.tickets.ticket-' . strtolower($size), [
+            @include('admin.bookings.tickets.ticket-80mm', [
                 'booking' => $booking,
                 'ticketType' => 'customer'
             ])
@@ -169,7 +169,7 @@
 
         <!-- Host Ticket -->
         <div class="ticket-container">
-            @include('admin.bookings.tickets.ticket-' . strtolower($size), [
+            @include('admin.bookings.tickets.ticket-80mm', [
                 'booking' => $booking,
                 'ticketType' => 'host'
             ])
