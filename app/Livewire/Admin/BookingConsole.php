@@ -405,7 +405,7 @@ class BookingConsole extends Component
             }
 
             if ($ts->departure_time) {
-                $fullDeparture = Carbon::parse($selectedDate->format('Y-m-d') . ' ' . $ts->departure_time);
+                $fullDeparture = Carbon::parse($selectedDate->format('Y-m-d').' '.$ts->departure_time);
 
                 // Only include departures greater than or equal to the current moment
                 if ($fullDeparture->greaterThanOrEqualTo($now)) {
@@ -427,7 +427,6 @@ class BookingConsole extends Component
             ->values()
             ->toArray();
     }
-
 
     public function loadFare(): void
     {
@@ -595,14 +594,15 @@ class BookingConsole extends Component
 
     public function loadTripPassengers(): void
     {
-        if (! $this->tripId || ! $this->fromStop) {
+        if (! $this->tripId || ! $this->fromStop || ! $this->toStop) {
             return;
         }
 
-        // Get the selected from terminal sequence for filtering
+        // Get the selected from and to terminal sequences for filtering
         $selectedFromSequence = $this->fromStop['sequence'] ?? null;
+        $selectedToSequence = $this->toStop['sequence'] ?? null;
 
-        if ($selectedFromSequence === null) {
+        if ($selectedFromSequence === null || $selectedToSequence === null) {
             return;
         }
 
@@ -611,8 +611,8 @@ class BookingConsole extends Component
             ->where('trip_id', $this->tripId)
             ->where('status', '!=', 'cancelled')
             ->with([
-                'passengers' => fn($q) => $q->orderBy('id'),
-                'seats' => fn($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
+                'passengers' => fn ($q) => $q->orderBy('id'),
+                'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
                 'fromStop:id,sequence,terminal_id',
                 'toStop:id,sequence,terminal_id',
                 'fromStop.terminal:id,name,code',
@@ -625,12 +625,24 @@ class BookingConsole extends Component
         $processedBookings = [];
 
         foreach ($bookings as $booking) {
-            // Filter: Only show bookings that start from the selected terminal onwards
-            // This means booking's from_stop sequence should be >= selected from sequence
+            // Filter: Only show bookings that travel within the selected segment
+            // Booking's from_stop sequence should be >= selected from sequence
+            // AND booking's to_stop sequence should be <= selected to sequence
             $bookingFromSeq = $booking->fromStop?->sequence ?? null;
+            $bookingToSeq = $booking->toStop?->sequence ?? null;
 
-            if ($bookingFromSeq === null || $bookingFromSeq < $selectedFromSequence) {
-                continue; // Skip bookings that start before the selected terminal
+            if ($bookingFromSeq === null || $bookingToSeq === null) {
+                continue;
+            }
+
+            // Skip bookings that start before the selected terminal
+            if ($bookingFromSeq < $selectedFromSequence) {
+                continue;
+            }
+
+            // Skip bookings that end after the selected terminal
+            if ($bookingToSeq > $selectedToSequence) {
+                continue;
             }
 
             // Get all active seats for this booking
@@ -926,7 +938,7 @@ class BookingConsole extends Component
         }
 
         $this->validate([
-            'passengers' => 'required|array|min:1|max:' . $selectedSeatCount,
+            'passengers' => 'required|array|min:1|max:'.$selectedSeatCount,
             'passengers.*.name' => 'required|string|max:100',
             'passengers.*.age' => 'required|integer|min:1|max:120',
             'passengers.*.gender' => 'required|in:male,female',
@@ -935,7 +947,7 @@ class BookingConsole extends Component
             'passengers.*.email' => 'nullable|email|max:100',
         ], [
             'passengers.min' => 'Please provide at least one passenger information',
-            'passengers.max' => 'You can add up to ' . $selectedSeatCount . ' passenger(s) for ' . $selectedSeatCount . ' selected seat(s)',
+            'passengers.max' => 'You can add up to '.$selectedSeatCount.' passenger(s) for '.$selectedSeatCount.' selected seat(s)',
             'passengers.*.name.required' => 'Passenger name is required',
             'passengers.*.age.required' => 'Passenger age is required',
             'passengers.*.gender.required' => 'Passenger gender is required',
@@ -1366,7 +1378,7 @@ class BookingConsole extends Component
             'hostName' => 'nullable|string|max:255',
             'hostPhone' => 'nullable|string|max:20',
             'expenses' => 'nullable|array',
-            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
             'expenses.*.amount' => 'required_with:expenses.*.expense_type|numeric|min:0',
             'expenses.*.description' => 'nullable|string|max:500',
         ], [
@@ -1404,8 +1416,8 @@ class BookingConsole extends Component
                 }
                 // Append to existing notes
                 $existingNotes = $trip->notes ?? '';
-                $hostNotes = 'Host: ' . ($this->hostName ?? 'N/A') . ($this->hostPhone ? ' (' . $this->hostPhone . ')' : '');
-                $trip->notes = $existingNotes ? $existingNotes . "\n" . $hostNotes : $hostNotes;
+                $hostNotes = 'Host: '.($this->hostName ?? 'N/A').($this->hostPhone ? ' ('.$this->hostPhone.')' : '');
+                $trip->notes = $existingNotes ? $existingNotes."\n".$hostNotes : $hostNotes;
                 $trip->save();
             }
 
