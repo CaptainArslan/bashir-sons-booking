@@ -379,13 +379,13 @@ class BookingController extends Controller
         try {
             DB::beginTransaction();
 
-            // If departure has passed, keep the original status
-            $statusToUpdate = $departurePassed ? $booking->status : $validated['status'];
-
-            // Check if booking is being cancelled
-            $isBeingCancelled = ($statusToUpdate === 'cancelled' || $statusToUpdate === BookingStatusEnum::CANCELLED->value);
+            // Check if booking is being cancelled (check the validated status, not the computed one)
+            $isBeingCancelled = ($validated['status'] === 'cancelled' || $validated['status'] === BookingStatusEnum::CANCELLED->value);
             $wasCancelled = ($booking->status === 'cancelled' || $booking->status === BookingStatusEnum::CANCELLED->value);
             $shouldCancelSeats = $isBeingCancelled && ! $wasCancelled;
+
+            // If departure has passed, keep the original status UNLESS it's being cancelled (allow cancellation for record-keeping)
+            $statusToUpdate = ($departurePassed && ! $isBeingCancelled) ? $booking->status : $validated['status'];
 
             // Validate transaction ID for non-cash payments
             $paymentMethod = $validated['payment_method'] ?? $booking->payment_method ?? 'cash';
@@ -499,6 +499,9 @@ class BookingController extends Controller
     {
         $this->authorize('edit bookings');
 
+        // Load booking relationships for stop-wise validation
+        $booking->load(['trip.stops', 'fromStop.terminal']);
+
         // Check if seat belongs to this booking
         if ($seat->booking_id !== $booking->id) {
             return response()->json([
@@ -506,12 +509,13 @@ class BookingController extends Controller
             ], 400);
         }
 
-        // Check if departure time has passed
-        $departureTime = $booking->trip?->departure_datetime;
+        // Check if departure time has passed - use stop-wise departure time
+        $fromTripStop = $booking->trip?->stops?->firstWhere('terminal_id', $booking->fromStop?->terminal_id);
+        $departureTime = $fromTripStop?->departure_at ?? $booking->trip?->departure_datetime;
         $departurePassed = $departureTime && $departureTime->isPast();
         if ($departurePassed) {
             return response()->json([
-                'message' => 'Cannot cancel seat as trip has already departed',
+                'message' => 'Cannot cancel seat as trip has already departed from the origin stop',
             ], 400);
         }
 
@@ -523,7 +527,11 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'cancellation_reason' => 'nullable|string|max:500',
+            'cancellation_reason' => 'required|string|min:5|max:500',
+        ], [
+            'cancellation_reason.required' => 'Cancellation reason is required.',
+            'cancellation_reason.min' => 'Cancellation reason must be at least 5 characters.',
+            'cancellation_reason.max' => 'Cancellation reason cannot exceed 500 characters.',
         ]);
 
         try {
@@ -532,16 +540,56 @@ class BookingController extends Controller
             // Cancel the seat with cancellation reason
             $seat->update([
                 'cancelled_at' => now(),
-                'cancellation_reason' => $validated['cancellation_reason'] ?? null,
+                'cancellation_reason' => trim($validated['cancellation_reason']),
             ]);
 
             // Recalculate booking totals from active seats only
             $this->recalculateBookingTotals($booking);
 
+            // Refresh booking to get updated seat counts
+            $booking->refresh();
+            $booking->load('seats');
+
+            // Check if all seats are now cancelled - if so, cancel the booking
+            $activeSeatsCount = $booking->seats()->whereNull('cancelled_at')->count();
+            $isBookingCancelled = ($booking->status === 'cancelled' || $booking->status === BookingStatusEnum::CANCELLED->value);
+            $bookingCancelled = false;
+
+            if ($activeSeatsCount === 0 && ! $isBookingCancelled) {
+                // All seats are cancelled, so cancel the booking
+                $cancellationReason = trim($validated['cancellation_reason']);
+
+                // Determine cancelled_by_type based on user role
+                $user = Auth::user();
+                $cancelledByType = 'admin';
+                if (method_exists($user, 'hasRole')) {
+                    if ($user->hasRole('admin') || $user->hasRole('Admin') || $user->hasRole('super_admin')) {
+                        $cancelledByType = 'admin';
+                    } elseif ($user->hasRole('employee') || $user->hasRole('Employee')) {
+                        $cancelledByType = 'employee';
+                    }
+                }
+
+                $booking->update([
+                    'status' => BookingStatusEnum::CANCELLED->value,
+                    'cancelled_at' => now(),
+                    'cancellation_reason' => $cancellationReason,
+                    'cancelled_by_user_id' => Auth::id(),
+                    'cancelled_by_type' => $cancelledByType,
+                ]);
+
+                $bookingCancelled = true;
+            }
+
             DB::commit();
 
+            $message = 'Seat cancelled successfully';
+            if ($bookingCancelled) {
+                $message .= '. All seats are cancelled, so the booking has been cancelled.';
+            }
+
             return response()->json([
-                'message' => 'Seat cancelled successfully',
+                'message' => $message,
                 'booking' => $booking->fresh(['seats', 'trip.route', 'fromStop.terminal', 'toStop.terminal']),
             ]);
         } catch (\Exception $e) {
@@ -558,6 +606,9 @@ class BookingController extends Controller
     {
         $this->authorize('edit bookings');
 
+        // Load booking relationships for stop-wise validation
+        $booking->load(['trip.stops', 'fromStop.terminal']);
+
         // Check if seat belongs to this booking
         if ($seat->booking_id !== $booking->id) {
             return response()->json([
@@ -565,12 +616,13 @@ class BookingController extends Controller
             ], 400);
         }
 
-        // Check if departure time has passed
-        $departureTime = $booking->trip?->departure_datetime;
+        // Check if departure time has passed - use stop-wise departure time
+        $fromTripStop = $booking->trip?->stops?->firstWhere('terminal_id', $booking->fromStop?->terminal_id);
+        $departureTime = $fromTripStop?->departure_at ?? $booking->trip?->departure_datetime;
         $departurePassed = $departureTime && $departureTime->isPast();
         if ($departurePassed) {
             return response()->json([
-                'message' => 'Cannot restore seat as trip has already departed',
+                'message' => 'Cannot restore seat as trip has already departed from the origin stop',
             ], 400);
         }
 
@@ -584,6 +636,9 @@ class BookingController extends Controller
         try {
             DB::beginTransaction();
 
+            // Check if booking is cancelled before restoring seat
+            $isBookingCancelled = ($booking->status === 'cancelled' || $booking->status === BookingStatusEnum::CANCELLED->value);
+
             // Restore the seat (clear cancellation reason as well)
             $seat->update([
                 'cancelled_at' => null,
@@ -593,10 +648,40 @@ class BookingController extends Controller
             // Recalculate booking totals from active seats only
             $this->recalculateBookingTotals($booking);
 
+            // Refresh booking to get updated seat counts
+            $booking->refresh();
+            $booking->load('seats');
+
+            // If booking was cancelled and now has active seats, clear cancellation fields but don't auto-update status
+            $requiresStatusUpdate = false;
+            if ($isBookingCancelled) {
+                $activeSeatsCount = $booking->seats()->whereNull('cancelled_at')->count();
+
+                if ($activeSeatsCount > 0) {
+                    // Clear cancellation fields but don't auto-update status - let user decide
+                    $booking->update([
+                        'cancelled_at' => null,
+                        'cancellation_reason' => null,
+                        'cancelled_by_user_id' => null,
+                        'cancelled_by_type' => null,
+                    ]);
+
+                    // Keep booking status as cancelled - user needs to update it manually
+                    // Also need to update payment status and payment method
+                    $requiresStatusUpdate = true;
+                }
+            }
+
             DB::commit();
 
+            $message = 'Seat restored successfully';
+            if ($requiresStatusUpdate) {
+                $message .= '. Please update the booking status, payment status, and payment method.';
+            }
+
             return response()->json([
-                'message' => 'Seat restored successfully',
+                'message' => $message,
+                'requires_status_update' => $requiresStatusUpdate,
                 'booking' => $booking->fresh(['seats', 'trip.route', 'fromStop.terminal', 'toStop.terminal']),
             ]);
         } catch (\Exception $e) {

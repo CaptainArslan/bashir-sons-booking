@@ -805,10 +805,11 @@
                                                     </h6>
                                                     @if(!$passenger['is_required'])
                                                         <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger" 
+                                                                class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" 
                                                                 wire:click="removePassenger({{ $index }})"
                                                                 title="Remove this passenger">
-                                                            <i class="fas fa-trash"></i> Remove
+                                                            <i class="bx bx-trash" style="font-size: 1rem;"></i> 
+                                                            <span>Remove</span>
                                                         </button>
                                                     @endif
                                                 </div>
@@ -851,20 +852,31 @@
                                                         @enderror
                                                     </div>
                                                     <div class="col-md-4">
-                                                        <label class="form-label small">CNIC</label>
+                                                        <label class="form-label small">CNIC <span class="text-danger">*</span></label>
                                                         <input type="text" 
                                                                class="form-control form-control-sm" 
-                                                               wire:model="passengers.{{ $index }}.cnic"
+                                                               wire:model.blur="passengers.{{ $index }}.cnic"
+                                                               id="cnic-{{ $index }}"
                                                                placeholder="12345-1234567-1" 
-                                                               maxlength="20">
+                                                               maxlength="15"
+                                                               required>
+                                                        @error("passengers.{$index}.cnic") 
+                                                            <small class="text-danger">{{ $message }}</small> 
+                                                        @enderror
+                                                        <small class="text-muted">Format: 12345-1234567-1</small>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label small">Phone</label>
                                                         <input type="text" 
                                                                class="form-control form-control-sm" 
-                                                               wire:model="passengers.{{ $index }}.phone"
+                                                               wire:model.blur="passengers.{{ $index }}.phone"
+                                                               id="phone-{{ $index }}"
                                                                placeholder="03001234567" 
-                                                               maxlength="20">
+                                                               maxlength="11">
+                                                        @error("passengers.{$index}.phone") 
+                                                            <small class="text-danger">{{ $message }}</small> 
+                                                        @enderror
+                                                        <small class="text-muted">Format: 03001234567 (11 digits)</small>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label small">Email</label>
@@ -1183,7 +1195,7 @@
                                                 <button type="button" 
                                                         class="btn btn-sm btn-outline-danger" 
                                                         wire:click="removeExpense({{ $index }})">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="bx bx-trash"></i>
                                                 </button>
                                             @endif
                                         </div>
@@ -1316,8 +1328,121 @@
 
     @script
     <script>
+        // CNIC Input Mask Function
+        function applyCnicMask(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove all non-digits
+            
+            // Format: 12345-1234567-1 (exactly 13 digits)
+            if (value.length > 13) {
+                value = value.substring(0, 13);
+            }
+            
+            if (value.length > 0) {
+                if (value.length <= 5) {
+                    value = value;
+                } else if (value.length <= 12) {
+                    value = value.substring(0, 5) + '-' + value.substring(5);
+                } else {
+                    value = value.substring(0, 5) + '-' + value.substring(5, 12) + '-' + value.substring(12, 13);
+                }
+            }
+            
+            input.value = value;
+            return value;
+        }
+
+        // Phone Input Mask Function
+        function applyPhoneMask(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove all non-digits
+            
+            // Limit to 11 digits and ensure it starts with 0
+            if (value.length > 0) {
+                if (value[0] !== '0') {
+                    value = '0' + value;
+                }
+                if (value.length > 11) {
+                    value = value.substring(0, 11);
+                }
+            }
+            
+            input.value = value;
+            return value;
+        }
+
+        // Initialize input masks on page load and after Livewire updates
+        function initializeInputMasks() {
+            // CNIC masks
+            document.querySelectorAll('input[id^="cnic-"]').forEach(input => {
+                // Skip if already initialized
+                if (input.dataset.maskInitialized === 'true') {
+                    return;
+                }
+                
+                input.dataset.maskInitialized = 'true';
+                
+                // Format on input
+                input.addEventListener('input', function(e) {
+                    applyCnicMask(e.target);
+                });
+                
+                // Format on blur to ensure correct format before Livewire syncs
+                input.addEventListener('blur', function(e) {
+                    const formattedValue = applyCnicMask(e.target);
+                    const index = e.target.id.split('-')[1];
+                    // Update Livewire with formatted value
+                    if (formattedValue) {
+                        $wire.set(`passengers.${index}.cnic`, formattedValue);
+                    }
+                });
+                
+                input.addEventListener('keypress', function(e) {
+                    // Only allow digits
+                    if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Phone masks
+            document.querySelectorAll('input[id^="phone-"]').forEach(input => {
+                // Skip if already initialized
+                if (input.dataset.maskInitialized === 'true') {
+                    return;
+                }
+                
+                input.dataset.maskInitialized = 'true';
+                
+                // Format on input
+                input.addEventListener('input', function(e) {
+                    applyPhoneMask(e.target);
+                });
+                
+                // Format on blur to ensure correct format before Livewire syncs
+                input.addEventListener('blur', function(e) {
+                    const formattedValue = applyPhoneMask(e.target);
+                    const index = e.target.id.split('-')[1];
+                    // Update Livewire with formatted value
+                    if (formattedValue) {
+                        $wire.set(`passengers.${index}.phone`, formattedValue);
+                    }
+                });
+                
+                input.addEventListener('keypress', function(e) {
+                    // Only allow digits
+                    if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        }
+
         // Re-initialize Select2 after every Livewire update
         document.addEventListener('livewire:update', () => {
+            // Re-initialize input masks after Livewire updates
+            setTimeout(() => {
+                initializeInputMasks();
+            }, 150);
+            
             if (typeof $ !== 'undefined' && $.fn.select2) {
                 // Destroy existing Select2 instances
                 $('.select2').each(function() {
@@ -1517,45 +1642,89 @@
 
         // Function to print both customer and host tickets automatically
         function printBothTickets(bookingId, ticketSize) {
+            if (!bookingId) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Booking',
+                        text: 'Booking ID is missing.',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    alert('Booking ID is missing.');
+                }
+                return;
+            }
+
             try {
-                // Open customer ticket first
-                const customerWindow = window.open(`/admin/bookings/${bookingId}/print/customer/${ticketSize}`, '_blank');
+                const size = ticketSize || '80mm';
+                const customerUrl = `/admin/bookings/${bookingId}/print/customer/${size}`;
+                const hostUrl = `/admin/bookings/${bookingId}/print/host/${size}`;
                 
-                // Open host ticket after a short delay
-                setTimeout(function() {
-                    const hostWindow = window.open(`/admin/bookings/${bookingId}/print/host/${ticketSize}`, '_blank');
-                    
-                    if (!hostWindow) {
+                // Open both windows immediately and synchronously to avoid popup blocker
+                // Both must be opened in the same execution context as the user's click
+                const customerWindow = window.open(customerUrl, 'customerTicket');
+                const hostWindow = window.open(hostUrl, 'hostTicket');
+                
+                // Check if windows were blocked
+                if (!customerWindow) {
+                    if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Popup Blocked',
-                            text: 'Please allow popups for this site to print both tickets.',
+                            text: 'Please allow popups for this site to print tickets. Click the browser\'s popup blocker icon and allow popups.',
                             confirmButtonColor: '#3085d6'
                         });
+                    } else {
+                        alert('Popup blocked. Please allow popups for this site.');
                     }
-                }, 500);
+                    return;
+                }
                 
-                if (!customerWindow) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Popup Blocked',
-                        text: 'Please allow popups for this site to print both tickets.',
-                        confirmButtonColor: '#3085d6'
-                    });
+                if (!hostWindow) {
+                    // Customer opened but host blocked
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Second Window Blocked',
+                            text: 'Customer ticket opened. Please allow popups and the host ticket will open automatically.',
+                            confirmButtonColor: '#3085d6',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                    // Try opening host window again after user interaction
+                    // This will only work if user allows popups
+                    setTimeout(() => {
+                        const hWindow = window.open(hostUrl, 'hostTicket');
+                        if (!hWindow && typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Host Ticket Blocked',
+                                text: 'Customer ticket is open. Please click the print button again to open the host ticket, or allow popups.',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Error opening print windows:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Print Error',
-                    text: 'Failed to open print windows. Please try again.',
-                    confirmButtonColor: '#d33'
-                });
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Print Error',
+                        text: 'Failed to open print windows. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    alert('Failed to open print windows. Please try again.');
+                }
             }
         }
 
-        // Make printBooking available globally
+        // Make printBooking and printBothTickets available globally
         window.printBooking = printBooking;
+        window.printBothTickets = printBothTickets;
 
         // Define printVoucher function for police records
         window.printVoucher = function() {
@@ -2283,6 +2452,11 @@
 
         // Initialize modal on page load if already open
         document.addEventListener('livewire:init', () => {
+            // Initialize input masks on component init
+            setTimeout(() => {
+                initializeInputMasks();
+            }, 300);
+            
             setTimeout(() => {
                 if ($wire.get('showBusAssignmentModal')) {
                     showBusAssignmentModal();

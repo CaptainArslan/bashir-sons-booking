@@ -4,9 +4,12 @@
 
 @section('content')
 @php
-    $departureTime = $booking->trip?->departure_datetime;
+    // Get the actual departure time from the trip stop that matches the booking's from terminal
+    $fromTripStop = $booking->trip?->stops?->firstWhere('terminal_id', $booking->fromStop?->terminal_id);
+    $departureTime = $fromTripStop?->departure_at ?? $booking->trip?->departure_datetime;
     $departurePassed = $departureTime && $departureTime->isPast();
     $formDisabled = $departurePassed ? 'disabled' : '';
+    $isBookingCancelled = ($booking->status === 'cancelled' || $booking->status === \App\Enums\BookingStatusEnum::CANCELLED->value);
 @endphp
 
 <!--breadcrumb-->
@@ -150,9 +153,7 @@
                                         <th>Tax (PKR)</th>
                                         <th>Total (PKR)</th>
                                         <th>Status</th>
-                                        @if(!$departurePassed)
-                                            <th>Action</th>
-                                        @endif
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -187,29 +188,48 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            @if(!$departurePassed)
-                                                <td>
-                                                    @if(!$seat->cancelled_at)
+                                            <td>
+                                                @if(!$seat->cancelled_at)
+                                                    @if(!$departurePassed)
                                                         <button type="button" 
-                                                                class="btn btn-sm btn-danger cancel-seat-btn" 
+                                                                class="btn btn-sm btn-danger cancel-seat-btn d-flex align-items-center gap-1" 
                                                                 data-seat-id="{{ $seat->id }}"
-                                                                data-seat-number="{{ $seat->seat_number }}">
-                                                            <i class="fas fa-times"></i> Cancel Seat
+                                                                data-seat-number="{{ $seat->seat_number }}"
+                                                                data-departure-passed="false"
+                                                                title="Cancel this seat">
+                                                            <i class="bx bx-trash"></i> 
+                                                            <span>Cancel</span>
                                                         </button>
                                                     @else
-                                                        <button type="button" 
-                                                                class="btn btn-sm btn-success restore-seat-btn" 
-                                                                data-seat-id="{{ $seat->id }}"
-                                                                data-seat-number="{{ $seat->seat_number }}">
-                                                            <i class="fas fa-undo"></i> Restore
-                                                        </button>
+                                                        <span class="text-muted small">
+                                                            <i class="bx bx-lock"></i> Trip Departed
+                                                        </span>
                                                     @endif
-                                                </td>
-                                            @endif
+                                                @else
+                                                    @if($isBookingCancelled)
+                                                        <span class="text-muted small">
+                                                            <i class="bx bx-lock"></i> Booking Cancelled
+                                                        </span>
+                                                    @elseif(!$departurePassed)
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-success restore-seat-btn d-flex align-items-center gap-1" 
+                                                                data-seat-id="{{ $seat->id }}"
+                                                                data-seat-number="{{ $seat->seat_number }}"
+                                                                title="Restore this seat">
+                                                            <i class="bx bx-refresh"></i> 
+                                                            <span>Restore</span>
+                                                        </button>
+                                                    @else
+                                                        <span class="text-muted small">
+                                                            <i class="bx bx-lock"></i> Cannot restore
+                                                        </span>
+                                                    @endif
+                                                @endif
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="{{ !$departurePassed ? '7' : '6' }}" class="text-center text-muted">No seats found</td>
+                                            <td colspan="7" class="text-center text-muted">No seats found</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -226,49 +246,35 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <div class="row" id="passengersContainer">
-                            @forelse($booking->passengers as $index => $passenger)
-                                @php
-                                    $passengerSeat = $booking->seats->sortBy('seat_number')->values()->get($index);
-                                @endphp
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border">
-                                        <div class="card-header bg-white border-bottom">
-                                            <h6 class="mb-0 fw-bold">
-                                                <i class="fas fa-user text-secondary"></i> Passenger {{ $index + 1 }}
-                                                <i class="{{ \App\Enums\GenderEnum::getGenderIcon($passenger->gender?->value ?? $passenger->gender) }} {{ ($passenger->gender?->value ?? $passenger->gender) === 'male' ? 'text-primary' : 'text-danger' }}"></i>
-                                                @if($passengerSeat)
-                                                    <span class="badge bg-light text-dark border ms-2">
-                                                        <i class="fas fa-chair"></i> Seat {{ $passengerSeat->seat_number }}
-                                                        @if($passengerSeat->cancelled_at)
-                                                            <span class="badge bg-danger ms-1">Cancelled</span>
-                                                        @endif
-                                                    </span>
-                                                @endif
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            @if($passengerSeat)
-                                                <div class="mb-2">
-                                                    <label class="form-label small fw-bold">Seat Number</label>
-                                                    <input type="text" class="form-control form-control-sm" value="{{ $passengerSeat->seat_number }}" disabled>
-                                                    @if($passengerSeat->cancelled_at)
-                                                        <small class="text-danger">
-                                                            <i class="fas fa-times-circle"></i> This seat was cancelled on {{ $passengerSeat->cancelled_at->format('d M Y, H:i') }}
-                                                            @if($passengerSeat->cancellation_reason)
-                                                                <br><strong>Reason:</strong> {{ $passengerSeat->cancellation_reason }}
-                                                            @endif
-                                                        </small>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold">Name</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][name]" value="{{ $passenger->name }}" required {{ $formDisabled }}>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold">Gender</label>
-                                                <select class="form-select form-select-sm" name="passengers[{{ $index }}][gender]" {{ $formDisabled }}>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Gender</th>
+                                        <th>Age</th>
+                                        <th>CNIC</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="passengersContainer">
+                                    @forelse($booking->passengers as $index => $passenger)
+                                        <tr>
+                                            <td>
+                                                <strong>{{ $index + 1 }}</strong>
+                                            </td>
+                                            <td>
+                                                <input type="text" 
+                                                       class="form-control form-control-sm" 
+                                                       name="passengers[{{ $index }}][name]" 
+                                                       value="{{ $passenger->name }}" 
+                                                       required>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm" 
+                                                        name="passengers[{{ $index }}][gender]">
                                                     <option value="">Select Gender</option>
                                                     @foreach(\App\Enums\GenderEnum::getGenders() as $genderValue)
                                                         @php
@@ -280,31 +286,46 @@
                                                         </option>
                                                     @endforeach
                                                 </select>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold">Age</label>
-                                                <input type="number" class="form-control form-control-sm" name="passengers[{{ $index }}][age]" value="{{ $passenger->age }}" min="1" max="120" {{ $formDisabled }}>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold">CNIC</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][cnic]" value="{{ $passenger->cnic }}" placeholder="34101-1111111-1" maxlength="15" {{ $formDisabled }}>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold">Phone</label>
-                                                <input type="text" class="form-control form-control-sm" name="passengers[{{ $index }}][phone]" value="{{ $passenger->phone }}" placeholder="0317-7777777" maxlength="12" {{ $formDisabled }}>
-                                            </div>
-                                            <div class="mb-0">
-                                                <label class="form-label small fw-bold">Email</label>
-                                                <input type="email" class="form-control form-control-sm" name="passengers[{{ $index }}][email]" value="{{ $passenger->email }}" maxlength="100" {{ $formDisabled }}>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="col-12">
-                                    <p class="text-muted">No passengers found</p>
-                                </div>
-                            @endforelse
+                                            </td>
+                                            <td>
+                                                <input type="number" 
+                                                       class="form-control form-control-sm" 
+                                                       name="passengers[{{ $index }}][age]" 
+                                                       value="{{ $passenger->age }}" 
+                                                       min="1" 
+                                                       max="120">
+                                            </td>
+                                            <td>
+                                                <input type="text" 
+                                                       class="form-control form-control-sm" 
+                                                       name="passengers[{{ $index }}][cnic]" 
+                                                       value="{{ $passenger->cnic }}" 
+                                                       placeholder="34101-1111111-1" 
+                                                       maxlength="15">
+                                            </td>
+                                            <td>
+                                                <input type="text" 
+                                                       class="form-control form-control-sm" 
+                                                       name="passengers[{{ $index }}][phone]" 
+                                                       value="{{ $passenger->phone }}" 
+                                                       placeholder="0317-7777777" 
+                                                       maxlength="12">
+                                            </td>
+                                            <td>
+                                                <input type="email" 
+                                                       class="form-control form-control-sm" 
+                                                       name="passengers[{{ $index }}][email]" 
+                                                       value="{{ $passenger->email }}" 
+                                                       maxlength="100">
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">No passengers found</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -329,7 +350,7 @@
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Status</label>
-                            <select class="form-select" name="status" required {{ $formDisabled }}>
+                            <select class="form-select" name="status" id="bookingStatusSelect" required>
                                 <option value="">Select Status</option>
                                 @foreach($bookingStatuses as $status)
                                     <option value="{{ $status->value }}" {{ $booking->status === $status->value ? 'selected' : '' }}>
@@ -337,8 +358,10 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @if($formDisabled)
-                                <input type="hidden" name="status" value="{{ $booking->status }}">
+                            @if($departurePassed)
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-info-circle"></i> Most status changes are restricted after departure, but cancellation is allowed for record-keeping.
+                                </small>
                             @endif
                         </div>
                         @if($booking->status === 'hold' && !$departurePassed)
@@ -367,8 +390,6 @@
                                         {{ $status->getLabel() }}
                                     </option>
                                 @endforeach
-                                {{-- Additional statuses not in enum but used in system --}}
-                                <option value="partial" {{ $booking->payment_status === 'partial' ? 'selected' : '' }}>⚠️ Partial</option>
                             </select>
                         </div>
                         
@@ -561,6 +582,8 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // Get status from select
+            const statusSelect = document.getElementById('bookingStatusSelect');
             const selectedStatus = statusSelect?.value;
             const wasCancelled = '{{ $booking->status }}' === 'cancelled';
             
@@ -597,6 +620,15 @@
 
         function submitForm() {
             const formData = new FormData(form);
+            
+            // Get the selected status from the select
+            const statusSelect = document.getElementById('bookingStatusSelect');
+            const selectedStatus = statusSelect?.value;
+            
+            // Ensure status is always sent
+            if (selectedStatus) {
+                formData.set('status', selectedStatus);
+            }
             
             // Add cancellation reason if provided
             if (cancellationReason !== null) {
@@ -719,12 +751,8 @@
     // ========================================
     document.addEventListener('DOMContentLoaded', function() {
         const departurePassed = {{ $departurePassed ? 'true' : 'false' }};
-        
-        if (departurePassed) {
-            return; // Don't set up seat cancellation handlers if departure passed
-        }
 
-        // Cancel seat handler
+        // Cancel seat handler - only available before departure
         document.querySelectorAll('.cancel-seat-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const seatId = this.getAttribute('data-seat-id');
@@ -732,25 +760,37 @@
 
                 Swal.fire({
                     title: 'Cancel Seat?',
-                    text: `Please provide a reason for cancelling seat ${seatNumber}:`,
+                    html: `
+                        <div class="text-start">
+                            <p class="mb-3">You are about to cancel <strong>Seat ${seatNumber}</strong>.</p>
+                            <p class="mb-2 text-danger"><strong>Please provide a reason for cancellation:</strong></p>
+                        </div>
+                    `,
                     icon: 'warning',
                     input: 'textarea',
-                    inputPlaceholder: 'Enter cancellation reason (optional)',
+                    inputPlaceholder: 'Enter cancellation reason (required)',
                     inputAttributes: {
-                        'aria-label': 'Cancellation reason'
+                        'aria-label': 'Cancellation reason',
+                        'rows': 4,
+                        'maxlength': 500
                     },
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, cancel seat',
-                    cancelButtonText: 'No, keep it',
+                    confirmButtonText: '<i class="bx bx-trash"></i> Yes, Cancel Seat',
+                    cancelButtonText: '<i class="bx bx-x"></i> No, Keep It',
                     inputValidator: (value) => {
-                        // Reason is optional, so no validation needed
-                        return Promise.resolve();
+                        if (!value || value.trim().length === 0) {
+                            return 'Cancellation reason is required. Please provide a reason.';
+                        }
+                        if (value.trim().length < 5) {
+                            return 'Please provide a more detailed reason (at least 5 characters).';
+                        }
+                        return null;
                     }
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        cancelSeat(seatId, seatNumber, result.value || null);
+                    if (result.isConfirmed && result.value && result.value.trim().length >= 5) {
+                        cancelSeat(seatId, seatNumber, result.value.trim());
                     }
                 });
             });
@@ -764,13 +804,18 @@
 
                 Swal.fire({
                     title: 'Restore Seat?',
-                    text: `Are you sure you want to restore seat ${seatNumber}? This action will recalculate the booking totals.`,
+                    html: `
+                        <div class="text-start">
+                            <p class="mb-2">Are you sure you want to restore <strong>Seat ${seatNumber}</strong>?</p>
+                            <p class="mb-0 text-info"><i class="fas fa-info-circle"></i> This action will recalculate the booking totals.</p>
+                        </div>
+                    `,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
                     cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, restore seat',
-                    cancelButtonText: 'No, cancel'
+                    confirmButtonText: '<i class="bx bx-refresh"></i> Yes, Restore Seat',
+                    cancelButtonText: '<i class="bx bx-x"></i> No, Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         restoreSeat(seatId, seatNumber);
@@ -812,7 +857,7 @@
             error: function(error) {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-times"></i> Cancel Seat';
+                    btn.innerHTML = '<i class="bx bx-trash"></i> <span>Cancel</span>';
                 }
                 const message = error.responseJSON?.message || error.responseJSON?.error || 'Failed to cancel seat';
                 Swal.fire({
@@ -839,22 +884,75 @@
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
             success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Seat Restored',
-                    text: `Seat ${seatNumber} has been restored successfully.`,
-                    confirmButtonColor: '#28a745',
-                    timer: 2000,
-                    timerProgressBar: true
-                }).then(() => {
-                    // Reload the page to show updated totals and seat status
-                    window.location.reload();
-                });
+                const requiresStatusUpdate = response.requires_status_update || false;
+                
+                if (requiresStatusUpdate) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Seat Restored',
+                        html: `
+                            <div class="text-start">
+                                <p class="mb-3">Seat ${seatNumber} has been restored successfully.</p>
+                                <div class="alert alert-warning mb-0">
+                                    <strong><i class="fas fa-exclamation-triangle"></i> Action Required:</strong><br>
+                                    Please update the following fields:
+                                    <ul class="mb-0 mt-2">
+                                        <li>Booking Status</li>
+                                        <li>Payment Status</li>
+                                        <li>Payment Method</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Go to Booking Status',
+                        showCancelButton: true,
+                        cancelButtonText: 'Reload Page'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Scroll to booking status section
+                            const statusSelect = document.getElementById('bookingStatusSelect');
+                            if (statusSelect) {
+                                // Find the parent card
+                                const statusCard = statusSelect.closest('.card');
+                                if (statusCard) {
+                                    statusCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                                // Highlight and focus the status select
+                                setTimeout(() => {
+                                    statusSelect.focus();
+                                    statusSelect.style.border = '2px solid #ffc107';
+                                    statusSelect.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
+                                    setTimeout(() => {
+                                        statusSelect.style.border = '';
+                                        statusSelect.style.boxShadow = '';
+                                    }, 3000);
+                                }, 300);
+                            } else {
+                                window.location.reload();
+                            }
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Seat Restored',
+                        text: `Seat ${seatNumber} has been restored successfully.`,
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Reload the page to show updated totals and seat status
+                        window.location.reload();
+                    });
+                }
             },
             error: function(error) {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-undo"></i> Restore';
+                    btn.innerHTML = '<i class="bx bx-refresh"></i> <span>Restore</span>';
                 }
                 const message = error.responseJSON?.message || error.responseJSON?.error || 'Failed to restore seat';
                 Swal.fire({
