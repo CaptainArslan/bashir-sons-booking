@@ -195,16 +195,16 @@ class BookingConsole extends Component
 
         // Initialize first passenger
         $this->passengers = [
-            [
-                'id' => 1,
-                'name' => '',
-                'age' => '',
-                'gender' => '',
-                'cnic' => '',
-                'phone' => '',
-                'email' => '',
-                'is_required' => true,
-            ],
+            // [
+            //     'id' => 1,
+            //     'name' => '',
+            //     'age' => '',
+            //     'gender' => '',
+            //     'cnic' => '',
+            //     'phone' => '',
+            //     'email' => '',
+            //     'is_required' => true,
+            // ],
         ];
     }
 
@@ -407,7 +407,7 @@ class BookingConsole extends Component
             }
 
             if ($ts->departure_time) {
-                $fullDeparture = Carbon::parse($selectedDate->format('Y-m-d').' '.$ts->departure_time);
+                $fullDeparture = Carbon::parse($selectedDate->format('Y-m-d') . ' ' . $ts->departure_time);
 
                 // Only include departures greater than or equal to the current moment
                 if ($fullDeparture->greaterThanOrEqualTo($now)) {
@@ -615,8 +615,8 @@ class BookingConsole extends Component
             ->where('trip_id', $this->tripId)
             ->where('status', '!=', 'cancelled')
             ->with([
-                'passengers' => fn ($q) => $q->orderBy('id'),
-                'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
+                'passengers' => fn($q) => $q->orderBy('id'),
+                'seats' => fn($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
                 'fromStop:id,sequence,terminal_id',
                 'toStop:id,sequence,terminal_id',
                 'fromStop.terminal:id,name,code',
@@ -940,7 +940,7 @@ class BookingConsole extends Component
         }
 
         $this->validate([
-            'passengers' => 'required|array|min:1|max:'.$selectedSeatCount,
+            'passengers' => 'required|array|min:1|max:' . $selectedSeatCount,
             'passengers.*.name' => 'required|string|max:100',
             'passengers.*.age' => 'required|integer|min:1|max:120',
             'passengers.*.gender' => 'required|in:male,female',
@@ -949,7 +949,7 @@ class BookingConsole extends Component
             'passengers.*.email' => 'nullable|email|max:100',
         ], [
             'passengers.min' => 'Please provide at least one passenger information',
-            'passengers.max' => 'You can add up to '.$selectedSeatCount.' passenger(s) for '.$selectedSeatCount.' selected seat(s)',
+            'passengers.max' => 'You can add up to ' . $selectedSeatCount . ' passenger(s) for ' . $selectedSeatCount . ' selected seat(s)',
             'passengers.*.name.required' => 'Passenger name is required',
             'passengers.*.age.required' => 'Passenger age is required',
             'passengers.*.gender.required' => 'Passenger gender is required',
@@ -1067,33 +1067,39 @@ class BookingConsole extends Component
         $this->selectedSeats = [];
         $this->pendingSeat = null;
 
-        // DO NOT reset fare calculations - they should remain until trip/route changes
-        // Fare calculations (baseFare, discountAmount, taxAmount, totalFare, finalAmount, etc.)
-        // will be recalculated when trip/route/terminals change or when seats are selected
+        // DO NOT reset route-based fare calculations - they should remain until trip/route changes
+        // Keep: baseFare, discountAmount, fareData (these are route-based)
+        // Reset: taxAmount (user-entered), totalFare and finalAmount will be recalculated
 
         // Reset payment fields - clear all payment information for next booking
-        $this->amountReceived = 0.00; // Reset amount received from customer to zero (explicit float)
-        $this->returnAmount = 0.00; // Reset return amount to zero (explicit float)
+        $this->amountReceived = 0.00; // Reset amount received from customer to zero
+        $this->returnAmount = 0.00; // Reset return amount to zero
         $this->transactionId = null; // Clear transaction ID
         $this->paymentMethod = 'cash'; // Reset to default payment method
         $this->bookingType = 'counter'; // Reset to default booking type
         $this->notes = ''; // Clear notes
+        $this->taxAmount = 0.00; // Reset tax/charges to zero (user-entered value)
 
+        // dd($this->amountReceived, $this->returnAmount, $this->transactionId, $this->paymentMethod, $this->bookingType, $this->notes, $this->taxAmount);
         // Reset passenger information - completely clear all passengers and create fresh empty form
         // Use a new ID to force Livewire to re-render the passenger forms
         $this->passengerCounter = 1;
         $this->passengers = [
-            [
-                'id' => $this->passengerCounter,
-                'name' => '',
-                'age' => '',
-                'gender' => '',
-                'cnic' => '',
-                'phone' => '',
-                'email' => '',
-                'is_required' => true,
-            ],
+            // [
+            //     'id' => $this->passengerCounter,
+            //     'name' => '',
+            //     'age' => '',
+            //     'gender' => '',
+            //     'cnic' => '',
+            //     'phone' => '',
+            //     'email' => '',
+            //     'is_required' => true,
+            // ],
         ];
+
+        // Recalculate final amount with reset values (no seats selected, taxAmount = 0)
+        // This will set totalFare = 0 and finalAmount = 0 automatically
+        $this->calculateFinal();
 
         // Force Livewire to update the view
         $this->dispatch('form-reset');
@@ -1444,7 +1450,7 @@ class BookingConsole extends Component
             'hostName' => 'nullable|string|max:255',
             'hostPhone' => 'nullable|string|max:20',
             'expenses' => 'nullable|array',
-            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
             'expenses.*.amount' => 'required_with:expenses.*.expense_type|numeric|min:0',
             'expenses.*.description' => 'nullable|string|max:500',
         ], [
@@ -1482,8 +1488,8 @@ class BookingConsole extends Component
                 }
                 // Append to existing notes
                 $existingNotes = $trip->notes ?? '';
-                $hostNotes = 'Host: '.($this->hostName ?? 'N/A').($this->hostPhone ? ' ('.$this->hostPhone.')' : '');
-                $trip->notes = $existingNotes ? $existingNotes."\n".$hostNotes : $hostNotes;
+                $hostNotes = 'Host: ' . ($this->hostName ?? 'N/A') . ($this->hostPhone ? ' (' . $this->hostPhone . ')' : '');
+                $trip->notes = $existingNotes ? $existingNotes . "\n" . $hostNotes : $hostNotes;
                 $trip->save();
             }
 

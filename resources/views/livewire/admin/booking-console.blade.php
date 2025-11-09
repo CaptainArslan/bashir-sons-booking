@@ -663,7 +663,7 @@
                                             <input type="number" 
                                                    class="form-control form-control-lg fw-bold" 
                                                    wire:model.blur="amountReceived"
-                                                   wire:loading.attr="disabled"
+                                                   {{-- wire:loading.attr="disabled" --}}
                                                    min="0" 
                                                    step="0.01" 
                                                    placeholder="0.00"
