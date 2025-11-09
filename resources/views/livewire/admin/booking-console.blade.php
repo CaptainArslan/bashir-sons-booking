@@ -39,7 +39,7 @@
                     <!-- From Terminal -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">From Terminal</label>
-                        <select class="form-select form-select-lg select2" 
+                        <select class="form-select form-select-lg" 
                                 wire:model.live="fromTerminalId"
                                 @if (!$isAdmin && auth()->user()->terminal_id) disabled @endif>
                             <option value="">Select Terminal</option>
@@ -54,7 +54,7 @@
                     <!-- To Terminal -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">To Terminal</label>
-                        <select class="form-select form-select-lg select2" 
+                        <select class="form-select form-select-lg" 
                                 wire:model.live="toTerminalId"
                                 wire:key="to-terminal-select-{{ count($toTerminals) }}"
                                 @if (!$fromTerminalId) disabled @endif>
@@ -70,7 +70,7 @@
                     <!-- Departure Time -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Departure Time</label>
-                        <select class="form-select form-select-lg select2" 
+                        <select class="form-select form-select-lg" 
                                 wire:model.live="departureTimeId"
                                 wire:key="departure-time-select-{{ count($departureTimes) }}-{{ $travelDate }}"
                                 @if (!$toTerminalId) disabled @endif>
@@ -951,6 +951,7 @@
                                                 <th class="small">Phone</th>
                                                 <th class="small">From</th>
                                                 <th class="small">To</th>
+                                                <th class="small text-end">Fare (PKR)</th>
                                                 <th class="small text-center">Actions</th>
                                             </tr>
                                         </thead>
@@ -978,6 +979,9 @@
                                                     <td class="small">
                                                         <small>{{ $passenger['to_code'] }}</small>
                                                     </td>
+                                                    <td class="small text-end">
+                                                        <strong>PKR {{ number_format($passenger['final_amount'] ?? 0, 2) }}</strong>
+                                                    </td>
                                                     <td class="small">
                                                         <div class="d-flex gap-1 justify-content-center">
                                                             <a href="{{ route('admin.bookings.edit', $passenger['booking_id']) }}" 
@@ -1002,8 +1006,8 @@
                                                 <td colspan="3" class="text-end fw-bold small">
                                                     <strong>Total Passengers:</strong> <span class="badge bg-info">{{ count($tripPassengers) }}</span>
                                                 </td>
-                                                <td colspan="2" class="text-end fw-bold small">Total Earnings:</td>
-                                                <td colspan="2" class="fw-bold text-success small">PKR {{ number_format($totalEarnings, 2) }}</td>
+                                                <td colspan="4" class="text-end fw-bold small">Total Earnings:</td>
+                                                <td class="fw-bold text-success small text-end">PKR {{ number_format($totalEarnings, 2) }}</td>
                                                 <td></td>
                                             </tr>
                                         </tfoot>
@@ -1436,28 +1440,76 @@
             });
         }
 
-        // Re-initialize Select2 after every Livewire update
+        // Function to highlight error fields and scroll to first error
+        function highlightErrorFields() {
+            // Remove previous error highlights
+            document.querySelectorAll('.is-invalid, .border-danger').forEach(el => {
+                el.classList.remove('is-invalid', 'border-danger');
+            });
+
+            // Find all error messages
+            const errorElements = document.querySelectorAll('.text-danger, [wire\\:id] .text-danger');
+            let firstErrorField = null;
+            let firstErrorOffset = null;
+
+            errorElements.forEach(errorEl => {
+                // Find the associated input field
+                let inputField = null;
+                
+                // Check if error is next to an input (common pattern)
+                const parent = errorEl.closest('.col-md-6, .col-md-3, .col-md-4, .mb-3, .form-group');
+                if (parent) {
+                    inputField = parent.querySelector('input, select, textarea');
+                }
+                
+                // If not found, try to find by name/id pattern
+                if (!inputField && errorEl.textContent) {
+                    const errorText = errorEl.textContent.toLowerCase();
+                    // Try to find field by common patterns
+                    const fieldName = errorText.match(/(\w+)\s+(is required|must be|invalid)/i);
+                    if (fieldName) {
+                        const searchName = fieldName[1].toLowerCase();
+                        inputField = document.querySelector(`[name*="${searchName}"], [id*="${searchName}"], [wire\\:model*="${searchName}"]`);
+                    }
+                }
+
+                if (inputField) {
+                    // Add error styling
+                    inputField.classList.add('is-invalid', 'border-danger');
+                    inputField.style.borderWidth = '2px';
+                    
+                    // Find first error for scrolling
+                    if (!firstErrorField) {
+                        firstErrorField = inputField;
+                        firstErrorOffset = inputField.getBoundingClientRect().top + window.pageYOffset - 100;
+                    }
+                }
+            });
+
+            // Scroll to first error field
+            if (firstErrorField) {
+                window.scrollTo({
+                    top: firstErrorOffset,
+                    behavior: 'smooth'
+                });
+                // Focus on the field after a short delay
+                setTimeout(() => {
+                    firstErrorField.focus();
+                    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+
         document.addEventListener('livewire:update', () => {
             // Re-initialize input masks after Livewire updates
             setTimeout(() => {
                 initializeInputMasks();
             }, 150);
             
-            if (typeof $ !== 'undefined' && $.fn.select2) {
-                // Destroy existing Select2 instances
-                $('.select2').each(function() {
-                    if ($(this).hasClass('select2-hidden-accessible')) {
-                        $(this).select2('destroy');
-                    }
-                });
-                
-                // Re-initialize Select2
-                setTimeout(() => {
-                    $('.select2').select2({
-                        width: 'resolve'
-                    });
-                }, 100);
-            }
+            // Highlight error fields after update
+            setTimeout(() => {
+                highlightErrorFields();
+            }, 200);
         });
         
         let pendingSeatNumber = null;
@@ -1539,6 +1591,14 @@
 
         let lastBookingId = null;
 
+        // Listen for form reset event to ensure fields are cleared
+        $wire.on('form-reset', () => {
+            // Re-initialize input masks for fresh passenger forms
+            setTimeout(() => {
+                initializeInputMasks();
+            }, 200);
+        });
+
         $wire.on('booking-success', () => {
             // Show modal after a small delay to ensure DOM is ready
             setTimeout(() => {
@@ -1553,6 +1613,30 @@
                     // Create new modal instance and show
                     const successModal = new bootstrap.Modal(successModalElement);
                     successModal.show();
+                    
+                    // Listen for modal close event to ensure form is ready for next booking
+                    successModalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
+                        // Re-initialize input masks after form reset
+                        setTimeout(() => {
+                            initializeInputMasks();
+                            
+                            // Scroll to passenger section to make it visible
+                            const passengerSection = document.querySelector('.card-body .mb-2.p-2.bg-light.rounded');
+                            if (passengerSection) {
+                                passengerSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                            
+                            // Focus on first passenger name field if available
+                            const firstPassengerName = document.querySelector('input[wire\\:model*="passengers.0.name"]');
+                            if (firstPassengerName) {
+                                setTimeout(() => {
+                                    firstPassengerName.focus();
+                                }, 300);
+                            }
+                        }, 200);
+                        // Remove listener after first use to avoid multiple bindings
+                        successModalElement.removeEventListener('hidden.bs.modal', onModalHidden);
+                    });
                 } else {
                     console.error('successModal element not found');
                 }
@@ -1658,16 +1742,12 @@
 
             try {
                 const size = ticketSize || '80mm';
-                const customerUrl = `/admin/bookings/${bookingId}/print/customer/${size}`;
-                const hostUrl = `/admin/bookings/${bookingId}/print/host/${size}`;
+                // Open a single window with both tickets combined
+                const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/${size}`;
+                const printWindow = window.open(bothTicketsUrl, 'bothTickets');
                 
-                // Open both windows immediately and synchronously to avoid popup blocker
-                // Both must be opened in the same execution context as the user's click
-                const customerWindow = window.open(customerUrl, 'customerTicket');
-                const hostWindow = window.open(hostUrl, 'hostTicket');
-                
-                // Check if windows were blocked
-                if (!customerWindow) {
+                // Check if window was blocked
+                if (!printWindow) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'warning',
@@ -1680,44 +1760,17 @@
                     }
                     return;
                 }
-                
-                if (!hostWindow) {
-                    // Customer opened but host blocked
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Second Window Blocked',
-                            text: 'Customer ticket opened. Please allow popups and the host ticket will open automatically.',
-                            confirmButtonColor: '#3085d6',
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                    }
-                    // Try opening host window again after user interaction
-                    // This will only work if user allows popups
-                    setTimeout(() => {
-                        const hWindow = window.open(hostUrl, 'hostTicket');
-                        if (!hWindow && typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Host Ticket Blocked',
-                                text: 'Customer ticket is open. Please click the print button again to open the host ticket, or allow popups.',
-                                confirmButtonColor: '#3085d6'
-                            });
-                        }
-                    }, 1000);
-                }
             } catch (error) {
-                console.error('Error opening print windows:', error);
+                console.error('Error opening print window:', error);
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
                         title: 'Print Error',
-                        text: 'Failed to open print windows. Please try again.',
+                        text: 'Failed to open print window. Please try again.',
                         confirmButtonColor: '#d33'
                     });
                 } else {
-                    alert('Failed to open print windows. Please try again.');
+                    alert('Failed to open print window. Please try again.');
                 }
             }
         }
@@ -1730,7 +1783,7 @@
         window.printVoucher = function() {
             // Get current data from Livewire component dynamically
             const tripPassengers = $wire.get('tripPassengers') || [];
-            const tripData = $wire.get('tripData') || null;
+            const tripData = $wire.get('tripDataForJs') || null;
             const travelDate = $wire.get('travelDate') || '';
             const routeData = $wire.get('routeData') || null;
             const fromStop = $wire.get('fromStop') || null;
@@ -1779,7 +1832,7 @@
                 return;
             }
 
-            // Create voucher content (NO amount information)
+            // Create voucher content (NO fare information for police record)
             const voucherContent = `
                 <!DOCTYPE html>
                 <html>
@@ -1891,17 +1944,11 @@
                             ${fromStop && toStop ? `
                             <tr>
                                 <td>From Terminal:</td>
-                                <td><strong>${fromStop.terminal_name || 'N/A'}</strong></td>
+                                <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
                                 <td>To Terminal:</td>
-                                <td><strong>${toStop.terminal_name || 'N/A'}</strong></td>
+                                <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
                             </tr>
                             ` : ''}
-                            <tr>
-                                <td>Bus:</td>
-                                <td><strong>${tripData?.bus ? (tripData.bus.name || 'N/A') : 'Not Assigned'}</strong></td>
-                                <td>Registration:</td>
-                                <td><strong>${tripData?.bus ? (tripData.bus.registration_number || 'N/A') : 'Not Assigned'}</strong></td>
-                            </tr>
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
@@ -1912,21 +1959,39 @@
                     </div>
                     
                     <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Bus Information</h3>
+                        <table>
+                            <tr>
+                                <td>Bus Name:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.name || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Registration Number:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.registration_number || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Bus Model:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.model || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Total Seats:</td>
+                                <td><strong>${tripData?.bus?.bus_layout ? (tripData.bus.bus_layout.total_seats || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="trip-info" style="margin-top: 15px;">
                         <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Driver Information</h3>
                         <table>
                             <tr>
                                 <td>Driver Name:</td>
-                                <td><strong>${tripData?.bus ? (tripData.driver_name || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${tripData?.driver_name || 'N/A (Not Assigned)'}</strong></td>
                                 <td>Driver Phone:</td>
-                                <td><strong>${tripData?.bus ? (tripData.driver_phone || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             <tr>
                                 <td>Driver CNIC:</td>
-                                <td><strong>${tripData?.bus ? (tripData.driver_cnic || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${tripData?.driver_cnic || 'N/A (Not Assigned)'}</strong></td>
                                 <td>Driver License:</td>
-                                <td><strong>${tripData?.bus ? (tripData.driver_license || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
-                            ${tripData?.bus && tripData?.driver_address ? `
+                            ${tripData?.driver_address ? `
                             <tr>
                                 <td>Driver Address:</td>
                                 <td colspan="3"><strong>${tripData.driver_address}</strong></td>
@@ -1946,9 +2011,9 @@
                         <table>
                             <tr>
                                 <td>Host Name:</td>
-                                <td><strong>${tripData?.bus ? (hostInfo ? (hostInfo.name !== 'N/A' ? hostInfo.name : 'N/A') : 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${hostInfo ? (hostInfo.name !== 'N/A' ? hostInfo.name : 'N/A (Not Assigned)') : 'N/A (Not Assigned)'}</strong></td>
                                 <td>Host Phone:</td>
-                                <td><strong>${tripData?.bus ? (hostInfo ? (hostInfo.phone || 'N/A') : 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td><strong>${hostInfo ? (hostInfo.phone || 'N/A (Not Assigned)') : 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                         </table>
                     </div>
@@ -2060,32 +2125,65 @@
             }
 
             // Get trip information dynamically from Livewire component
-            const tripData = $wire.get('tripData') || null;
+            const tripData = $wire.get('tripDataForJs') || null;
             const travelDate = $wire.get('travelDate') || '';
             const routeData = $wire.get('routeData') || null;
+            const fromStop = $wire.get('fromStop') || null;
+            const toStop = $wire.get('toStop') || null;
             const tripPassengers = $wire.get('tripPassengers') || [];
             const tripStops = tripData?.stops || [];
             const totalPassengers = tripPassengers.length;
             const totalEarnings = $wire.get('totalEarnings') || 0;
+
+            console.log(tripData, 'tripData');
+            console.log(travelDate, 'travelDate');
+            console.log(routeData, 'routeData');
+            console.log(fromStop, 'fromStop');
+            console.log(toStop, 'toStop');
+            console.log(tripPassengers, 'tripPassengers');
+            console.log(tripStops, 'tripStops');
+            console.log(totalPassengers, 'totalPassengers');
+            console.log(totalEarnings, 'totalEarnings');
             
-            // Build complete stop-to-stop information
-            let stopsInfo = '';
-            if (tripStops && tripStops.length > 0) {
-                stopsInfo = '<tr><td colspan="4" style="background-color: #e9ecef; font-weight: bold; padding: 8px;">Complete Route Stops:</td></tr>';
-                tripStops.forEach((stop, index) => {
-                    console.log(stop);
-                    const arrivalTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                    const departureTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                    stopsInfo += `
-                        <tr>
-                            <td style="text-align: center; font-weight: bold;">${index + 1}</td>
-                            <td>${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
-                            <td style="text-align: center;">${arrivalTime}</td>
-                            <td style="text-align: center;">${departureTime}</td>
-                        </tr>
-                    `;
-                });
+            // Get fare information
+            const fareData = $wire.get('fareData');
+            const baseFare = $wire.get('baseFare') || 0;
+            const discountAmount = $wire.get('discountAmount') || 0;
+            const taxAmount = $wire.get('taxAmount') || 0;
+            
+            // Extract host information from trip notes
+            let hostInfo = null;
+            if (tripData?.notes) {
+                const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
+                if (hostMatch) {
+                    hostInfo = {
+                        name: hostMatch[1]?.trim() || 'N/A',
+                        phone: hostMatch[2]?.trim() || null
+                    };
+                }
             }
+            
+            // Get departure and arrival times
+            let departureTime = 'N/A';
+            let arrivalTime = 'N/A';
+            
+            if (fromStop?.departure_at) {
+                const depDate = new Date(fromStop.departure_at);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.departure_datetime) {
+                const depDate = new Date(tripData.departure_datetime);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            if (toStop?.arrival_at) {
+                const arrDate = new Date(toStop.arrival_at);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.estimated_arrival_datetime) {
+                const arrDate = new Date(tripData.estimated_arrival_datetime);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            // Removed complete stop-to-stop information section as per user request
 
             // Create print window content
             const printContent = `
@@ -2186,49 +2284,89 @@
                         <h2>Trip Passenger Details</h2>
                     </div>
                     
-                    <div class="trip-info">
+                    <div class="trip-info" style="margin-top: 0;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Bus Information</h3>
                         <table>
                             <tr>
-                                <td>Travel Date:</td>
-                                <td><strong>${travelDate || 'N/A'}</strong></td>
-                                <td>Route:</td>
-                                <td><strong>${routeData?.name || 'N/A'}</strong></td>
+                                <td>Bus Name:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.name || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Registration Number:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.registration_number || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
                             </tr>
-                            ${tripData?.bus ? `
                             <tr>
-                                <td>Bus:</td>
-                                <td><strong>${tripData.bus.name || 'N/A'}</strong></td>
-                                <td>Driver:</td>
-                                <td>${tripData.driver_name || 'N/A'}${tripData.driver_phone ? ' (' + tripData.driver_phone + ')' : ''}</td>
-                            </tr>
-                            ` : ''}
-                            <tr>
-                                <td>Total Passengers:</td>
-                                <td><strong>${totalPassengers}</strong></td>
-                                <td>Total Earnings:</td>
-                                <td class="text-success"><strong>PKR ${parseFloat(totalEarnings).toFixed(2)}</strong></td>
+                                <td>Bus Model:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.model || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Total Seats:</td>
+                                <td><strong>${tripData?.bus?.bus_layout ? (tripData.bus.bus_layout.total_seats || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
                             </tr>
                         </table>
                     </div>
                     
-                    ${stopsInfo ? `
-                    <div style="margin-bottom: 15px;">
-                        <h3 style="font-size: 14px; margin-bottom: 10px;">Complete Route Information (Stop-to-Stop)</h3>
-                        <table style="margin-bottom: 20px;">
-                            <thead>
-                                <tr>
-                                    <th style="width: 8%;">Seq</th>
-                                    <th style="width: 40%;">Terminal</th>
-                                    <th style="width: 26%;">Arrival Time</th>
-                                    <th style="width: 26%;">Departure Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${stopsInfo}
-                            </tbody>
+                    <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Driver Information</h3>
+                        <table>
+                            <tr>
+                                <td>Driver Name:</td>
+                                <td><strong>${tripData?.driver_name || 'N/A (Not Assigned)'}</strong></td>
+                                <td>Driver Phone:</td>
+                                <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Driver CNIC:</td>
+                                <td><strong>${tripData?.driver_cnic || 'N/A (Not Assigned)'}</strong></td>
+                                <td>Driver License:</td>
+                                <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
+                            </tr>
+                            ${tripData?.driver_address ? `
+                            <tr>
+                                <td>Driver Address:</td>
+                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                            </tr>
+                            ` : ''}
+                            ${routeData ? `
+                            <tr>
+                                <td>Route:</td>
+                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                            </tr>
+                            ` : ''}
                         </table>
                     </div>
-                    ` : ''}
+                    
+                    <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Host/Hostess Information</h3>
+                        <table>
+                            <tr>
+                                <td>Host Name:</td>
+                                <td><strong>${hostInfo ? (hostInfo.name !== 'N/A' ? hostInfo.name : 'N/A (Not Assigned)') : 'N/A (Not Assigned)'}</strong></td>
+                                <td>Host Phone:</td>
+                                <td><strong>${hostInfo ? (hostInfo.phone || 'N/A (Not Assigned)') : 'N/A (Not Assigned)'}</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Fare Information</h3>
+                        <table>
+                            <tr>
+                                <td>Base Fare (Per Seat):</td>
+                                <td><strong>PKR ${parseFloat(baseFare || 0).toFixed(2)}</strong></td>
+                                <td>Discount (Per Seat):</td>
+                                <td><strong>PKR ${parseFloat(discountAmount || 0).toFixed(2)}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Tax/Charges:</td>
+                                <td><strong>PKR ${parseFloat(taxAmount || 0).toFixed(2)}</strong></td>
+                                <td>Total Earnings:</td>
+                                <td class="text-success"><strong>PKR ${parseFloat(totalEarnings || 0).toFixed(2)}</strong></td>
+                            </tr>
+                            ${fareData && fareData.from_terminal ? `
+                            <tr>
+                                <td>Fare Route:</td>
+                                <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
                     
                     <h3 style="font-size: 14px; margin-bottom: 10px;">Passenger Details</h3>
                     ${(() => {
@@ -2377,12 +2515,39 @@
 
         $wire.on('show-error', (event) => {
             hideLoader(); // Hide loader on error
+            
+            // Highlight error fields
+            setTimeout(() => {
+                highlightErrorFields();
+            }, 100);
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: event.message,
                 confirmButtonColor: '#d33'
+            }).then(() => {
+                // Re-highlight after modal closes
+                setTimeout(() => {
+                    highlightErrorFields();
+                }, 100);
             });
+        });
+        
+        // Hook into Livewire validation errors
+        Livewire.hook('message.failed', ({ component, message, respond }) => {
+            setTimeout(() => {
+                highlightErrorFields();
+            }, 200);
+        });
+        
+        // Hook into Livewire validation errors (alternative hook)
+        Livewire.hook('message.processed', ({ component, message, respond }) => {
+            if (message.response && message.response.serverMemo && message.response.serverMemo.errors) {
+                setTimeout(() => {
+                    highlightErrorFields();
+                }, 200);
+            }
         });
 
         $wire.on('show-success', (event) => {
@@ -2488,14 +2653,6 @@
             console.log('Trip loaded event received. Setting up WebSocket for trip:', tripId, 'Args:', args);
             
             setupEchoChannel(tripId);
-            
-            // Re-initialize Select2 after Livewire updates
-            if (typeof $ !== 'undefined' && $.fn.select2) {
-                $('.select2').select2('destroy');
-                $('.select2').select2({
-                    width: 'resolve'
-                });
-            }
         });
         
         // Function to setup Echo channel subscription

@@ -53,6 +53,8 @@ class BookingConsole extends Component
 
     public $tripData = null;
 
+    public $tripDataForJs = null; // JavaScript-accessible trip data
+
     public $routeData = null;
 
     public $fromStop = null;
@@ -439,6 +441,7 @@ class BookingConsole extends Component
 
         try {
             $fare = Fare::active()
+                ->with(['fromTerminal:id,name,code', 'toTerminal:id,name,code'])
                 ->where('from_terminal_id', $this->fromTerminalId)
                 ->where('to_terminal_id', $this->toTerminalId)
                 ->first();
@@ -550,6 +553,7 @@ class BookingConsole extends Component
 
             $this->tripId = $trip->id;
             $this->tripData = $trip;
+            $this->updateTripDataForJs(); // Update JavaScript-accessible data
             $this->routeData = [
                 'id' => $route->id,
                 'name' => $route->name,
@@ -588,7 +592,7 @@ class BookingConsole extends Component
             // Dispatch trip-loaded event with tripId for Echo subscription
             $this->dispatch('trip-loaded', ['tripId' => $this->tripId]);
         } catch (\Exception $e) {
-            $this->dispatch('show-error', message: $e->getMessage());
+            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
         }
     }
 
@@ -622,7 +626,6 @@ class BookingConsole extends Component
 
         $passengers = [];
         $totalEarnings = 0;
-        $processedBookings = [];
 
         foreach ($bookings as $booking) {
             // Filter: Only show bookings that travel within the selected segment
@@ -649,12 +652,14 @@ class BookingConsole extends Component
             $seats = $booking->seats->sortBy('seat_number')->values();
             $passengerList = $booking->passengers->sortBy('id')->values();
 
-            // Create one row per seat
+            // Create one row per seat and calculate earnings per seat
             foreach ($seats as $seatIndex => $seat) {
                 // Map seat to passenger by index (first seat = first passenger, etc.)
                 $passenger = $passengerList[$seatIndex] ?? $passengerList[0] ?? null;
 
                 if ($passenger) {
+                    $seatAmount = $seat->final_amount ?? 0;
+
                     $passengers[] = [
                         'id' => $passenger->id,
                         'seat_id' => $seat->id,
@@ -675,15 +680,12 @@ class BookingConsole extends Component
                         'payment_method' => $booking->payment_method,
                         'booking_number' => $booking->booking_number,
                         'channel' => $booking->channel,
-                        'final_amount' => $seat->final_amount ?? 0, // Per-seat amount
+                        'final_amount' => $seatAmount, // Per-seat amount
                     ];
-                }
-            }
 
-            // Add to total earnings only once per booking (to avoid double counting)
-            if (! in_array($booking->id, $processedBookings)) {
-                $totalEarnings += $booking->final_amount;
-                $processedBookings[] = $booking->id;
+                    // Add seat amount to total earnings (sum of all seat amounts in the selected segment)
+                    $totalEarnings += $seatAmount;
+                }
             }
         }
 
@@ -1037,14 +1039,17 @@ class BookingConsole extends Component
                 'status' => $booking->status,
             ];
 
+            // Reset booking form but keep passenger forms ready for next booking
             $this->resetBookingForm();
-            $this->loadTrip(); // Reload trip to update seat map and passengers
+
+            // Reload trip to update seat map and passengers
+            $this->loadTrip();
 
             // Dispatch event to show modal - data is already stored in lastBookingData
             $this->dispatch('booking-success');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('show-error', message: $e->getMessage());
+            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
         }
     }
 
@@ -1058,10 +1063,28 @@ class BookingConsole extends Component
             }
         }
 
+        // Reset seat selection
         $this->selectedSeats = [];
+        $this->pendingSeat = null;
+
+        // DO NOT reset fare calculations - they should remain until trip/route changes
+        // Fare calculations (baseFare, discountAmount, taxAmount, totalFare, finalAmount, etc.)
+        // will be recalculated when trip/route/terminals change or when seats are selected
+
+        // Reset payment fields - clear all payment information for next booking
+        $this->amountReceived = 0.00; // Reset amount received from customer to zero (explicit float)
+        $this->returnAmount = 0.00; // Reset return amount to zero (explicit float)
+        $this->transactionId = null; // Clear transaction ID
+        $this->paymentMethod = 'cash'; // Reset to default payment method
+        $this->bookingType = 'counter'; // Reset to default booking type
+        $this->notes = ''; // Clear notes
+
+        // Reset passenger information - completely clear all passengers and create fresh empty form
+        // Use a new ID to force Livewire to re-render the passenger forms
+        $this->passengerCounter = 1;
         $this->passengers = [
             [
-                'id' => 1,
+                'id' => $this->passengerCounter,
                 'name' => '',
                 'age' => '',
                 'gender' => '',
@@ -1071,17 +1094,16 @@ class BookingConsole extends Component
                 'is_required' => true,
             ],
         ];
-        $this->amountReceived = 0;
-        $this->returnAmount = 0;
-        $this->transactionId = null;
-        $this->notes = '';
-        $this->pendingSeat = null;
+
+        // Force Livewire to update the view
+        $this->dispatch('form-reset');
     }
 
     public function resetTripData(): void
     {
         $this->tripId = null;
         $this->tripData = null;
+        $this->tripDataForJs = null; // Reset JavaScript-accessible data
         $this->routeData = null;
         $this->fromStop = null;
         $this->toStop = null;
@@ -1323,16 +1345,60 @@ class BookingConsole extends Component
             $this->driverCnic = $this->tripData->driver_cnic ?? '';
             $this->driverLicense = $this->tripData->driver_license ?? '';
             $this->driverAddress = $this->tripData->driver_address ?? '';
-        }
 
-        // Initialize expenses array with one empty expense
-        $this->expenses = [
-            [
-                'expense_type' => '',
-                'amount' => '',
-                'description' => '',
-            ],
-        ];
+            // Extract host information from trip notes
+            if ($this->tripData->notes) {
+                $hostMatch = preg_match('/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i', $this->tripData->notes, $matches);
+                if ($hostMatch && isset($matches[1])) {
+                    $this->hostName = trim($matches[1]);
+                    $this->hostPhone = isset($matches[2]) ? trim($matches[2]) : '';
+                }
+            }
+
+            // Load existing expenses for this trip from the current stop to next stop
+            $nextStop = $this->getNextStop();
+            $fromTerminalId = $this->fromStop['terminal_id'] ?? null;
+            $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
+
+            // Load expenses that match the current segment
+            $existingExpenses = Expense::where('trip_id', $this->tripId)
+                ->where('from_terminal_id', $fromTerminalId)
+                ->when($toTerminalId, function ($query) use ($toTerminalId) {
+                    $query->where('to_terminal_id', $toTerminalId);
+                })
+                ->orderBy('created_at')
+                ->get();
+
+            if ($existingExpenses->isNotEmpty()) {
+                $this->expenses = $existingExpenses->map(function ($expense) {
+                    return [
+                        'expense_type' => $expense->expense_type instanceof \App\Enums\ExpenseTypeEnum
+                            ? $expense->expense_type->value
+                            : $expense->expense_type,
+                        'amount' => (string) $expense->amount,
+                        'description' => $expense->description ?? '',
+                    ];
+                })->toArray();
+            } else {
+                // Initialize expenses array with one empty expense if no existing expenses
+                $this->expenses = [
+                    [
+                        'expense_type' => '',
+                        'amount' => '',
+                        'description' => '',
+                    ],
+                ];
+            }
+        } else {
+            // Initialize expenses array with one empty expense if no bus assigned
+            $this->expenses = [
+                [
+                    'expense_type' => '',
+                    'amount' => '',
+                    'description' => '',
+                ],
+            ];
+        }
 
         $this->showBusAssignmentModal = true;
 
@@ -1478,6 +1544,7 @@ class BookingConsole extends Component
 
                 // Update trip data
                 $this->tripData = $trip;
+                $this->updateTripDataForJs(); // Update JavaScript-accessible data
             }
 
             $this->closeBusAssignmentModal();
@@ -1488,7 +1555,7 @@ class BookingConsole extends Component
             $this->dispatch('show-success', message: 'Bus, driver, host, and expenses assigned successfully! Seat map updated.');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('show-error', message: $e->getMessage());
+            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
         }
     }
 
@@ -1551,6 +1618,108 @@ class BookingConsole extends Component
     public function updatedSelectedSeats(): void
     {
         $this->calculateFinal();
+    }
+
+    /**
+     * Update trip data formatted for JavaScript access
+     * This ensures all relationships are properly serialized
+     * Called whenever tripData changes
+     */
+    private function updateTripDataForJs(): void
+    {
+        if (! $this->tripData) {
+            $this->tripDataForJs = null;
+
+            return;
+        }
+
+        $trip = $this->tripData;
+
+        // Ensure relationships are loaded
+        if (! $trip->relationLoaded('bus')) {
+            $trip->load('bus.busLayout');
+        }
+        if (! $trip->relationLoaded('stops')) {
+            $trip->load('stops.terminal:id,name,code');
+        }
+
+        $this->tripDataForJs = [
+            'id' => $trip->id,
+            'bus_id' => $trip->bus_id,
+            'departure_datetime' => $trip->departure_datetime?->format('Y-m-d H:i:s'),
+            'estimated_arrival_datetime' => $trip->estimated_arrival_datetime?->format('Y-m-d H:i:s'),
+            'driver_name' => $trip->driver_name,
+            'driver_phone' => $trip->driver_phone,
+            'driver_cnic' => $trip->driver_cnic,
+            'driver_license' => $trip->driver_license,
+            'driver_address' => $trip->driver_address,
+            'notes' => $trip->notes,
+            'bus' => $trip->bus ? [
+                'id' => $trip->bus->id,
+                'name' => $trip->bus->name,
+                'registration_number' => $trip->bus->registration_number,
+                'model' => $trip->bus->model,
+                'bus_layout' => $trip->bus->busLayout ? [
+                    'id' => $trip->bus->busLayout->id,
+                    'total_seats' => $trip->bus->busLayout->total_seats ?? null,
+                ] : null,
+            ] : null,
+            'stops' => $trip->stops ? $trip->stops->map(function ($stop) {
+                return [
+                    'id' => $stop->id,
+                    'terminal_id' => $stop->terminal_id,
+                    'sequence' => $stop->sequence,
+                    'arrival_at' => $stop->arrival_at?->format('Y-m-d H:i:s'),
+                    'departure_at' => $stop->departure_at?->format('Y-m-d H:i:s'),
+                    'terminal' => $stop->terminal ? [
+                        'id' => $stop->terminal->id,
+                        'name' => $stop->terminal->name,
+                        'code' => $stop->terminal->code,
+                    ] : null,
+                ];
+            })->toArray() : [],
+        ];
+    }
+
+    /**
+     * Convert database/technical errors to user-friendly messages
+     */
+    private function getUserFriendlyErrorMessage(\Exception $e): string
+    {
+        $message = $e->getMessage();
+
+        // Database connection errors
+        if (str_contains($message, 'SQLSTATE') || str_contains($message, 'connection') || str_contains($message, 'Connection refused')) {
+            return 'Unable to connect to the database. Please try again or contact support if the problem persists.';
+        }
+
+        // Foreign key constraint errors
+        if (str_contains($message, 'foreign key constraint') || str_contains($message, 'FOREIGN KEY')) {
+            return 'This operation cannot be completed because it is linked to other records. Please check related data and try again.';
+        }
+
+        // Unique constraint errors
+        if (str_contains($message, 'Duplicate entry') || str_contains($message, 'UNIQUE constraint')) {
+            return 'This record already exists. Please use a different value.';
+        }
+
+        // Integrity constraint errors
+        if (str_contains($message, 'integrity constraint') || str_contains($message, 'Integrity constraint')) {
+            return 'The data you entered conflicts with existing records. Please check your input and try again.';
+        }
+
+        // General database errors
+        if (str_contains($message, 'SQLSTATE') || str_contains($message, 'SQL')) {
+            return 'An error occurred while processing your request. Please try again or contact support if the problem persists.';
+        }
+
+        // Validation errors (already user-friendly)
+        if (str_contains($message, 'required') || str_contains($message, 'invalid') || str_contains($message, 'must be')) {
+            return $message;
+        }
+
+        // Return a generic friendly message for unknown errors
+        return 'An unexpected error occurred. Please try again or contact support if the problem persists.';
     }
 
     public function render()

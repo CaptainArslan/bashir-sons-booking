@@ -234,5 +234,34 @@
             width: 100%;
         }
     }
+
+    /* Error field highlighting */
+    .is-invalid,
+    .border-danger {
+        border-color: #dc3545 !important;
+        border-width: 2px !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        animation: errorPulse 0.5s ease-in-out;
+    }
+
+    @keyframes errorPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 0 0.3rem rgba(220, 53, 69, 0.4);
+        }
+        100% {
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+    }
+
+    /* Remove error highlight on input */
+    input.is-invalid:focus,
+    select.is-invalid:focus,
+    textarea.is-invalid:focus {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
 </style>
 
