@@ -813,6 +813,7 @@ class BookingConsole extends Component
             $this->totalFare = 0;
             $this->taxAmount = 0;
             $this->finalAmount = 0;
+            $this->calculateReturn();
 
             return;
         }
@@ -824,6 +825,9 @@ class BookingConsole extends Component
         if ($this->finalAmount < 0) {
             $this->finalAmount = 0;
         }
+
+        // Recalculate return amount when final amount changes
+        $this->calculateReturn();
     }
 
     public function updatedTaxAmount(): void
@@ -833,8 +837,13 @@ class BookingConsole extends Component
 
     public function calculateReturn(): void
     {
-        if ($this->paymentMethod === 'cash' && $this->amountReceived > 0) {
-            $this->returnAmount = max(0, $this->amountReceived - $this->finalAmount);
+        // Ensure finalAmount is calculated first
+        if (count($this->selectedSeats) > 0 && $this->finalAmount == 0) {
+            $this->calculateFinal();
+        }
+
+        if ($this->paymentMethod === 'cash' && $this->amountReceived > 0 && $this->finalAmount > 0) {
+            $this->returnAmount = max(0, (float) $this->amountReceived - (float) $this->finalAmount);
         } else {
             $this->returnAmount = 0;
         }

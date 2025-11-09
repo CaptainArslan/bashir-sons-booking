@@ -247,6 +247,19 @@
                                     No support information configured
                                 </div>
                                 @endif
+                                <div class="info-item">
+                                    <div class="d-flex">
+                                        <span class="info-label">
+                                            <i class="bx bx-printer me-2 text-success"></i>
+                                            Default Ticket Design:
+                                        </span>
+                                        <span class="info-value">
+                                            <span class="badge bg-primary">
+                                                {{ ucfirst(str_replace('design', 'Design ', $settings->default_ticket_design ?? 'design1')) }}
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

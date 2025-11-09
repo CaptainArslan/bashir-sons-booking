@@ -495,6 +495,44 @@
                             </div>
                         </div>
 
+                        <!-- Ticket Design Settings -->
+                        <div class="form-section" style="border-left-color: #6f42c1;">
+                            <div class="section-header">
+                                <div class="section-icon text-white" style="background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);">
+                                    <i class="bx bx-printer font-size-24"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Ticket Design Settings</h5>
+                                    <p class="text-muted mb-0 small">Select default ticket design for printing</p>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="default_ticket_design" class="form-label">Default Ticket Design</label>
+                                    <select class="form-select @error('default_ticket_design') is-invalid @enderror" 
+                                        id="default_ticket_design" name="default_ticket_design">
+                                        <option value="design1" {{ old('default_ticket_design', $settings->default_ticket_design ?? 'design1') === 'design1' ? 'selected' : '' }}>
+                                            Design 1 - Standard Layout
+                                        </option>
+                                        <option value="design2" {{ old('default_ticket_design', $settings->default_ticket_design ?? 'design1') === 'design2' ? 'selected' : '' }}>
+                                            Design 2 - Compact Layout
+                                        </option>
+                                        <option value="design3" {{ old('default_ticket_design', $settings->default_ticket_design ?? 'design1') === 'design3' ? 'selected' : '' }}>
+                                            Design 3 - Modern Layout
+                                        </option>
+                                    </select>
+                                    <div class="form-text">
+                                        <i class="bx bx-info-circle me-1"></i>
+                                        This design will be used when printing tickets. Both customer and host copies will use the selected design.
+                                    </div>
+                                    @error('default_ticket_design')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="row mt-4">
                             <div class="col-12">

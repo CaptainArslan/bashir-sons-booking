@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\GeneralSetting;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 
 class GeneralSettingController extends Controller
@@ -12,6 +12,7 @@ class GeneralSettingController extends Controller
     public function index()
     {
         $settings = GeneralSetting::first();
+
         return view('admin.general-settings.index', compact('settings'));
     }
 
@@ -44,6 +45,7 @@ class GeneralSettingController extends Controller
             'support_email' => 'nullable|email|max:255',
             'support_phone' => 'nullable|string|max:20|regex:/^[\+]?[0-9\s\-\(\)]+$/',
             'business_hours' => 'nullable|string|max:500',
+            'default_ticket_design' => 'nullable|string|in:design1,design2,design3',
         ], [
             'company_name.required' => 'Company name is required',
             'company_name.regex' => 'Company name can only contain letters, numbers, spaces, hyphens, underscores, ampersands, and periods',
@@ -92,13 +94,14 @@ class GeneralSettingController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create settings: ' . $e->getMessage());
+                ->with('error', 'Failed to create settings: '.$e->getMessage());
         }
     }
 
     public function edit($id)
     {
         $settings = GeneralSetting::findOrFail($id);
+
         return view('admin.general-settings.edit', compact('settings'));
     }
 
@@ -126,6 +129,7 @@ class GeneralSettingController extends Controller
             'support_email' => 'nullable|email|max:255',
             'support_phone' => 'nullable|string|max:20|regex:/^[\+]?[0-9\s\-\(\)]+$/',
             'business_hours' => 'nullable|string|max:500',
+            'default_ticket_design' => 'nullable|string|in:design1,design2,design3',
         ], [
             'company_name.required' => 'Company name is required',
             'company_name.regex' => 'Company name can only contain letters, numbers, spaces, hyphens, underscores, ampersands, and periods',
@@ -188,7 +192,7 @@ class GeneralSettingController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update settings: ' . $e->getMessage());
+                ->with('error', 'Failed to update settings: '.$e->getMessage());
         }
     }
 
@@ -196,7 +200,7 @@ class GeneralSettingController extends Controller
     {
         try {
             $settings = GeneralSetting::findOrFail($id);
-            
+
             // Delete associated files
             if ($settings->logo && Storage::disk('public')->exists($settings->logo)) {
                 Storage::disk('public')->delete($settings->logo);
@@ -206,14 +210,15 @@ class GeneralSettingController extends Controller
             }
 
             $settings->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'General settings deleted successfully.'
+                'message' => 'General settings deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting settings: ' . $e->getMessage()
+                'message' => 'Error deleting settings: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -277,7 +277,7 @@ class BookingController extends Controller
         return view('admin.bookings.show', compact('booking'));
     }
 
-    public function printTicket(Booking $booking, ?string $type = 'customer'): View
+    public function printTicket(Booking $booking, ?string $type = null): View
     {
         $this->authorize('view bookings');
 
@@ -293,14 +293,52 @@ class BookingController extends Controller
             'cancelledByUser',
         ]);
 
+        // Get default design from settings
+        $settings = \App\Models\GeneralSetting::first();
+        $design = $settings->default_ticket_design ?? 'design1';
+
+        // Validate design exists
+        if (! in_array($design, ['design1', 'design2', 'design3'])) {
+            $design = 'design1';
+        }
+
+        // If type is null, print both customer and host
+        if ($type === null) {
+            return view('admin.bookings.print-both', [
+                'booking' => $booking,
+                'design' => $design,
+            ]);
+        }
+
         // Validate type
         if (! in_array($type, ['customer', 'host'])) {
             $type = 'customer';
         }
 
-        return view('admin.bookings.print-ticket', [
+        return view('admin.bookings.tickets.'.$design, [
             'booking' => $booking,
             'ticketType' => $type,
+        ]);
+    }
+
+    public function printReport(Booking $booking): View
+    {
+        $this->authorize('view bookings');
+
+        $booking->load([
+            'trip.route',
+            'trip.bus.busLayout',
+            'trip.stops',
+            'fromStop.terminal.city',
+            'toStop.terminal.city',
+            'seats',
+            'passengers',
+            'user',
+            'cancelledByUser',
+        ]);
+
+        return view('admin.bookings.report-a4', [
+            'booking' => $booking,
         ]);
     }
 

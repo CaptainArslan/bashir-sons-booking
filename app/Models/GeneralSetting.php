@@ -34,6 +34,7 @@ class GeneralSetting extends Model
         'business_hours',
         'advance_booking_enable',
         'advance_booking_days',
+        'default_ticket_design',
         'is_active',
     ];
 

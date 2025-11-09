@@ -647,9 +647,63 @@
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
-                                        @if($returnAmount > 0)
-                                            <div class="alert alert-success border-1 mb-0 p-2 small">
-                                                <strong>💰 Return: PKR {{ number_format($returnAmount, 2) }}</strong>
+                                        @php
+                                            $amountReceivedValue = (float) ($amountReceived ?? 0);
+                                            $finalAmountValue = (float) ($finalAmount ?? 0);
+                                            $calculatedReturn = max(0, $amountReceivedValue - $finalAmountValue);
+                                            $calculatedDue = max(0, $finalAmountValue - $amountReceivedValue);
+                                        @endphp
+                                        @if($amountReceivedValue > 0 && $finalAmountValue > 0)
+                                            @if($calculatedReturn > 0)
+                                                <div class="alert alert-success border-2 mb-2 p-3" style="background-color: #d1e7dd !important;">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold">
+                                                            <i class="fas fa-money-bill-wave"></i> Return to Customer:
+                                                        </span>
+                                                        <span class="fs-4 fw-bold text-success">
+                                                            PKR {{ number_format($calculatedReturn, 2) }}
+                                                        </span>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">
+                                                        <i class="fas fa-info-circle"></i> Customer paid PKR {{ number_format($amountReceivedValue, 2) }}, Final amount is PKR {{ number_format($finalAmountValue, 2) }}
+                                                    </small>
+                                                </div>
+                                            @elseif($calculatedDue > 0)
+                                                <div class="alert alert-warning border-2 mb-2 p-3" style="background-color: #fff3cd !important;">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold">
+                                                            <i class="fas fa-exclamation-triangle"></i> Amount Due from Customer:
+                                                        </span>
+                                                        <span class="fs-4 fw-bold text-warning">
+                                                            PKR {{ number_format($calculatedDue, 2) }}
+                                                        </span>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">
+                                                        <i class="fas fa-info-circle"></i> Customer paid PKR {{ number_format($amountReceivedValue, 2) }}, Final amount is PKR {{ number_format($finalAmountValue, 2) }}
+                                                    </small>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-info border-2 mb-2 p-3" style="background-color: #cfe2ff !important;">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span class="fw-bold">
+                                                            <i class="fas fa-check-circle"></i> Exact Amount Paid:
+                                                        </span>
+                                                        <span class="fs-4 fw-bold text-info">
+                                                            No Return Required
+                                                        </span>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">
+                                                        <i class="fas fa-info-circle"></i> Customer paid exactly PKR {{ number_format($finalAmountValue, 2) }}
+                                                    </small>
+                                                </div>
+                                            @endif
+                                        @elseif($amountReceivedValue > 0 && $finalAmountValue == 0)
+                                            <div class="alert alert-secondary border-1 mb-2 p-2 small">
+                                                <i class="fas fa-info-circle"></i> Please select seats first to calculate the final amount
+                                            </div>
+                                        @else
+                                            <div class="alert alert-secondary border-1 mb-2 p-2 small">
+                                                <i class="fas fa-info-circle"></i> Enter amount received to calculate return/due amount
                                             </div>
                                         @endif
                                     @endif
@@ -1347,37 +1401,48 @@
                 return;
             }
 
-            // If ticket type is not provided, show dialog to select
-            if (!ticketType) {
-                Swal.fire({
-                    title: 'Select Ticket Type',
-                    text: 'Which ticket would you like to print?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: '<i class="fas fa-user"></i> Customer Ticket',
-                    cancelButtonText: '<i class="fas fa-bus"></i> Host Ticket',
-                    showDenyButton: true,
-                    denyButtonText: '<i class="fas fa-times"></i> Cancel',
-                    confirmButtonColor: '#007bff',
-                    cancelButtonColor: '#28a745',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        printBooking(bookingId, 'customer');
-                    } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
-                        printBooking(bookingId, 'host');
-                    }
-                });
-                return;
-            }
-
+            // Always print both customer and host copies without prompting
             try {
-                const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}`, '_blank');
+                const printWindow = window.open(`/admin/bookings/${bookingId}/print`, '_blank');
                 
                 if (!printWindow) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Popup Blocked',
                         text: 'Please allow popups for this site to print the booking ticket.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            } catch (error) {
+                console.error('Error opening print window:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Print Error',
+                    text: 'Failed to open print window. Please try again.',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        }
+        
+        function printReport(bookingId) {
+            if (!bookingId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Booking',
+                    text: 'Booking ID is missing.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
+
+            try {
+                const printWindow = window.open(`/admin/bookings/${bookingId}/report`, '_blank');
+                
+                if (!printWindow) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Popup Blocked',
+                        text: 'Please allow popups for this site to print the report.',
                         confirmButtonColor: '#3085d6'
                     });
                 }
