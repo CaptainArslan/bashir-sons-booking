@@ -18,8 +18,8 @@
                 @if ($lastBookingId)
                     <button type="button" 
                             class="btn btn-light btn-sm fw-bold" 
-                            onclick="printBooking({{ $lastBookingId }})"
-                            title="Reprint Last Ticket">
+                            onclick="printBothTickets({{ $lastBookingId }}, '80mm')"
+                            title="Print Both Customer and Host Tickets">
                         <i class="fas fa-print"></i> Print Last Ticket
                     </button>
                 @endif
@@ -976,8 +976,8 @@
                                                             </a>
                                                             <button type="button" 
                                                                     class="btn btn-sm btn-outline-info" 
-                                                                    onclick="printBooking({{ $passenger['booking_id'] }})"
-                                                                    title="Print Ticket">
+                                                                    onclick="printBothTickets({{ $passenger['booking_id'] }}, '80mm')"
+                                                                    title="Print Both Customer and Host Tickets">
                                                                 <i class="bx bx-printer"></i>
                                                             </button>
                                                         </div>
@@ -1301,8 +1301,8 @@
                 <div class="modal-footer d-flex gap-2">
                     <button type="button" 
                             class="btn btn-primary btn-lg fw-bold flex-fill" 
-                            @if($lastBookingId) onclick="printBooking({{ $lastBookingId }})" @else disabled @endif>
-                        <i class="fas fa-print"></i> Print Ticket (80mm)
+                            @if($lastBookingId) onclick="printBothTickets({{ $lastBookingId }}, '80mm')" @else disabled @endif>
+                        <i class="fas fa-print"></i> Print Both Tickets (Customer & Host)
                     </button>
                     <button type="button" 
                             class="btn btn-success btn-lg fw-bold flex-fill" 
@@ -1434,7 +1434,7 @@
             }, 100);
         });
 
-        function printBooking(bookingId, ticketType = null) {
+        function printBooking(bookingId, ticketType = null, ticketSize = null) {
             if (!bookingId) {
                 Swal.fire({
                     icon: 'error',
@@ -1445,46 +1445,110 @@
                 return;
             }
 
-            // If ticket type is not provided, show dialog to select
+            // Default behavior: automatically print both customer and host tickets
+            // If no ticket type is specified, print both with default size (80mm) or selected size
             if (!ticketType) {
+                const defaultSize = ticketSize || '80mm';
+                printBothTickets(bookingId, defaultSize);
+                return;
+            }
+
+            // If ticket type is 'both', print both customer and host tickets
+            if (ticketType === 'both') {
+                const defaultSize = ticketSize || '80mm';
+                printBothTickets(bookingId, defaultSize);
+                return;
+            }
+
+            // If ticket size is not provided and ticket type is specified, show dialog to select size
+            if (!ticketSize) {
                 Swal.fire({
-                    title: 'Select Ticket Type',
-                    text: 'Which ticket would you like to print?',
+                    title: 'Select Ticket Size',
+                    text: 'Which printer size would you like to use?',
                     icon: 'question',
+                    input: 'select',
+                    inputOptions: {
+                        'a4': 'A4 Paper',
+                        '80mm': '80mm Thermal Printer',
+                        '50mm': '50mm Thermal Printer'
+                    },
+                    inputPlaceholder: 'Select ticket size',
                     showCancelButton: true,
-                    confirmButtonText: '<i class="fas fa-user"></i> Customer Ticket',
-                    cancelButtonText: '<i class="fas fa-bus"></i> Host Ticket',
-                    showDenyButton: true,
-                    denyButtonText: '<i class="fas fa-times"></i> Cancel',
+                    confirmButtonText: 'Print',
+                    cancelButtonText: 'Cancel',
                     confirmButtonColor: '#007bff',
-                    cancelButtonColor: '#28a745',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to select a ticket size!';
+                        }
+                    }
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        printBooking(bookingId, 'customer');
-                    } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
-                        printBooking(bookingId, 'host');
+                    if (result.isConfirmed && result.value) {
+                        printBooking(bookingId, ticketType, result.value);
                     }
                 });
                 return;
             }
 
+            // If ticket type is specified (customer or host), print single ticket
+            if (ticketType) {
+                try {
+                    const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}/${ticketSize}`, '_blank');
+                    
+                    if (!printWindow) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Popup Blocked',
+                            text: 'Please allow popups for this site to print the booking ticket.',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error opening print window:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Print Error',
+                        text: 'Failed to open print window. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+            }
+        }
+
+        // Function to print both customer and host tickets automatically
+        function printBothTickets(bookingId, ticketSize) {
             try {
-                const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}`, '_blank');
+                // Open customer ticket first
+                const customerWindow = window.open(`/admin/bookings/${bookingId}/print/customer/${ticketSize}`, '_blank');
                 
-                if (!printWindow) {
+                // Open host ticket after a short delay
+                setTimeout(function() {
+                    const hostWindow = window.open(`/admin/bookings/${bookingId}/print/host/${ticketSize}`, '_blank');
+                    
+                    if (!hostWindow) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Popup Blocked',
+                            text: 'Please allow popups for this site to print both tickets.',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                }, 500);
+                
+                if (!customerWindow) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Popup Blocked',
-                        text: 'Please allow popups for this site to print the booking ticket.',
+                        text: 'Please allow popups for this site to print both tickets.',
                         confirmButtonColor: '#3085d6'
                     });
                 }
             } catch (error) {
-                console.error('Error opening print window:', error);
+                console.error('Error opening print windows:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Print Error',
-                    text: 'Failed to open print window. Please try again.',
+                    text: 'Failed to open print windows. Please try again.',
                     confirmButtonColor: '#d33'
                 });
             }
@@ -1522,6 +1586,18 @@
             } else if (tripData?.estimated_arrival_datetime) {
                 const arrDate = new Date(tripData.estimated_arrival_datetime);
                 arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            // Extract host information from trip notes
+            let hostInfo = null;
+            if (tripData?.notes) {
+                const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
+                if (hostMatch) {
+                    hostInfo = {
+                        name: hostMatch[1]?.trim() || 'N/A',
+                        phone: hostMatch[2]?.trim() || null
+                    };
+                }
             }
             
             if (!tripPassengers || tripPassengers.length === 0) {
@@ -1651,19 +1727,59 @@
                                 <td><strong>${toStop.terminal_name || 'N/A'}</strong></td>
                             </tr>
                             ` : ''}
-                            ${tripData?.bus ? `
                             <tr>
                                 <td>Bus:</td>
-                                <td><strong>${tripData.bus.name || 'N/A'}</strong></td>
-                                <td>Driver:</td>
-                                <td>${tripData.driver_name || 'N/A'}${tripData.driver_phone ? ' (' + tripData.driver_phone + ')' : ''}</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.name || 'N/A') : 'Not Assigned'}</strong></td>
+                                <td>Registration:</td>
+                                <td><strong>${tripData?.bus ? (tripData.bus.registration_number || 'N/A') : 'Not Assigned'}</strong></td>
                             </tr>
-                            ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
                                 <td>Printed On:</td>
                                 <td>${new Date().toLocaleString()}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Driver Information</h3>
+                        <table>
+                            <tr>
+                                <td>Driver Name:</td>
+                                <td><strong>${tripData?.bus ? (tripData.driver_name || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Driver Phone:</td>
+                                <td><strong>${tripData?.bus ? (tripData.driver_phone || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Driver CNIC:</td>
+                                <td><strong>${tripData?.bus ? (tripData.driver_cnic || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Driver License:</td>
+                                <td><strong>${tripData?.bus ? (tripData.driver_license || 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                            </tr>
+                            ${tripData?.bus && tripData?.driver_address ? `
+                            <tr>
+                                <td>Driver Address:</td>
+                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                            </tr>
+                            ` : ''}
+                            ${routeData ? `
+                            <tr>
+                                <td>Route:</td>
+                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                    
+                    <div class="trip-info" style="margin-top: 15px;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Host/Hostess Information</h3>
+                        <table>
+                            <tr>
+                                <td>Host Name:</td>
+                                <td><strong>${tripData?.bus ? (hostInfo ? (hostInfo.name !== 'N/A' ? hostInfo.name : 'N/A') : 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
+                                <td>Host Phone:</td>
+                                <td><strong>${tripData?.bus ? (hostInfo ? (hostInfo.phone || 'N/A') : 'N/A') : 'N/A (Bus Not Assigned)'}</strong></td>
                             </tr>
                         </table>
                     </div>

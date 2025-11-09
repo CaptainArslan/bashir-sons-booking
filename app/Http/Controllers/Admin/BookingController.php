@@ -277,7 +277,7 @@ class BookingController extends Controller
         return view('admin.bookings.show', compact('booking'));
     }
 
-    public function printTicket(Booking $booking, ?string $type = 'customer'): View
+    public function printTicket(Booking $booking, ?string $type = 'customer', ?string $size = '80mm'): View
     {
         $this->authorize('view bookings');
 
@@ -293,12 +293,34 @@ class BookingController extends Controller
             'cancelledByUser',
         ]);
 
+        // If type is 'both', print both customer and host tickets
+        if ($type === 'both') {
+            // Validate size and set template
+            $validSizes = ['a4', '80mm', '50mm'];
+            if (! in_array(strtolower($size), $validSizes)) {
+                $size = '80mm';
+            }
+
+            return view('admin.bookings.tickets.print-both', [
+                'booking' => $booking,
+                'size' => strtolower($size),
+            ]);
+        }
+
         // Validate type
         if (! in_array($type, ['customer', 'host'])) {
             $type = 'customer';
         }
 
-        return view('admin.bookings.print-ticket', [
+        // Validate size and set template
+        $validSizes = ['a4', '80mm', '50mm'];
+        if (! in_array(strtolower($size), $validSizes)) {
+            $size = '80mm';
+        }
+
+        $template = 'admin.bookings.tickets.ticket-'.strtolower($size);
+
+        return view($template, [
             'booking' => $booking,
             'ticketType' => $type,
         ]);
