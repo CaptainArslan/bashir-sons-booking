@@ -1,6 +1,6 @@
 <div>
     @include('admin.bookings.console._styles')
-
+    
     <div class="container-fluid p-4">
         <!-- Header Section -->
         <div class="card mb-4 shadow-sm">
@@ -16,9 +16,10 @@
                     @endif
                 </h5>
                 @if ($lastBookingId)
-                    <button type="button" class="btn btn-light btn-sm fw-bold"
-                        onclick="printBothTickets({{ $lastBookingId }}, '80mm')"
-                        title="Print Both Customer and Host Tickets">
+                    <button type="button" 
+                            class="btn btn-light btn-sm fw-bold" 
+                            onclick="printBothTickets({{ $lastBookingId }}, '80mm')"
+                            title="Print Both Customer and Host Tickets">
                         <i class="fas fa-print"></i> Print Last Ticket
                     </button>
                 @endif
@@ -28,15 +29,19 @@
                     <!-- Date -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Travel Date</label>
-                        <input type="date" class="form-control form-control-lg" wire:model.live="travelDate"
-                            min="{{ $minDate }}" max="{{ $maxDate }}" />
+                        <input type="date" 
+                               class="form-control form-control-lg" 
+                               wire:model.live="travelDate"
+                               min="{{ $minDate }}" 
+                               max="{{ $maxDate }}" />
                     </div>
 
                     <!-- From Terminal -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">From Terminal</label>
-                        <select class="form-select form-select-lg" wire:model.live="fromTerminalId"
-                            @if (!$isAdmin && auth()->user()->terminal_id) disabled @endif>
+                        <select class="form-select form-select-lg" 
+                                wire:model.live="fromTerminalId"
+                                @if (!$isAdmin && auth()->user()->terminal_id) disabled @endif>
                             <option value="">Select Terminal</option>
                             @foreach ($terminals as $terminal)
                                 <option value="{{ $terminal->id }}">
@@ -49,9 +54,10 @@
                     <!-- To Terminal -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">To Terminal</label>
-                        <select class="form-select form-select-lg" wire:model.live="toTerminalId"
-                            wire:key="to-terminal-select-{{ count($toTerminals) }}"
-                            @if (!$fromTerminalId) disabled @endif>
+                        <select class="form-select form-select-lg" 
+                                wire:model.live="toTerminalId"
+                                wire:key="to-terminal-select-{{ count($toTerminals) }}"
+                                @if (!$fromTerminalId) disabled @endif>
                             <option value="">Select Destination</option>
                             @foreach ($toTerminals as $terminal)
                                 <option value="{{ $terminal['terminal_id'] }}">
@@ -64,9 +70,10 @@
                     <!-- Departure Time -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Departure Time</label>
-                        <select class="form-select form-select-lg" wire:model.live="departureTimeId"
-                            wire:key="departure-time-select-{{ count($departureTimes) }}-{{ $travelDate }}"
-                            @if (!$toTerminalId) disabled @endif>
+                        <select class="form-select form-select-lg" 
+                                wire:model.live="departureTimeId"
+                                wire:key="departure-time-select-{{ count($departureTimes) }}-{{ $travelDate }}"
+                                @if (!$toTerminalId) disabled @endif>
                             <option value="">Select Departure Time</option>
                             @foreach ($departureTimes as $time)
                                 <option value="{{ $time['id'] }}">
@@ -79,27 +86,29 @@
                     <!-- Arrival Time -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Arrival Time</label>
-                        <input type="text" class="form-control form-control-lg" value="{{ $arrivalTime }}" disabled
-                            readonly>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               value="{{ $arrivalTime }}" 
+                               disabled readonly>
                     </div>
 
                     <!-- Load Trip Button -->
                     <div class="col-md-1 d-flex align-items-end gap-2">
-                        <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" wire:click="loadTrip"
-                            @if (!$departureTimeId) disabled @endif>
+                        <button class="btn btn-primary btn-lg flex-grow-1 fw-bold" 
+                                wire:click="loadTrip"
+                                @if(!$departureTimeId) disabled @endif>
                             <i class="fas fa-play"></i> Load
                         </button>
                     </div>
                 </div>
-
+                
                 <!-- Fare Error Display -->
                 @if ($fareError)
                     <div class="mt-3">
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <strong>Fare Error:</strong> {{ $fareError }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                wire:click="$set('fareError', null)"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" wire:click="$set('fareError', null)"></button>
                         </div>
                     </div>
                 @endif
@@ -133,8 +142,7 @@
                                 <div>
                                     <small class="d-block opacity-75"
                                         style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Date</small>
-                                    <h5 class="mb-0 fw-bold">{{ \Carbon\Carbon::parse($travelDate)->format('d M Y') }}
-                                    </h5>
+                                    <h5 class="mb-0 fw-bold">{{ \Carbon\Carbon::parse($travelDate)->format('d M Y') }}</h5>
                                 </div>
                             </div>
                         </div>
@@ -158,10 +166,7 @@
                         </div>
                         <div class="col-md-3">
                             @php
-                                $isOrigin =
-                                    $tripData?->originStop &&
-                                    $fromStop &&
-                                    $tripData->originStop->id === $fromStop['trip_stop_id'];
+                                $isOrigin = $tripData?->originStop && $fromStop && $tripData->originStop->id === $fromStop['trip_stop_id'];
                             @endphp
                             @if ($tripData?->bus_id && $tripData?->bus)
                                 {{-- Bus assigned --}}
@@ -171,8 +176,7 @@
                                     </div>
                                     <div style="flex: 1;">
                                         <small class="d-block opacity-75"
-                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus
-                                            & Driver</small>
+                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
                                         <h6 class="mb-1 fw-bold">{{ $tripData->bus->name ?? 'N/A' }}</h6>
                                         <small class="opacity-75" style="font-size: 0.7rem;">
                                             @if ($tripData->driver_name)
@@ -184,8 +188,10 @@
                                         </small>
                                         @if ($isOrigin)
                                             <div class="mt-2">
-                                                <button type="button" class="btn btn-sm btn-outline-light fw-bold"
-                                                    wire:click="openBusAssignmentModal" title="Edit Bus Assignment">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-light fw-bold" 
+                                                        wire:click="openBusAssignmentModal"
+                                                        title="Edit Bus Assignment">
                                                     <i class="fas fa-edit"></i> Edit Assignment
                                                 </button>
                                             </div>
@@ -200,11 +206,11 @@
                                     </div>
                                     <div style="flex: 1;">
                                         <small class="d-block opacity-75"
-                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus
-                                            & Driver</small>
+                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
                                         <p class="mb-2 fw-bold">Not Assigned</p>
-                                        <button type="button" class="btn btn-sm btn-light fw-bold w-100"
-                                            wire:click="openBusAssignmentModal">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-light fw-bold w-100" 
+                                                wire:click="openBusAssignmentModal">
                                             <i class="fas fa-bus"></i> Assign Bus & Driver
                                         </button>
                                     </div>
@@ -217,11 +223,9 @@
                                     </div>
                                     <div>
                                         <small class="d-block opacity-75"
-                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus
-                                            & Driver</small>
+                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Bus & Driver</small>
                                         <p class="mb-0 fw-bold">Not Assigned</p>
-                                        <small class="opacity-75" style="font-size: 0.7rem;">Assign at origin
-                                            terminal</small>
+                                        <small class="opacity-75" style="font-size: 0.7rem;">Assign at origin terminal</small>
                                     </div>
                                 </div>
                             @endif
@@ -254,7 +258,7 @@
                                         <div class="me-2"
                                             style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
                                             <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">Male</span>
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
                                         </div>
                                         <span class="small text-dark">Selected (Male)</span>
                                     </div>
@@ -262,7 +266,7 @@
                                         <div class="me-2"
                                             style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
                                             <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">Female</span>
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
                                         </div>
                                         <span class="small text-dark">Selected (Female)</span>
                                     </div>
@@ -270,7 +274,7 @@
                                         <div class="me-2"
                                             style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px; position: relative;">
                                             <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">Male</span>
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
                                         </div>
                                         <span class="small text-dark">Male Booked</span>
                                     </div>
@@ -278,7 +282,7 @@
                                         <div class="me-2"
                                             style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px; position: relative;">
                                             <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">Female</span>
+                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
                                         </div>
                                         <span class="small text-dark">Female Booked</span>
                                     </div>
@@ -290,21 +294,19 @@
                                     </div>
                                 </div>
                             </div>
-
+                            
                             <!-- Seat Grid -->
                             <div class="seat-map-container">
-                                <h6 class="text-center mb-3"
-                                    style="color: #334155; font-weight: 600; font-size: 1rem;">
+                                <h6 class="text-center mb-3" style="color: #334155; font-weight: 600; font-size: 1rem;">
                                     Select Your Seat</h6>
                                 <div class="seat-grid">
                                     @php
                                         // Use seatCount from bus (if assigned) or calculate from seatMap
-                                        $totalSeats =
-                                            $seatCount ?? (count($seatMap) > 0 ? max(array_keys($seatMap)) : 44);
+                                        $totalSeats = $seatCount ?? (count($seatMap) > 0 ? max(array_keys($seatMap)) : 44);
                                         // Calculate number of full rows (4 seats per row: 2 left + 2 right)
                                         $seatsPerRow = 4;
                                         $fullRows = floor(($totalSeats - 1) / $seatsPerRow);
-                                        $lastRowSeats = $totalSeats - $fullRows * $seatsPerRow;
+                                        $lastRowSeats = $totalSeats - ($fullRows * $seatsPerRow);
                                     @endphp
                                     @for ($row = 1; $row <= $fullRows; $row++)
                                         <div class="seat-row-container">
@@ -313,106 +315,88 @@
                                                 @for ($seat = ($row - 1) * 4 + 1; $seat <= ($row - 1) * 4 + 2; $seat++)
                                                     @if ($seat <= $totalSeats)
                                                         @php
-                                                            $seatData = $seatMap[$seat] ?? [
-                                                                'number' => $seat,
-                                                                'status' => 'available',
-                                                            ];
+                                                            $seatData = $seatMap[$seat] ?? ['number' => $seat, 'status' => 'available'];
                                                             $isSelected = isset($selectedSeats[$seat]);
-                                                            $seatGender = $isSelected
-                                                                ? $selectedSeats[$seat]['gender'] ?? null
-                                                                : $seatData['gender'] ?? null;
+                                                            $seatGender = $isSelected ? ($selectedSeats[$seat]['gender'] ?? null) : ($seatData['gender'] ?? null);
                                                             $status = $seatData['status'] ?? 'available';
-                                                            $isLockedByOtherUser =
-                                                                isset($lockedSeats[$seat]) &&
-                                                                $lockedSeats[$seat] != auth()->id();
-
+                                                            $isLockedByOtherUser = isset($lockedSeats[$seat]) && $lockedSeats[$seat] != auth()->id();
+                                                            
                                                             // Override status if locked by another user
                                                             if ($isLockedByOtherUser) {
                                                                 $status = 'held';
                                                             }
                                                         @endphp
                                                         <button type="button"
-                                                            wire:click="selectSeat({{ $seat }})"
-                                                            class="seat-btn 
-                                                                    @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
+                                                                wire:click="selectSeat({{ $seat }})"
+                                                                class="seat-btn 
+                                                                    @if($status === 'booked')
+                                                                        @if($seatGender === 'male') seat-booked-male
                                                                         @elseif($seatGender === 'female') seat-booked-female
-                                                                        @else seat-booked-male @endif
-@elseif($status === 'held' || $isLockedByOtherUser)
-seat-held
-@elseif($isSelected)
-seat-selected
-@else
-seat-available
+                                                                        @else seat-booked-male
+                                                                        @endif
+                                                                    @elseif($status === 'held' || $isLockedByOtherUser)
+                                                                        seat-held
+                                                                    @elseif($isSelected) seat-selected
+                                                                    @else seat-available
                                                                     @endif"
-                                                            @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
+                                                                @if($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
-                                                            @if ($isSelected && $seatGender)
-                                                                <span
-                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
-                                                                    {{ $seatGender === 'male' ? 'Male' : 'Female' }}
+                                                            @if($isSelected && $seatGender)
+                                                                <span class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
                                                                 </span>
                                                             @endif
-                                                            @if ($isLockedByOtherUser)
-                                                                <span class="seat-locked-badge"
-                                                                    title="Locked by another user">
+                                                            @if($isLockedByOtherUser)
+                                                                <span class="seat-locked-badge" title="Locked by another user">
                                                                     🔒
                                                                 </span>
                                                             @endif
                                                         </button>
                                                     @endif
                                                 @endfor
-                                            </div>
+</div>
 
                                             <!-- Aisle -->
                                             <div class="seat-aisle">{{ $row }}</div>
-
+                                            
                                             <!-- Right Pair -->
                                             <div class="seat-pair-right">
                                                 @for ($seat = ($row - 1) * 4 + 3; $seat <= ($row - 1) * 4 + 4; $seat++)
                                                     @if ($seat <= $totalSeats)
                                                         @php
-                                                            $seatData = $seatMap[$seat] ?? [
-                                                                'number' => $seat,
-                                                                'status' => 'available',
-                                                            ];
+                                                            $seatData = $seatMap[$seat] ?? ['number' => $seat, 'status' => 'available'];
                                                             $isSelected = isset($selectedSeats[$seat]);
-                                                            $seatGender = $isSelected
-                                                                ? $selectedSeats[$seat]['gender'] ?? null
-                                                                : $seatData['gender'] ?? null;
+                                                            $seatGender = $isSelected ? ($selectedSeats[$seat]['gender'] ?? null) : ($seatData['gender'] ?? null);
                                                             $status = $seatData['status'] ?? 'available';
-                                                            $isLockedByOtherUser =
-                                                                isset($lockedSeats[$seat]) &&
-                                                                $lockedSeats[$seat] != auth()->id();
-
+                                                            $isLockedByOtherUser = isset($lockedSeats[$seat]) && $lockedSeats[$seat] != auth()->id();
+                                                            
                                                             // Override status if locked by another user
                                                             if ($isLockedByOtherUser) {
                                                                 $status = 'held';
                                                             }
                                                         @endphp
                                                         <button type="button"
-                                                            wire:click="selectSeat({{ $seat }})"
-                                                            class="seat-btn 
-                                                                    @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
+                                                                wire:click="selectSeat({{ $seat }})"
+                                                                class="seat-btn 
+                                                                    @if($status === 'booked')
+                                                                        @if($seatGender === 'male') seat-booked-male
                                                                         @elseif($seatGender === 'female') seat-booked-female
-                                                                        @else seat-booked-male @endif
-@elseif($status === 'held' || $isLockedByOtherUser)
-seat-held
-@elseif($isSelected)
-seat-selected
-@else
-seat-available
+                                                                        @else seat-booked-male
+                                                                        @endif
+                                                                    @elseif($status === 'held' || $isLockedByOtherUser)
+                                                                        seat-held
+                                                                    @elseif($isSelected) seat-selected
+                                                                    @else seat-available
                                                                     @endif"
-                                                            @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
+                                                                @if($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
-                                                            @if ($isSelected && $seatGender)
-                                                                <span
-                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
-                                                                    {{ $seatGender === 'male' ? 'Male' : 'Female' }}
+                                                            @if($isSelected && $seatGender)
+                                                                <span class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
                                                                 </span>
                                                             @endif
-                                                            @if ($isLockedByOtherUser)
-                                                                <span class="seat-locked-badge"
-                                                                    title="Locked by another user">
+                                                            @if($isLockedByOtherUser)
+                                                                <span class="seat-locked-badge" title="Locked by another user">
                                                                     🔒
                                                                 </span>
                                                             @endif
@@ -422,53 +406,45 @@ seat-available
                                             </div>
                                         </div>
                                     @endfor
-
+                                    
                                     {{-- Last row with remaining seats (if any) --}}
                                     @if ($lastRowSeats > 0)
                                         <div class="seat-row-container" style="gap: 0.5rem;">
                                             @for ($seat = $fullRows * 4 + 1; $seat <= $totalSeats; $seat++)
                                                 @php
-                                                    $seatData = $seatMap[$seat] ?? [
-                                                        'number' => $seat,
-                                                        'status' => 'available',
-                                                    ];
+                                                    $seatData = $seatMap[$seat] ?? ['number' => $seat, 'status' => 'available'];
                                                     $isSelected = isset($selectedSeats[$seat]);
-                                                    $seatGender = $isSelected
-                                                        ? $selectedSeats[$seat]['gender'] ?? null
-                                                        : $seatData['gender'] ?? null;
+                                                    $seatGender = $isSelected ? ($selectedSeats[$seat]['gender'] ?? null) : ($seatData['gender'] ?? null);
                                                     $status = $seatData['status'] ?? 'available';
-                                                    $isLockedByOtherUser =
-                                                        isset($lockedSeats[$seat]) &&
-                                                        $lockedSeats[$seat] != auth()->id();
-
+                                                    $isLockedByOtherUser = isset($lockedSeats[$seat]) && $lockedSeats[$seat] != auth()->id();
+                                                    
                                                     // Override status if locked by another user
                                                     if ($isLockedByOtherUser) {
                                                         $status = 'held';
                                                     }
                                                 @endphp
-                                                <button type="button" wire:click="selectSeat({{ $seat }})"
-                                                    class="seat-btn 
-                                                            @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
+                                                <button type="button"
+                                                        wire:click="selectSeat({{ $seat }})"
+                                                        class="seat-btn 
+                                                            @if($status === 'booked')
+                                                                @if($seatGender === 'male') seat-booked-male
                                                                 @elseif($seatGender === 'female') seat-booked-female
-                                                                @else seat-booked-male @endif
-@elseif($status === 'held' || $isLockedByOtherUser)
-seat-held
-@elseif($isSelected)
-seat-selected
-@else
-seat-available
+                                                                @else seat-booked-male
+                                                                @endif
+                                                            @elseif($status === 'held' || $isLockedByOtherUser)
+                                                                seat-held
+                                                            @elseif($isSelected) seat-selected
+                                                            @else seat-available
                                                             @endif"
-                                                    @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
+                                                        @if($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                     {{ $seat }}
-                                                    @if ($isSelected && $seatGender)
-                                                        <span
-                                                            class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
-                                                            {{ $seatGender === 'male' ? 'Male' : 'Female' }}
+                                                    @if($isSelected && $seatGender)
+                                                        <span class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}">
+                                                            {{ $seatGender === 'male' ? '👨' : '👩' }}
                                                         </span>
                                                     @endif
-                                                    @if ($isLockedByOtherUser)
-                                                        <span class="seat-locked-badge"
-                                                            title="Locked by another user">
+                                                    @if($isLockedByOtherUser)
+                                                        <span class="seat-locked-badge" title="Locked by another user">
                                                             🔒
                                                         </span>
                                                     @endif
@@ -501,7 +477,7 @@ seat-available
                                     @forelse($selectedSeats as $seatNumber => $seatData)
                                         <span class="badge bg-primary">
                                             Seat {{ $seatNumber }}
-                                            @if ($seatData['gender'])
+                                            @if($seatData['gender'])
                                                 ({{ ucfirst($seatData['gender']) }})
                                             @endif
                                         </span>
@@ -514,70 +490,77 @@ seat-available
                             <!-- Fare Calculation -->
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
                                 <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation</h6>
-
+                                
                                 @php
                                     $seatCount = count($selectedSeats);
                                     $totalDiscount = $discountAmount * $seatCount;
                                     $fareAfterDiscount = $totalFare - $totalDiscount;
                                 @endphp
-
+                                
                                 <div class="row g-2 mb-2">
                                     <div class="col-6">
                                         <label class="form-label small mb-1">Base Fare (Per Seat)</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            value="PKR {{ number_format($baseFare, 2) }}" readonly>
+                                        <input type="text" 
+                                               class="form-control form-control-sm" 
+                                               value="PKR {{ number_format($baseFare, 2) }}" 
+                                               readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label small mb-1">Discount (Per Seat)</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 2) : 'None' }}"
-                                            readonly>
+                                        <input type="text" 
+                                               class="form-control form-control-sm" 
+                                               value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 2) : 'None' }}" 
+                                               readonly>
                                     </div>
                                 </div>
-
-                                @if ($seatCount > 0)
+                                
+                                @if($seatCount > 0)
                                     <div class="row g-2 mb-2">
                                         <div class="col-6">
-                                            <label class="form-label small mb-1">Total Fare ({{ $seatCount }}
-                                                seat{{ $seatCount > 1 ? 's' : '' }})</label>
-                                            <input type="text" class="form-control form-control-sm fw-bold"
-                                                value="PKR {{ number_format($totalFare, 2) }}" readonly>
+                                            <label class="form-label small mb-1">Total Fare ({{ $seatCount }} seat{{ $seatCount > 1 ? 's' : '' }})</label>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm fw-bold" 
+                                                   value="PKR {{ number_format($totalFare, 2) }}" 
+                                                   readonly>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small mb-1">Total Discount</label>
-                                            <input type="text"
-                                                class="form-control form-control-sm text-danger fw-bold"
-                                                value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 2) : 'PKR 0.00' }}"
-                                                readonly>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm text-danger fw-bold" 
+                                                   value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 2) : 'PKR 0.00' }}" 
+                                                   readonly>
                                         </div>
                                     </div>
-
+                                    
                                     <div class="row g-2 mb-2">
                                         <div class="col-6">
                                             <label class="form-label small mb-1">Fare After Discount</label>
-                                            <input type="text"
-                                                class="form-control form-control-sm fw-bold text-primary"
-                                                value="PKR {{ number_format($fareAfterDiscount, 2) }}" readonly>
+                                            <input type="text" 
+                                                   class="form-control form-control-sm fw-bold text-primary" 
+                                                   value="PKR {{ number_format($fareAfterDiscount, 2) }}" 
+                                                   readonly>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small mb-1">Tax/Charge
                                                 <small class="text-muted">
-                                                    @if ($paymentMethod === 'mobile_wallet')
+                                                    @if($paymentMethod === 'mobile_wallet')
                                                         (Suggested: PKR 40 per seat)
                                                     @else
                                                         (Optional)
                                                     @endif
                                                 </small>
                                             </label>
-                                            <input type="number" class="form-control form-control-sm"
-                                                wire:model.blur="taxAmount" wire:loading.attr="disabled"
-                                                placeholder="0.00" min="0" step="0.01">
-                                            @error('taxAmount')
-                                                <small class="text-danger">{{ $message }}</small>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   wire:model.blur="taxAmount"
+                                                   wire:loading.attr="disabled"
+                                                   placeholder="0.00" 
+                                                   min="0" 
+                                                   step="0.01">
+                                            @error('taxAmount') 
+                                                <small class="text-danger">{{ $message }}</small> 
                                             @enderror
-                                            <div wire:loading wire:target="taxAmount"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
+                                            <div wire:loading wire:target="taxAmount" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
@@ -587,13 +570,12 @@ seat-available
                                         <i class="fas fa-info-circle"></i> Select seats to calculate fare
                                     </div>
                                 @endif
-
-                                @if ($seatCount > 0)
+                                
+                                @if($seatCount > 0)
                                     <div class="alert alert-success border-2 mb-0 p-3">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-bold">Final Amount:</span>
-                                            <span class="fs-5 fw-bold text-success">PKR
-                                                {{ number_format($finalAmount, 2) }}</span>
+                                            <span class="fs-5 fw-bold text-success">PKR {{ number_format($finalAmount, 2) }}</span>
                                         </div>
                                     </div>
                                 @endif
@@ -605,32 +587,29 @@ seat-available
                                 <div class="row g-2">
                                     <div class="col-md-6 mb-2">
                                         <label class="form-label small fw-bold">Booking Type</label>
-                                        <select class="form-select form-select-sm" wire:model.live="bookingType"
-                                            wire:loading.attr="disabled">
+                                        <select class="form-select form-select-sm" 
+                                                wire:model.live="bookingType"
+                                                wire:loading.attr="disabled">
                                             <option value="counter">🏪 Counter</option>
-                                            <option value="phone">📞 Phone (Hold till before 60 mins of departure)
-                                            </option>
+                                            <option value="phone">📞 Phone (Hold till before 60 mins of departure)</option>
                                         </select>
-                                        <div wire:loading wire:target="bookingType"
-                                            class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                        <div wire:loading wire:target="bookingType" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
-                                    @if ($bookingType === 'counter')
+                                    @if($bookingType === 'counter')
                                         <div class="col-md-6 mb-2">
                                             <label class="form-label small fw-bold">Payment Method</label>
-                                            <select class="form-select form-select-sm" wire:model.live="paymentMethod"
-                                                wire:loading.attr="disabled">
+                                            <select class="form-select form-select-sm" 
+                                                    wire:model.live="paymentMethod"
+                                                    wire:loading.attr="disabled">
                                                 @foreach ($paymentMethods as $method)
-                                                    @if ($method['value'] !== 'other')
-                                                        <option value="{{ $method['value'] }}">{{ $method['label'] }}
-                                                        </option>
+                                                    @if($method['value'] !== 'other')
+                                                        <option value="{{ $method['value'] }}">{{ $method['label'] }}</option>
                                                     @endif
                                                 @endforeach
                                             </select>
-                                            <div wire:loading wire:target="paymentMethod"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
+                                            <div wire:loading wire:target="paymentMethod" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
@@ -639,30 +618,31 @@ seat-available
                             </div>
 
                             <!-- Payment Fields (Counter Only) -->
-                            @if ($bookingType === 'counter')
+                            @if($bookingType === 'counter')
                                 <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details
-                                    </h6>
+                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details</h6>
 
-                                    @if ($paymentMethod !== 'cash')
+                                    @if($paymentMethod !== 'cash')
                                         <div class="mb-2">
                                             <label class="form-label small">Transaction ID</label>
-                                            <input type="text" class="form-control form-control-sm"
-                                                wire:model="transactionId" placeholder="TXN123456789"
-                                                maxlength="100">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   wire:model="transactionId"
+                                                   placeholder="TXN123456789" 
+                                                   maxlength="100">
                                         </div>
                                     @endif
 
-                                    @if ($paymentMethod === 'cash')
+                                    @if($paymentMethod === 'cash')
                                         @php
                                             $amountReceivedValue = (float) ($amountReceived ?? 0);
                                             $finalAmountValue = (float) ($finalAmount ?? 0);
                                             $calculatedReturn = max(0, $amountReceivedValue - $finalAmountValue);
                                             $calculatedDue = max(0, $finalAmountValue - $amountReceivedValue);
                                         @endphp
-
+                                        
                                         <!-- Final Amount Display -->
-                                        @if ($finalAmountValue > 0)
+                                        @if($finalAmountValue > 0)
                                             <div class="mb-3 p-2 bg-white rounded border border-primary">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <span class="fw-bold small">
@@ -680,33 +660,31 @@ seat-available
                                             <label class="form-label small fw-bold">
                                                 <i class="fas fa-money-bill"></i> Amount Received from Customer (PKR)
                                             </label>
-                                            <input type="number" class="form-control form-control-lg fw-bold"
-                                                wire:model.blur="amountReceived" wire:loading.attr="disabled"
-                                                min="0" step="0.01" placeholder="0.00"
-                                                style="font-size: 1.1rem;">
-                                            <div wire:loading wire:target="amountReceived"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
+                                            <input type="number" 
+                                                   class="form-control form-control-lg fw-bold" 
+                                                   wire:model.blur="amountReceived"
+                                                   wire:loading.attr="disabled"
+                                                   min="0" 
+                                                   step="0.01" 
+                                                   placeholder="0.00"
+                                                   style="font-size: 1.1rem;">
+                                            <div wire:loading wire:target="amountReceived" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                             <small class="text-muted d-block mt-1">
-                                                <i class="fas fa-info-circle"></i> Press Tab or click outside to
-                                                calculate return/due amount
+                                                <i class="fas fa-info-circle"></i> Press Tab or click outside to calculate return/due amount
                                             </small>
                                         </div>
 
                                         <!-- Payment Summary -->
-                                        @if ($amountReceivedValue > 0 && $finalAmountValue > 0)
+                                        @if($amountReceivedValue > 0 && $finalAmountValue > 0)
                                             <div class="payment-summary">
                                                 <!-- Amount Remaining (Due) -->
-                                                @if ($calculatedDue > 0)
-                                                    <div class="alert alert-warning border-2 mb-2 p-3"
-                                                        style="background-color: #fff3cd !important;">
-                                                        <div
-                                                            class="d-flex justify-content-between align-items-center mb-2">
+                                                @if($calculatedDue > 0)
+                                                    <div class="alert alert-warning border-2 mb-2 p-3" style="background-color: #fff3cd !important;">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span class="fw-bold">
-                                                                <i class="fas fa-exclamation-triangle"></i> Amount
-                                                                Remaining (Due):
+                                                                <i class="fas fa-exclamation-triangle"></i> Amount Remaining (Due):
                                                             </span>
                                                             <span class="fs-3 fw-bold text-warning">
                                                                 PKR {{ number_format($calculatedDue, 2) }}
@@ -714,50 +692,41 @@ seat-available
                                                         </div>
                                                         <div class="progress mb-2" style="height: 8px;">
                                                             @php
-                                                                $paymentPercentage = min(
-                                                                    100,
-                                                                    ($amountReceivedValue / $finalAmountValue) * 100,
-                                                                );
+                                                                $paymentPercentage = min(100, ($amountReceivedValue / $finalAmountValue) * 100);
                                                             @endphp
-                                                            <div class="progress-bar bg-warning" role="progressbar"
-                                                                style="width: {{ $paymentPercentage }}%"
-                                                                aria-valuenow="{{ $paymentPercentage }}"
-                                                                aria-valuemin="0" aria-valuemax="100">
+                                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                                 style="width: {{ $paymentPercentage }}%" 
+                                                                 aria-valuenow="{{ $paymentPercentage }}" 
+                                                                 aria-valuemin="0" 
+                                                                 aria-valuemax="100">
                                                             </div>
                                                         </div>
                                                         <small class="text-muted d-block">
-                                                            <i class="fas fa-info-circle"></i> Customer still needs to
-                                                            pay PKR {{ number_format($calculatedDue, 2) }} more
+                                                            <i class="fas fa-info-circle"></i> Customer still needs to pay PKR {{ number_format($calculatedDue, 2) }} more
                                                         </small>
                                                     </div>
                                                 @endif
 
                                                 <!-- Return Amount -->
-                                                @if ($calculatedReturn > 0)
-                                                    <div class="alert alert-success border-2 mb-2 p-3"
-                                                        style="background-color: #d1e7dd !important;">
-                                                        <div
-                                                            class="d-flex justify-content-between align-items-center mb-2">
+                                                @if($calculatedReturn > 0)
+                                                    <div class="alert alert-success border-2 mb-2 p-3" style="background-color: #d1e7dd !important;">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span class="fw-bold">
-                                                                <i class="fas fa-money-bill-wave"></i> Return to
-                                                                Customer:
+                                                                <i class="fas fa-money-bill-wave"></i> Return to Customer:
                                                             </span>
                                                             <span class="fs-3 fw-bold text-success">
                                                                 PKR {{ number_format($calculatedReturn, 2) }}
                                                             </span>
                                                         </div>
                                                         <small class="text-muted d-block">
-                                                            <i class="fas fa-info-circle"></i> Customer paid extra.
-                                                            Return PKR {{ number_format($calculatedReturn, 2) }} to
-                                                            customer
+                                                            <i class="fas fa-info-circle"></i> Customer paid extra. Return PKR {{ number_format($calculatedReturn, 2) }} to customer
                                                         </small>
                                                     </div>
                                                 @endif
 
                                                 <!-- Exact Payment -->
-                                                @if ($calculatedReturn == 0 && $calculatedDue == 0)
-                                                    <div class="alert alert-info border-2 mb-2 p-3"
-                                                        style="background-color: #cfe2ff !important;">
+                                                @if($calculatedReturn == 0 && $calculatedDue == 0)
+                                                    <div class="alert alert-info border-2 mb-2 p-3" style="background-color: #cfe2ff !important;">
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <span class="fw-bold">
                                                                 <i class="fas fa-check-circle"></i> Payment Complete:
@@ -767,21 +736,18 @@ seat-available
                                                             </span>
                                                         </div>
                                                         <small class="text-muted d-block mt-1">
-                                                            <i class="fas fa-info-circle"></i> Customer paid exactly
-                                                            PKR {{ number_format($finalAmountValue, 2) }}
+                                                            <i class="fas fa-info-circle"></i> Customer paid exactly PKR {{ number_format($finalAmountValue, 2) }}
                                                         </small>
                                                     </div>
                                                 @endif
                                             </div>
                                         @elseif($amountReceivedValue > 0 && $finalAmountValue == 0)
                                             <div class="alert alert-secondary border-1 mb-2 p-2 small">
-                                                <i class="fas fa-info-circle"></i> Please select seats first to
-                                                calculate the final amount
+                                                <i class="fas fa-info-circle"></i> Please select seats first to calculate the final amount
                                             </div>
                                         @else
                                             <div class="alert alert-secondary border-1 mb-2 p-2 small">
-                                                <i class="fas fa-info-circle"></i> Enter amount received to see payment
-                                                summary
+                                                <i class="fas fa-info-circle"></i> Enter amount received to see payment summary
                                             </div>
                                         @endif
                                     @endif
@@ -790,12 +756,14 @@ seat-available
 
                             <!-- Notes -->
                             <div class="mb-2">
-                                <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i>
-                                    Notes</label>
-                                <textarea class="form-control form-control-sm" wire:model="notes" {{-- wire:loading.attr="disabled" --}} rows="2"
-                                    maxlength="500" placeholder="Optional notes..."></textarea>
-                                <div wire:loading wire:target="notes"
-                                    class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
+                                <textarea class="form-control form-control-sm" 
+                                          wire:model="notes" 
+                                          {{-- wire:loading.attr="disabled" --}}
+                                          rows="2" 
+                                          maxlength="500"
+                                          placeholder="Optional notes..."></textarea>
+                                <div wire:loading wire:target="notes" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
@@ -806,44 +774,41 @@ seat-available
                                     <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
                                     <div class="d-flex gap-2 align-items-center">
                                         <span class="badge bg-info">{{ count($selectedSeats) }} seat(s)</span>
-                                        @if (count($selectedSeats) > 0 && count($passengers) < count($selectedSeats))
-                                            <button type="button" class="btn btn-outline-primary btn-sm"
-                                                wire:click="addPassenger"
-                                                title="Add another passenger (max {{ count($selectedSeats) }})">
+                                        @if(count($selectedSeats) > 0 && count($passengers) < count($selectedSeats))
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm" 
+                                                    wire:click="addPassenger"
+                                                    title="Add another passenger (max {{ count($selectedSeats) }})">
                                                 <i class="fas fa-plus-circle"></i> Add Passenger
                                             </button>
                                         @endif
                                     </div>
                                 </div>
                                 <p class="text-muted small mb-2" style="font-size: 0.75rem;">
-                                    <strong>Required:</strong> At least 1 passenger information required.
-                                    @if (count($selectedSeats) > 0)
-                                        You can add up to {{ count($selectedSeats) }} passenger(s) for
-                                        {{ count($selectedSeats) }} selected seat(s).
+                                    <strong>Required:</strong> At least 1 passenger information required. 
+                                    @if(count($selectedSeats) > 0)
+                                        You can add up to {{ count($selectedSeats) }} passenger(s) for {{ count($selectedSeats) }} selected seat(s).
                                     @endif
                                 </p>
                                 <div style="max-height: 250px; overflow-y: auto;">
-                                    @foreach ($passengers as $index => $passenger)
-                                        <div class="card mb-3 border-2 {{ $passenger['is_required'] ? '' : 'border-warning' }}"
-                                            style="border-color: {{ $passenger['is_required'] ? '#e9ecef' : '#ffc107' }};">
-                                            <div class="card-header"
-                                                style="background-color: {{ $passenger['is_required'] ? '#f8f9fa' : '#fff3cd' }};">
+                                    @foreach($passengers as $index => $passenger)
+                                        <div class="card mb-3 border-2 {{ $passenger['is_required'] ? '' : 'border-warning' }}" 
+                                             style="border-color: {{ $passenger['is_required'] ? '#e9ecef' : '#ffc107' }};">
+                                            <div class="card-header" style="background-color: {{ $passenger['is_required'] ? '#f8f9fa' : '#fff3cd' }};">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <h6 class="mb-0">
-                                                        @if ($passenger['is_required'])
-                                                            <i class="fas fa-user"></i> Passenger {{ $index + 1 }}
-                                                            <span class="badge bg-danger ms-2">Required</span>
+                                                        @if($passenger['is_required'])
+                                                            <i class="fas fa-user"></i> Passenger {{ $index + 1 }} <span class="badge bg-danger ms-2">Required</span>
                                                         @else
-                                                            <i class="fas fa-user-plus"></i> Passenger
-                                                            {{ $index + 1 }}
+                                                            <i class="fas fa-user-plus"></i> Passenger {{ $index + 1 }}
                                                         @endif
                                                     </h6>
-                                                    @if (!$passenger['is_required'])
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-                                                            wire:click="removePassenger({{ $index }})"
-                                                            title="Remove this passenger">
-                                                            <i class="bx bx-trash" style="font-size: 1rem;"></i>
+                                                    @if(!$passenger['is_required'])
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" 
+                                                                wire:click="removePassenger({{ $index }})"
+                                                                title="Remove this passenger">
+                                                            <i class="bx bx-trash" style="font-size: 1rem;"></i> 
                                                             <span>Remove</span>
                                                         </button>
                                                     @endif
@@ -852,71 +817,78 @@ seat-available
                                             <div class="card-body">
                                                 <div class="row g-2">
                                                     <div class="col-md-6">
-                                                        <label class="form-label small">Name <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.name"
-                                                            placeholder="Full Name" maxlength="100">
-                                                        @error("passengers.{$index}.name")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        <label class="form-label small">Name <span class="text-danger">*</span></label>
+                                                        <input type="text" 
+                                                               class="form-control form-control-sm" 
+                                                               wire:model="passengers.{{ $index }}.name"
+                                                               placeholder="Full Name" 
+                                                               maxlength="100">
+                                                        @error("passengers.{$index}.name") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <label class="form-label small">Age <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="number" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.age"
-                                                            min="1" max="120" placeholder="Age">
-                                                        @error("passengers.{$index}.age")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        <label class="form-label small">Age <span class="text-danger">*</span></label>
+                                                        <input type="number" 
+                                                               class="form-control form-control-sm" 
+                                                               wire:model="passengers.{{ $index }}.age"
+                                                               min="1" 
+                                                               max="120" 
+                                                               placeholder="Age">
+                                                        @error("passengers.{$index}.age") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <label class="form-label small">Gender <span
-                                                                class="text-danger">*</span></label>
-                                                        <select class="form-select form-select-sm"
-                                                            wire:model="passengers.{{ $index }}.gender">
+                                                        <label class="form-label small">Gender <span class="text-danger">*</span></label>
+                                                        <select class="form-select form-select-sm" 
+                                                                wire:model="passengers.{{ $index }}.gender">
                                                             <option value="">Select</option>
                                                             <option value="male">Male</option>
-                                                            <option value="female"> Female</option>
+                                                            <option value="female">Female</option>
                                                         </select>
-                                                        @error("passengers.{$index}.gender")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        @error("passengers.{$index}.gender") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
                                                     </div>
                                                     <div class="col-md-4">
-                                                        <label class="form-label small">CNIC <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            wire:model.blur="passengers.{{ $index }}.cnic"
-                                                            id="cnic-{{ $index }}"
-                                                            placeholder="12345-1234567-1"
-                                                            pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}" maxlength="15"
-                                                            required>
-                                                        @error("passengers.{$index}.cnic")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        <label class="form-label small">CNIC <span class="text-danger">*</span></label>
+                                                        <input type="text" 
+                                                               class="form-control form-control-sm" 
+                                                               wire:model.blur="passengers.{{ $index }}.cnic"
+                                                               id="cnic-{{ $index }}"
+                                                               placeholder="12345-1234567-1" 
+                                                               pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}"
+                                                               maxlength="15"
+                                                               required>
+                                                        @error("passengers.{$index}.cnic") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
                                                         <small class="text-muted">Format: 12345-1234567-1</small>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label small">Phone</label>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            wire:model.blur="passengers.{{ $index }}.phone"
-                                                            id="phone-{{ $index }}" placeholder="03001234567"
-                                                            pattern="0[0-9]{10}" maxlength="11">
-                                                        @error("passengers.{$index}.phone")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        <input type="text" 
+                                                               class="form-control form-control-sm" 
+                                                               wire:model.blur="passengers.{{ $index }}.phone"
+                                                               id="phone-{{ $index }}"
+                                                               placeholder="03001234567" 
+                                                               pattern="0[0-9]{10}"
+                                                               maxlength="11">
+                                                        @error("passengers.{$index}.phone") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
-                                                        <small class="text-muted">Format: 03001234567 (11
-                                                            digits)</small>
+                                                        <small class="text-muted">Format: 03001234567 (11 digits)</small>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label small">Email</label>
-                                                        <input type="email" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.email"
-                                                            placeholder="email@example.com" maxlength="100">
-                                                        @error("passengers.{$index}.email")
-                                                            <small class="text-danger">{{ $message }}</small>
+                                                        <input type="email" 
+                                                               class="form-control form-control-sm" 
+                                                               wire:model="passengers.{{ $index }}.email"
+                                                               placeholder="email@example.com" 
+                                                               maxlength="100">
+                                                        @error("passengers.{$index}.email") 
+                                                            <small class="text-danger">{{ $message }}</small> 
                                                         @enderror
                                                     </div>
                                                 </div>
@@ -927,8 +899,9 @@ seat-available
                             </div>
 
                             <!-- Confirm Button -->
-                            <button class="btn btn-success w-100 fw-bold py-2 small" wire:click="confirmBooking"
-                                wire:loading.attr="disabled">
+                            <button class="btn btn-success w-100 fw-bold py-2 small" 
+                                    wire:click="confirmBooking"
+                                    wire:loading.attr="disabled">
                                 <span wire:loading.remove>
                                     <i class="fas fa-check-circle"></i> Confirm Booking
                                 </span>
@@ -944,31 +917,31 @@ seat-available
                 <div class="col-lg-4 col-md-12">
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
-                        <div
-                            class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 small">
                                 <i class="bx bx-list-check"></i> Booked Passengers
                                 <span class="badge bg-info ms-2">Total Passengers: {{ count($tripPassengers) }}</span>
-                                <span class="badge bg-success ms-2">Total Earnings: PKR
-                                    {{ number_format($totalEarnings, 2) }}</span>
+                                <span class="badge bg-success ms-2">Total Earnings: PKR {{ number_format($totalEarnings, 2) }}</span>
                             </h6>
-                            @if (count($tripPassengers) > 0)
+                            @if(count($tripPassengers) > 0)
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-dark"
-                                        onclick="window.printPassengerList && window.printPassengerList()"
-                                        title="Print Passenger List">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-dark" 
+                                            onclick="window.printPassengerList && window.printPassengerList()"
+                                            title="Print Passenger List">
                                         <i class="bx bx-printer"></i> Print List
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                        onclick="window.printVoucher && window.printVoucher()"
-                                        title="Print Voucher (For Police Record)">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            onclick="window.printVoucher && window.printVoucher()"
+                                            title="Print Voucher (For Police Record)">
                                         <i class="bx bx-file"></i> Print Voucher
                                     </button>
                                 </div>
                             @endif
                         </div>
                         <div class="card-body p-2 scrollable-content">
-                            @if (count($tripPassengers) > 0)
+                            @if(count($tripPassengers) > 0)
                                 <div class="table-responsive">
                                     <table id="passengerListTable" class="table table-sm table-hover mb-0">
                                         <thead class="table-light">
@@ -985,15 +958,13 @@ seat-available
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($tripPassengers as $passenger)
+                                            @foreach($tripPassengers as $passenger)
                                                 <tr>
                                                     <td class="small">
-                                                        <span
-                                                            class="badge bg-dark">{{ $passenger['booking_number'] }}</span>
+                                                        <span class="badge bg-dark">{{ $passenger['booking_number'] }}</span>
                                                     </td>
                                                     <td class="small">
-                                                        <span
-                                                            class="badge bg-info">{{ $passenger['seat_number'] }}</span>
+                                                        <span class="badge bg-info">{{ $passenger['seat_number'] }}</span>
                                                     </td>
                                                     <td class="small">
                                                         <strong>{{ $passenger['name'] }}</strong>
@@ -1011,19 +982,20 @@ seat-available
                                                         <small>{{ $passenger['to_code'] }}</small>
                                                     </td>
                                                     <td class="small text-end">
-                                                        <strong>PKR
-                                                            {{ number_format($passenger['final_amount'] ?? 0, 2) }}</strong>
+                                                        <strong>PKR {{ number_format($passenger['final_amount'] ?? 0, 2) }}</strong>
                                                     </td>
                                                     <td class="small">
                                                         <div class="d-flex gap-1 justify-content-center">
-                                                            <a href="{{ route('admin.bookings.edit', $passenger['booking_id']) }}"
-                                                                class="btn btn-sm btn-outline-warning" target="_blank"
-                                                                title="Edit Booking">
+                                                            <a href="{{ route('admin.bookings.edit', $passenger['booking_id']) }}" 
+                                                               class="btn btn-sm btn-outline-warning" 
+                                                               target="_blank"
+                                                               title="Edit Booking">
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
-                                                            <button type="button" class="btn btn-sm btn-outline-info"
-                                                                onclick="printBothTickets({{ $passenger['booking_id'] }}, '80mm')"
-                                                                title="Print Both Customer and Host Tickets">
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info" 
+                                                                    onclick="printBothTickets({{ $passenger['booking_id'] }}, '80mm')"
+                                                                    title="Print Both Customer and Host Tickets">
                                                                 <i class="bx bx-printer"></i>
                                                             </button>
                                                         </div>
@@ -1034,12 +1006,10 @@ seat-available
                                         <tfoot class="table-light">
                                             <tr>
                                                 <td colspan="3" class="text-end fw-bold small">
-                                                    <strong>Total Passengers:</strong> <span
-                                                        class="badge bg-info">{{ count($tripPassengers) }}</span>
+                                                    <strong>Total Passengers:</strong> <span class="badge bg-info">{{ count($tripPassengers) }}</span>
                                                 </td>
                                                 <td colspan="4" class="text-end fw-bold small">Total Earnings:</td>
-                                                <td class="fw-bold text-success small text-end">PKR
-                                                    {{ number_format($totalEarnings, 2) }}</td>
+                                                <td class="fw-bold text-success small text-end">PKR {{ number_format($totalEarnings, 2) }}</td>
                                                 <td></td>
                                             </tr>
                                         </tfoot>
@@ -1072,13 +1042,17 @@ seat-available
                     <p class="text-center mb-0">Please select passenger gender:</p>
                 </div>
                 <div class="modal-footer gap-2">
-                    <button type="button" class="btn btn-outline-primary btn-lg flex-grow-1 fw-bold"
-                        onclick="window.setGender('male')" data-gender="male">
-                        Male
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-lg flex-grow-1 fw-bold"
+                            onclick="window.setGender('male')"
+                            data-gender="male">
+                        👨 Male
                     </button>
-                    <button type="button" class="btn btn-outline-danger btn-lg flex-grow-1 fw-bold"
-                        onclick="window.setGender('female')" data-gender="female">
-                        Female
+                    <button type="button" 
+                            class="btn btn-outline-danger btn-lg flex-grow-1 fw-bold"
+                            onclick="window.setGender('female')"
+                            data-gender="female">
+                        👩 Female
                     </button>
                 </div>
             </div>
@@ -1093,8 +1067,7 @@ seat-available
                     <h5 class="modal-title fw-bold">
                         <i class="fas fa-bus"></i> Assign Bus & Driver
                     </h5>
-                    <button type="button" class="btn-close btn-close-white"
-                        wire:click="closeBusAssignmentModal"></button>
+                    <button type="button" class="btn-close btn-close-white" wire:click="closeBusAssignmentModal"></button>
                 </div>
                 <div class="modal-body py-4">
                     @if ($showBusAssignmentModal)
@@ -1111,8 +1084,8 @@ seat-available
                                     </option>
                                 @endforeach
                             </select>
-                            @error('selectedBusId')
-                                <small class="text-danger">{{ $message }}</small>
+                            @error('selectedBusId') 
+                                <small class="text-danger">{{ $message }}</small> 
                             @enderror
                         </div>
 
@@ -1121,47 +1094,58 @@ seat-available
                             <h6 class="fw-bold mb-3"><i class="fas fa-user-tie"></i> Driver Information</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label small">Driver Name <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverName" placeholder="Enter driver name" maxlength="255">
-                                    @error('driverName')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <label class="form-label small">Driver Name <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverName"
+                                           placeholder="Enter driver name" 
+                                           maxlength="255">
+                                    @error('driverName') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small">Driver Phone <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverPhone" placeholder="03001234567" maxlength="20">
-                                    @error('driverPhone')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <label class="form-label small">Driver Phone <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverPhone"
+                                           placeholder="03001234567" 
+                                           maxlength="20">
+                                    @error('driverPhone') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small">Driver CNIC <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverCnic" placeholder="42101-1234567-1" maxlength="50">
-                                    @error('driverCnic')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <label class="form-label small">Driver CNIC <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverCnic"
+                                           placeholder="42101-1234567-1" 
+                                           maxlength="50">
+                                    @error('driverCnic') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small">Driver License <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverLicense" placeholder="PK-DL-2023-001" maxlength="100">
-                                    @error('driverLicense')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <label class="form-label small">Driver License <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="driverLicense"
+                                           placeholder="PK-DL-2023-001" 
+                                           maxlength="100">
+                                    @error('driverLicense') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small">Driver Address</label>
-                                    <textarea class="form-control form-control-sm" wire:model="driverAddress" rows="2"
-                                        placeholder="Enter driver address" maxlength="500"></textarea>
-                                    @error('driverAddress')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <textarea class="form-control form-control-sm" 
+                                              wire:model="driverAddress"
+                                              rows="2" 
+                                              placeholder="Enter driver address" 
+                                              maxlength="500"></textarea>
+                                    @error('driverAddress') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                             </div>
@@ -1173,18 +1157,24 @@ seat-available
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label small">Host Name</label>
-                                    <input type="text" class="form-control form-control-sm" wire:model="hostName"
-                                        placeholder="Enter host name" maxlength="255">
-                                    @error('hostName')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="hostName"
+                                           placeholder="Enter host name" 
+                                           maxlength="255">
+                                    @error('hostName') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small">Host Phone</label>
-                                    <input type="text" class="form-control form-control-sm" wire:model="hostPhone"
-                                        placeholder="03001234567" maxlength="20">
-                                    @error('hostPhone')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           wire:model="hostPhone"
+                                           placeholder="03001234567" 
+                                           maxlength="20">
+                                    @error('hostPhone') 
+                                        <small class="text-danger">{{ $message }}</small> 
                                     @enderror
                                 </div>
                             </div>
@@ -1194,11 +1184,11 @@ seat-available
                         <div class="mb-4 p-3 bg-light rounded">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0">
-                                    <i class="fas fa-receipt"></i> Expenses (From
-                                    {{ $fromStop['terminal_name'] ?? 'Current' }} to Next Stop)
+                                    <i class="fas fa-receipt"></i> Expenses (From {{ $fromStop['terminal_name'] ?? 'Current' }} to Next Stop)
                                 </h6>
-                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                    wire:click="addExpense">
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        wire:click="addExpense">
                                     <i class="fas fa-plus"></i> Add Expense
                                 </button>
                             </div>
@@ -1208,8 +1198,9 @@ seat-available
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
                                             @if (count($expenses) > 1)
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    wire:click="removeExpense({{ $index }})">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        wire:click="removeExpense({{ $index }})">
                                                     <i class="bx bx-trash"></i>
                                                 </button>
                                             @endif
@@ -1217,34 +1208,38 @@ seat-available
                                         <div class="row g-2">
                                             <div class="col-md-4">
                                                 <label class="form-label small">Expense Type</label>
-                                                <select class="form-select form-select-sm"
-                                                    wire:model="expenses.{{ $index }}.expense_type">
+                                                <select class="form-select form-select-sm" 
+                                                        wire:model="expenses.{{ $index }}.expense_type">
                                                     <option value="">-- Select Type --</option>
                                                     @foreach ($expenseTypes as $type)
-                                                        <option value="{{ $type['value'] }}">{{ $type['label'] }}
-                                                        </option>
+                                                        <option value="{{ $type['value'] }}">{{ $type['label'] }}</option>
                                                     @endforeach
                                                 </select>
-                                                @error("expenses.{$index}.expense_type")
-                                                    <small class="text-danger">{{ $message }}</small>
+                                                @error("expenses.{$index}.expense_type") 
+                                                    <small class="text-danger">{{ $message }}</small> 
                                                 @enderror
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label small">Amount (PKR)</label>
-                                                <input type="number" class="form-control form-control-sm"
-                                                    wire:model="expenses.{{ $index }}.amount"
-                                                    placeholder="0.00" min="0" step="0.01">
-                                                @error("expenses.{$index}.amount")
-                                                    <small class="text-danger">{{ $message }}</small>
+                                                <input type="number" 
+                                                       class="form-control form-control-sm" 
+                                                       wire:model="expenses.{{ $index }}.amount"
+                                                       placeholder="0.00" 
+                                                       min="0" 
+                                                       step="0.01">
+                                                @error("expenses.{$index}.amount") 
+                                                    <small class="text-danger">{{ $message }}</small> 
                                                 @enderror
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label small">Description</label>
-                                                <input type="text" class="form-control form-control-sm"
-                                                    wire:model="expenses.{{ $index }}.description"
-                                                    placeholder="Optional description" maxlength="500">
-                                                @error("expenses.{$index}.description")
-                                                    <small class="text-danger">{{ $message }}</small>
+                                                <input type="text" 
+                                                       class="form-control form-control-sm" 
+                                                       wire:model="expenses.{{ $index }}.description"
+                                                       placeholder="Optional description" 
+                                                       maxlength="500">
+                                                @error("expenses.{$index}.description") 
+                                                    <small class="text-danger">{{ $message }}</small> 
                                                 @enderror
                                             </div>
                                         </div>
@@ -1252,18 +1247,21 @@ seat-available
                                 </div>
                             @endforeach
                             <small class="text-muted">
-                                <i class="fas fa-info-circle"></i> Expenses will be recorded from
-                                {{ $fromStop['terminal_name'] ?? 'current terminal' }} to the next stop.
+                                <i class="fas fa-info-circle"></i> Expenses will be recorded from {{ $fromStop['terminal_name'] ?? 'current terminal' }} to the next stop.
                             </small>
                         </div>
                     @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
-                    <button type="button" class="btn btn-secondary" wire:click="closeBusAssignmentModal">
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            wire:click="closeBusAssignmentModal">
                         <i class="fas fa-times"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-primary fw-bold" wire:click="assignBus"
-                        wire:loading.attr="disabled">
+                    <button type="button" 
+                            class="btn btn-primary fw-bold" 
+                            wire:click="assignBus"
+                            wire:loading.attr="disabled">
                         <span wire:loading.remove>
                             <i class="fas fa-check"></i> Assign Bus
                         </span>
@@ -1287,41 +1285,31 @@ seat-available
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body py-4">
-                    @if ($lastBookingData)
+                    @if($lastBookingData)
                         <div class="mb-4 p-3 bg-light rounded text-center">
                             <h6 class="text-muted mb-2">Booking Number</h6>
                             <h3 class="fw-bold text-primary">#{{ $lastBookingData['booking_number'] }}</h3>
                         </div>
 
                         <div class="mb-4">
-                            <p class="mb-2"><strong>Seats:</strong> <span
-                                    class="badge bg-info ms-2">{{ $lastBookingData['seats'] }}</span></p>
-                            <p class="mb-0"><strong>Status:</strong> <span
-                                    class="badge bg-success ms-2">{{ ucfirst($lastBookingData['status']) }}</span>
-                            </p>
+                            <p class="mb-2"><strong>Seats:</strong> <span class="badge bg-info ms-2">{{ $lastBookingData['seats'] }}</span></p>
+                            <p class="mb-0"><strong>Status:</strong> <span class="badge bg-success ms-2">{{ ucfirst($lastBookingData['status']) }}</span></p>
                         </div>
 
                         <div class="alert alert-light border-2 mb-4">
                             <h6 class="fw-bold mb-3">Fare Breakdown</h6>
-                            <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR
-                                    {{ number_format($lastBookingData['total_fare'], 2) }}</span></p>
-                            @if ($lastBookingData['discount_amount'] > 0)
-                                <p class="mb-2"><strong>Discount:</strong> <span class="float-end text-danger">-PKR
-                                        {{ number_format($lastBookingData['discount_amount'], 2) }}</span></p>
+                            <p class="mb-2"><strong>Total Fare:</strong> <span class="float-end">PKR {{ number_format($lastBookingData['total_fare'], 2) }}</span></p>
+                            @if($lastBookingData['discount_amount'] > 0)
+                            <p class="mb-2"><strong>Discount:</strong> <span class="float-end text-danger">-PKR {{ number_format($lastBookingData['discount_amount'], 2) }}</span></p>
                             @endif
-                            @if ($lastBookingData['tax_amount'] > 0)
-                                <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR
-                                        {{ number_format($lastBookingData['tax_amount'], 2) }}</span></p>
+                            @if($lastBookingData['tax_amount'] > 0)
+                            <p class="mb-2"><strong>Tax/Charge:</strong> <span class="float-end">+PKR {{ number_format($lastBookingData['tax_amount'], 2) }}</span></p>
                             @endif
                             <hr>
-                            <p class="mb-0"><strong>Final Amount:</strong> <span
-                                    class="float-end fw-bold text-success">PKR
-                                    {{ number_format($lastBookingData['final_amount'], 2) }}</span></p>
+                            <p class="mb-0"><strong>Final Amount:</strong> <span class="float-end fw-bold text-success">PKR {{ number_format($lastBookingData['final_amount'], 2) }}</span></p>
                         </div>
 
-                        <p><strong>Payment Method:</strong> <span
-                                class="badge bg-warning ms-2">{{ ucfirst(str_replace('_', ' ', $lastBookingData['payment_method'])) }}</span>
-                        </p>
+                        <p><strong>Payment Method:</strong> <span class="badge bg-warning ms-2">{{ ucfirst(str_replace('_', ' ', $lastBookingData['payment_method'])) }}</span></p>
                     @else
                         <div class="text-center py-4">
                             <p class="text-muted">No booking data available</p>
@@ -1329,11 +1317,14 @@ seat-available
                     @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
-                    <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
-                        @if ($lastBookingId) onclick="printBothTickets({{ $lastBookingId }}, '80mm')" @else disabled @endif>
+                    <button type="button" 
+                            class="btn btn-primary btn-lg fw-bold flex-fill" 
+                            @if($lastBookingId) onclick="printBothTickets({{ $lastBookingId }}, '80mm')" @else disabled @endif>
                         <i class="fas fa-print"></i> Print Both Tickets (Customer & Host)
                     </button>
-                    <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
+                    <button type="button" 
+                            class="btn btn-success btn-lg fw-bold flex-fill" 
+                            data-bs-dismiss="modal">
                         <i class="fas fa-check"></i> Done
                     </button>
                 </div>
@@ -1342,297 +1333,291 @@ seat-available
     </div>
 
     @script
-        <script>
-            // Removed input masking and error highlighting functions as they were not working properly
+    <script>
+        // Removed input masking and error highlighting functions as they were not working properly
 
-            // Re-initialize Select2 after every Livewire update
-            document.addEventListener('livewire:update', () => {
-                if (typeof $ !== 'undefined' && $.fn.select2) {
-                    // Destroy existing Select2 instances safely
-                    $('.select2').each(function() {
-                        if ($(this).hasClass('select2-hidden-accessible')) {
-                            $(this).select2('destroy');
-                        }
+        // Re-initialize Select2 after every Livewire update
+        document.addEventListener('livewire:update', () => {
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                // Destroy existing Select2 instances safely
+                $('.select2').each(function() {
+                    if ($(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2('destroy');
+                    }
+                });
+                
+                // Re-initialize Select2
+                setTimeout(() => {
+                    $('.select2').select2({
+                        width: 'resolve'
                     });
+                }, 100);
+            }
+        });
+        
+        let pendingSeatNumber = null;
+        let genderModalInstance = null;
 
-                    // Re-initialize Select2
-                    setTimeout(() => {
-                        $('.select2').select2({
-                            width: 'resolve'
-                        });
-                    }, 100);
-                }
-            });
+        // Handle Livewire events
+        $wire.on('show-gender-modal', (event) => {
+            pendingSeatNumber = event.seatNumber;
+            document.getElementById('modalSeatNumber').textContent = event.seatNumber;
+            
+            // Get or create modal instance
+            const modalElement = document.getElementById('genderModal');
+            genderModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            genderModalInstance.show();
+        });
 
-            let pendingSeatNumber = null;
-            let genderModalInstance = null;
-
-            // Handle Livewire events
-            $wire.on('show-gender-modal', (event) => {
-                pendingSeatNumber = event.seatNumber;
-                document.getElementById('modalSeatNumber').textContent = event.seatNumber;
-
-                // Get or create modal instance
+        function closeGenderModal() {
+            if (genderModalInstance) {
+                genderModalInstance.hide();
+                genderModalInstance = null;
+            } else {
+                // Fallback: try to get instance
                 const modalElement = document.getElementById('genderModal');
-                genderModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-                genderModalInstance.show();
-            });
-
-            function closeGenderModal() {
-                if (genderModalInstance) {
-                    genderModalInstance.hide();
-                    genderModalInstance = null;
-                } else {
-                    // Fallback: try to get instance
-                    const modalElement = document.getElementById('genderModal');
-                    if (modalElement) {
-                        const instance = bootstrap.Modal.getInstance(modalElement);
-                        if (instance) {
-                            instance.hide();
+                if (modalElement) {
+                    const instance = bootstrap.Modal.getInstance(modalElement);
+                    if (instance) {
+                        instance.hide();
+                    } else {
+                        // Last resort: use jQuery/bootstrap data attribute
+                        if (typeof $ !== 'undefined') {
+                            $('#genderModal').modal('hide');
                         } else {
-                            // Last resort: use jQuery/bootstrap data attribute
-                            if (typeof $ !== 'undefined') {
-                                $('#genderModal').modal('hide');
-                            } else {
-                                // Use Bootstrap 5 native way
-                                const bsModal = new bootstrap.Modal(modalElement);
-                                bsModal.hide();
-                            }
+                            // Use Bootstrap 5 native way
+                            const bsModal = new bootstrap.Modal(modalElement);
+                            bsModal.hide();
                         }
                     }
                 }
             }
+        }
 
-            // Make setGender available globally
-            window.setGender = function(gender) {
-                if (pendingSeatNumber) {
-                    // Call Livewire method
-                    $wire.call('setSeatGender', pendingSeatNumber, gender)
-                        .then(() => {
-                            // Close modal immediately
-                            closeGenderModal();
-                            pendingSeatNumber = null;
-                        })
-                        .catch((error) => {
-                            console.error('Error setting gender:', error);
-                            // Still try to close modal even if there's an error
-                            closeGenderModal();
-                        });
+        // Make setGender available globally
+        window.setGender = function(gender) {
+            if (pendingSeatNumber) {
+                // Call Livewire method
+                $wire.call('setSeatGender', pendingSeatNumber, gender)
+                    .then(() => {
+                        // Close modal immediately
+                        closeGenderModal();
+                        pendingSeatNumber = null;
+                    })
+                    .catch((error) => {
+                        console.error('Error setting gender:', error);
+                        // Still try to close modal even if there's an error
+                        closeGenderModal();
+                    });
+            }
+        };
+
+        // Also add event listeners as backup (works with Livewire dynamic content)
+        document.addEventListener('livewire:init', () => {
+            // Use event delegation to handle dynamically added buttons
+            document.addEventListener('click', function(e) {
+                const button = e.target.closest('[data-gender]');
+                if (button && button.hasAttribute('data-gender')) {
+                    e.preventDefault();
+                    const gender = button.getAttribute('data-gender');
+                    if (window.setGender && typeof window.setGender === 'function') {
+                        window.setGender(gender);
+                    }
                 }
-            };
+            });
+        });
 
-            // Also add event listeners as backup (works with Livewire dynamic content)
-            document.addEventListener('livewire:init', () => {
-                // Use event delegation to handle dynamically added buttons
-                document.addEventListener('click', function(e) {
-                    const button = e.target.closest('[data-gender]');
-                    if (button && button.hasAttribute('data-gender')) {
-                        e.preventDefault();
-                        const gender = button.getAttribute('data-gender');
-                        if (window.setGender && typeof window.setGender === 'function') {
-                            window.setGender(gender);
+        // Listen for gender selected event
+        $wire.on('gender-selected', () => {
+            closeGenderModal();
+        });
+
+        let lastBookingId = null;
+
+        // Listen for form reset event
+        $wire.on('form-reset', () => {
+            // Form reset handled by Livewire
+        });
+
+        $wire.on('booking-success', () => {
+            // Show modal after a small delay to ensure DOM is ready
+            setTimeout(() => {
+                const successModalElement = document.getElementById('successModal');
+                if (successModalElement) {
+                    // Hide any existing modal instance first
+                    const existingModal = bootstrap.Modal.getInstance(successModalElement);
+                    if (existingModal) {
+                        existingModal.hide();
+                    }
+                    
+                    // Create new modal instance and show
+                    const successModal = new bootstrap.Modal(successModalElement);
+                    successModal.show();
+                    
+                    // Listen for modal close event to ensure form is ready for next booking
+                    successModalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
+                        // Scroll to passenger section to make it visible
+                        setTimeout(() => {
+                            const passengerSection = document.querySelector('.card-body .mb-2.p-2.bg-light.rounded');
+                            if (passengerSection) {
+                                passengerSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                            
+                            // Focus on first passenger name field if available
+                            const firstPassengerName = document.querySelector('input[wire\\:model*="passengers.0.name"]');
+                            if (firstPassengerName) {
+                                setTimeout(() => {
+                                    firstPassengerName.focus();
+                                }, 300);
+                            }
+                        }, 200);
+                        // Remove listener after first use to avoid multiple bindings
+                        successModalElement.removeEventListener('hidden.bs.modal', onModalHidden);
+                    });
+                } else {
+                    console.error('successModal element not found');
+                }
+            }, 100);
+        });
+
+        function printBooking(bookingId, ticketType = null, ticketSize = null) {
+            if (!bookingId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Booking',
+                    text: 'Booking ID is missing.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
+
+            // Default behavior: automatically print both customer and host tickets
+            // If no ticket type is specified, print both with default size (80mm) or selected size
+            if (!ticketType) {
+                const defaultSize = ticketSize || '80mm';
+                printBothTickets(bookingId, defaultSize);
+                return;
+            }
+
+            // If ticket type is 'both', print both customer and host tickets
+            if (ticketType === 'both') {
+                const defaultSize = ticketSize || '80mm';
+                printBothTickets(bookingId, defaultSize);
+                return;
+            }
+
+            // If ticket size is not provided and ticket type is specified, show dialog to select size
+            if (!ticketSize) {
+                Swal.fire({
+                    title: 'Select Ticket Size',
+                    text: 'Which printer size would you like to use?',
+                    icon: 'question',
+                    input: 'select',
+                    inputOptions: {
+                        'a4': 'A4 Paper',
+                        '80mm': '80mm Thermal Printer',
+                        '50mm': '50mm Thermal Printer'
+                    },
+                    inputPlaceholder: 'Select ticket size',
+                    showCancelButton: true,
+                    confirmButtonText: 'Print',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#007bff',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to select a ticket size!';
                         }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && result.value) {
+                        printBooking(bookingId, ticketType, result.value);
                     }
                 });
-            });
+                return;
+            }
 
-            // Listen for gender selected event
-            $wire.on('gender-selected', () => {
-                closeGenderModal();
-            });
-
-            let lastBookingId = null;
-
-            // Listen for form reset event
-            $wire.on('form-reset', () => {
-                // Form reset handled by Livewire
-            });
-
-            $wire.on('booking-success', () => {
-                // Show modal after a small delay to ensure DOM is ready
-                setTimeout(() => {
-                    const successModalElement = document.getElementById('successModal');
-                    if (successModalElement) {
-                        // Hide any existing modal instance first
-                        const existingModal = bootstrap.Modal.getInstance(successModalElement);
-                        if (existingModal) {
-                            existingModal.hide();
-                        }
-
-                        // Create new modal instance and show
-                        const successModal = new bootstrap.Modal(successModalElement);
-                        successModal.show();
-
-                        // Listen for modal close event to ensure form is ready for next booking
-                        successModalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
-                            // Scroll to passenger section to make it visible
-                            setTimeout(() => {
-                                const passengerSection = document.querySelector(
-                                    '.card-body .mb-2.p-2.bg-light.rounded');
-                                if (passengerSection) {
-                                    passengerSection.scrollIntoView({
-                                        behavior: 'smooth',
-                                        block: 'nearest'
-                                    });
-                                }
-
-                                // Focus on first passenger name field if available
-                                const firstPassengerName = document.querySelector(
-                                    'input[wire\\:model*="passengers.0.name"]');
-                                if (firstPassengerName) {
-                                    setTimeout(() => {
-                                        firstPassengerName.focus();
-                                    }, 300);
-                                }
-                            }, 200);
-                            // Remove listener after first use to avoid multiple bindings
-                            successModalElement.removeEventListener('hidden.bs.modal', onModalHidden);
+            // If ticket type is specified (customer or host), print single ticket
+            if (ticketType) {
+                try {
+                    const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}/${ticketSize}`, '_blank');
+                    
+                    if (!printWindow) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Popup Blocked',
+                            text: 'Please allow popups for this site to print the booking ticket.',
+                            confirmButtonColor: '#3085d6'
                         });
-                    } else {
-                        console.error('successModal element not found');
                     }
-                }, 100);
-            });
+                } catch (error) {
+                    console.error('Error opening print window:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Print Error',
+                        text: 'Failed to open print window. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+            }
+        }
 
-            function printBooking(bookingId, ticketType = null, ticketSize = null) {
-                if (!bookingId) {
+        // Function to print both customer and host tickets automatically
+        function printBothTickets(bookingId, ticketSize) {
+            if (!bookingId) {
+                if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
                         title: 'Invalid Booking',
                         text: 'Booking ID is missing.',
                         confirmButtonColor: '#d33'
                     });
+                } else {
+                    alert('Booking ID is missing.');
+                }
+                return;
+            }
+
+            try {
+                const size = ticketSize || '80mm';
+                // Open a single window with both tickets combined
+                const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/${size}`;
+                const printWindow = window.open(bothTicketsUrl, 'bothTickets');
+                
+                // Check if window was blocked
+                if (!printWindow) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Popup Blocked',
+                            text: 'Please allow popups for this site to print tickets. Click the browser\'s popup blocker icon and allow popups.',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    } else {
+                        alert('Popup blocked. Please allow popups for this site.');
+                    }
                     return;
                 }
-
-                // Default behavior: automatically print both customer and host tickets
-                // If no ticket type is specified, print both with default size (80mm) or selected size
-                if (!ticketType) {
-                    const defaultSize = ticketSize || '80mm';
-                    printBothTickets(bookingId, defaultSize);
-                    return;
-                }
-
-                // If ticket type is 'both', print both customer and host tickets
-                if (ticketType === 'both') {
-                    const defaultSize = ticketSize || '80mm';
-                    printBothTickets(bookingId, defaultSize);
-                    return;
-                }
-
-                // If ticket size is not provided and ticket type is specified, show dialog to select size
-                if (!ticketSize) {
+            } catch (error) {
+                console.error('Error opening print window:', error);
+                if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: 'Select Ticket Size',
-                        text: 'Which printer size would you like to use?',
-                        icon: 'question',
-                        input: 'select',
-                        inputOptions: {
-                            'a4': 'A4 Paper',
-                            '80mm': '80mm Thermal Printer',
-                            '50mm': '50mm Thermal Printer'
-                        },
-                        inputPlaceholder: 'Select ticket size',
-                        showCancelButton: true,
-                        confirmButtonText: 'Print',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#007bff',
-                        inputValidator: (value) => {
-                            if (!value) {
-                                return 'You need to select a ticket size!';
-                            }
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed && result.value) {
-                            printBooking(bookingId, ticketType, result.value);
-                        }
+                        icon: 'error',
+                        title: 'Print Error',
+                        text: 'Failed to open print window. Please try again.',
+                        confirmButtonColor: '#d33'
                     });
-                    return;
-                }
-
-                // If ticket type is specified (customer or host), print single ticket
-                if (ticketType) {
-                    try {
-                        const printWindow = window.open(`/admin/bookings/${bookingId}/print/${ticketType}/${ticketSize}`,
-                            '_blank');
-
-                        if (!printWindow) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Popup Blocked',
-                                text: 'Please allow popups for this site to print the booking ticket.',
-                                confirmButtonColor: '#3085d6'
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Error opening print window:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Print Error',
-                            text: 'Failed to open print window. Please try again.',
-                            confirmButtonColor: '#d33'
-                        });
-                    }
+                } else {
+                    alert('Failed to open print window. Please try again.');
                 }
             }
+        }
 
-            // Function to print both customer and host tickets automatically
-            function printBothTickets(bookingId, ticketSize) {
-                if (!bookingId) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Invalid Booking',
-                            text: 'Booking ID is missing.',
-                            confirmButtonColor: '#d33'
-                        });
-                    } else {
-                        alert('Booking ID is missing.');
-                    }
-                    return;
-                }
+        // Make printBooking and printBothTickets available globally
+        window.printBooking = printBooking;
+        window.printBothTickets = printBothTickets;
 
-                try {
-                    const size = ticketSize || '80mm';
-                    // Open a single window with both tickets combined
-                    const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/${size}`;
-                    const printWindow = window.open(bothTicketsUrl, 'bothTickets');
-
-                    // Check if window was blocked
-                    if (!printWindow) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Popup Blocked',
-                                text: 'Please allow popups for this site to print tickets. Click the browser\'s popup blocker icon and allow popups.',
-                                confirmButtonColor: '#3085d6'
-                            });
-                        } else {
-                            alert('Popup blocked. Please allow popups for this site.');
-                        }
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error opening print window:', error);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Print Error',
-                            text: 'Failed to open print window. Please try again.',
-                            confirmButtonColor: '#d33'
-                        });
-                    } else {
-                        alert('Failed to open print window. Please try again.');
-                    }
-                }
-            }
-
-            // Make printBooking and printBothTickets available globally
-            window.printBooking = printBooking;
-            window.printBothTickets = printBothTickets;
-
-            // Define printVoucher function for police records
-            window.printVoucher = function() {
+        // Define printVoucher function for police records
+        window.printVoucher = function() {
             // Get current data from Livewire component dynamically
             const tripPassengers = $wire.get('tripPassengers') || [];
             const tripData = $wire.get('tripDataForJs') || null;
@@ -1641,43 +1626,27 @@ seat-available
             const fromStop = $wire.get('fromStop') || null;
             const toStop = $wire.get('toStop') || null;
             const tripStops = tripData?.stops || [];
-
+            
             // Get departure and arrival times
             let departureTime = 'N/A';
             let arrivalTime = 'N/A';
-
+            
             if (fromStop?.departure_at) {
                 const depDate = new Date(fromStop.departure_at);
-                departureTime = depDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             } else if (tripData?.departure_datetime) {
                 const depDate = new Date(tripData.departure_datetime);
-                departureTime = depDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
-
+            
             if (toStop?.arrival_at) {
                 const arrDate = new Date(toStop.arrival_at);
-                arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             } else if (tripData?.estimated_arrival_datetime) {
                 const arrDate = new Date(tripData.estimated_arrival_datetime);
-                arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
-
+            
             // Extract host information from trip notes
             let hostInfo = null;
             if (tripData?.notes) {
@@ -1689,7 +1658,7 @@ seat-available
                     };
                 }
             }
-
+            
             if (!tripPassengers || tripPassengers.length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -1810,13 +1779,13 @@ seat-available
                                 <td><strong>${arrivalTime}</strong></td>
                             </tr>
                             ${fromStop && toStop ? `
-                                    <tr>
-                                        <td>From Terminal:</td>
-                                        <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
-                                        <td>To Terminal:</td>
-                                        <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>From Terminal:</td>
+                                <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
+                                <td>To Terminal:</td>
+                                <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
+                            </tr>
+                            ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
@@ -1860,17 +1829,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                    <tr>
-                                        <td>Driver Address:</td>
-                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>Driver Address:</td>
+                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                            </tr>
+                            ` : ''}
                             ${routeData ? `
-                                    <tr>
-                                        <td>Route:</td>
-                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>Route:</td>
+                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                            </tr>
+                            ` : ''}
                         </table>
                     </div>
                     
@@ -1887,22 +1856,22 @@ seat-available
                     </div>
                     
                     ${tripStops && tripStops.length > 0 ? `
-                            <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
-                                <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
-                                <table style="margin-bottom: 0; font-size: 10px;">
-                                    <thead>
-                                        <tr style="background-color: #333; color: #fff;">
-                                            <th style="padding: 4px; width: 8%;">Seq</th>
-                                            <th style="padding: 4px; width: 40%;">Terminal</th>
-                                            <th style="padding: 4px; width: 26%;">Arrival Time</th>
-                                            <th style="padding: 4px; width: 26%;">Departure Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${tripStops.map((stop, index) => {
-                                            const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                            const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                            return `
+                    <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
+                        <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
+                        <table style="margin-bottom: 0; font-size: 10px;">
+                            <thead>
+                                <tr style="background-color: #333; color: #fff;">
+                                    <th style="padding: 4px; width: 8%;">Seq</th>
+                                    <th style="padding: 4px; width: 40%;">Terminal</th>
+                                    <th style="padding: 4px; width: 26%;">Arrival Time</th>
+                                    <th style="padding: 4px; width: 26%;">Departure Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tripStops.map((stop, index) => {
+                                    const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                    const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+                                    return `
                                         <tr>
                                             <td style="text-align: center; padding: 4px; font-weight: bold;">${index + 1}</td>
                                             <td style="padding: 4px;">${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
@@ -1910,12 +1879,11 @@ seat-available
                                             <td style="text-align: center; padding: 4px;">${depTime}</td>
                                         </tr>
                                     `;
-            }).join('')
-            } <
-            /tbody> <
-            /table> <
-            /div>
-            ` : ''}
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : ''}
                     
                     <table>
                         <thead>
@@ -1932,17 +1900,17 @@ seat-available
                         </thead>
                         <tbody>
                             ${tripPassengers.map((passenger, index) => `
-                                        <tr>
-                                            <td class="text-center">${index + 1}</td>
-                                            <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
-                                            <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
-                                            <td><strong>${passenger.name || 'N/A'}</strong></td>
-                                            <td>${passenger.cnic || 'N/A'}</td>
-                                            <td>${passenger.phone || 'N/A'}</td>
-                                            <td>${passenger.from_code || 'N/A'}</td>
-                                            <td>${passenger.to_code || 'N/A'}</td>
-                                        </tr>
-                                    `).join('')}
+                                <tr>
+                                    <td class="text-center">${index + 1}</td>
+                                    <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                    <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
+                                    <td><strong>${passenger.name || 'N/A'}</strong></td>
+                                    <td>${passenger.cnic || 'N/A'}</td>
+                                    <td>${passenger.phone || 'N/A'}</td>
+                                    <td>${passenger.from_code || 'N/A'}</td>
+                                    <td>${passenger.to_code || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                     
@@ -1971,107 +1939,91 @@ seat-available
 
             printWindow.document.write(voucherContent);
             printWindow.document.close();
-
+            
             // Wait for content to load, then print
             printWindow.onload = function() {
                 setTimeout(function() {
                     printWindow.print();
                 }, 250);
             };
-            };
+        };
 
-            // Define printPassengerList directly on window object
-            window.printPassengerList = function() {
-                const table = document.getElementById('passengerListTable');
-                if (!table) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Passenger list table not found.',
-                        confirmButtonColor: '#d33'
-                    });
-                    return;
+        // Define printPassengerList directly on window object
+        window.printPassengerList = function() {
+            const table = document.getElementById('passengerListTable');
+            if (!table) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Passenger list table not found.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
+
+            // Get trip information dynamically from Livewire component
+            const tripData = $wire.get('tripDataForJs') || null;
+            const travelDate = $wire.get('travelDate') || '';
+            const routeData = $wire.get('routeData') || null;
+            const fromStop = $wire.get('fromStop') || null;
+            const toStop = $wire.get('toStop') || null;
+            const tripPassengers = $wire.get('tripPassengers') || [];
+            const tripStops = tripData?.stops || [];
+            const totalPassengers = tripPassengers.length;
+            const totalEarnings = $wire.get('totalEarnings') || 0;
+
+            console.log(tripData, 'tripData');
+            console.log(travelDate, 'travelDate');
+            console.log(routeData, 'routeData');
+            console.log(fromStop, 'fromStop');
+            console.log(toStop, 'toStop');
+            console.log(tripPassengers, 'tripPassengers');
+            console.log(tripStops, 'tripStops');
+            console.log(totalPassengers, 'totalPassengers');
+            console.log(totalEarnings, 'totalEarnings');
+            
+            // Get fare information
+            const fareData = $wire.get('fareData');
+            const baseFare = $wire.get('baseFare') || 0;
+            const discountAmount = $wire.get('discountAmount') || 0;
+            const taxAmount = $wire.get('taxAmount') || 0;
+            
+            // Extract host information from trip notes
+            let hostInfo = null;
+            if (tripData?.notes) {
+                const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
+                if (hostMatch) {
+                    hostInfo = {
+                        name: hostMatch[1]?.trim() || 'N/A',
+                        phone: hostMatch[2]?.trim() || null
+                    };
                 }
+            }
+            
+            // Get departure and arrival times
+            let departureTime = 'N/A';
+            let arrivalTime = 'N/A';
+            
+            if (fromStop?.departure_at) {
+                const depDate = new Date(fromStop.departure_at);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.departure_datetime) {
+                const depDate = new Date(tripData.departure_datetime);
+                departureTime = depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            if (toStop?.arrival_at) {
+                const arrDate = new Date(toStop.arrival_at);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } else if (tripData?.estimated_arrival_datetime) {
+                const arrDate = new Date(tripData.estimated_arrival_datetime);
+                arrivalTime = arrDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            // Removed complete stop-to-stop information section as per user request
 
-                // Get trip information dynamically from Livewire component
-                const tripData = $wire.get('tripDataForJs') || null;
-                const travelDate = $wire.get('travelDate') || '';
-                const routeData = $wire.get('routeData') || null;
-                const fromStop = $wire.get('fromStop') || null;
-                const toStop = $wire.get('toStop') || null;
-                const tripPassengers = $wire.get('tripPassengers') || [];
-                const tripStops = tripData?.stops || [];
-                const totalPassengers = tripPassengers.length;
-                const totalEarnings = $wire.get('totalEarnings') || 0;
-
-                console.log(tripData, 'tripData');
-                console.log(travelDate, 'travelDate');
-                console.log(routeData, 'routeData');
-                console.log(fromStop, 'fromStop');
-                console.log(toStop, 'toStop');
-                console.log(tripPassengers, 'tripPassengers');
-                console.log(tripStops, 'tripStops');
-                console.log(totalPassengers, 'totalPassengers');
-                console.log(totalEarnings, 'totalEarnings');
-
-                // Get fare information
-                const fareData = $wire.get('fareData');
-                const baseFare = $wire.get('baseFare') || 0;
-                const discountAmount = $wire.get('discountAmount') || 0;
-                const taxAmount = $wire.get('taxAmount') || 0;
-
-                // Extract host information from trip notes
-                let hostInfo = null;
-                if (tripData?.notes) {
-                    const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
-                    if (hostMatch) {
-                        hostInfo = {
-                            name: hostMatch[1]?.trim() || 'N/A',
-                            phone: hostMatch[2]?.trim() || null
-                        };
-                    }
-                }
-
-                // Get departure and arrival times
-                let departureTime = 'N/A';
-                let arrivalTime = 'N/A';
-
-                if (fromStop?.departure_at) {
-                    const depDate = new Date(fromStop.departure_at);
-                    departureTime = depDate.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                } else if (tripData?.departure_datetime) {
-                    const depDate = new Date(tripData.departure_datetime);
-                    departureTime = depDate.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                }
-
-                if (toStop?.arrival_at) {
-                    const arrDate = new Date(toStop.arrival_at);
-                    arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                } else if (tripData?.estimated_arrival_datetime) {
-                    const arrDate = new Date(tripData.estimated_arrival_datetime);
-                    arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                }
-
-                // Removed complete stop-to-stop information section as per user request
-
-                // Create print window content
-                const printContent = `
+            // Create print window content
+            const printContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -2203,17 +2155,17 @@ seat-available
                                 <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                    <tr>
-                                        <td>Driver Address:</td>
-                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>Driver Address:</td>
+                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                            </tr>
+                            ` : ''}
                             ${routeData ? `
-                                    <tr>
-                                        <td>Route:</td>
-                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>Route:</td>
+                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                            </tr>
+                            ` : ''}
                         </table>
                     </div>
                     
@@ -2245,11 +2197,11 @@ seat-available
                                 <td class="text-success"><strong>PKR ${parseFloat(totalEarnings || 0).toFixed(2)}</strong></td>
                             </tr>
                             ${fareData && fareData.from_terminal ? `
-                                    <tr>
-                                        <td>Fare Route:</td>
-                                        <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
-                                    </tr>
-                                    ` : ''}
+                            <tr>
+                                <td>Fare Route:</td>
+                                <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
+                            </tr>
+                            ` : ''}
                         </table>
                     </div>
                     
@@ -2287,316 +2239,299 @@ seat-available
                 </html>
             `;
 
-                // Open print window
-                const printWindow = window.open('', '_blank');
-                if (!printWindow) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Popup Blocked',
-                        text: 'Please allow popups for this site to print the passenger list.',
-                        confirmButtonColor: '#3085d6'
-                    });
-                    return;
-                }
-
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-
-                // Wait for content to load, then print
-                printWindow.onload = function() {
-                    setTimeout(function() {
-                        printWindow.print();
-                    }, 250);
-                };
-            };
-
-            // Global loader variable
-            let currentLoader = null;
-
-            // Function to show SweetAlert loader
-            function showLoader(title = 'Loading...', text = 'Please wait while we process your request.') {
-                // Close existing loader if any
-                if (currentLoader) {
-                    Swal.close();
-                }
-
-                currentLoader = Swal.fire({
-                    title: title,
-                    text: text,
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Popup Blocked',
+                    text: 'Please allow popups for this site to print the passenger list.',
+                    confirmButtonColor: '#3085d6'
                 });
+                return;
             }
 
-            // Function to hide loader
-            function hideLoader() {
-                if (currentLoader) {
-                    Swal.close();
-                    currentLoader = null;
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                }, 250);
+            };
+        };
+
+        // Global loader variable
+        let currentLoader = null;
+
+        // Function to show SweetAlert loader
+        function showLoader(title = 'Loading...', text = 'Please wait while we process your request.') {
+            // Close existing loader if any
+            if (currentLoader) {
+                Swal.close();
+            }
+            
+            currentLoader = Swal.fire({
+                title: title,
+                text: text,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
-            }
+            });
+        }
 
-            // Listen for loader events
-            $wire.on('show-loader', (event) => {
-                const title = event.title || 'Loading...';
-                const text = event.text || 'Please wait while we process your request.';
-                showLoader(title, text);
+        // Function to hide loader
+        function hideLoader() {
+            if (currentLoader) {
+                Swal.close();
+                currentLoader = null;
+            }
+        }
+
+        // Listen for loader events
+        $wire.on('show-loader', (event) => {
+            const title = event.title || 'Loading...';
+            const text = event.text || 'Please wait while we process your request.';
+            showLoader(title, text);
+        });
+
+        $wire.on('hide-loader', () => {
+            hideLoader();
+        });
+
+        // Use Livewire hooks to detect when actions start and end
+        document.addEventListener('livewire:init', () => {
+            let isLoading = false;
+            
+            // Show loader when component starts a request
+            Livewire.hook('request', ({ component, uri, payload, options, respond }) => {
+                // Check which method is being called
+                const method = payload?.fingerprint?.method || '';
+                
+                // Only show loader if not already showing
+                if (!isLoading && !currentLoader) {
+                    if (method === 'loadTrip') {
+                        isLoading = true;
+                        showLoader('Loading Trip', 'Fetching trip data and seat availability...');
+                    } else if (method === 'confirmBooking') {
+                        isLoading = true;
+                        showLoader('Processing Booking', 'Creating your booking, please wait...');
+                    } else if (method === 'assignBus') {
+                        isLoading = true;
+                        showLoader('Assigning Bus', 'Assigning bus and driver information...');
+                    } else if (method === 'loadTripPassengers') {
+                        // Don't show loader for this as it's usually quick
+                    } else if (method && (method.startsWith('load') || method.startsWith('update'))) {
+                        // Show generic loader for other load/update methods
+                        isLoading = true;
+                        showLoader('Loading', 'Please wait...');
+                    }
+                }
             });
 
-            $wire.on('hide-loader', () => {
+            // Hide loader when request completes
+            Livewire.hook('message.processed', ({ component, message, respond }) => {
+                isLoading = false;
+                // Small delay to ensure UI updates are complete
+                setTimeout(() => {
+                    hideLoader();
+                }, 300);
+            });
+
+            // Also hide loader on errors
+            Livewire.hook('message.failed', ({ component, message, respond }) => {
+                isLoading = false;
                 hideLoader();
             });
+        });
 
-            // Use Livewire hooks to detect when actions start and end
-            document.addEventListener('livewire:init', () => {
-                let isLoading = false;
 
-                // Show loader when component starts a request
-                Livewire.hook('request', ({
-                    component,
-                    uri,
-                    payload,
-                    options,
-                    respond
-                }) => {
-                    // Check which method is being called
-                    const method = payload?.fingerprint?.method || '';
-
-                    // Only show loader if not already showing
-                    if (!isLoading && !currentLoader) {
-                        if (method === 'loadTrip') {
-                            isLoading = true;
-                            showLoader('Loading Trip', 'Fetching trip data and seat availability...');
-                        } else if (method === 'confirmBooking') {
-                            isLoading = true;
-                            showLoader('Processing Booking', 'Creating your booking, please wait...');
-                        } else if (method === 'assignBus') {
-                            isLoading = true;
-                            showLoader('Assigning Bus', 'Assigning bus and driver information...');
-                        } else if (method === 'loadTripPassengers') {
-                            // Don't show loader for this as it's usually quick
-                        } else if (method && (method.startsWith('load') || method.startsWith('update'))) {
-                            // Show generic loader for other load/update methods
-                            isLoading = true;
-                            showLoader('Loading', 'Please wait...');
-                        }
-                    }
-                });
-
-                // Hide loader when request completes
-                Livewire.hook('message.processed', ({
-                    component,
-                    message,
-                    respond
-                }) => {
-                    isLoading = false;
-                    // Small delay to ensure UI updates are complete
-                    setTimeout(() => {
-                        hideLoader();
-                    }, 300);
-                });
-
-                // Also hide loader on errors
-                Livewire.hook('message.failed', ({
-                    component,
-                    message,
-                    respond
-                }) => {
-                    isLoading = false;
-                    hideLoader();
-                });
+        $wire.on('show-error', (event) => {
+            hideLoader(); // Hide loader on error
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: event.message,
+                confirmButtonColor: '#d33'
             });
+        });
 
-
-            $wire.on('show-error', (event) => {
-                hideLoader(); // Hide loader on error
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: event.message,
-                    confirmButtonColor: '#d33'
-                });
+        $wire.on('show-success', (event) => {
+            hideLoader(); // Hide loader on success
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: event.message,
+                confirmButtonColor: '#28a745'
             });
+        });
 
-            $wire.on('show-success', (event) => {
-                hideLoader(); // Hide loader on success
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: event.message,
-                    confirmButtonColor: '#28a745'
-                });
-            });
+        // Handle bus assignment modal
+        let busAssignmentModalInstance = null;
 
-            // Handle bus assignment modal
-            let busAssignmentModalInstance = null;
-
-            // Function to show modal
-            function showBusAssignmentModal() {
-                const modalElement = document.getElementById('busAssignmentModal');
-                if (modalElement) {
-                    busAssignmentModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-                    busAssignmentModalInstance.show();
-                }
+        // Function to show modal
+        function showBusAssignmentModal() {
+            const modalElement = document.getElementById('busAssignmentModal');
+            if (modalElement) {
+                busAssignmentModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                busAssignmentModalInstance.show();
             }
+        }
 
-            // Function to hide modal
-            function hideBusAssignmentModal() {
-                const modalElement = document.getElementById('busAssignmentModal');
-                if (modalElement) {
-                    if (busAssignmentModalInstance) {
-                        busAssignmentModalInstance.hide();
-                    } else {
-                        const instance = bootstrap.Modal.getInstance(modalElement);
-                        if (instance) {
-                            instance.hide();
-                        }
-                    }
-                }
-            }
-
-            // Listen for Livewire events
-            $wire.on('open-bus-assignment-modal', () => {
-                console.log('Opening bus assignment modal');
-                setTimeout(() => showBusAssignmentModal(), 200);
-            });
-
-            $wire.on('close-bus-assignment-modal', () => {
-                console.log('Closing bus assignment modal');
-                hideBusAssignmentModal();
-            });
-
-            // Listen for seat map update after bus assignment
-            $wire.on('seat-map-updated', () => {
-                console.log('Seat map updated after bus assignment');
-                // Livewire will automatically re-render the seat map
-                // This event is just for confirmation/logging
-            });
-
-            // Also watch for property changes as fallback
-            $wire.watch('showBusAssignmentModal', (value) => {
-                console.log('showBusAssignmentModal changed to:', value);
-                if (value) {
-                    setTimeout(() => showBusAssignmentModal(), 200);
+        // Function to hide modal
+        function hideBusAssignmentModal() {
+            const modalElement = document.getElementById('busAssignmentModal');
+            if (modalElement) {
+                if (busAssignmentModalInstance) {
+                    busAssignmentModalInstance.hide();
                 } else {
-                    hideBusAssignmentModal();
-                }
-            });
-
-            // Initialize modal on page load if already open
-            document.addEventListener('livewire:init', () => {
-                setTimeout(() => {
-                    if ($wire.get('showBusAssignmentModal')) {
-                        showBusAssignmentModal();
+                    const instance = bootstrap.Modal.getInstance(modalElement);
+                    if (instance) {
+                        instance.hide();
                     }
-                }, 500);
-            });
-
-            // WebSocket integration for real-time updates
-            $wire.on('trip-loaded', (...args) => {
-                // Extract tripId from event - Livewire v3 passes data as array
-                let tripId = null;
-
-                if (args.length > 0) {
-                    // Check if first arg is an array with data
-                    if (Array.isArray(args[0]) && args[0].length > 0) {
-                        tripId = args[0][0]?.tripId || args[0][0];
-                    } else if (typeof args[0] === 'object' && args[0] !== null) {
-                        tripId = args[0].tripId || args[0].detail?.tripId;
-                    } else if (typeof args[0] === 'number') {
-                        tripId = args[0];
-                    }
-                }
-
-                // Fallback: get from component property
-                if (!tripId) {
-                    tripId = $wire.get('tripId');
-                }
-
-                console.log('Trip loaded event received. Setting up WebSocket for trip:', tripId, 'Args:', args);
-
-                setupEchoChannel(tripId);
-            });
-
-            // Function to setup Echo channel subscription
-            function setupEchoChannel(tripId) {
-                if (!tripId || !window.Echo) {
-                    console.error('Cannot setup WebSocket - tripId:', tripId, 'Echo available:', !!window.Echo);
-                    if (!window.Echo) {
-                        console.error(
-                            'Laravel Echo is not loaded. Make sure vite is included in the layout and assets are built. resources/js/app.js'
-                            );
-                    }
-                    return;
-                }
-
-                // Leave previous channel if exists
-                if (window.currentEchoChannel) {
-                    console.log('Leaving previous channel:', window.currentEchoChannel);
-                    Echo.leave(window.currentEchoChannel);
-                    window.currentEchoChannel = null;
-                }
-
-                // Join new channel
-                window.currentEchoChannel = 'trip.' + tripId;
-                console.log('Joining channel:', window.currentEchoChannel);
-
-                try {
-                    const channel = Echo.channel(window.currentEchoChannel);
-
-                    // Listen for seat locked events - note: backend broadcasts as 'seat-locked'
-                    channel.listen('.seat-locked', (e) => {
-                        console.log('Seat locked event received:', e);
-                        $wire.call('handleSeatLocked', e.trip_id, e.seat_numbers, e.user_id);
-                    });
-
-                    // Listen for seat unlocked events - note: backend broadcasts as 'seat-unlocked'
-                    channel.listen('.seat-unlocked', (e) => {
-                        console.log('Seat unlocked event received:', e);
-                        $wire.call('handleSeatUnlocked', e.trip_id, e.seat_numbers, e.user_id);
-                    });
-
-                    // Listen for seat confirmed events - note: backend broadcasts as 'seat-confirmed'
-                    channel.listen('.seat-confirmed', (e) => {
-                        console.log('Seat confirmed event received:', e);
-                        $wire.call('handleSeatConfirmed', e.trip_id, e.seat_numbers, e.user_id);
-                    });
-
-                    console.log('WebSocket listeners registered successfully for channel:', window.currentEchoChannel);
-                } catch (error) {
-                    console.error('Error setting up WebSocket listeners:', error);
                 }
             }
+        }
 
-            // Also check if trip is already loaded when component initializes
-            document.addEventListener('livewire:init', () => {
-                // Wait a bit for component to be ready
-                setTimeout(() => {
-                    const tripId = $wire.get('tripId');
-                    if (tripId && window.Echo && !window.currentEchoChannel) {
-                        console.log('Component initialized with existing trip. Setting up WebSocket for trip:',
-                            tripId);
-                        setupEchoChannel(tripId);
-                    }
-                }, 500);
-            });
+        // Listen for Livewire events
+        $wire.on('open-bus-assignment-modal', () => {
+            console.log('Opening bus assignment modal');
+            setTimeout(() => showBusAssignmentModal(), 200);
+        });
 
-            // Cleanup on component destroy
-            $wire.on('destroy', () => {
-                if (window.currentEchoChannel) {
-                    Echo.leave(window.currentEchoChannel);
-                    window.currentEchoChannel = null;
+        $wire.on('close-bus-assignment-modal', () => {
+            console.log('Closing bus assignment modal');
+            hideBusAssignmentModal();
+        });
+
+        // Listen for seat map update after bus assignment
+        $wire.on('seat-map-updated', () => {
+            console.log('Seat map updated after bus assignment');
+            // Livewire will automatically re-render the seat map
+            // This event is just for confirmation/logging
+        });
+
+        // Also watch for property changes as fallback
+        $wire.watch('showBusAssignmentModal', (value) => {
+            console.log('showBusAssignmentModal changed to:', value);
+            if (value) {
+                setTimeout(() => showBusAssignmentModal(), 200);
+            } else {
+                hideBusAssignmentModal();
+            }
+        });
+
+        // Initialize modal on page load if already open
+        document.addEventListener('livewire:init', () => {
+            setTimeout(() => {
+                if ($wire.get('showBusAssignmentModal')) {
+                    showBusAssignmentModal();
                 }
-                if (genderModalInstance) {
-                    genderModalInstance.hide();
-                    genderModalInstance = null;
+            }, 500);
+        });
+
+        // WebSocket integration for real-time updates
+        $wire.on('trip-loaded', (...args) => {
+            // Extract tripId from event - Livewire v3 passes data as array
+            let tripId = null;
+            
+            if (args.length > 0) {
+                // Check if first arg is an array with data
+                if (Array.isArray(args[0]) && args[0].length > 0) {
+                    tripId = args[0][0]?.tripId || args[0][0];
+                } else if (typeof args[0] === 'object' && args[0] !== null) {
+                    tripId = args[0].tripId || args[0].detail?.tripId;
+                } else if (typeof args[0] === 'number') {
+                    tripId = args[0];
                 }
-            });
-        </script>
+            }
+            
+            // Fallback: get from component property
+            if (!tripId) {
+                tripId = $wire.get('tripId');
+            }
+            
+            console.log('Trip loaded event received. Setting up WebSocket for trip:', tripId, 'Args:', args);
+            
+            setupEchoChannel(tripId);
+        });
+        
+        // Function to setup Echo channel subscription
+        function setupEchoChannel(tripId) {
+            if (!tripId || !window.Echo) {
+                console.error('Cannot setup WebSocket - tripId:', tripId, 'Echo available:', !!window.Echo);
+                if (!window.Echo) {
+                    console.error('Laravel Echo is not loaded. Make sure vite is included in the layout and assets are built. resources/js/app.js');
+                }
+                return;
+            }
+            
+            // Leave previous channel if exists
+            if (window.currentEchoChannel) {
+                console.log('Leaving previous channel:', window.currentEchoChannel);
+                Echo.leave(window.currentEchoChannel);
+                window.currentEchoChannel = null;
+            }
+            
+            // Join new channel
+            window.currentEchoChannel = 'trip.' + tripId;
+            console.log('Joining channel:', window.currentEchoChannel);
+            
+            try {
+                const channel = Echo.channel(window.currentEchoChannel);
+                
+                // Listen for seat locked events - note: backend broadcasts as 'seat-locked'
+                channel.listen('.seat-locked', (e) => {
+                    console.log('Seat locked event received:', e);
+                    $wire.call('handleSeatLocked', e.trip_id, e.seat_numbers, e.user_id);
+                });
+                
+                // Listen for seat unlocked events - note: backend broadcasts as 'seat-unlocked'
+                channel.listen('.seat-unlocked', (e) => {
+                    console.log('Seat unlocked event received:', e);
+                    $wire.call('handleSeatUnlocked', e.trip_id, e.seat_numbers, e.user_id);
+                });
+                
+                // Listen for seat confirmed events - note: backend broadcasts as 'seat-confirmed'
+                channel.listen('.seat-confirmed', (e) => {
+                    console.log('Seat confirmed event received:', e);
+                    $wire.call('handleSeatConfirmed', e.trip_id, e.seat_numbers, e.user_id);
+                });
+                
+                console.log('WebSocket listeners registered successfully for channel:', window.currentEchoChannel);
+            } catch (error) {
+                console.error('Error setting up WebSocket listeners:', error);
+            }
+        }
+        
+        // Also check if trip is already loaded when component initializes
+        document.addEventListener('livewire:init', () => {
+            // Wait a bit for component to be ready
+            setTimeout(() => {
+                const tripId = $wire.get('tripId');
+                if (tripId && window.Echo && !window.currentEchoChannel) {
+                    console.log('Component initialized with existing trip. Setting up WebSocket for trip:', tripId);
+                    setupEchoChannel(tripId);
+                }
+            }, 500);
+        });
+
+        // Cleanup on component destroy
+        $wire.on('destroy', () => {
+            if (window.currentEchoChannel) {
+                Echo.leave(window.currentEchoChannel);
+                window.currentEchoChannel = null;
+            }
+            if (genderModalInstance) {
+                genderModalInstance.hide();
+                genderModalInstance = null;
+            }
+        });
+    </script>
     @endscript
 </div>
