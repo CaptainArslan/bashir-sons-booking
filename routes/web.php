@@ -16,19 +16,20 @@ use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\FareController;
 use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\InvoiceSettingController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\TerminalReportController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Manager\ReportController as ManagerReportController;
-use App\Http\Controllers\Employee\ReportController as EmployeeReportController;
 use App\Http\Controllers\Auth\UserActivationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Employee\ReportController as EmployeeReportController;
 use App\Http\Controllers\FrontendBookingController;
+use App\Http\Controllers\Manager\ReportController as ManagerReportController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
@@ -205,6 +206,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/general-settings/{id}/edit', [GeneralSettingController::class, 'edit'])->can('edit general settings')->name('general-settings.edit');
         Route::put('/general-settings/{id}', [GeneralSettingController::class, 'update'])->can('edit general settings')->name('general-settings.update');
         Route::delete('/general-settings/{id}', [GeneralSettingController::class, 'destroy'])->can('delete general settings')->name('general-settings.destroy');
+
+        // Invoice Settings Routes
+        Route::get('/invoice-settings', [InvoiceSettingController::class, 'index'])->can('view general settings')->name('invoice-settings.index');
+        Route::get('/invoice-settings/create', [InvoiceSettingController::class, 'create'])->can('edit general settings')->name('invoice-settings.create');
+        Route::post('/invoice-settings', [InvoiceSettingController::class, 'store'])->can('edit general settings')->name('invoice-settings.store');
+        Route::get('/invoice-settings/{invoiceSetting}', [InvoiceSettingController::class, 'show'])->can('view general settings')->name('invoice-settings.show');
+        Route::get('/invoice-settings/{invoiceSetting}/edit', [InvoiceSettingController::class, 'edit'])->can('edit general settings')->name('invoice-settings.edit');
+        Route::put('/invoice-settings/{invoiceSetting}', [InvoiceSettingController::class, 'update'])->can('edit general settings')->name('invoice-settings.update');
+        Route::delete('/invoice-settings/{invoiceSetting}', [InvoiceSettingController::class, 'destroy'])->can('edit general settings')->name('invoice-settings.destroy');
+        Route::post('/invoice-settings/{invoiceSetting}/set-default', [InvoiceSettingController::class, 'setDefault'])->can('edit general settings')->name('invoice-settings.set-default');
 
         // Enquiries Routes
         Route::get('/enquiries', [EnquiryController::class, 'index'])->can('view enquiries')->name('enquiries.index');

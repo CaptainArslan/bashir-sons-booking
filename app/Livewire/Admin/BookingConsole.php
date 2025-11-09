@@ -428,7 +428,6 @@ class BookingConsole extends Component
             ->toArray();
     }
 
-
     public function loadFare(): void
     {
         if (! $this->fromTerminalId || ! $this->toTerminalId || $this->fromTerminalId === $this->toTerminalId) {
@@ -595,14 +594,15 @@ class BookingConsole extends Component
 
     public function loadTripPassengers(): void
     {
-        if (! $this->tripId || ! $this->fromStop) {
+        if (! $this->tripId || ! $this->fromStop || ! $this->toStop) {
             return;
         }
 
-        // Get the selected from terminal sequence for filtering
+        // Get the selected from and to terminal sequences for filtering
         $selectedFromSequence = $this->fromStop['sequence'] ?? null;
+        $selectedToSequence = $this->toStop['sequence'] ?? null;
 
-        if ($selectedFromSequence === null) {
+        if ($selectedFromSequence === null || $selectedToSequence === null) {
             return;
         }
 
@@ -625,12 +625,22 @@ class BookingConsole extends Component
         $processedBookings = [];
 
         foreach ($bookings as $booking) {
-            // Filter: Only show bookings that start from the selected terminal onwards
-            // This means booking's from_stop sequence should be >= selected from sequence
+            // Filter: Only show bookings that are within the selected segment
+            // Booking's from_stop sequence should be >= selected from sequence
+            // AND booking's to_stop sequence should be <= selected to sequence
             $bookingFromSeq = $booking->fromStop?->sequence ?? null;
+            $bookingToSeq = $booking->toStop?->sequence ?? null;
 
-            if ($bookingFromSeq === null || $bookingFromSeq < $selectedFromSequence) {
-                continue; // Skip bookings that start before the selected terminal
+            if ($bookingFromSeq === null || $bookingToSeq === null) {
+                continue; // Skip bookings with missing stop information
+            }
+
+            // Only include bookings that overlap with the selected segment
+            // A booking overlaps if:
+            // - It starts at or after the selected from stop (bookingFromSeq >= selectedFromSequence)
+            // - AND it ends at or before the selected to stop (bookingToSeq <= selectedToSequence)
+            if ($bookingFromSeq < $selectedFromSequence || $bookingToSeq > $selectedToSequence) {
+                continue; // Skip bookings outside the selected segment
             }
 
             // Get all active seats for this booking
@@ -930,8 +940,8 @@ class BookingConsole extends Component
             'passengers.*.name' => 'required|string|max:100',
             'passengers.*.age' => 'required|integer|min:1|max:120',
             'passengers.*.gender' => 'required|in:male,female',
-            'passengers.*.cnic' => 'nullable|string|max:20',
-            'passengers.*.phone' => 'nullable|string|max:20',
+            'passengers.*.cnic' => 'required|string|max:20',
+            'passengers.*.phone' => 'required|string|max:20',
             'passengers.*.email' => 'nullable|email|max:100',
         ], [
             'passengers.min' => 'Please provide at least one passenger information',
@@ -939,6 +949,10 @@ class BookingConsole extends Component
             'passengers.*.name.required' => 'Passenger name is required',
             'passengers.*.age.required' => 'Passenger age is required',
             'passengers.*.gender.required' => 'Passenger gender is required',
+            'passengers.*.cnic.required' => 'Passenger CNIC is required',
+            'passengers.*.cnic.regex' => 'CNIC must be in format: 12345-1234567-1',
+            'passengers.*.phone.required' => 'Passenger phone is required',
+            'passengers.*.phone.regex' => 'Phone must be 11 digits starting with 0 (e.g., 03001234567)',
         ]);
 
         if ($this->bookingType === 'counter' && $this->paymentMethod !== 'cash' && empty($this->transactionId)) {

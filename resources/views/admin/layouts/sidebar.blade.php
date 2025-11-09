@@ -428,6 +428,18 @@
               </li>
           @endcan
 
+          @can('view general settings')
+              <li>
+                  <a href="{{ route('admin.invoice-settings.index') }}"
+                      style="padding: 0.75rem 1rem; font-size: 0.875rem;">
+                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
+                              class='bx bx-receipt'></i>
+                      </div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Invoice Settings</div>
+                  </a>
+              </li>
+          @endcan
+
           @can('edit general settings')
               <li>
                   <a href="{{ route('admin.advance-booking.index') }}"
