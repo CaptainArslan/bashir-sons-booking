@@ -314,13 +314,71 @@ class BookingConsole extends Component
         $this->toTerminals = $terminals->unique('terminal_id')->values()->toArray();
     }
 
+    // public function loadDepartureTimes(): void
+    // {
+    //     if (! $this->fromTerminalId || ! $this->toTerminalId || ! $this->travelDate) {
+    //         return;
+    //     }
+
+    //     $selectedDate = $this->travelDate;
+    //     $now = now();
+
+    //     $timetableStops = [];
+
+    //     $timetableStopsQuery = TimetableStop::where('terminal_id', $this->fromTerminalId)
+    //         ->where('is_active', true)
+    //         ->with('timetable.route')
+    //         ->get();
+
+    //     foreach ($timetableStopsQuery as $ts) {
+    //         if (! $ts->timetable || ! $ts->timetable->route) {
+    //             continue;
+    //         }
+
+    //         $routeStops = RouteStop::where('route_id', $ts->timetable->route->id)
+    //             ->orderBy('sequence')
+    //             ->get();
+
+    //         $fromStop = $routeStops->firstWhere('terminal_id', $this->fromTerminalId);
+    //         $toStop = $routeStops->firstWhere('terminal_id', $this->toTerminalId);
+
+    //         if (! $fromStop || ! $toStop || $fromStop->sequence >= $toStop->sequence) {
+    //             continue;
+    //         }
+
+    //         if ($ts->departure_time) {
+    //             $fullDeparture = Carbon::parse($selectedDate.' '.$ts->departure_time);
+
+    //             // Allow past times for admin users, or if it's today's date
+    //             $isToday = Carbon::parse($selectedDate)->isToday();
+
+    //             if ($isToday || $fullDeparture->greaterThanOrEqualTo($now)) {
+    //                 $timetableStops[] = [
+    //                     'id' => $ts->id,
+    //                     'timetable_id' => $ts->timetable_id,
+    //                     'departure_at' => $ts->departure_time,
+    //                     'arrival_at' => $ts->arrival_time,
+    //                     'route_id' => $ts->timetable->route->id,
+    //                     'route_name' => $ts->timetable->route->name,
+    //                     'full_departure' => $fullDeparture->toDateTimeString(),
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     $this->departureTimes = collect($timetableStops)
+    //         ->sortBy('full_departure')
+    //         ->values()
+    //         ->toArray();
+    // }
+
     public function loadDepartureTimes(): void
     {
         if (! $this->fromTerminalId || ! $this->toTerminalId || ! $this->travelDate) {
             return;
         }
 
-        $selectedDate = $this->travelDate;
+        $selectedDate = Carbon::parse($this->travelDate);
         $now = now();
 
         $timetableStops = [];
@@ -347,12 +405,10 @@ class BookingConsole extends Component
             }
 
             if ($ts->departure_time) {
-                $fullDeparture = Carbon::parse($selectedDate.' '.$ts->departure_time);
+                $fullDeparture = Carbon::parse($selectedDate->format('Y-m-d') . ' ' . $ts->departure_time);
 
-                // Allow past times for admin users, or if it's today's date
-                $isToday = Carbon::parse($selectedDate)->isToday();
-
-                if ($isToday || $fullDeparture->greaterThanOrEqualTo($now)) {
+                // Only include departures greater than or equal to the current moment
+                if ($fullDeparture->greaterThanOrEqualTo($now)) {
                     $timetableStops[] = [
                         'id' => $ts->id,
                         'timetable_id' => $ts->timetable_id,
@@ -371,6 +427,7 @@ class BookingConsole extends Component
             ->values()
             ->toArray();
     }
+
 
     public function loadFare(): void
     {
@@ -554,8 +611,8 @@ class BookingConsole extends Component
             ->where('trip_id', $this->tripId)
             ->where('status', '!=', 'cancelled')
             ->with([
-                'passengers' => fn ($q) => $q->orderBy('id'),
-                'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
+                'passengers' => fn($q) => $q->orderBy('id'),
+                'seats' => fn($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
                 'fromStop:id,sequence,terminal_id',
                 'toStop:id,sequence,terminal_id',
                 'fromStop.terminal:id,name,code',
@@ -869,7 +926,7 @@ class BookingConsole extends Component
         }
 
         $this->validate([
-            'passengers' => 'required|array|min:1|max:'.$selectedSeatCount,
+            'passengers' => 'required|array|min:1|max:' . $selectedSeatCount,
             'passengers.*.name' => 'required|string|max:100',
             'passengers.*.age' => 'required|integer|min:1|max:120',
             'passengers.*.gender' => 'required|in:male,female',
@@ -878,7 +935,7 @@ class BookingConsole extends Component
             'passengers.*.email' => 'nullable|email|max:100',
         ], [
             'passengers.min' => 'Please provide at least one passenger information',
-            'passengers.max' => 'You can add up to '.$selectedSeatCount.' passenger(s) for '.$selectedSeatCount.' selected seat(s)',
+            'passengers.max' => 'You can add up to ' . $selectedSeatCount . ' passenger(s) for ' . $selectedSeatCount . ' selected seat(s)',
             'passengers.*.name.required' => 'Passenger name is required',
             'passengers.*.age.required' => 'Passenger age is required',
             'passengers.*.gender.required' => 'Passenger gender is required',
@@ -973,7 +1030,6 @@ class BookingConsole extends Component
 
             // Dispatch event to show modal - data is already stored in lastBookingData
             $this->dispatch('booking-success');
-
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('show-error', message: $e->getMessage());
@@ -1310,7 +1366,7 @@ class BookingConsole extends Component
             'hostName' => 'nullable|string|max:255',
             'hostPhone' => 'nullable|string|max:20',
             'expenses' => 'nullable|array',
-            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:' . implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
             'expenses.*.amount' => 'required_with:expenses.*.expense_type|numeric|min:0',
             'expenses.*.description' => 'nullable|string|max:500',
         ], [
@@ -1348,8 +1404,8 @@ class BookingConsole extends Component
                 }
                 // Append to existing notes
                 $existingNotes = $trip->notes ?? '';
-                $hostNotes = 'Host: '.($this->hostName ?? 'N/A').($this->hostPhone ? ' ('.$this->hostPhone.')' : '');
-                $trip->notes = $existingNotes ? $existingNotes."\n".$hostNotes : $hostNotes;
+                $hostNotes = 'Host: ' . ($this->hostName ?? 'N/A') . ($this->hostPhone ? ' (' . $this->hostPhone . ')' : '');
+                $trip->notes = $existingNotes ? $existingNotes . "\n" . $hostNotes : $hostNotes;
                 $trip->save();
             }
 

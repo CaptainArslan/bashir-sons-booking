@@ -77,7 +77,7 @@
                             <option value="">Select Departure Time</option>
                             @foreach ($departureTimes as $time)
                                 <option value="{{ $time['id'] }}">
-                                    {{ \Carbon\Carbon::parse($time['departure_at'])->format('H:i A') }}
+                                    {{ $time['departure_at'] }}
                                 </option>
                             @endforeach
                         </select>
