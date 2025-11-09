@@ -634,22 +634,120 @@
                                     @endif
 
                                     @if($paymentMethod === 'cash')
-                                        <div class="mb-2">
-                                            <label class="form-label small">Amount Received (PKR)</label>
+                                        @php
+                                            $amountReceivedValue = (float) ($amountReceived ?? 0);
+                                            $finalAmountValue = (float) ($finalAmount ?? 0);
+                                            $calculatedReturn = max(0, $amountReceivedValue - $finalAmountValue);
+                                            $calculatedDue = max(0, $finalAmountValue - $amountReceivedValue);
+                                        @endphp
+                                        
+                                        <!-- Final Amount Display -->
+                                        @if($finalAmountValue > 0)
+                                            <div class="mb-3 p-2 bg-white rounded border border-primary">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold small">
+                                                        <i class="fas fa-calculator"></i> Final Amount:
+                                                    </span>
+                                                    <span class="fs-5 fw-bold text-primary">
+                                                        PKR {{ number_format($finalAmountValue, 2) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!-- Amount Received Input -->
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">
+                                                <i class="fas fa-money-bill"></i> Amount Received from Customer (PKR)
+                                            </label>
                                             <input type="number" 
-                                                   class="form-control form-control-sm" 
-                                                   wire:model.debounce.500ms="amountReceived"
+                                                   class="form-control form-control-lg fw-bold" 
+                                                   wire:model.blur="amountReceived"
                                                    wire:loading.attr="disabled"
                                                    min="0" 
                                                    step="0.01" 
-                                                   placeholder="0.00">
+                                                   placeholder="0.00"
+                                                   style="font-size: 1.1rem;">
                                             <div wire:loading wire:target="amountReceived" class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
+                                            <small class="text-muted d-block mt-1">
+                                                <i class="fas fa-info-circle"></i> Press Tab or click outside to calculate return/due amount
+                                            </small>
                                         </div>
-                                        @if($returnAmount > 0)
-                                            <div class="alert alert-success border-1 mb-0 p-2 small">
-                                                <strong>💰 Return: PKR {{ number_format($returnAmount, 2) }}</strong>
+
+                                        <!-- Payment Summary -->
+                                        @if($amountReceivedValue > 0 && $finalAmountValue > 0)
+                                            <div class="payment-summary">
+                                                <!-- Amount Remaining (Due) -->
+                                                @if($calculatedDue > 0)
+                                                    <div class="alert alert-warning border-2 mb-2 p-3" style="background-color: #fff3cd !important;">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span class="fw-bold">
+                                                                <i class="fas fa-exclamation-triangle"></i> Amount Remaining (Due):
+                                                            </span>
+                                                            <span class="fs-3 fw-bold text-warning">
+                                                                PKR {{ number_format($calculatedDue, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="progress mb-2" style="height: 8px;">
+                                                            @php
+                                                                $paymentPercentage = min(100, ($amountReceivedValue / $finalAmountValue) * 100);
+                                                            @endphp
+                                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                                 style="width: {{ $paymentPercentage }}%" 
+                                                                 aria-valuenow="{{ $paymentPercentage }}" 
+                                                                 aria-valuemin="0" 
+                                                                 aria-valuemax="100">
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted d-block">
+                                                            <i class="fas fa-info-circle"></i> Customer still needs to pay PKR {{ number_format($calculatedDue, 2) }} more
+                                                        </small>
+                                                    </div>
+                                                @endif
+
+                                                <!-- Return Amount -->
+                                                @if($calculatedReturn > 0)
+                                                    <div class="alert alert-success border-2 mb-2 p-3" style="background-color: #d1e7dd !important;">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <span class="fw-bold">
+                                                                <i class="fas fa-money-bill-wave"></i> Return to Customer:
+                                                            </span>
+                                                            <span class="fs-3 fw-bold text-success">
+                                                                PKR {{ number_format($calculatedReturn, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <small class="text-muted d-block">
+                                                            <i class="fas fa-info-circle"></i> Customer paid extra. Return PKR {{ number_format($calculatedReturn, 2) }} to customer
+                                                        </small>
+                                                    </div>
+                                                @endif
+
+                                                <!-- Exact Payment -->
+                                                @if($calculatedReturn == 0 && $calculatedDue == 0)
+                                                    <div class="alert alert-info border-2 mb-2 p-3" style="background-color: #cfe2ff !important;">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="fw-bold">
+                                                                <i class="fas fa-check-circle"></i> Payment Complete:
+                                                            </span>
+                                                            <span class="fs-4 fw-bold text-info">
+                                                                No Return Required
+                                                            </span>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="fas fa-info-circle"></i> Customer paid exactly PKR {{ number_format($finalAmountValue, 2) }}
+                                                        </small>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @elseif($amountReceivedValue > 0 && $finalAmountValue == 0)
+                                            <div class="alert alert-secondary border-1 mb-2 p-2 small">
+                                                <i class="fas fa-info-circle"></i> Please select seats first to calculate the final amount
+                                            </div>
+                                        @else
+                                            <div class="alert alert-secondary border-1 mb-2 p-2 small">
+                                                <i class="fas fa-info-circle"></i> Enter amount received to see payment summary
                                             </div>
                                         @endif
                                     @endif
@@ -660,8 +758,8 @@
                             <div class="mb-2">
                                 <label class="form-label small fw-bold"><i class="fas fa-sticky-note"></i> Notes</label>
                                 <textarea class="form-control form-control-sm" 
-                                          wire:model.live="notes" 
-                                          wire:loading.attr="disabled"
+                                          wire:model="notes" 
+                                          {{-- wire:loading.attr="disabled" --}}
                                           rows="2" 
                                           maxlength="500"
                                           placeholder="Optional notes..."></textarea>
@@ -1690,6 +1788,7 @@
             if (tripStops && tripStops.length > 0) {
                 stopsInfo = '<tr><td colspan="4" style="background-color: #e9ecef; font-weight: bold; padding: 8px;">Complete Route Stops:</td></tr>';
                 tripStops.forEach((stop, index) => {
+                    console.log(stop);
                     const arrivalTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
                     const departureTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
                     stopsInfo += `

@@ -350,11 +350,9 @@ class BookingConsole extends Component
                 $fullDeparture = Carbon::parse($selectedDate.' '.$ts->departure_time);
 
                 // Allow past times for admin users, or if it's today's date
-                $user = Auth::user();
-                $isAdmin = $user->hasRole('admin');
                 $isToday = Carbon::parse($selectedDate)->isToday();
 
-                if ($isAdmin || $isToday || $fullDeparture->greaterThanOrEqualTo($now)) {
+                if ($isToday || $fullDeparture->greaterThanOrEqualTo($now)) {
                     $timetableStops[] = [
                         'id' => $ts->id,
                         'timetable_id' => $ts->timetable_id,
