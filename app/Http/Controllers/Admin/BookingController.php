@@ -294,6 +294,7 @@ class BookingController extends Controller
             'seats',
             'passengers',
             'user',
+            'bookedByUser',
             'cancelledByUser',
         ]);
 

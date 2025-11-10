@@ -94,7 +94,6 @@
             text-align: center;
             margin-bottom: 3mm;
             padding-bottom: 2mm;
-            border-bottom: 2px solid #000;
         }
         
         .company-name {
@@ -111,31 +110,7 @@
             font-size: 9px;
             margin-bottom: 2mm;
             font-weight: 600;
-            color: #333;
-        }
-        
-        .social-media {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            margin: 2mm 0;
-            font-size: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .social-media span:first-child {
-            font-weight: 600;
-            margin-right: 2px;
-        }
-        
-        .qr-code {
-            width: 22px;
-            height: 22px;
-            background: #000;
-            display: inline-block;
-            margin-left: 4px;
-            border: 1px solid #333;
+            color: #000;
         }
         
         .urdu-text {
@@ -146,8 +121,8 @@
             font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
             line-height: 1.4;
             padding: 1.5mm;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
+            background: #fff;
+            border: 1px solid #000;
             border-radius: 2px;
         }
         
@@ -163,18 +138,13 @@
             display: flex;
             flex-direction: column;
             padding: 1mm 0;
-            border-bottom: 0.5px dotted #ccc;
-        }
-        
-        .info-item:last-child {
-            border-bottom: none;
         }
         
         .info-label {
             font-weight: 700;
             font-size: 7px;
             margin-bottom: 0.5mm;
-            color: #333;
+            color: #000;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
@@ -196,7 +166,7 @@
         }
         
         .perforated-line::before {
-            content: '✂️ CUT HERE ✂️';
+            content: 'CUT HERE';
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
@@ -205,6 +175,7 @@
             font-size: 6px;
             font-weight: bold;
             top: -6px;
+            letter-spacing: 0.5px;
         }
         
         .boarding-coupon {
@@ -218,7 +189,6 @@
         
         .boarding-header {
             text-align: center;
-            border-bottom: 2px solid #000;
             padding-bottom: 1.5mm;
             margin-bottom: 2mm;
         }
@@ -247,8 +217,8 @@
             font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
             line-height: 1.5;
             padding: 2mm;
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: #fff;
+            border: 1px solid #000;
             border-radius: 2px;
         }
         
@@ -257,7 +227,6 @@
             font-size: 8px;
             margin-top: 2.5mm;
             padding-top: 2mm;
-            border-top: 1px dashed #000;
             line-height: 1.4;
         }
         
@@ -314,24 +283,49 @@
             border-radius: 2px;
         }
         
+        .section-heading {
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 2.5mm 0 1.5mm 0;
+            color: #000;
+        }
+        
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
         @media print {
-            .info-item {
-                border-bottom: 0.5px dotted #999;
-            }
-            
             .customer-ticket,
             .boarding-coupon {
-                border: 2px solid #000;
+                border: 2px solid #000 !important;
+                background: #fff !important;
             }
             
             .urdu-text {
-                background: #f9f9f9 !important;
-                border: 1px solid #ddd !important;
+                background: #fff !important;
+                border: 1px solid #000 !important;
             }
             
             .instructions {
-                background: #fff3cd !important;
-                border: 1px solid #ffc107 !important;
+                background: #fff !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .status-badge {
+                background: #000 !important;
+                color: #fff !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .section-heading {
+                color: #000 !important;
+            }
+            
+            .info-label,
+            .info-value {
+                color: #000 !important;
             }
         }
     </style>
@@ -355,6 +349,8 @@
             $busType = $booking->trip->bus->busType->name ?? 'N/A';
             $routeName = $booking->trip->route->name ?? 'N/A';
             $userId = $booking->booked_by_user_id ?? $booking->user_id ?? 'N/A';
+            $bookedByUser = $booking->bookedByUser ?? $booking->user;
+            $bookedByName = $bookedByUser ? $bookedByUser->name : 'N/A';
         @endphp
 
         <!-- Customer Ticket Section -->
@@ -363,33 +359,28 @@
             <div class="header">
                 <div class="company-name">{{ $settings->company_name ?? 'BALOCH TRANSPORT SEF' }}</div>
                 <div class="uan">UAN: {{ $settings->phone ?? '03-111-155-255' }}</div>
-                <div class="social-media">
-                    <span>Follow Us On</span>
-                    <span>📘</span>
-                    <span>📷</span>
-                    <span>🎵</span>
-                    <span class="qr-code"></span>
-                </div>
                 <div class="urdu-text">
                     Download {{ $settings->company_name ?? 'Bashir Sons Travels' }} App & Buy Tickets Online<br>
                     اب گھر بیٹھے آپ سے ٹکٹ خریدے اور اپنی پسند کی سیٹ بک کریں
                 </div>
             </div>
 
-            <!-- Ticket Information Grid -->
+            <!-- Passenger Details Section -->
+            <div class="section-heading">Passenger Details</div>
             <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Passenger Name:</span>
+                    <span class="info-value">{{ $firstPassenger->name ?? 'N/A' }}</span>
+                </div>
                 <div class="info-item">
                     <span class="info-label">Seat No.:</span>
                     <span class="info-value">{{ $firstSeat->seat_number ?? 'N/A' }}@if($firstPassenger && $firstPassenger->gender) ({{ ucfirst($firstPassenger->gender->value ?? $firstPassenger->gender) }})@endif</span>
                 </div>
-                <div class="info-item">
-                    <span class="info-label">Dep Time:</span>
-                    <span class="info-value">{{ $departureTime }} {{ $departureDate }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Name:</span>
-                    <span class="info-value">{{ $firstPassenger->name ?? 'N/A' }}</span>
-                </div>
+            </div>
+
+            <!-- Journey Details Section -->
+            <div class="section-heading">Journey Details</div>
+            <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">From City:</span>
                     <span class="info-value">{{ $booking->fromStop->terminal->city->name ?? $booking->fromStop->terminal->name }}</span>
@@ -399,32 +390,62 @@
                     <span class="info-value">{{ $booking->toStop->terminal->city->name ?? $booking->toStop->terminal->name }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Fare:</span>
-                    <span class="info-value">PKR {{ number_format($booking->final_amount, 0) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Class:</span>
-                    <span class="info-value">{{ strtoupper($busType) }}</span>
+                    <span class="info-label">Departure Time:</span>
+                    <span class="info-value">{{ $departureTime }} {{ $departureDate }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Terminal:</span>
                     <span class="info-value">{{ strtoupper($booking->fromStop->terminal->name) }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Print Time:</span>
-                    <span class="info-value">{{ $booking->created_at->format('h:i A d/m/Y') }}</span>
+                    <span class="info-label">Bus #:</span>
+                    <span class="info-value">{{ $booking->trip->bus->name ?? 'N/A' }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Route Time:</span>
-                    <span class="info-value">{{ $departureTime }}</span>
+                    <span class="info-label">Class:</span>
+                    <span class="info-value">{{ strtoupper($busType) }}</span>
                 </div>
+            </div>
+
+            <!-- Payment Details Section -->
+            <div class="section-heading">Payment Details</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Total Fare:</span>
+                    <span class="info-value">PKR {{ number_format($booking->final_amount, 0) }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Payment Method:</span>
+                    <span class="info-value">{{ strtoupper($booking->payment_method ?? 'CASH') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Payment Status:</span>
+                    <span class="info-value">{{ strtoupper($booking->payment_status ?? 'UNPAID') }}</span>
+                </div>
+            </div>
+
+            <!-- Booking Details Section -->
+            <div class="section-heading">Booking Details</div>
+            <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">Ticket #:</span>
                     <span class="info-value">{{ $booking->booking_number }}-{{ $firstSeat->seat_number ?? '' }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">BUS #:</span>
-                    <span class="info-value">{{ $booking->trip->bus->name ?? 'N/A' }}</span>
+                    <span class="info-label">Booked By:</span>
+                    <span class="info-value">{{ $bookedByName }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Channel:</span>
+                    <span class="info-value">{{ strtoupper($booking->channel ?? 'COUNTER') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">{{ strtoupper($booking->status) }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Print Time:</span>
+                    <span class="info-value">{{ $booking->created_at->format('h:i A d/m/Y') }}</span>
                 </div>
             </div>
 
@@ -448,7 +469,7 @@
         <!-- Boarding Coupon (Host Copy) -->
         <div class="boarding-coupon">
             <div class="boarding-header">
-                <div class="boarding-company-name">{{ $settings->company_name ?? 'Baloch Transport Services' }}</div>
+                <div class="boarding-company-name">{{ $settings->company_name ?? 'Bas Transport Services' }}</div>
                 <div class="boarding-title">BOARDING COUPON</div>
             </div>
 
@@ -496,10 +517,6 @@
                 <div class="info-item">
                     <span class="info-label">STATUS:</span>
                     <span class="info-value"><span class="status-badge">{{ strtoupper($booking->status) }}</span></span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">USER ID:</span>
-                    <span class="info-value">{{ $userId }}</span>
                 </div>
             </div>
         </div>
