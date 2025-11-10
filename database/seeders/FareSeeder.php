@@ -92,14 +92,14 @@ class FareSeeder extends Seeder
                     $baseFare = $this->calculateBaseFare($fromStop, $toStop, $sequenceDiff);
 
                     // Randomly decide if this fare has a discount
-                    $discountType = fake()->randomElement(['flat', 'percent', null]);
+                    $discountType = \fake()->randomElement(['flat', 'percent', null]);
                     $discountValue = null;
                     $finalFare = $baseFare;
 
                     if ($discountType) {
                         $discountValue = $discountType === 'percent'
-                            ? fake()->randomFloat(2, 5, 20)
-                            : fake()->randomFloat(2, 50, min(200, $baseFare * 0.2));
+                            ? \fake()->randomFloat(2, 5, 20)
+                            : \fake()->randomFloat(2, 50, min(200, $baseFare * 0.2));
 
                         $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
                     }
@@ -168,11 +168,11 @@ class FareSeeder extends Seeder
     {
         // Base fare calculation based on sequence difference
         // More stops between = higher fare
-        $baseFarePerStop = fake()->randomFloat(2, 200, 500);
+        $baseFarePerStop = \fake()->randomFloat(2, 200, 500);
         $baseFare = $baseFarePerStop * $sequenceDiff;
 
         // Add some randomness to make it more realistic
-        $variation = fake()->randomFloat(2, 0.8, 1.2);
+        $variation = \fake()->randomFloat(2, 0.8, 1.2);
         $baseFare = $baseFare * $variation;
 
         // Ensure minimum fare
