@@ -2,22 +2,39 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
 use App\Models\Timetable;
 use App\Models\Trip;
 use App\Models\TripStop;
+use Carbon\Carbon;
 
 class TripFactoryService
 {
     public function createFromTimetable(int $timetableId, string $date, array $attrs = []): Trip
     {
-        $tt = Timetable::with(['route', 'timetableStops' => fn($q) => $q->orderBy('sequence')])->findOrFail($timetableId);
+        $tt = Timetable::with(['route', 'timetableStops' => fn ($q) => $q->orderBy('sequence')])->findOrFail($timetableId);
+
+        // Calculate departure and arrival datetimes from timetable stops before creating trip
+        $originStop = $tt->timetableStops->first();
+        $destinationStop = $tt->timetableStops->last();
+
+        $departureDatetime = null;
+        $estimatedArrivalDatetime = null;
+
+        if ($originStop && $originStop->departure_time) {
+            $departureDatetime = Carbon::parse("{$date} {$originStop->departure_time}");
+        }
+
+        if ($destinationStop && $destinationStop->arrival_time) {
+            $estimatedArrivalDatetime = Carbon::parse("{$date} {$destinationStop->arrival_time}");
+        }
 
         $trip = Trip::create([
             'timetable_id' => $tt->id,
             'route_id' => $tt->route_id,
             'bus_id' => $attrs['bus_id'] ?? null,
             'departure_date' => $date,
+            'departure_datetime' => $departureDatetime,
+            'estimated_arrival_datetime' => $estimatedArrivalDatetime,
             'driver_name' => $attrs['driver_name'] ?? null,
             'driver_phone' => $attrs['driver_phone'] ?? null,
             'driver_license' => $attrs['driver_license'] ?? null,
@@ -37,7 +54,7 @@ class TripFactoryService
                 'sequence' => $s->sequence,
                 'arrival_at' => $arr,
                 'departure_at' => $dep,
-                'is_active' => (bool)$s->is_active,
+                'is_active' => (bool) $s->is_active,
                 'is_origin' => $i === 0,
                 'is_destination' => $i === (count($tt->timetableStops) - 1),
                 'created_at' => now(),
@@ -45,13 +62,6 @@ class TripFactoryService
             ];
         }
         TripStop::insert($rows);
-
-        $origin = TripStop::where('trip_id', $trip->id)->orderBy('sequence')->first();
-        $dest = TripStop::where('trip_id', $trip->id)->orderByDesc('sequence')->first();
-        $trip->update([
-            'departure_datetime' => $origin?->departure_at,
-            'estimated_arrival_datetime' => $dest?->arrival_at,
-        ]);
 
         return $trip->load('stops');
     }
