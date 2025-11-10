@@ -51,39 +51,58 @@
         
         /* Simple Timetable Group Styling */
         .timetable-group {
-            margin-bottom: 3rem;
+            margin-bottom: 1rem;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #dee2e6;
             overflow: hidden;
         }
         
         .timetable-group:last-child {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
         
         .timetable-header {
-            background: #e9ecef;
-            padding: 1rem;
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .timetable-header:hover {
+            background: #e9ecef;
+        }
+        
+        .timetable-header.collapsed {
+            border-bottom: none;
         }
         
         .timetable-title {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             margin: 0;
             color: #495057;
         }
         
         .timetable-meta {
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            font-size: 0.8rem;
             color: #6c757d;
         }
         
         .meta-item {
-            margin-right: 1rem;
+            margin-right: 0.75rem;
+        }
+        
+        .collapse-icon {
+            transition: transform 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .timetable-header.collapsed .collapse-icon {
+            transform: rotate(-90deg);
         }
         
         .status-badge {
@@ -113,22 +132,23 @@
         .stops-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.85rem;
         }
         
         .stops-table th {
             background: #f8f9fa;
-            padding: 0.75rem;
+            padding: 0.5rem 0.75rem;
             text-align: left;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #495057;
             border-bottom: 1px solid #dee2e6;
         }
         
         .stops-table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.85rem;
             color: #495057;
         }
         
@@ -136,13 +156,22 @@
             background: #f8f9fa;
         }
         
+        .timetable-body {
+            display: none;
+        }
+        
+        .timetable-body.show {
+            display: block;
+        }
+        
         .stop-sequence {
             font-weight: 600;
             color: #007bff;
+            font-size: 0.8rem;
         }
         
         .stop-type {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #6c757d;
             font-style: italic;
         }
@@ -150,6 +179,25 @@
         .time-value {
             font-weight: 500;
             font-family: monospace;
+            font-size: 0.85rem;
+        }
+        
+        .filters-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .filters-header {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        
+        .filters-body {
+            padding: 1rem;
         }
         
         .action-buttons {
@@ -261,6 +309,53 @@
         </div>
     </div>
 
+    <!-- Filters Card -->
+    <div class="filters-card">
+        <div class="filters-header" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="true">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bx bx-filter-alt text-primary"></i> Filters & Search
+                </h6>
+                <i class="bx bx-chevron-down collapse-icon"></i>
+            </div>
+        </div>
+        <div class="collapse show" id="filtersCollapse">
+            <div class="filters-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Route</label>
+                        <select class="form-select form-select-sm" id="filterRoute">
+                            <option value="">All Routes</option>
+                            @foreach($routes as $route)
+                                <option value="{{ $route->id }}">{{ $route->name }} ({{ $route->code }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Status</label>
+                        <select class="form-select form-select-sm" id="filterStatus">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label small fw-bold">Search Route</label>
+                        <input type="text" class="form-control form-control-sm" id="filterSearch" placeholder="Route name or code...">
+                    </div>
+                    <div class="col-md-12 d-flex align-items-end gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                            <i class="bx bx-search"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="resetFilters()">
+                            <i class="bx bx-refresh"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Timetables List Container -->
     <div class="table-container">
         <div id="timetables-list">
@@ -295,9 +390,16 @@ function loadTimetables() {
     $('#timetables-list').empty();
     $('#no-timetables').hide();
 
+    const filters = {
+        route_id: $('#filterRoute').val(),
+        status: $('#filterStatus').val(),
+        search: $('#filterSearch').val()
+    };
+
     $.ajax({
         url: "{{ route('admin.timetables.data') }}",
         type: 'GET',
+        data: filters,
         success: function(response) {
             $('#loading-spinner').hide();
             
@@ -315,35 +417,50 @@ function loadTimetables() {
     });
 }
 
+function applyFilters() {
+    loadTimetables();
+}
+
+function resetFilters() {
+    $('#filterRoute').val('');
+    $('#filterStatus').val('');
+    $('#filterSearch').val('');
+    loadTimetables();
+}
+
 function displayTimetables(timetables) {
     let html = '';
     
     timetables.forEach(function(timetable, index) {
+        const collapseId = `collapse-${timetable.id}`;
         html += `
             <div class="timetable-group">
                 <!-- Timetable Header -->
-                <div class="timetable-header">
+                <div class="timetable-header collapsed" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 class="timetable-title">
-                                ${timetable.route_name} <span class="text-muted">(${timetable.route_code})</span>
-                            </h3>
-                            <div class="timetable-meta">
-                                <span class="meta-item">
-                                    <i class="fas fa-map-marker-alt me-1"></i>
-                                    ${timetable.start_terminal} → ${timetable.end_terminal}
-                                </span>
-                                <span class="meta-item">
-                                    <i class="fas fa-calendar-alt me-1"></i>
-                                    ${formatDate(timetable.created_at)}
-                                </span>
-                                <span class="meta-item">
-                                    <i class="fas fa-list-ol me-1"></i>
-                                    ${timetable.total_stops} stops
-                                </span>
+                        <div class="d-flex align-items-center gap-2 flex-grow-1">
+                            <i class="bx bx-chevron-down collapse-icon"></i>
+                            <div class="flex-grow-1">
+                                <h3 class="timetable-title mb-0">
+                                    ${timetable.route_name} <span class="text-muted">(${timetable.route_code})</span>
+                                </h3>
+                                <div class="timetable-meta">
+                                    <span class="meta-item">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        ${timetable.start_terminal} → ${timetable.end_terminal}
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-clock me-1"></i>
+                                        ${timetable.start_departure_time || 'N/A'}
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-list-ol me-1"></i>
+                                        ${timetable.total_stops} stops
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
                             <span class="status-badge ${timetable.status === 'active' ? 'active' : 'inactive'}">
                                 ${timetable.status}
                             </span>
@@ -403,30 +520,39 @@ function displayTimetables(timetables) {
                 </div>
                 
                 <!-- Stops Table -->
-                <div class="p-3">
-                    <table class="stops-table">
-                        <thead>
-                            <tr>
-                                <th width="6%">#</th>
-                                <th width="25%">Stop Name</th>
-                                <th width="12%">Type</th>
-                                <th width="12%">Arrival Time <small class="text-muted">(Optional for first stop)</small></th>
-                                <th width="12%">Departure Time</th>
-                                <th width="10%">Sequence</th>
-                                <th width="13%">Status</th>
-                                <th width="10%">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateStopsTableRows(timetable.stops, timetable.id)}
-                        </tbody>
-                    </table>
+                <div class="collapse timetable-body" id="${collapseId}">
+                    <div class="p-2">
+                        <table class="stops-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="22%">Stop Name</th>
+                                    <th width="10%">Type</th>
+                                    <th width="12%">Arrival</th>
+                                    <th width="12%">Departure</th>
+                                    <th width="8%">Seq</th>
+                                    <th width="11%">Status</th>
+                                    <th width="10%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${generateStopsTableRows(timetable.stops, timetable.id)}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         `;
     });
     
     $('#timetables-list').html(html);
+    
+    // Initialize collapse behavior
+    $('.timetable-header').on('click', function() {
+        const target = $(this).data('bs-target');
+        const isExpanded = $(target).hasClass('show');
+        $(this).toggleClass('collapsed', !isExpanded);
+    });
 }
 
 function generateStopsTableRows(stops, timetableId) {
@@ -451,21 +577,21 @@ function generateStopsTableRows(stops, timetableId) {
                     <div class="stop-type">${stopType}</div>
                 </td>
                 <td>
-                    <span class="badge ${isStartStop ? 'bg-success' : (isEndStop ? 'bg-danger' : 'bg-primary')}">
-                        ${stopType}
+                    <span class="badge ${isStartStop ? 'bg-success' : (isEndStop ? 'bg-danger' : 'bg-primary')}" style="font-size: 0.75rem;">
+                        ${isStartStop ? 'Start' : (isEndStop ? 'End' : 'Mid')}
                     </span>
                 </td>
                 <td class="time-value">
-                    ${stop.arrival_time ? stop.arrival_time : (isStartStop ? '<span class="text-muted">--:--</span> <small class="text-muted">(Optional)</small>' : '--:--')}
+                    ${stop.arrival_time ? stop.arrival_time : (isStartStop ? '<span class="text-muted">--</span>' : '--')}
                 </td>
                 <td class="time-value">
-                    ${!isEndStop ? (stop.departure_time || '--:--') : '-'}
+                    ${!isEndStop ? (stop.departure_time || '--') : '-'}
                 </td>
                 <td>
-                    <span class="badge bg-secondary">${stop.sequence || index + 1}</span>
+                    <span class="badge bg-secondary" style="font-size: 0.75rem;">${stop.sequence || index + 1}</span>
                 </td>
                 <td>
-                    <span class="badge ${statusClass}">${statusText}</span>
+                    <span class="badge ${statusClass}" style="font-size: 0.75rem;">${statusText}</span>
                 </td>
                 <td>
                     ${canToggle ? `
@@ -489,11 +615,6 @@ function generateStopsTableRows(stops, timetableId) {
     });
     
     return html;
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 }
 
 // Enhanced View Function
@@ -818,5 +939,21 @@ function toggleAllStops(timetableId, status) {
 
 // Add smooth scrolling for better UX
 $('html').css('scroll-behavior', 'smooth');
+
+// Allow Enter key to trigger filter
+$('#filterSearch').on('keypress', function(e) {
+    if (e.which === 13) {
+        applyFilters();
+    }
+});
+
+// Initialize collapse icons
+$(document).on('shown.bs.collapse', '.collapse', function() {
+    $(this).closest('.timetable-group').find('.timetable-header').removeClass('collapsed');
+});
+
+$(document).on('hidden.bs.collapse', '.collapse', function() {
+    $(this).closest('.timetable-group').find('.timetable-header').addClass('collapsed');
+});
 </script>
 @endsection

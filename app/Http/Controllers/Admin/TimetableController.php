@@ -11,6 +11,7 @@ use App\Models\TimetableStop;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -21,22 +22,47 @@ class TimetableController extends Controller
      */
     public function index(): View
     {
-        return view('admin.timetables.index');
+        $routes = Route::where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        return view('admin.timetables.index', compact('routes'));
     }
 
     /**
      * Get timetable data for AJAX request
      */
-    public function getData(): JsonResponse
+    public function getData(Request $request): JsonResponse
     {
         $this->authorize('view timetables');
 
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         $hasEditPermission = $user->can('edit timetables');
         $hasDeletePermission = $user->can('delete timetables');
 
-        $timetables = Timetable::with(['route', 'timetableStops.terminal'])
-            ->orderBy('created_at', 'desc')
+        $query = Timetable::with(['route', 'timetableStops.terminal']);
+
+        // Filter by route
+        if ($request->filled('route_id')) {
+            $query->where('route_id', $request->route_id);
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        // Filter by search (route name or code)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('route', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $timetables = $query->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($timetable) use ($hasEditPermission, $hasDeletePermission) {
                 $stops = $timetable->timetableStops()
