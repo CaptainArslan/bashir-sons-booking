@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             DefaultTerminalSeeder::class,
             DefaultRouteSeeder::class,
             BusSeeder::class,
-            FareSeeder::class,
+            // FareSeeder::class,
             TimetableSeeder::class,
             // AnnouncementSeeder::class,
             // DiscountSeeder::class,
