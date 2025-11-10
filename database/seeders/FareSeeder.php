@@ -6,18 +6,10 @@ use App\Enums\FareStatusEnum;
 use App\Models\Fare;
 use App\Models\Route;
 use App\Models\RouteStop;
-use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 
 class FareSeeder extends Seeder
 {
-    protected $faker;
-
-    public function __construct()
-    {
-        $this->faker = Faker::create();
-    }
-
     /**
      * Run the database seeds.
      */
@@ -100,14 +92,14 @@ class FareSeeder extends Seeder
                     $baseFare = $this->calculateBaseFare($fromStop, $toStop, $sequenceDiff);
 
                     // Randomly decide if this fare has a discount
-                    $discountType = $this->faker->randomElement(['flat', 'percent', null]);
+                    $discountType = fake()->randomElement(['flat', 'percent', null]);
                     $discountValue = null;
                     $finalFare = $baseFare;
 
                     if ($discountType) {
                         $discountValue = $discountType === 'percent'
-                            ? $this->faker->randomFloat(2, 5, 20)
-                            : $this->faker->randomFloat(2, 50, min(200, $baseFare * 0.2));
+                            ? fake()->randomFloat(2, 5, 20)
+                            : fake()->randomFloat(2, 50, min(200, $baseFare * 0.2));
 
                         $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
                     }
@@ -176,11 +168,11 @@ class FareSeeder extends Seeder
     {
         // Base fare calculation based on sequence difference
         // More stops between = higher fare
-        $baseFarePerStop = $this->faker->randomFloat(2, 200, 500);
+        $baseFarePerStop = fake()->randomFloat(2, 200, 500);
         $baseFare = $baseFarePerStop * $sequenceDiff;
 
         // Add some randomness to make it more realistic
-        $variation = $this->faker->randomFloat(2, 0.8, 1.2);
+        $variation = fake()->randomFloat(2, 0.8, 1.2);
         $baseFare = $baseFare * $variation;
 
         // Ensure minimum fare
