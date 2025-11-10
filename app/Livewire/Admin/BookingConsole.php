@@ -592,7 +592,8 @@ class BookingConsole extends Component
             // Dispatch trip-loaded event with tripId for Echo subscription
             $this->dispatch('trip-loaded', ['tripId' => $this->tripId]);
         } catch (\Exception $e) {
-            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            // $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            $this->dispatch('show-error', message: $e->getMessage());
         }
     }
 
@@ -1055,7 +1056,8 @@ class BookingConsole extends Component
             $this->dispatch('booking-success');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            // $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            $this->dispatch('show-error', message: $e->getMessage());
         }
     }
 
@@ -1569,7 +1571,8 @@ class BookingConsole extends Component
             $this->dispatch('show-success', message: 'Bus, driver, host, and expenses assigned successfully! Seat map updated.');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            // $this->dispatch('show-error', message: $this->getUserFriendlyErrorMessage($e));
+            $this->dispatch('show-error', message: $e->getMessage());
         }
     }
 
