@@ -81,7 +81,8 @@ class RolePermissionSeeder extends Seeder
                 'view banners',
                 'view announcements',
                 'view discounts',
-                'view reports',
+                // Terminal reports only
+                'view terminal reports',
             ])->get();
             $employeeRole->syncPermissions($employeePermissions);
             $this->command->info('Employee role assigned '.$employeePermissions->count().' permissions.');

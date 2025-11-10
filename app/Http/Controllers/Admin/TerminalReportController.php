@@ -19,63 +19,80 @@ class TerminalReportController extends Controller
 {
     public function index(): View
     {
+        $this->authorize('view terminal reports');
+
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Super Admin') || $user->hasRole('admin') || $user->hasRole('super_admin');
+        $canViewAllReports = $user->can('view all booking reports');
         $hasTerminalAssigned = (bool) $user->terminal_id;
 
-        // If user has no terminal assigned OR is admin, show all terminals (selectable)
-        // If user has terminal assigned, show only their terminal (read-only)
-        if ($isAdmin || ! $hasTerminalAssigned) {
-            $terminals = Terminal::where('status', TerminalEnum::ACTIVE->value)->orderBy('name')->get(['id', 'name', 'code']);
+        if ($canViewAllReports) {
+            $terminals = Terminal::where('status', TerminalEnum::ACTIVE->value)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code']);
             $canSelectTerminal = true;
         } else {
+            abort_if(! $hasTerminalAssigned, 403, 'You do not have access to any terminal reports.');
+
             $terminals = Terminal::where('id', $user->terminal_id)
                 ->where('status', TerminalEnum::ACTIVE->value)
                 ->get(['id', 'name', 'code']);
             $canSelectTerminal = false;
         }
 
-        // Get users who have created bookings (excluding customers)
-        $bookedByUserIds = Booking::whereNotNull('booked_by_user_id')->distinct()->pluck('booked_by_user_id');
-        $userIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
-        $allUserIds = $bookedByUserIds->merge($userIds)->unique();
+        if ($canViewAllReports) {
+            $bookedByUserIds = Booking::whereNotNull('booked_by_user_id')->distinct()->pluck('booked_by_user_id');
+            $userIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
+            $allUserIds = $bookedByUserIds->merge($userIds)->unique();
 
-        $users = User::whereIn('id', $allUserIds)
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Customer');
-            })
-            ->select('id', 'name', 'email')
-            ->orderBy('name')
-            ->get();
+            $users = User::whereIn('id', $allUserIds)
+                ->whereDoesntHave('roles', function ($q) {
+                    $q->where('name', 'Customer');
+                })
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get();
+        } else {
+            $users = User::query()
+                ->where('id', $user->id)
+                ->select('id', 'name', 'email')
+                ->get();
+        }
 
-        return view('admin.terminal-reports.index', compact('terminals', 'isAdmin', 'users', 'canSelectTerminal'));
+        return view('admin.terminal-reports.index', [
+            'terminals' => $terminals,
+            'users' => $users,
+            'canSelectTerminal' => $canSelectTerminal,
+            'canViewAllReports' => $canViewAllReports,
+            'selectedUserId' => $canViewAllReports ? null : $user->id,
+        ]);
     }
 
     public function getData(Request $request): JsonResponse
     {
+        $this->authorize('view terminal reports');
+
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Super Admin') || $user->hasRole('admin') || $user->hasRole('super_admin');
+        $canViewAllReports = $user->can('view all booking reports');
         $hasTerminalAssigned = (bool) $user->terminal_id;
 
-        // If user has no terminal assigned OR is admin, terminal_id is required from request
-        // If user has terminal assigned, use their terminal_id (ignore request)
         $validationRules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'user_id' => 'nullable|exists:users,id',
         ];
 
-        if ($isAdmin || ! $hasTerminalAssigned) {
+        if ($canViewAllReports) {
             $validationRules['terminal_id'] = 'required|exists:terminals,id';
+            $validationRules['user_id'] = 'nullable|exists:users,id';
         } else {
             $validationRules['terminal_id'] = 'nullable';
+            $validationRules['user_id'] = 'nullable';
         }
 
         $validated = $request->validate($validationRules);
 
-        // Determine which terminal to use
-        if ($isAdmin || ! $hasTerminalAssigned) {
-            // Admin or user without terminal: use selected terminal from request
+        if ($canViewAllReports) {
             $terminalId = $validated['terminal_id'];
             if (! $terminalId) {
                 return response()->json([
@@ -84,7 +101,16 @@ class TerminalReportController extends Controller
                 ], 400);
             }
         } else {
-            // User with terminal assigned: use their terminal (ignore request)
+            abort_if(! $hasTerminalAssigned, 403, 'You do not have access to any terminal reports.');
+
+            if ($request->filled('terminal_id') && (int) $request->input('terminal_id') !== $user->terminal_id) {
+                abort(403, 'You are not allowed to access this terminal.');
+            }
+
+            if ($request->filled('user_id') && (int) $request->input('user_id') !== $user->id) {
+                abort(403, 'You are not allowed to view other user reports.');
+            }
+
             $terminalId = $user->terminal_id;
         }
 
@@ -93,7 +119,12 @@ class TerminalReportController extends Controller
         $endDate = Carbon::parse($validated['end_date'])->endOfDay();
 
         // Get bookings where from_stop or to_stop is at this terminal
-        $bookings = $this->getBookingsForTerminal($terminalId, $startDate, $endDate, $validated['user_id'] ?? null);
+        $bookings = $this->getBookingsForTerminal(
+            $terminalId,
+            $startDate,
+            $endDate,
+            $canViewAllReports ? ($validated['user_id'] ?? null) : $user->id
+        );
 
         // Get trips departing from or arriving at this terminal
         $trips = $this->getTripsForTerminal($terminalId, $startDate, $endDate);

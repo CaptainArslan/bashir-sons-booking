@@ -8,7 +8,10 @@
           </div>
       </div>
       <!--navigation-->
-      <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
+    <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
+        @php
+            $authUser = auth()->user();
+        @endphp
           <li>
               <a href="{{ route('admin.dashboard') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                   <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
@@ -274,7 +277,7 @@
               </li>
           @endcan
 
-          <li>
+        <li>
               <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                   <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
                           class='bx bx-book'></i>
@@ -282,21 +285,21 @@
                   <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bookings Management</div>
               </a>
               <ul style="padding-left: 0;">
-                  @can('view bookings')
+                @if ($authUser?->can('view all booking reports'))
                       <li> <a href="{{ route('admin.bookings.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i>All Bookings</a></li>
-                  @endcan
+                                style="font-size: 0.7rem;"></i>All Bookings</a></li>
+                @endif
                   @can('create bookings')
                       <li> <a href="{{ route('admin.bookings.console') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                   style="font-size: 0.7rem;"></i>Live Booking Console</a></li>
                   @endcan
-                  @can('view bookings')
+                @if ($authUser?->can('view terminal reports'))
                       <li> <a href="{{ route('admin.terminal-reports.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                   style="font-size: 0.7rem;"></i> Terminal Reports</a></li>
-                  @endcan
+                @endif
                   {{-- @can('view bookings')
                       <li> <a href="{{ route('admin.bus-assignments.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'

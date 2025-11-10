@@ -17,15 +17,13 @@ use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\FareController;
 use App\Http\Controllers\Admin\GeneralSettingController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\Rolecontroller;
 use App\Http\Controllers\Admin\RouteController;
 use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\TerminalReportController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Manager\ReportController as ManagerReportController;
-use App\Http\Controllers\Employee\ReportController as EmployeeReportController;
 use App\Http\Controllers\Auth\UserActivationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendBookingController;
@@ -258,8 +256,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/routes/{route}/stops', [TimetableController::class, 'getRouteStops'])->can('view routes')->name('routes.stops.ajax');
 
         // bookings Routes
-        Route::get('/bookings', [BookingController::class, 'index'])->can('view bookings')->name('bookings.index');
-        Route::get('/bookings/data', [BookingController::class, 'getData'])->can('view bookings')->name('bookings.data');
+        Route::get('/bookings', [BookingController::class, 'index'])->can('view all booking reports')->name('bookings.index');
+        Route::get('/bookings/data', [BookingController::class, 'getData'])->can('view all booking reports')->name('bookings.data');
         Route::get('/bookings/create', [BookingController::class, 'create'])->can('create bookings')->name('bookings.create');
         Route::post('/bookings', [BookingController::class, 'store'])->can('create bookings')->name('bookings.store');
         Route::get('/bookings/{booking}', [BookingController::class, 'show'])->can('view bookings')->name('bookings.show');
@@ -271,7 +269,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 
         // Booking Console Routes (Livewire Component)
-        Route::get('/bookings/console/load', fn () => view('admin.bookings.console-wrapper'))->can('create bookings')->name('bookings.console');
+        Route::get('/bookings/console/load', fn() => view('admin.bookings.console-wrapper'))->can('create bookings')->name('bookings.console');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
@@ -293,20 +291,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/advance-booking/settings', [AdvanceBookingController::class, 'getSettings'])->can('view general settings')->name('advance-booking.settings');
 
         // Terminal Reports Routes
-        Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view bookings')->name('terminal-reports.index');
-        Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view bookings')->name('terminal-reports.data');
+        Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view terminal reports')->name('terminal-reports.index');
+        Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view terminal reports')->name('terminal-reports.data');
 
         // Sales Reports Routes (Admin)
         Route::get('/reports', [AdminReportController::class, 'index'])->can('view bookings')->name('reports.index');
         Route::get('/reports/sales', [AdminReportController::class, 'sales'])->can('view bookings')->name('reports.sales');
-
-        // Manager Reports Routes
-        Route::get('/manager/reports', [ManagerReportController::class, 'index'])->middleware('role:Manager|Admin|Super Admin')->name('manager.reports.index');
-        Route::get('/manager/reports/sales', [ManagerReportController::class, 'sales'])->middleware('role:Manager|Admin|Super Admin')->name('manager.reports.sales');
-
-        // Employee Reports Routes
-        Route::get('/employee/reports', [EmployeeReportController::class, 'index'])->middleware('role:Employee|Manager|Admin|Super Admin')->name('employee.reports.index');
-        Route::get('/employee/reports/sales', [EmployeeReportController::class, 'sales'])->middleware('role:Employee|Manager|Admin|Super Admin')->name('employee.reports.sales');
 
         // Discount Routes
         Route::get('/discounts', [DiscountController::class, 'index'])->can('view discounts')->name('discounts.index');
@@ -321,4 +311,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

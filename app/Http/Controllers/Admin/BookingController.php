@@ -47,17 +47,18 @@ class BookingController extends Controller
 
     public function index(): View
     {
-        $this->authorize('view bookings');
+        $this->authorize('view all booking reports');
 
         $bookingStatuses = BookingStatusEnum::cases();
         $paymentStatuses = PaymentStatusEnum::cases();
         $channels = ChannelEnum::cases();
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        // If user has terminal assigned, show only that terminal; otherwise show all active terminals
-        $terminals = $user->terminal_id
-            ? Terminal::where('id', $user->terminal_id)->where('status', TerminalEnum::ACTIVE)->orderBy('name')->get(['id', 'name', 'code'])
-            : Terminal::where('status', TerminalEnum::ACTIVE)->orderBy('name')->get(['id', 'name', 'code']);
+
+        $terminals = Terminal::where('status', TerminalEnum::ACTIVE->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
 
         // Get users who have created bookings (distinct booked_by_user_id or user_id)
         // Exclude users with 'Customer' role
@@ -95,6 +96,8 @@ class BookingController extends Controller
 
     public function getData(Request $request)
     {
+        $this->authorize('view reports');
+
         $query = Booking::query()
             ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user', 'cancelledByUser'])
             ->latest();

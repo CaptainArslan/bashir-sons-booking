@@ -136,6 +136,8 @@ class PermissionSeeder extends Seeder
 
             // Reports
             ['name' => 'view reports', 'module' => 'Reports'],
+            ['name' => 'view terminal reports', 'module' => 'Reports'],
+            ['name' => 'view all booking reports', 'module' => 'Reports'],
             ['name' => 'export reports', 'module' => 'Reports'],
 
             // System

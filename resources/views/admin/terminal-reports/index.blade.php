@@ -80,10 +80,12 @@
                         <i class="bx bx-user"></i> User (Booked By)
                     </label>
                     <select class="form-select form-select-sm" id="filterUser">
-                        <option value="">All Users</option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">
-                                {{ $user->name }}{{ $user->email ? ' (' . $user->email . ')' : '' }}
+                        @if ($canViewAllReports)
+                            <option value="">All Users</option>
+                        @endif
+                        @foreach ($users as $reportUser)
+                            <option value="{{ $reportUser->id }}" {{ isset($selectedUserId) && (string) $selectedUserId === (string) $reportUser->id ? 'selected' : '' }}>
+                                {{ $reportUser->name }}{{ $reportUser->email ? ' (' . $reportUser->email . ')' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -92,9 +94,6 @@
                 <div class="col-md-3 d-flex align-items-end gap-2">
                     <button class="btn btn-primary btn-sm flex-grow-1" onclick="loadReport()">
                         <i class="bx bx-search"></i> Generate Report
-                    </button>
-                    <button class="btn btn-secondary btn-sm no-print" onclick="printReport()" id="printBtn" disabled>
-                        <i class="bx bx-printer"></i> Print
                     </button>
                 </div>
             </div>
@@ -576,7 +575,6 @@
             // Show loading indicator
             document.getElementById('loadingIndicator').style.display = 'block';
             document.getElementById('reportContent').style.display = 'none';
-            document.getElementById('printBtn').disabled = true;
 
             $.ajax({
                 url: "{{ route('admin.terminal-reports.data') }}",
@@ -591,7 +589,6 @@
                     if (response.success) {
                         renderReport(response);
                         document.getElementById('reportContent').style.display = 'block';
-                        document.getElementById('printBtn').disabled = false;
                     } else {
                         Swal.fire({
                             icon: 'error',
@@ -840,9 +837,6 @@
             }
         }
 
-        function printReport() {
-            window.print();
-        }
 
         // Auto-load report for users with assigned terminal (their terminal)
         @if (!$canSelectTerminal && $terminals->isNotEmpty())
