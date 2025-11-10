@@ -1852,37 +1852,6 @@ seat-available
                         </table>
                     </div>
                     
-                    ${tripStops && tripStops.length > 0 ? `
-                                                                            <div style="margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd;">
-                                                                                <h3 style="font-size: 12px; margin-bottom: 8px; font-weight: bold;">Complete Route Information (Stop-to-Stop)</h3>
-                                                                                <table style="margin-bottom: 0; font-size: 10px;">
-                                                                                    <thead>
-                                                                                        <tr style="background-color: #333; color: #fff;">
-                                                                                            <th style="padding: 4px; width: 8%;">Seq</th>
-                                                                                            <th style="padding: 4px; width: 40%;">Terminal</th>
-                                                                                            <th style="padding: 4px; width: 26%;">Arrival Time</th>
-                                                                                            <th style="padding: 4px; width: 26%;">Departure Time</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody>
-                                                                                        ${tripStops.map((stop, index) => {
-                                                                                            const arrTime = stop.arrival_at ? new Date(stop.arrival_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                                                            const depTime = stop.departure_at ? new Date(stop.departure_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
-                                                                                            return `
-                                        <tr>
-                                            <td style="text-align: center; padding: 4px; font-weight: bold;">${index + 1}</td>
-                                            <td style="padding: 4px;">${stop.terminal?.name || 'N/A'} (${stop.terminal?.code || 'N/A'})</td>
-                                            <td style="text-align: center; padding: 4px;">${arrTime}</td>
-                                            <td style="text-align: center; padding: 4px;">${depTime}</td>
-                                        </tr>
-                                    `;
-            }).join('')
-            } <
-            /tbody> < /
-            table > <
-                /div>
-            ` : ''}
-                    
                     <table>
                         <thead>
                             <tr>

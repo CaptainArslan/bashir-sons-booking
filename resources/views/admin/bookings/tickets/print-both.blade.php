@@ -133,21 +133,6 @@
         .ticket-container .print-btn {
             display: none !important;
         }
-        
-        /* Divider between tickets */
-        .ticket-divider {
-            height: 2px;
-            background: #ddd;
-            margin: 5mm 0;
-            border: none;
-        }
-        
-        @media print {
-            .ticket-divider {
-                border-top: 1px dashed #999;
-                background: transparent;
-            }
-        }
     </style>
 </head>
 <body>
@@ -156,22 +141,11 @@
     </button>
 
     <div class="tickets-wrapper">
-        <!-- Customer Ticket -->
+        <!-- Single Ticket with Customer Section and Boarding Coupon -->
         <div class="ticket-container">
             @include('admin.bookings.tickets.ticket-80mm', [
                 'booking' => $booking,
                 'ticketType' => 'customer'
-            ])
-        </div>
-
-        <!-- Divider -->
-        <hr class="ticket-divider">
-
-        <!-- Host Ticket -->
-        <div class="ticket-container">
-            @include('admin.bookings.tickets.ticket-80mm', [
-                'booking' => $booking,
-                'ticketType' => 'host'
             ])
         </div>
     </div>
