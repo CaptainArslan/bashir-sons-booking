@@ -172,7 +172,7 @@
     <!--end breadcrumb-->
 
     <div class="row">
-        <div class="col-xl-6 mx-auto">
+        <div class="col-xl-12 mx-auto">
             <div class="card route-card">
                 <div class="card-header-info">
                     <h5><i class="bx bx-edit me-2"></i>Edit Route: {{ $route->name }}</h5>

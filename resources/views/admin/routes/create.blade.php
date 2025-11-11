@@ -163,7 +163,7 @@
     <!--end breadcrumb-->
 
     <div class="row">
-        <div class="col-xl-6 mx-auto">
+        <div class="col-xl-12 mx-auto">
             <div class="card route-card">
                 <div class="card-header-info">
                     <h5><i class="bx bx-plus-circle me-2"></i>Create New Route</h5>
@@ -208,7 +208,7 @@
                                 </label>
                                 <input type="text" class="form-control @error('code') is-invalid @enderror"
                                     id="code" name="code" placeholder="Route code will be auto-generated"
-                                    value="{{ old('code') }}" style="text-transform: uppercase;" required readonly>
+                                    value="{{ old('code') }}" style="text-transform: uppercase;" required>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
                                     Code will be auto-generated based on route name
