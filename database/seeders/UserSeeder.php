@@ -22,15 +22,15 @@ class UserSeeder extends Seeder
         $twoFactorRecoveryCodes = null;
         $twoFactorConfirmedAt = null;
 
-        $user = User::create([
-            'name' => 'Omar',
-            'email' => 'customer@gmail.com',
-            'password' => Hash::make('password'),
-            'two_factor_secret' => $twoFactorSecret,
-            'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
-            'two_factor_confirmed_at' => $twoFactorConfirmedAt,
-        ]);
-        $user->assignRole('Customer');
+        // $user = User::create([
+        //     'name' => 'Omar',
+        //     'email' => 'customer@gmail.com',
+        //     'password' => Hash::make('password'),
+        //     'two_factor_secret' => $twoFactorSecret,
+        //     'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
+        //     'two_factor_confirmed_at' => $twoFactorConfirmedAt,
+        // ]);
+        // $user->assignRole('Customer');
 
         $user = User::create([
             'name' => 'Super Admin',
@@ -43,14 +43,14 @@ class UserSeeder extends Seeder
         $user->assignRole(['Super Admin']);
 
 
-        $user = User::create([
-            'name' => 'Employee',
-            'email' => 'employee@gmail.com',
-            'password' => Hash::make('password'),
-            'two_factor_secret' => $twoFactorSecret,
-            'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
-            'two_factor_confirmed_at' => $twoFactorConfirmedAt,
-        ]);
-        $user->assignRole(['Employee']);
+        // $user = User::create([
+        //     'name' => 'Employee',
+        //     'email' => 'employee@gmail.com',
+        //     'password' => Hash::make('password'),
+        //     'two_factor_secret' => $twoFactorSecret,
+        //     'two_factor_recovery_codes' => $twoFactorRecoveryCodes,
+        //     'two_factor_confirmed_at' => $twoFactorConfirmedAt,
+        // ]);
+        // $user->assignRole(['Employee']);
     }
 }
