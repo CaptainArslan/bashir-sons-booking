@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
 use App\Models\profile;
-use App\Models\Profile;
 use App\Models\Terminal;
 use App\Enums\GenderEnum;
 use Illuminate\Support\Str;
