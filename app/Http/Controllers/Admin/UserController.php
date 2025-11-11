@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\GenderEnum;
-use App\Enums\UserStatusEnum;
-use App\Http\Controllers\Controller;
-use App\Models\profile;
-use App\Models\Terminal;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use App\Models\profile;
+use App\Models\Profile;
+use App\Models\Terminal;
+use App\Enums\GenderEnum;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Enums\UserStatusEnum;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -288,7 +289,7 @@ class UserController extends Controller
             ]);
 
             // Create user profile
-            profile::create([
+            Profile::create([
                 'user_id' => $user->id,
                 'phone' => $validated['phone'],
                 'cnic' => $validated['cnic'],
