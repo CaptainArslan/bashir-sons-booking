@@ -66,7 +66,6 @@ class RolePermissionSeeder extends Seeder
                 'view timetables',
                 'view buses',
                 'view bus types',
-                'view bus layouts',
                 'view facilities',
                 // Full booking management
                 'view bookings',

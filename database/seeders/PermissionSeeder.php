@@ -56,12 +56,6 @@ class PermissionSeeder extends Seeder
             ['name' => 'edit bus types', 'module' => 'Bus Type Management'],
             ['name' => 'delete bus types', 'module' => 'Bus Type Management'],
 
-            // Bus Layout Management
-            ['name' => 'view bus layouts', 'module' => 'Bus Layout Management'],
-            ['name' => 'create bus layouts', 'module' => 'Bus Layout Management'],
-            ['name' => 'edit bus layouts', 'module' => 'Bus Layout Management'],
-            ['name' => 'delete bus layouts', 'module' => 'Bus Layout Management'],
-
             // Facility Management
             ['name' => 'view facilities', 'module' => 'Facility Management'],
             ['name' => 'create facilities', 'module' => 'Facility Management'],

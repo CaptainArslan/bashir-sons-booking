@@ -23,6 +23,7 @@ class Bus extends Model
         'registration_number',
         'model',
         'color',
+        'total_seats',
         'status',
     ];
 
@@ -30,6 +31,7 @@ class Bus extends Model
         'status' => BusEnum::class,
         'bus_type_id' => 'integer',
         'bus_layout_id' => 'integer',
+        'total_seats' => 'integer',
     ];
 
     // =============================
@@ -62,14 +64,20 @@ class Bus extends Model
     {
         return Attribute::make(
             get: function () {
-                // Load busLayout relationship if not already loaded
-                if (! $this->relationLoaded('busLayout')) {
-                    $this->load('busLayout');
+                // Use total_seats directly if set, otherwise fallback to busLayout or default
+                if ($this->total_seats) {
+                    return $this->total_seats;
                 }
 
-                // Get seat count from busLayout
-                if ($this->busLayout) {
-                    return $this->busLayout->total_seats ?? BusLayout::DEFAULT_SEATS;
+                // Fallback to busLayout if available
+                if ($this->bus_layout_id) {
+                    if (! $this->relationLoaded('busLayout')) {
+                        $this->load('busLayout');
+                    }
+
+                    if ($this->busLayout) {
+                        return $this->busLayout->total_seats ?? BusLayout::DEFAULT_SEATS;
+                    }
                 }
 
                 return BusLayout::DEFAULT_SEATS;

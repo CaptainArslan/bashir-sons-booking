@@ -8,10 +8,10 @@
           </div>
       </div>
       <!--navigation-->
-    <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
-        @php
-            $authUser = auth()->user();
-        @endphp
+      <ul class="metismenu" id="menu" style="padding: 0.5rem 0;">
+          @php
+              $authUser = auth()->user();
+          @endphp
           <li>
               <a href="{{ route('admin.dashboard') }}" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                   <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
@@ -115,7 +115,6 @@
               'view terminals',
               'view buses',
               'view bus types',
-              'view bus layouts',
               'view facilities',
               'view
               routes',
@@ -150,13 +149,13 @@
               </li>
           @endcan
 
-          @canany(['view bus types', 'view bus layouts', 'view facilities'])
+          @canany(['view bus types', 'view facilities'])
               <li>
                   <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                       <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
                               class='bx bx-category'></i>
                       </div>
-                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bus Configuration</div>
+                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bus Management</div>
                   </a>
                   <ul style="padding-left: 0;">
                       @can('view bus types')
@@ -165,30 +164,13 @@
                                       style="font-size: 0.7rem;"></i>Bus Types</a>
                           </li>
                       @endcan
-                      @can('view bus layouts')
-                          <li> <a href="{{ route('admin.bus-layouts.index') }}"
-                                  style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                      style="font-size: 0.7rem;"></i>Bus Layouts</a></li>
-                      @endcan
                       @can('view facilities')
                           <li> <a href="{{ route('admin.facilities.index') }}"
                                   style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                       style="font-size: 0.7rem;"></i>Facilities</a>
                           </li>
                       @endcan
-                  </ul>
-              </li>
-          @endcanany
 
-          @can('view buses')
-              <li>
-                  <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
-                      <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
-                              class='bx bx-bus'></i>
-                      </div>
-                      <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bus Management</div>
-                  </a>
-                  <ul style="padding-left: 0;">
                       <li> <a href="{{ route('admin.buses.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                   style="font-size: 0.7rem;"></i>All Buses</a>
@@ -201,7 +183,7 @@
                       @endcan
                   </ul>
               </li>
-          @endcan
+          @endcanany
 
           @can('view routes')
               <li>
@@ -277,7 +259,7 @@
               </li>
           @endcan
 
-        <li>
+          <li>
               <a href="javascript:;" class="has-arrow" style="padding: 0.75rem 1rem; font-size: 0.875rem;">
                   <div class="parent-icon" style="width: 20px; height: 20px; font-size: 1rem;"><i
                           class='bx bx-book'></i>
@@ -285,21 +267,21 @@
                   <div class="menu-title" style="font-size: 0.875rem; font-weight: 500;">Bookings Management</div>
               </a>
               <ul style="padding-left: 0;">
-                @if ($authUser?->can('view all booking reports'))
+                  @if ($authUser?->can('view all booking reports'))
                       <li> <a href="{{ route('admin.bookings.index') }}"
-                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                style="font-size: 0.7rem;"></i>All Bookings</a></li>
-                @endif
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i
+                                  class='bx bx-radio-circle' style="font-size: 0.7rem;"></i>All Bookings</a></li>
+                  @endif
                   @can('create bookings')
                       <li> <a href="{{ route('admin.bookings.console') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
                                   style="font-size: 0.7rem;"></i>Live Booking Console</a></li>
                   @endcan
-                @if ($authUser?->can('view terminal reports'))
+                  @if ($authUser?->can('view terminal reports'))
                       <li> <a href="{{ route('admin.terminal-reports.index') }}"
-                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'
-                                  style="font-size: 0.7rem;"></i> Terminal Reports</a></li>
-                @endif
+                              style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i
+                                  class='bx bx-radio-circle' style="font-size: 0.7rem;"></i> Terminal Reports</a></li>
+                  @endif
                   {{-- @can('view bookings')
                       <li> <a href="{{ route('admin.bus-assignments.index') }}"
                               style="padding: 0.5rem 1rem 0.5rem 2.5rem; font-size: 0.8rem;"><i class='bx bx-radio-circle'

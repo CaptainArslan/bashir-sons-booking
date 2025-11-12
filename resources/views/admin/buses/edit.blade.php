@@ -181,7 +181,7 @@
                                             <div class="col-md-2">
                                                 <p class="mb-1" style="font-size: 0.85rem;">
                                                     <strong>Seats:</strong> 
-                                                    <span class="badge bg-success">{{ $bus->busLayout->total_seats ?? 'N/A' }}</span>
+                                                    <span class="badge bg-success">{{ $bus->total_seats ?? ($bus->seat_count ?? 'N/A') }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
@@ -326,23 +326,19 @@
                             </div>
                             
                             <div class="col-md-6">
-                                <label for="bus_layout_id" class="form-label">
-                                    Bus Layout 
+                                <label for="total_seats" class="form-label">
+                                    Total Seats 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('bus_layout_id') is-invalid @enderror" 
-                                        id="bus_layout_id" 
-                                        name="bus_layout_id" 
-                                        required>
-                                    <option value="">Select Bus Layout</option>
-                                    @foreach ($busLayouts as $busLayout)
-                                        <option value="{{ $busLayout->id }}" 
-                                            {{ old('bus_layout_id', $bus->bus_layout_id) == $busLayout->id ? 'selected' : '' }}>
-                                            {{ $busLayout->name }} ({{ $busLayout->total_seats }} seats)
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('bus_layout_id')
+                                <input type="number" 
+                                       class="form-control @error('total_seats') is-invalid @enderror" 
+                                       id="total_seats" 
+                                       name="total_seats" 
+                                       placeholder="Enter total number of seats"
+                                       value="{{ old('total_seats', $bus->total_seats) }}" 
+                                       min="1"
+                                       required>
+                                @error('total_seats')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -437,9 +433,7 @@
         $('#bus_type_id').select2({
             width: 'resolve'
         });
-        $('#bus_layout_id').select2({
-            width: 'resolve'
-        });
+        // Bus layout removed - using total_seats directly
         $('#status').select2({
             width: 'resolve'
         });

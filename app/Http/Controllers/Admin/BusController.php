@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\BusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Bus;
-use App\Models\BusLayout;
 use App\Models\BusType;
 use App\Models\Facility;
 use Illuminate\Http\Request;
@@ -23,8 +22,8 @@ class BusController extends Controller
     {
         if ($request->ajax()) {
             $buses = Bus::query()
-                ->with(['busType', 'busLayout', 'facilities'])
-                ->select('id', 'name', 'description', 'bus_type_id', 'bus_layout_id', 'registration_number', 'model', 'color', 'status', 'created_at');
+                ->with(['busType', 'facilities'])
+                ->select('id', 'name', 'description', 'bus_type_id', 'bus_layout_id', 'total_seats', 'registration_number', 'model', 'color', 'status', 'created_at');
 
             return DataTables::eloquent($buses)
                 ->addColumn('formatted_name', function ($bus) {
@@ -55,14 +54,11 @@ class BusController extends Controller
                     return '<span class="badge bg-info">'.e($busType->name).'</span>';
                 })
                 ->addColumn('layout_info', function ($bus) {
-                    $busLayout = $bus->busLayout;
-                    if (! $busLayout) {
-                        return '<span class="text-muted">No layout</span>';
-                    }
+                    // Use total_seats directly if available, otherwise use seat_count accessor
+                    $totalSeats = $bus->total_seats ?? $bus->seat_count ?? 'N/A';
 
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold">'.e($busLayout->name).'</span>
-                                <small class="text-muted">'.$busLayout->total_seats.' seats</small>
+                                <span class="fw-bold">'.$totalSeats.' seats</span>
                             </div>';
                 })
                 ->addColumn('facilities_list', function ($bus) {
@@ -126,7 +122,6 @@ class BusController extends Controller
     public function create()
     {
         $busTypes = BusType::where('status', 'active')->orderBy('name')->get();
-        $busLayouts = BusLayout::where('status', 'active')->orderBy('name')->get();
         $facilities = Facility::where('status', 'active')->orderBy('name')->get();
         $statuses = BusEnum::getStatuses();
 
@@ -151,9 +146,10 @@ class BusController extends Controller
                 'required',
                 'exists:bus_types,id',
             ],
-            'bus_layout_id' => [
+            'total_seats' => [
                 'required',
-                'exists:bus_layouts,id',
+                'integer',
+                'min:1',
             ],
             'registration_number' => [
                 'required',
@@ -194,8 +190,9 @@ class BusController extends Controller
             'description.max' => 'Description must be less than 1000 characters',
             'bus_type_id.required' => 'Bus type is required',
             'bus_type_id.exists' => 'Selected bus type is invalid',
-            'bus_layout_id.required' => 'Bus layout is required',
-            'bus_layout_id.exists' => 'Selected bus layout is invalid',
+            'total_seats.required' => 'Total seats is required',
+            'total_seats.integer' => 'Total seats must be a number',
+            'total_seats.min' => 'Total seats must be at least 1',
             'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
             'model.required' => 'Model is required',
@@ -216,7 +213,7 @@ class BusController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'bus_type_id' => $validated['bus_type_id'],
-                'bus_layout_id' => $validated['bus_layout_id'],
+                'total_seats' => $validated['total_seats'],
                 'registration_number' => strtoupper($validated['registration_number']),
                 'model' => $validated['model'],
                 'color' => $validated['color'],
@@ -244,7 +241,6 @@ class BusController extends Controller
     {
         $bus = Bus::with(['facilities'])->findOrFail($id);
         $busTypes = BusType::where('status', 'active')->orderBy('name')->get();
-        $busLayouts = BusLayout::where('status', 'active')->orderBy('name')->get();
         $facilities = Facility::where('status', 'active')->orderBy('name')->get();
         $statuses = BusEnum::getStatuses();
 
@@ -271,9 +267,10 @@ class BusController extends Controller
                 'required',
                 'exists:bus_types,id',
             ],
-            'bus_layout_id' => [
+            'total_seats' => [
                 'required',
-                'exists:bus_layouts,id',
+                'integer',
+                'min:1',
             ],
             'registration_number' => [
                 'required',
@@ -314,8 +311,9 @@ class BusController extends Controller
             'description.max' => 'Description must be less than 1000 characters',
             'bus_type_id.required' => 'Bus type is required',
             'bus_type_id.exists' => 'Selected bus type is invalid',
-            'bus_layout_id.required' => 'Bus layout is required',
-            'bus_layout_id.exists' => 'Selected bus layout is invalid',
+            'total_seats.required' => 'Total seats is required',
+            'total_seats.integer' => 'Total seats must be a number',
+            'total_seats.min' => 'Total seats must be at least 1',
             'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
             'model.required' => 'Model is required',
@@ -336,7 +334,7 @@ class BusController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'bus_type_id' => $validated['bus_type_id'],
-                'bus_layout_id' => $validated['bus_layout_id'],
+                'total_seats' => $validated['total_seats'],
                 'registration_number' => strtoupper($validated['registration_number']),
                 'model' => $validated['model'],
                 'color' => $validated['color'],

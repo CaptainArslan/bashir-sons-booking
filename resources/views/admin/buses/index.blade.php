@@ -115,6 +115,7 @@
                     {
                         data: 'description_preview',
                         name: 'description',
+                        width: '100px',
                     },
                     {
                         data: 'bus_info',
