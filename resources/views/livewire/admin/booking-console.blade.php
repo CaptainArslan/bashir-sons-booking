@@ -64,7 +64,7 @@
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Departure Time</label>
                         <select class="form-select form-select-lg" wire:model.live="departureTimeId"
-                            wire:key="departure-time-select-{{ count($departureTimes) }}-{{ $travelDate }}"
+                            wire:key="departure-time-select-{{ $toTerminalId }}-{{ count($departureTimes) }}-{{ $travelDate }}"
                             @if (!$toTerminalId) disabled @endif>
                             <option value="">Select Departure Time</option>
                             @foreach ($departureTimes as $time)
@@ -78,8 +78,10 @@
                     <!-- Arrival Time -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Arrival Time</label>
-                        <input type="text" class="form-control form-control-lg" value="{{ $arrivalTime }}" disabled
-                            readonly>
+                        <input type="text" class="form-control form-control-lg" 
+                            value="{{ $arrivalTime ?? '' }}" 
+                            placeholder="{{ $departureTimeId ? 'Calculating...' : 'Select departure time' }}"
+                            disabled readonly>
                     </div>
 
                     <!-- Load Trip Button -->
