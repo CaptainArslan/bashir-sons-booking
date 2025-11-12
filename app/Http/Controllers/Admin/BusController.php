@@ -30,7 +30,7 @@ class BusController extends Controller
                     return '<div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1 fw-bold text-primary">'.e($bus->name).'</h6>
-                                    <small class="text-muted">'.e($bus->registration_number).'</small>
+                                    <small class="text-muted">'.e($bus->registration_number ?? 'N/A').'</small>
                                 </div>
                             </div>';
                 })
@@ -152,7 +152,7 @@ class BusController extends Controller
                 'min:1',
             ],
             'registration_number' => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 'unique:buses,registration_number',
@@ -193,7 +193,6 @@ class BusController extends Controller
             'total_seats.required' => 'Total seats is required',
             'total_seats.integer' => 'Total seats must be a number',
             'total_seats.min' => 'Total seats must be at least 1',
-            'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
             'model.required' => 'Model is required',
             'model.regex' => 'Model can only contain letters, numbers, spaces, hyphens, and underscores',
@@ -214,7 +213,7 @@ class BusController extends Controller
                 'description' => $validated['description'],
                 'bus_type_id' => $validated['bus_type_id'],
                 'total_seats' => $validated['total_seats'],
-                'registration_number' => strtoupper($validated['registration_number']),
+                'registration_number' => isset($validated['registration_number']) && $validated['registration_number'] ? strtoupper($validated['registration_number']) : null,
                 'model' => $validated['model'],
                 'color' => $validated['color'],
                 'status' => $validated['status'],
@@ -273,7 +272,7 @@ class BusController extends Controller
                 'min:1',
             ],
             'registration_number' => [
-                'required',
+                'nullable',
                 'string',
                 'max:50',
                 'unique:buses,registration_number,'.$bus->id,
@@ -314,7 +313,6 @@ class BusController extends Controller
             'total_seats.required' => 'Total seats is required',
             'total_seats.integer' => 'Total seats must be a number',
             'total_seats.min' => 'Total seats must be at least 1',
-            'registration_number.required' => 'Registration number is required',
             'registration_number.unique' => 'Registration number already exists',
             'model.required' => 'Model is required',
             'model.regex' => 'Model can only contain letters, numbers, spaces, hyphens, and underscores',
@@ -335,7 +333,7 @@ class BusController extends Controller
                 'description' => $validated['description'],
                 'bus_type_id' => $validated['bus_type_id'],
                 'total_seats' => $validated['total_seats'],
-                'registration_number' => strtoupper($validated['registration_number']),
+                'registration_number' => isset($validated['registration_number']) && $validated['registration_number'] ? strtoupper($validated['registration_number']) : null,
                 'model' => $validated['model'],
                 'color' => $validated['color'],
                 'status' => $validated['status'],

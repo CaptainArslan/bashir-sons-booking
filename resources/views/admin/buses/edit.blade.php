@@ -10,37 +10,37 @@
     }
     
     .card-header-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* background: #495057; */
         color: white;
-        padding: 0.75rem 1rem;
-        border-radius: 8px 8px 0 0;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px 4px 0 0;
     }
     
     .card-header-info h5 {
         margin: 0;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     .form-label {
         font-weight: 600;
         color: #495057;
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
+        margin-bottom: 0.15rem;
+        font-size: 0.85rem;
     }
     
     .form-control, .form-select {
-        padding: 0.375rem 0.75rem;
+        padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
-        border-radius: 6px;
+        border-radius: 4px;
     }
     
     .card-body {
-        padding: 1rem !important;
+        padding: 0.75rem !important;
     }
     
     .row {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.35rem;
     }
     
     .btn {
@@ -49,72 +49,79 @@
     }
     
     .bus-info-card {
-        border-left: 3px solid #0dcaf0;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 3px solid #6c757d;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    
+    .bus-info-card .card-body {
+        padding: 0.5rem !important;
     }
     
     .stats-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
     }
     
     .info-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-        border-left: 4px solid #2196f3;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin-bottom: 1rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 3px solid #6c757d;
+        padding: 0.4rem 0.6rem;
+        border-radius: 4px;
+        margin-bottom: 0.75rem;
     }
     
     .info-box p {
         margin: 0;
-        font-size: 0.85rem;
-        color: #1976d2;
+        font-size: 0.8rem;
+        color: #495057;
+        line-height: 1.4;
     }
     
     .section-divider {
         border-top: 1px solid #e9ecef;
-        margin: 1rem 0;
-        padding-top: 1rem;
+        margin: 0.5rem 0;
+        padding-top: 0.5rem;
     }
     
     .section-title {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid #e9ecef;
     }
     
     .form-text {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: #6c757d;
-        margin-top: 0.25rem;
+        margin-top: 0.15rem;
     }
     
-    .facility-group {
-        background: #f8f9fa;
-        padding: 0.75rem;
-        border-radius: 6px;
-        border-left: 3px solid #0dcaf0;
-        transition: all 0.3s ease;
+    .facilities-container {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.4rem;
+        background: #fff;
     }
     
-    .facility-group:hover {
-        background: #e9ecef;
-        transform: translateX(2px);
+    .facility-item {
+        padding: 0.15rem 0.4rem;
+        margin: 0;
     }
     
-    .facility-group .form-check-input:checked ~ .form-check-label {
-        color: #0d6efd;
-        font-weight: 600;
+    .facility-item .form-check-label {
+        font-size: 0.875rem;
+        color: #495057;
+        cursor: pointer;
     }
     
-    .facility-group .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
+    .facility-item .form-check-input:checked ~ .form-check-label {
+        color: #212529;
+        font-weight: 500;
     }
 </style>
 @endsection
@@ -156,22 +163,22 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="card bus-info-card">
-                                    <div class="card-body" style="padding: 0.75rem;">
-                                        <div class="row">
+                                    <div class="card-body">
+                                        <div class="row g-2">
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Bus ID:</strong> 
                                                     <span class="badge bg-secondary">{{ $bus->id }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Registration:</strong> 
-                                                    <span class="badge bg-info">{{ $bus->registration_number }}</span>
+                                                    <span class="badge bg-info">{{ $bus->registration_number ?? 'N/A' }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Current Status:</strong> 
                                                     <span class="badge bg-{{ $bus->status->getStatusColor($bus->status->value) }} stats-badge">
                                                         {{ $bus->status->getName() }}
@@ -179,19 +186,19 @@
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Seats:</strong> 
                                                     <span class="badge bg-success">{{ $bus->total_seats ?? ($bus->seat_count ?? 'N/A') }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Type:</strong> 
                                                     <span class="badge bg-primary">{{ $bus->busType->name ?? 'N/A' }}</span>
                                                 </p>
                                             </div>
                                             <div class="col-md-2">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
+                                                <p class="mb-0" style="font-size: 0.75rem;">
                                                     <strong>Created:</strong> 
                                                     {{ $bus->created_at->format('M d, Y') }}
                                                 </p>
@@ -228,18 +235,16 @@
                             
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label">
-                                    Registration Number 
-                                    <span class="text-danger">*</span>
+                                    Registration Number
                                 </label>
                                 <input type="text" 
                                        class="form-control @error('registration_number') is-invalid @enderror" 
                                        id="registration_number"
                                        name="registration_number" 
-                                       placeholder="Enter Registration Number (e.g., ABC-123)" 
+                                       placeholder="Enter Registration Number (e.g., ABC-123) - Optional" 
                                        value="{{ old('registration_number', $bus->registration_number) }}" 
-                                       style="text-transform: uppercase;" 
-                                       required>
-                                <div class="form-text">Enter in format: ABC-123 (will be converted to uppercase)</div>
+                                       style="text-transform: uppercase;">
+                                <div class="form-text">Enter in format: ABC-123 (will be converted to uppercase). This field is optional.</div>
                                 @error('registration_number')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -376,11 +381,11 @@
                         
                         <div class="row">
                             <div class="col-12">
-                                <div class="row">
-                                    @foreach ($facilities as $facility)
-                                        <div class="col-md-4 mb-2">
-                                            <div class="facility-group">
-                                                <div class="form-check">
+                                <div class="facilities-container">
+                                    <div class="row g-2">
+                                        @foreach ($facilities as $facility)
+                                            <div class="col-md-3 col-sm-4 col-6">
+                                                <div class="form-check facility-item">
                                                     <input class="form-check-input" 
                                                            type="checkbox" 
                                                            name="facilities[]" 
@@ -388,15 +393,15 @@
                                                            id="facility_{{ $facility->id }}"
                                                            {{ in_array($facility->id, old('facilities', $bus->facilities->pluck('id')->toArray())) ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="facility_{{ $facility->id }}">
-                                                        <i class="{{ $facility->icon }} me-2"></i>{{ $facility->name }}
+                                                        <i class="{{ $facility->icon }} me-1"></i>{{ $facility->name }}
                                                     </label>
                                                 </div>
                                             </div>
-                                        </div>
-                                    @endforeach
+                                        @endforeach
+                                    </div>
                                 </div>
                                 @error('facilities')
-                                    <div class="text-danger d-block">{{ $message }}</div>
+                                    <div class="text-danger d-block mt-2">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
