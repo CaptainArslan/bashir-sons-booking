@@ -90,22 +90,50 @@
         border-radius: 4px;
         padding: 0.4rem;
         background: #fff;
+        overflow: hidden;
+        width: 100%;
     }
     
     .facility-item {
         padding: 0.15rem 0.4rem;
         margin: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .facility-item .form-check {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .facility-item .form-check-input {
+        flex-shrink: 0;
+        margin-top: 0;
+        margin-right: 0.5rem;
     }
     
     .facility-item .form-check-label {
         font-size: 0.875rem;
         color: #495057;
         cursor: pointer;
+        margin: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
     }
     
     .facility-item .form-check-input:checked ~ .form-check-label {
         color: #212529;
         font-weight: 500;
+    }
+    
+    .facilities-container .row > div {
+        overflow: hidden;
+        min-width: 0;
     }
 </style>
 @endsection
