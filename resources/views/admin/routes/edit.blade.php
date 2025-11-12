@@ -185,92 +185,96 @@
                     <div class="card-body">
                         <!-- Info Box -->
                         <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating route information will affect all timetables and bookings using this route. Please review carefully before saving changes.</p>
+                            <p><i class="bx bx-info-circle me-1"></i><strong>Tip:</strong> Select from and to cities. The
+                                route code and name will be auto-generated based on the selected cities.
+                            </p>
                         </div>
-                        
+
                         <!-- Basic Information -->
                         <div class="section-title">
                             <i class="bx bx-route me-1"></i>Basic Information
                         </div>
-                        
+
                         <div class="row">
-                            <div class="col-md-12">
-                                <label for="name" class="form-label">
-                                    Route Name 
+                            <div class="col-md-6">
+                                <label for="from_city_id" class="form-label">
+                                    From City
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror" 
-                                       id="name"
-                                       name="name" 
-                                       placeholder="Enter Route Name" 
-                                       value="{{ old('name', $route->name) }}" 
-                                       required
-                                       autofocus>
-                                @error('name')
+                                <select class="form-select select2 @error('from_city_id') is-invalid @enderror"
+                                    id="from_city_id" name="from_city_id" required autofocus>
+                                    <option value="">Select From City</option>
+                                    @foreach ($cities as $city)
+                                        @php
+                                            $cityCode = strtoupper(
+                                                substr(preg_replace('/[^a-zA-Z0-9]/', '', $city->name), 0, 3),
+                                            );
+                                        @endphp
+                                        <option value="{{ $city->id }}" data-code="{{ $cityCode }}"
+                                            {{ old('from_city_id', $route->from_city_id) == $city->id ? 'selected' : '' }}>
+                                            {{ $city->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('from_city_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="to_city_id" class="form-label">
+                                    To City
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select select2 @error('to_city_id') is-invalid @enderror"
+                                    id="to_city_id" name="to_city_id" required>
+                                    <option value="">Select To City</option>
+                                    @foreach ($cities as $city)
+                                        @php
+                                            $cityCode = strtoupper(
+                                                substr(preg_replace('/[^a-zA-Z0-9]/', '', $city->name), 0, 3),
+                                            );
+                                        @endphp
+                                        <option value="{{ $city->id }}" data-code="{{ $cityCode }}"
+                                            {{ old('to_city_id', $route->to_city_id) == $city->id ? 'selected' : '' }}>
+                                            {{ $city->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('to_city_id')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label for="code" class="form-label">
-                                    Route Code 
-                                    <span class="text-danger">*</span>
+                                    Route Code (Auto-generated)
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('code') is-invalid @enderror" 
-                                       id="code"
-                                       name="code" 
-                                       placeholder="Route code will be auto-generated" 
-                                       value="{{ old('code', $route->code) }}" 
-                                       style="text-transform: uppercase;" 
-                                       required>
+                                <input type="text" class="form-control @error('code') is-invalid @enderror"
+                                    id="code" name="code" placeholder="Route code will be auto-generated"
+                                    value="{{ old('code', $route->code) }}" style="text-transform: uppercase;" readonly>
                                 <div class="form-text">
                                     <i class="bx bx-info-circle me-1"></i>
-                                    Code will be auto-generated based on route name
+                                    Code will be auto-generated based on city names (first 3 letters)
                                 </div>
                                 @error('code')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="base_currency" class="form-label">
-                                    Base Currency 
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select @error('base_currency') is-invalid @enderror" 
-                                        id="base_currency" 
-                                        name="base_currency" 
-                                        required>
-                                    <option value="">Select Currency</option>
-                                    @foreach ($currencies as $currency)
-                                        <option value="{{ $currency }}" {{ old('base_currency', $route->base_currency) == $currency ? 'selected' : '' }}>
-                                            {{ $currency }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('base_currency')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
+
                             <div class="col-md-6">
                                 <label for="status" class="form-label">
-                                    Status 
+                                    Status
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status" 
-                                        name="status" 
-                                        required>
+                                <select class="form-select select2 @error('status') is-invalid @enderror" id="status"
+                                    name="status" required>
                                     <option value="">Select Status</option>
-                                    @foreach (\App\Enums\RouteStatusEnum::getStatusOptions() as $value => $label)
-                                        <option value="{{ $value }}" {{ old('status', $route->status->value) == $value ? 'selected' : '' }}>
+                                    @foreach ($statuses as $value => $label)
+                                        <option value="{{ $value }}"
+                                            {{ old('status', $route->status->value) == $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach
@@ -281,22 +285,22 @@
                             </div>
                         </div>
                         
-                        <!-- Route Stops Section -->
+                        <!-- Route Terminals Section -->
                         <div class="section-divider"></div>
                         <div class="section-title">
-                            <i class="bx bx-map me-1"></i>Route Stops
+                            <i class="bx bx-map me-1"></i>Route Terminals
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-12">
                                 <div class="stops-section">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <div class="d-flex align-items-center">
                                             <i class="bx bx-map text-primary me-2" style="font-size: 1.2rem;"></i>
-                                            <h6 class="mb-0 fw-bold text-primary">Route Stops</h6>
+                                            <h6 class="mb-0 fw-bold text-primary">Route Terminals</h6>
                                         </div>
-                                        <button type="button" class="add-stop-btn" id="add-stop-btn">
-                                            <i class="bx bx-plus me-1"></i>Add Stop
+                                        <button type="button" class="add-stop-btn" id="add-terminal-btn">
+                                            <i class="bx bx-plus me-1"></i>Add Terminal
                                         </button>
                                     </div>
                                     <div id="stops-container" class="row g-4">
@@ -307,16 +311,16 @@
                                                         <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
                                                             {{ $stop->sequence }}
                                                         </div>
-                                                        <span class="stop-header text-primary">Stop {{ $stop->sequence }}</span>
+                                                        <span class="stop-header text-primary">Terminal {{ $stop->sequence }}</span>
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this terminal">
                                                         <i class="bx bx-trash"></i>
                                                     </button>
                                                 </div>
                                                 <div class="row g-3">
                                                     <div class="col-md-12">
                                                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
-                                                        <select class="form-select terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
+                                                        <select class="form-select select2 terminal-select" name="stops[{{ $stop->id }}][terminal_id]" required>
                                                             <option value="">Select Terminal</option>
                                                             @foreach ($terminals as $terminal)
                                                                 <option value="{{ $terminal->id }}" {{ $stop->terminal_id == $terminal->id ? 'selected' : '' }}>
@@ -368,123 +372,85 @@
 @endsection
 
 @section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.getElementById('name');
-    const codeInput = document.getElementById('code');
+    <script>
+        $(document).ready(function() {
+            // ----------------------------------
+            // Auto-generate Route Code
+            // ----------------------------------
+            function generateRouteInfo() {
+                const $fromOption = $('#from_city_id option:selected');
+                const $toOption = $('#to_city_id option:selected');
 
-    // Auto-generate code when name changes
-    function generateRouteCode() {
-        const name = nameInput.value.trim();
+                const fromCode = $fromOption.attr('data-code');
+                const toCode = $toOption.attr('data-code');
 
-        if (name) {
-            const code = generateCodeFromName(name);
-            codeInput.value = code;
-        } else {
-            codeInput.value = '';
-        }
-    }
-
-    // Generate code based on route name
-    function generateCodeFromName(name) {
-        // Extract city names from route name
-        const cities = extractCitiesFromName(name);
-
-        if (cities.length >= 2) {
-            const fromCity = cities[0].substring(0, 3).toUpperCase();
-            const toCity = cities[1].substring(0, 3).toUpperCase();
-            return `${fromCity}-${toCity}`;
-        } else if (cities.length === 1) {
-            const city = cities[0].substring(0, 3).toUpperCase();
-            return `${city}-ROUTE`;
-        } else {
-            // Generate code from route name initials
-            const words = name.split(/\s+/);
-            const initials = words.map(word => word.charAt(0).toUpperCase()).join('');
-            return initials.length > 0 ? initials.substring(0, 8) : 'ROUTE';
-        }
-    }
-
-    // Extract city names from route name
-    function extractCitiesFromName(name) {
-        const commonPatterns = [
-            /(\w+)\s+to\s+(\w+)/i,
-            /(\w+)\s+-\s+(\w+)/i,
-            /(\w+)\s+→\s+(\w+)/i,
-            /(\w+)\s+and\s+(\w+)/i
-        ];
-
-        for (const pattern of commonPatterns) {
-            const match = name.match(pattern);
-            if (match) {
-                return [match[1], match[2]];
-            }
-        }
-
-        // If no pattern matches, try to extract words that look like city names
-        const words = name.split(/\s+/);
-        const cityWords = words.filter(word => 
-            word.length > 2 && 
-            /^[A-Za-z]+$/.test(word) && 
-            !['express', 'route', 'service', 'bus', 'line'].includes(word.toLowerCase())
-        );
-
-        return cityWords.slice(0, 2);
-    }
-
-    // Event listeners
-    nameInput.addEventListener('input', generateRouteCode);
-
-    // Initialize code generation if there are existing values
-    if (nameInput.value) {
-        generateRouteCode();
-    }
-
-        // Route Stops Management
-        let stopCounter = {{ $route->routeStops->max('sequence') ?? 0 }};
-        const stopsContainer = document.getElementById('stops-container');
-        const addStopBtn = document.getElementById('add-stop-btn');
-
-        addStopBtn.addEventListener('click', function() {
-            addStop();
-        });
-
-        // Add event listeners to existing stops
-        document.querySelectorAll('.remove-stop-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const stopItem = this.closest('.stop-item');
-                const terminalSelect = stopItem.querySelector('.terminal-select');
-                
-                // Destroy Select2 before removing the element
-                if (terminalSelect && $(terminalSelect).hasClass('select2-hidden-accessible')) {
-                    $(terminalSelect).select2('destroy');
+                if (fromCode && toCode) {
+                    $('#code').val(`${fromCode}-${toCode}`);
+                } else if (fromCode) {
+                    $('#code').val(`${fromCode}-`);
+                } else {
+                    $('#code').val('');
                 }
-                
-                stopItem.remove();
-                updateSequences();
-            });
-        });
+            }
 
-        function addStop() {
-            stopCounter++;
-            const stopDiv = document.createElement('div');
-            stopDiv.className = 'stop-item border rounded p-3 mb-1 col-md-4';
-            stopDiv.innerHTML = `
+            $('#from_city_id, #to_city_id').on('change', generateRouteInfo);
+            generateRouteInfo();
+
+            // ----------------------------------
+            // Route Terminals Management
+            // ----------------------------------
+            const stopsContainer = document.getElementById('stops-container');
+            const addTerminalBtn = document.getElementById('add-terminal-btn');
+            
+            // Initialize stop counter based on existing stops
+            let stopCounter = stopsContainer.querySelectorAll('.stop-item').length;
+
+            addTerminalBtn.addEventListener('click', function() {
+                addStop();
+            });
+
+            // Add event listeners to existing stops for removal
+            document.querySelectorAll('.remove-stop-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const stopItem = this.closest('.stop-item');
+                    const terminalSelect = stopItem.querySelector('.terminal-select');
+                    
+                    // Destroy Select2 before removing the element
+                    if (terminalSelect && $(terminalSelect).hasClass('select2-hidden-accessible')) {
+                        $(terminalSelect).select2('destroy');
+                    }
+                    
+                    stopItem.remove();
+                    updateSequences();
+                });
+            });
+
+            // -----------------------------
+            // Add Stop
+            // -----------------------------
+            function addStop() {
+                const currentStops = stopsContainer.querySelectorAll('.stop-item').length;
+                stopCounter = currentStops + 1;
+
+                const stopDiv = document.createElement('div');
+                stopDiv.className = 'stop-item border rounded p-3 mb-1 col-md-4';
+                stopDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
                         <div class="badge bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
                             ${stopCounter}
                         </div>
-                        <span class="stop-header text-primary">Stop ${stopCounter}</span>
+                        <span class="stop-header text-primary">Terminal ${stopCounter}</span>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" title="Remove this stop">
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>
+    
                 <div class="row g-3">
                     <div class="col-md-12">
                         <label class="form-label">Terminal <span class="text-danger">*</span></label>
-                        <select class="form-select terminal-select" name="stops[new_${stopCounter}][terminal_id]" required>
+                        <select class="form-select select2 terminal-select" name="stops[new_${stopCounter}][terminal_id]" required>
                             <option value="">Select Terminal</option>
                             @foreach ($terminals as $terminal)
                                 <option value="{{ $terminal->id }}">
@@ -493,7 +459,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             @endforeach
                         </select>
                     </div>
+    
                     <input type="hidden" class="sequence-input" name="stops[new_${stopCounter}][sequence]" value="${stopCounter}">
+    
                     <div class="col-md-12">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="stops[new_${stopCounter}][online_booking_allowed]" value="1" id="online_booking_new_${stopCounter}" checked>
@@ -504,50 +472,76 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            
-            stopsContainer.appendChild(stopDiv);
 
-            // Initialize Select2 for the new terminal select
-            const terminalSelect = stopDiv.querySelector('.terminal-select');
-            $(terminalSelect).select2({
+                stopsContainer.appendChild(stopDiv);
+
+                // Initialize Select2 for new stop
+                const terminalSelect = stopDiv.querySelector('.terminal-select');
+                $(terminalSelect).select2({
+                    width: 'resolve',
+                    placeholder: 'Select Terminal'
+                });
+
+                // Remove stop and reindex
+                const removeBtn = stopDiv.querySelector('.remove-stop-btn');
+                removeBtn.addEventListener('click', function() {
+                    $(terminalSelect).select2('destroy');
+                    stopDiv.remove();
+                    updateSequences();
+                });
+            }
+
+            // -----------------------------
+            // Update Stop Sequences and Numbers
+            // -----------------------------
+            function updateSequences() {
+                const stopItems = stopsContainer.querySelectorAll('.stop-item');
+
+                stopItems.forEach((item, index) => {
+                    const newIndex = index + 1;
+
+                    // Update hidden sequence input
+                    const sequenceInput = item.querySelector('.sequence-input');
+                    if (sequenceInput) sequenceInput.value = newIndex;
+
+                    // Update badge number
+                    const badge = item.querySelector('.badge');
+                    if (badge) badge.textContent = newIndex;
+
+                    // Update terminal title
+                    const stopHeader = item.querySelector('.stop-header');
+                    if (stopHeader) stopHeader.textContent = `Terminal ${newIndex}`;
+
+                    // Update input names (only for new stops, preserve existing stop IDs)
+                    const stopId = item.getAttribute('data-stop-id');
+                    if (!stopId) {
+                        // This is a new stop, update its name
+                        const inputs = item.querySelectorAll('select, input');
+                        inputs.forEach(input => {
+                            if (input.name && input.name.includes('stops[')) {
+                                input.name = input.name.replace(/stops\[new_\d+\]/, `stops[new_${newIndex}]`);
+                            }
+                        });
+
+                        // Update checkbox IDs and labels for new stops
+                        const checkbox = item.querySelector('.form-check-input');
+                        const label = item.querySelector('.form-check-label');
+                        if (checkbox && label) {
+                            const newId = `online_booking_new_${newIndex}`;
+                            checkbox.id = newId;
+                            label.setAttribute('for', newId);
+                        }
+                    }
+                });
+
+                // Update global counter to reflect actual number of stops
+                stopCounter = stopItems.length;
+            }
+
+            // Initialize Select2 for existing elements
+            $('.select2').select2({
                 width: 'resolve',
-                placeholder: 'Select Terminal'
             });
-
-            // Add event listeners for this stop
-            const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-
-            removeBtn.addEventListener('click', function() {
-                // Destroy Select2 before removing the element
-                $(terminalSelect).select2('destroy');
-                stopDiv.remove();
-                updateSequences();
-            });
-        }
-
-        function updateSequences() {
-            const stopItems = stopsContainer.querySelectorAll('.stop-item');
-            stopItems.forEach((item, index) => {
-                const sequenceInput = item.querySelector('.sequence-input');
-                const badge = item.querySelector('.badge');
-                const stopHeader = item.querySelector('.stop-header');
-                if (sequenceInput) {
-                    sequenceInput.value = index + 1;
-                }
-                if (badge) {
-                    badge.textContent = index + 1;
-                }
-                if (stopHeader) {
-                    stopHeader.textContent = `Stop ${index + 1}`;
-                }
-            });
-        }
-
-        // Initialize Select2 for existing terminal selects
-        $('.terminal-select').select2({
-            width: 'resolve',
-            placeholder: 'Select Terminal'
         });
-    });
-</script>
+    </script>
 @endsection
