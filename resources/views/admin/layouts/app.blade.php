@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>@yield('title' ?? config('app.name'))</title>
-    
+
     @livewireStyles
 
     <!-- Compact Admin UI Styles -->
@@ -310,9 +310,9 @@
     <script src="{{ asset('admin/assets/plugins/simplebar/js/simplebar.min.js') }}"></script>
     <script src="{{ asset('admin/assets/plugins/metismenu/js/metisMenu.min.js') }}"></script>
     <script src="{{ asset('admin/assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js') }}"></script>
-    {{-- <script src="{{ asset('admin/assets/plugins/vectormap/jquery-jvectormap-2.0.2.min.js') }}"></script>
+    <script src="{{ asset('admin/assets/plugins/vectormap/jquery-jvectormap-2.0.2.min.js') }}"></script>
     <script src="{{ asset('admin/assets/plugins/vectormap/jquery-jvectormap-world-mill-en.js') }}"></script>
-    <script src="{{ asset('admin/assets/plugins/chartjs/js/chart.js') }}"></script> --}}
+    <script src="{{ asset('admin/assets/plugins/chartjs/js/chart.js') }}"></script>
     <script src="{{ asset('admin/assets/js/index.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
@@ -322,10 +322,10 @@
     @livewireScripts
     <!--app JS-->
     <script src="{{ asset('admin/assets/js/app.js') }}"></script>
-    
+
     <!-- Laravel Echo for Real-time Updates -->
     @vite(['resources/js/app.js'])
-    
+
     <script>
         function showLoader(show = true, message = "Please wait...") {
             if (show) {
@@ -346,7 +346,8 @@
         $(document).ready(function() {
             function applyCnicMask() {
                 // CNIC Mask: Format 34101-1111111-1 (5 digits - 7 digits - 1 digit)
-                $('input[name="cnic"], input[id="cnic"], input[name*="cnic"], input.cnic-input').not('[data-inputmask-applied]').each(function() {
+                $('input[name="cnic"], input[id="cnic"], input[name*="cnic"], input.cnic-input').not(
+                    '[data-inputmask-applied]').each(function() {
                     if ($(this).attr('type') === 'number') {
                         $(this).attr('type', 'text');
                     }
@@ -363,7 +364,8 @@
 
             function applyPhoneMask() {
                 // Phone Mask: Format 0317-7777777 (4 digits - 7 digits)
-                $('input[name="phone"], input[id="phone"], input[name*="phone"], input.phone-input').not('[data-inputmask-applied]').each(function() {
+                $('input[name="phone"], input[id="phone"], input[name*="phone"], input.phone-input').not(
+                    '[data-inputmask-applied]').each(function() {
                     if ($(this).attr('type') === 'number' || $(this).attr('type') === 'tel') {
                         $(this).attr('type', 'text');
                     }
