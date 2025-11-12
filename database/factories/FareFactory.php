@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\DiscountTypeEnum;
+use App\Enums\FareStatusEnum;
 use App\Models\Fare;
 use App\Models\Terminal;
-use App\Enums\FareStatusEnum;
-use App\Enums\DiscountTypeEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,12 +22,12 @@ class FareFactory extends Factory
      */
     public function definition(): array
     {
-        $baseFare = $this->faker->randomFloat(2, 100, 5000);
+        $baseFare = $this->faker->numberBetween(100, 5000);
         $discountType = $this->faker->randomElement(['flat', 'percent']);
-        $discountValue = $discountType === 'percent' 
-            ? $this->faker->randomFloat(2, 5, 25) 
-            : $this->faker->randomFloat(2, 50, 500);
-        
+        $discountValue = $discountType === 'percent'
+            ? $this->faker->numberBetween(5, 25)
+            : $this->faker->numberBetween(50, 500);
+
         $finalFare = $this->calculateFinalFare($baseFare, $discountType, $discountValue);
 
         return [
@@ -78,8 +78,8 @@ class FareFactory extends Factory
      */
     public function withFlatDiscount(): static
     {
-        $baseFare = $this->faker->randomFloat(2, 100, 5000);
-        $discountValue = $this->faker->randomFloat(2, 50, min(500, $baseFare * 0.3));
+        $baseFare = $this->faker->numberBetween(100, 5000);
+        $discountValue = $this->faker->numberBetween(50, min(500, (int) ($baseFare * 0.3)));
         $finalFare = max(0, $baseFare - $discountValue);
 
         return $this->state(fn (array $attributes) => [
@@ -95,9 +95,9 @@ class FareFactory extends Factory
      */
     public function withPercentDiscount(): static
     {
-        $baseFare = $this->faker->randomFloat(2, 100, 5000);
-        $discountValue = $this->faker->randomFloat(2, 5, 25);
-        $finalFare = max(0, $baseFare - ($baseFare * $discountValue / 100));
+        $baseFare = $this->faker->numberBetween(100, 5000);
+        $discountValue = $this->faker->numberBetween(5, 25);
+        $finalFare = max(0, (int) round($baseFare - ($baseFare * $discountValue / 100)));
 
         return $this->state(fn (array $attributes) => [
             'base_fare' => $baseFare,
@@ -112,7 +112,7 @@ class FareFactory extends Factory
      */
     public function withoutDiscount(): static
     {
-        $baseFare = $this->faker->randomFloat(2, 100, 5000);
+        $baseFare = $this->faker->numberBetween(100, 5000);
 
         return $this->state(fn (array $attributes) => [
             'base_fare' => $baseFare,
@@ -125,15 +125,15 @@ class FareFactory extends Factory
     /**
      * Calculate final fare based on discount
      */
-    private function calculateFinalFare(float $baseFare, string $discountType, float $discountValue): float
+    private function calculateFinalFare(int $baseFare, string $discountType, int $discountValue): int
     {
-        if (!$discountType || !$discountValue) {
+        if (! $discountType || ! $discountValue) {
             return $baseFare;
         }
 
         return match ($discountType) {
             'flat' => max(0, $baseFare - $discountValue),
-            'percent' => max(0, $baseFare - ($baseFare * $discountValue / 100)),
+            'percent' => max(0, (int) round($baseFare - ($baseFare * $discountValue / 100))),
             default => $baseFare,
         };
     }

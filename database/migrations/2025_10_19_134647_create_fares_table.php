@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('from_terminal_id')->constrained('terminals')->onDelete('cascade');
             $table->foreignId('to_terminal_id')->constrained('terminals')->onDelete('cascade');
-            $table->decimal('base_fare', 10, 2);
+            $table->unsignedBigInteger('base_fare');
             $table->string('discount_type')->nullable();
-            $table->decimal('discount_value', 10, 2)->default(0);
-            $table->decimal('final_fare', 10, 2)->default(0);
+            $table->unsignedBigInteger('discount_value')->default(0);
+            $table->unsignedBigInteger('final_fare')->default(0);
             $table->string('currency')->default('PKR');
             $table->string('status')->default(FareStatusEnum::ACTIVE->value);
             $table->timestamps();
@@ -29,7 +29,6 @@ return new class extends Migration
             // Indexes
             $table->index(['from_terminal_id', 'to_terminal_id']);
             $table->index('status');
-            $table->index('final_fare');
 
             // Ensure no duplicate fares for same terminal pair
             $table->unique(['from_terminal_id', 'to_terminal_id'], 'unique_terminal_pair');

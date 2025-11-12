@@ -105,7 +105,7 @@ class DefaultRouteSeeder extends Seeder
             // Auto-generate route code and name from cities
             $baseRouteCode = $fromCity->code.'-'.$toCity->code;
             $routeCode = $baseRouteCode;
-            $routeName = $fromCity->code.' → '.$toCity->code;
+            $routeName = $fromCity->name.' → '.$toCity->name;
 
             // Check if route already exists by city IDs
             $existingRoute = Route::where('from_city_id', $fromCity->id)

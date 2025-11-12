@@ -196,7 +196,7 @@ class BookingController extends Controller
                 return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
-                return '<strong>PKR '.number_format($booking->final_amount, 2).'</strong>';
+                return '<strong>PKR '.number_format($booking->final_amount, 0).'</strong>';
             })
             ->addColumn('channel', function (Booking $booking) {
                 try {

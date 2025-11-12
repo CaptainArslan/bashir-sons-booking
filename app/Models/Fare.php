@@ -29,9 +29,9 @@ class Fare extends Model
     protected function casts(): array
     {
         return [
-            'base_fare' => 'decimal:2',
-            'discount_value' => 'decimal:2',
-            'final_fare' => 'decimal:2',
+            'base_fare' => 'integer',
+            'discount_value' => 'integer',
+            'final_fare' => 'integer',
             'status' => FareStatusEnum::class,
             'discount_type' => DiscountTypeEnum::class,
         ];
@@ -65,14 +65,14 @@ class Fare extends Model
     protected function formattedBaseFare(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->currency.' '.number_format($this->base_fare, 2),
+            get: fn ($value) => $this->currency.' '.number_format($this->base_fare, 0),
         );
     }
 
     protected function formattedFinalFare(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->currency.' '.number_format($this->final_fare, 2),
+            get: fn ($value) => $this->currency.' '.number_format($this->final_fare, 0),
         );
     }
 
@@ -81,7 +81,7 @@ class Fare extends Model
         return Attribute::make(
             get: fn ($value) => $this->discount_type === 'percent'
                 ? $this->discount_value.'%'
-                : $this->currency.' '.number_format($this->discount_value, 2),
+                : $this->currency.' '.number_format($this->discount_value, 0),
         );
     }
 
@@ -102,7 +102,7 @@ class Fare extends Model
     // =============================
     // Methods
     // =============================
-    private function calculateFare(): float
+    private function calculateFare(): int
     {
         if (! $this->discount_type || ! $this->discount_value) {
             return $this->base_fare;
@@ -110,7 +110,7 @@ class Fare extends Model
 
         return match ($this->discount_type) {
             'flat' => max(0, $this->base_fare - $this->discount_value),
-            'percent' => max(0, $this->base_fare - ($this->base_fare * $this->discount_value / 100)),
+            'percent' => max(0, (int) round($this->base_fare - ($this->base_fare * $this->discount_value / 100))),
             default => $this->base_fare,
         };
     }
@@ -121,7 +121,7 @@ class Fare extends Model
         $this->save();
     }
 
-    public function getDiscountAmount(): float
+    public function getDiscountAmount(): int
     {
         if (! $this->discount_type || ! $this->discount_value) {
             return 0;
@@ -129,7 +129,7 @@ class Fare extends Model
 
         return match ($this->discount_type) {
             'flat' => $this->discount_value,
-            'percent' => $this->base_fare * $this->discount_value / 100,
+            'percent' => (int) round($this->base_fare * $this->discount_value / 100),
             default => 0,
         };
     }

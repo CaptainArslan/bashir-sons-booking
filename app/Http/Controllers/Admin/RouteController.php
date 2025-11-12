@@ -263,8 +263,8 @@ class RouteController extends Controller
             $fromCity = City::findOrFail($validated['from_city_id']);
             $toCity = City::findOrFail($validated['to_city_id']);
 
-            $routeCode = $fromCity->code.' '.$toCity->code;
-            $routeName = $fromCity->code.' → '.$toCity->code;
+            $routeCode = $fromCity->code.'-'.$toCity->code;
+            $routeName = $fromCity->name.' → '.$toCity->name;
 
             // Create the route - only include validated fields that exist in the form
             $routeData = [
@@ -382,7 +382,7 @@ class RouteController extends Controller
 
             // Auto-generate route code and name from city codes
             $routeCode = $fromCity->code.'-'.$toCity->code;
-            $routeName = $fromCity->code.' → '.$toCity->code;
+            $routeName = $fromCity->name.' → '.$toCity->name;
 
             // Update the route
             $routeData = [

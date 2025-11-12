@@ -197,7 +197,6 @@
                                            id="base_fare" 
                                            name="base_fare" 
                                            value="{{ old('base_fare') }}" 
-                                           step="0.01" 
                                            min="1" 
                                            max="100000" 
                                            required>
@@ -253,7 +252,6 @@
                                            id="discount_value" 
                                            name="discount_value" 
                                            value="{{ old('discount_value' ?? 0) }}" 
-                                           step="0.01" 
                                            min="0" 
                                            max="100000"
                                            disabled>
@@ -403,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alertDiv.className = 'fare-alert-box info';
                 alertDiv.innerHTML = `
                     <p><i class="bx bx-info-circle me-1"></i><strong>Fare Found!</strong> Loading existing fare data...</p>
-                    <p class="mb-0">Base Fare: ${fare.currency} ${parseFloat(fare.base_fare).toFixed(2)} | Final Fare: ${fare.currency} ${parseFloat(fare.final_fare).toFixed(2)}</p>
+                    <p class="mb-0">Base Fare: ${fare.currency} ${parseInt(fare.base_fare).toLocaleString()} | Final Fare: ${fare.currency} ${parseInt(fare.final_fare).toLocaleString()}</p>
                 `;
 
                 // Hide submit button since fare already exists
@@ -469,9 +467,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function calculateFinalFare() {
-    const baseFare = parseFloat(document.getElementById('base_fare').value) || 0;
+    const baseFare = parseInt(document.getElementById('base_fare').value) || 0;
     const discountType = document.getElementById('discount_type').value;
-    const discountValue = parseFloat(document.getElementById('discount_value').value) || 0;
+    const discountValue = parseInt(document.getElementById('discount_value').value) || 0;
     const currency = document.getElementById('currency').value;
 
     let finalFare = baseFare;
@@ -480,11 +478,11 @@ function calculateFinalFare() {
         if (discountType === 'flat') {
             finalFare = Math.max(0, baseFare - discountValue);
         } else if (discountType === 'percent') {
-            finalFare = Math.max(0, baseFare - (baseFare * discountValue / 100));
+            finalFare = Math.max(0, Math.round(baseFare - (baseFare * discountValue / 100)));
         }
     }
 
-    document.getElementById('final-fare-display').textContent = currency + ' ' + finalFare.toFixed(2);
+    document.getElementById('final-fare-display').textContent = currency + ' ' + finalFare.toLocaleString();
 }
 
 function updateRoutePreview() {

@@ -311,7 +311,7 @@
                 const cityOption = citySelect.selectedOptions[0];
                 const name = nameInput.value.trim();
 
-                if (cityOption && name) {
+                if (cityOption && name) {   
                     const cityName = cityOption.textContent;
                     const cityCode = cityName.substring(0, 3).toUpperCase();
                     const nameCode = name.substring(0, 2).toUpperCase();

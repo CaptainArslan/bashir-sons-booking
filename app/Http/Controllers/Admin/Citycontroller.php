@@ -103,7 +103,7 @@ class Citycontroller extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:cities,name',
-            'code' => 'nullable|string|max:10|unique:cities,code|regex:/^[A-Z0-9]+$/',
+            'code' => 'nullable|string|max:10|unique:cities,code',
             'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
@@ -113,7 +113,6 @@ class Citycontroller extends Controller
             'code.string' => 'City code must be a string',
             'code.max' => 'City code must be less than 10 characters',
             'code.unique' => 'City code must be unique',
-            'code.regex' => 'City code must contain only uppercase letters and numbers',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -122,7 +121,7 @@ class Citycontroller extends Controller
         // Auto-generate code if not provided
         $code = $validated['code'] ?? null;
         if (empty($code)) {
-            $code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 3));
+            $code = strtoupper($validated['name']);
 
             // Ensure uniqueness
             $baseCode = $code;
@@ -154,7 +153,7 @@ class Citycontroller extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:cities,name,'.$id,
-            'code' => 'nullable|string|max:10|unique:cities,code,'.$id.'|regex:/^[A-Z0-9]+$/',
+            'code' => 'nullable|string|max:10|unique:cities,code,'.$id,
             'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
@@ -163,7 +162,6 @@ class Citycontroller extends Controller
             'code.string' => 'City code must be a string',
             'code.max' => 'City code must be less than 10 characters',
             'code.unique' => 'City code must be unique',
-            'code.regex' => 'City code must contain only uppercase letters and numbers',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -174,7 +172,7 @@ class Citycontroller extends Controller
         // Auto-generate code if not provided
         $code = $validated['code'] ?? null;
         if (empty($code)) {
-            $code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 3));
+            $code = strtoupper($validated['name']);
 
             // Ensure uniqueness (exclude current city)
             $baseCode = $code;

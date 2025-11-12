@@ -29,9 +29,9 @@ class BookingSeat extends Model
     {
         return [
             'gender' => GenderEnum::class,
-            'fare' => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'final_amount' => 'decimal:2',
+            'fare' => 'integer',
+            'tax_amount' => 'integer',
+            'final_amount' => 'integer',
             'cancelled_at' => 'datetime',
         ];
     }

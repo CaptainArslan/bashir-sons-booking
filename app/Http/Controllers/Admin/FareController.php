@@ -45,14 +45,14 @@ class FareController extends Controller
                 })
 
                 ->addColumn('fare_info', function ($fare) {
-                    $baseFare = $fare->currency.' '.number_format($fare->base_fare, 2);
-                    $finalFare = $fare->currency.' '.number_format($fare->final_fare, 2);
+                    $baseFare = $fare->currency.' '.number_format($fare->base_fare, 0);
+                    $finalFare = $fare->currency.' '.number_format($fare->final_fare, 0);
 
                     $discountHtml = '';
                     if ($fare->discount_type && $fare->discount_value > 0) {
                         $discount = $fare->discount_type === DiscountTypeEnum::PERCENT->value
                             ? $fare->discount_value.'%'
-                            : $fare->currency.' '.number_format($fare->discount_value, 2);
+                            : $fare->currency.' '.number_format($fare->discount_value, 0);
                         $discountHtml = '<small class="text-success">Discount: '.$discount.'</small>';
                     }
 
@@ -133,10 +133,9 @@ class FareController extends Controller
             ],
             'base_fare' => [
                 'required',
-                'numeric',
+                'integer',
                 'min:1',
                 'max:100000',
-                'regex:/^\d+(\.\d{1,2})?$/',
             ],
             'discount_type' => [
                 'nullable',
@@ -145,9 +144,8 @@ class FareController extends Controller
             ],
             'discount_value' => [
                 'nullable',
-                'numeric',
+                'integer',
                 'min:0',
-                'regex:/^\d+(\.\d{1,2})?$/',
                 'required_if:discount_type,flat,percent',
             ],
             'currency' => [
@@ -162,14 +160,12 @@ class FareController extends Controller
             'to_terminal_id.exists' => 'Selected to terminal does not exist',
             'to_terminal_id.different' => 'To terminal must be different from from terminal',
             'base_fare.required' => 'Base fare is required',
-            'base_fare.numeric' => 'Base fare must be a valid number',
+            'base_fare.integer' => 'Base fare must be a whole number',
             'base_fare.min' => 'Base fare must be at least 1',
             'base_fare.max' => 'Base fare cannot exceed 100,000',
-            'base_fare.regex' => 'Base fare must be a valid currency amount (max 2 decimal places)',
             'discount_type.in' => 'Discount type must be either flat or percent',
-            'discount_value.numeric' => 'Discount value must be a valid number',
+            'discount_value.integer' => 'Discount value must be a whole number',
             'discount_value.min' => 'Discount value cannot be negative',
-            'discount_value.regex' => 'Discount value must be a valid amount (max 2 decimal places)',
             'discount_value.required_if' => 'Discount value is required when discount type is selected',
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
@@ -241,10 +237,9 @@ class FareController extends Controller
             ],
             'base_fare' => [
                 'required',
-                'numeric',
+                'integer',
                 'min:1',
                 'max:100000',
-                'regex:/^\d+(\.\d{1,2})?$/',
             ],
             'discount_type' => [
                 'nullable',
@@ -253,9 +248,8 @@ class FareController extends Controller
             ],
             'discount_value' => [
                 'nullable',
-                'numeric',
+                'integer',
                 'min:0',
-                'regex:/^\d+(\.\d{1,2})?$/',
                 'required_if:discount_type,flat,percent',
             ],
             'currency' => [
@@ -270,14 +264,12 @@ class FareController extends Controller
             'to_terminal_id.exists' => 'Selected to terminal does not exist',
             'to_terminal_id.different' => 'To terminal must be different from from terminal',
             'base_fare.required' => 'Base fare is required',
-            'base_fare.numeric' => 'Base fare must be a valid number',
+            'base_fare.integer' => 'Base fare must be a whole number',
             'base_fare.min' => 'Base fare must be at least 1',
             'base_fare.max' => 'Base fare cannot exceed 100,000',
-            'base_fare.regex' => 'Base fare must be a valid currency amount (max 2 decimal places)',
             'discount_type.in' => 'Discount type must be either flat or percent',
-            'discount_value.numeric' => 'Discount value must be a valid number',
+            'discount_value.integer' => 'Discount value must be a whole number',
             'discount_value.min' => 'Discount value cannot be negative',
-            'discount_value.regex' => 'Discount value must be a valid amount (max 2 decimal places)',
             'discount_value.required_if' => 'Discount value is required when discount type is selected',
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
@@ -382,11 +374,11 @@ class FareController extends Controller
                     'exists' => true,
                     'fare' => [
                         'id' => $fare->id,
-                        'base_fare' => (float) $fare->base_fare,
+                        'base_fare' => (int) $fare->base_fare,
                         'currency' => $fare->currency,
                         'discount_type' => $fare->discount_type?->value,
-                        'discount_value' => (float) $fare->discount_value,
-                        'final_fare' => (float) $fare->final_fare,
+                        'discount_value' => (int) $fare->discount_value,
+                        'final_fare' => (int) $fare->final_fare,
                     ],
                     'message' => 'A fare already exists for this terminal pair.',
                 ]);
@@ -406,7 +398,7 @@ class FareController extends Controller
         }
     }
 
-    private function calculateFinalFare(float $baseFare, ?string $discountType, ?float $discountValue): float
+    private function calculateFinalFare(int $baseFare, ?string $discountType, ?int $discountValue): int
     {
         if (! $discountType || ! $discountValue || $discountValue <= 0) {
             return $baseFare;
@@ -414,7 +406,7 @@ class FareController extends Controller
 
         return match ($discountType) {
             DiscountTypeEnum::FLAT->value => max(0, $baseFare - $discountValue),
-            DiscountTypeEnum::PERCENT->value => max(0, $baseFare - ($baseFare * $discountValue / 100)),
+            DiscountTypeEnum::PERCENT->value => max(0, (int) round($baseFare - ($baseFare * $discountValue / 100))),
             default => $baseFare,
         };
     }
