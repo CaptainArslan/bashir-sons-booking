@@ -163,9 +163,9 @@
                                 @enderror
                                 
                                 @if($isDefaultRole)
-                                    <div class="alert alert-warning mt-2 mb-0">
+                                    <div class="alert alert-info mt-2 mb-0">
                                         <i class="bx bx-info-circle me-2"></i>
-                                        This is a system role and cannot be modified.
+                                        This is a default role. The name cannot be changed, but permissions can be edited.
                                     </div>
                                 @endif
                             </div>
@@ -216,7 +216,7 @@
                             <h5 class="mb-0">
                                 <i class="bx bx-shield-quarter me-2"></i>Assign Permissions
                             </h5>
-                            @if(!$isDefaultRole && $permissions->count() > 0)
+                            @if($permissions->count() > 0)
                                 <div class="btn-group">
                                     <button type="button" id="selectAllBtn" class="btn btn-outline-primary btn-sm">
                                         <i class="bx bx-check-double me-1"></i>Select All
@@ -244,13 +244,11 @@
                                         </div>
                                         <div class="collapse show" id="module-{{ Str::slug($module) }}">
                                             <div class="module-body">
-                                                @if(!$isDefaultRole)
-                                                    <div class="mb-3">
-                                                        <a href="#" class="select-all-link" data-module="{{ Str::slug($module) }}">
-                                                            Select all
-                                                        </a>
-                                                    </div>
-                                                @endif
+                                                <div class="mb-3">
+                                                    <a href="#" class="select-all-link" data-module="{{ Str::slug($module) }}">
+                                                        Select all
+                                                    </a>
+                                                </div>
                                                 <div class="row">
                                                     @foreach ($modulePermissions as $permission)
                                                         <div class="col-md-3 col-sm-6 mb-2">
@@ -261,8 +259,7 @@
                                                                        value="{{ $permission->id }}"
                                                                        id="permission_{{ $permission->id }}"
                                                                        data-module="{{ Str::slug($module) }}"
-                                                                       {{ in_array($permission->id, old('permissions', $role->permissions->pluck('id')->toArray())) ? 'checked' : '' }}
-                                                                       {{ $isDefaultRole ? 'disabled' : '' }}>
+                                                                       {{ in_array($permission->id, old('permissions', $role->permissions->pluck('id')->toArray())) ? 'checked' : '' }}>
                                                                 <label class="form-check-label permission-label" 
                                                                        for="permission_{{ $permission->id }}">
                                                                     {{ ucwords(str_replace('_', ' ', $permission->name)) }}
@@ -293,7 +290,7 @@
                                 </a>
                             </div>
                             <div class="d-flex gap-2">
-                                @if(!$isDefaultRole && $permissions->count() > 0)
+                                @if($permissions->count() > 0)
                                     <button type="button" class="btn btn-secondary px-4" id="resetFormBtn">
                                         <i class="bx bx-reset me-1"></i>Reset
                                     </button>
@@ -335,8 +332,6 @@
 
             // ✅ Helper: Update button states dynamically
             function updateButtonStates() {
-                if (isDefaultRole) return;
-                
                 const checkedCount = document.querySelectorAll('.permission-checkbox:checked').length;
                 const total = checkboxes.length;
 
@@ -358,20 +353,16 @@
             // ✅ Select all permissions
             if (selectAllBtn) {
                 selectAllBtn.addEventListener('click', () => {
-                    if (!isDefaultRole) {
-                        checkboxes.forEach(checkbox => checkbox.checked = true);
-                        updateButtonStates();
-                    }
+                    checkboxes.forEach(checkbox => checkbox.checked = true);
+                    updateButtonStates();
                 });
             }
 
             // ✅ Deselect all permissions
             if (deselectAllBtn) {
                 deselectAllBtn.addEventListener('click', () => {
-                    if (!isDefaultRole) {
-                        checkboxes.forEach(checkbox => checkbox.checked = false);
-                        updateButtonStates();
-                    }
+                    checkboxes.forEach(checkbox => checkbox.checked = false);
+                    updateButtonStates();
                 });
             }
 
@@ -380,24 +371,24 @@
                 resetBtn.addEventListener('click', () => {
                     if (!isDefaultRole) {
                         nameInput.value = '{{ $role->name }}';
-                        // Reset to original role permissions
-                        checkboxes.forEach(checkbox => {
-                            const permissionId = parseInt(checkbox.value);
-                            checkbox.checked = {{ $role->permissions->pluck('id')->toJson() }}.includes(permissionId);
-                        });
-                        nameInput.classList.remove('is-invalid');
-                        nameInput.focus();
-                        updateButtonStates();
                     }
+                    // Reset to original role permissions
+                    checkboxes.forEach(checkbox => {
+                        const permissionId = parseInt(checkbox.value);
+                        checkbox.checked = {{ $role->permissions->pluck('id')->toJson() }}.includes(permissionId);
+                    });
+                    nameInput.classList.remove('is-invalid');
+                    if (!isDefaultRole) {
+                        nameInput.focus();
+                    }
+                    updateButtonStates();
                 });
             }
 
             // ✅ Update button states whenever a checkbox changes
-            if (!isDefaultRole) {
-                checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateButtonStates));
-                // ✅ Initialize state on page load
-                updateButtonStates();
-            }
+            checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateButtonStates));
+            // ✅ Initialize state on page load
+            updateButtonStates();
 
             // ✅ Module collapse toggle animation
             document.querySelectorAll('.module-header').forEach(header => {
@@ -408,25 +399,21 @@
             });
 
             // ✅ Select all for each module
-            if (!isDefaultRole) {
-                document.querySelectorAll('.select-all-link').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const moduleSlug = this.getAttribute('data-module');
-                        const moduleCheckboxes = document.querySelectorAll(
-                            `.permission-checkbox.module-${moduleSlug}`
-                        );
-                        const allChecked = Array.from(moduleCheckboxes).every(cb => cb.checked);
-                        
-                        moduleCheckboxes.forEach(checkbox => {
-                            if (!checkbox.disabled) {
-                                checkbox.checked = !allChecked;
-                            }
-                        });
-                        updateButtonStates();
+            document.querySelectorAll('.select-all-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const moduleSlug = this.getAttribute('data-module');
+                    const moduleCheckboxes = document.querySelectorAll(
+                        `.permission-checkbox.module-${moduleSlug}`
+                    );
+                    const allChecked = Array.from(moduleCheckboxes).every(cb => cb.checked);
+                    
+                    moduleCheckboxes.forEach(checkbox => {
+                        checkbox.checked = !allChecked;
                     });
+                    updateButtonStates();
                 });
-            }
+            });
         });
     </script>
 @endsection

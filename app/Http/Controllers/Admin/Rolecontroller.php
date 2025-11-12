@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -23,6 +24,23 @@ class Rolecontroller extends Controller
         ];
     }
 
+    /**
+     * Check if a role is a default role that cannot be deleted or edited.
+     */
+    private function isDefaultRole(string $roleName): bool
+    {
+        $normalizedRoleName = strtolower(str_replace([' ', '_'], '', $roleName));
+
+        foreach (User::DEFAULT_ROLES as $defaultRole) {
+            $normalizedDefault = strtolower(str_replace([' ', '_'], '', $defaultRole));
+            if ($normalizedRoleName === $normalizedDefault) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function index()
     {
         return view('admin.roles.index');
@@ -34,6 +52,8 @@ class Rolecontroller extends Controller
             $roles = Role::query()
                 ->with(['permissions:id,name'])
                 ->select('id', 'name', 'created_at');
+
+            $controller = $this;
 
             return DataTables::eloquent($roles)
                 ->addColumn('formatted_name', function ($role) {
@@ -54,9 +74,9 @@ class Rolecontroller extends Controller
 
                     return '<span class="badge '.$badgeClass.'">'.$count.' permission'.($count !== 1 ? 's' : '').'</span>';
                 })
-                ->addColumn('actions', function ($role) {
-                    // Only super_admin role is not editable/deletable
-                    $isSuperAdmin = $role->name === 'super_admin';
+                ->addColumn('actions', function ($role) use ($controller) {
+                    // Default roles can have permissions edited but not names, and cannot be deleted
+                    $isDefaultRole = $controller->isDefaultRole($role->name);
 
                     $actions = '<div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
@@ -67,6 +87,7 @@ class Rolecontroller extends Controller
                         </button>
                         <ul class="dropdown-menu">';
 
+                    // Allow editing permissions for all roles (including default roles)
                     if (auth()->user()->can('edit roles')) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
@@ -76,8 +97,8 @@ class Rolecontroller extends Controller
                         </li>';
                     }
 
-                    // Only show delete option for non-super_admin roles
-                    if (! $isSuperAdmin && auth()->user()->can('delete roles')) {
+                    // Only show delete option for non-default roles
+                    if (! $isDefaultRole && auth()->user()->can('delete roles')) {
                         $actions .= '<li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item text-danger" 
@@ -154,8 +175,8 @@ class Rolecontroller extends Controller
         $permissions = Permission::orderBy('module')->orderBy('name')->get();
         $permissionsByModule = $permissions->groupBy('module');
 
-        // Only super_admin role is not editable
-        $isDefaultRole = $role->name === 'super_admin';
+        // Default roles are not editable
+        $isDefaultRole = $this->isDefaultRole($role->name);
 
         return view('admin.roles.edit', compact('role', 'permissions', 'permissionsByModule', 'isDefaultRole'));
     }
@@ -163,12 +184,20 @@ class Rolecontroller extends Controller
     public function update(Request $request, $id)
     {
         $role = Role::findOrFail($id);
+        $isDefaultRole = $this->isDefaultRole($role->name);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name,'.$role->id],
+        // Validation rules
+        $rules = [
             'permissions' => ['required', 'array', 'min:1'],
             'permissions.*' => ['exists:permissions,id'],
-        ], [
+        ];
+
+        // Only validate name if it's not a default role
+        if (! $isDefaultRole) {
+            $rules['name'] = ['required', 'string', 'max:255', 'unique:roles,name,'.$role->id];
+        }
+
+        $validated = $request->validate($rules, [
             'name.required' => 'Role name is required.',
             'name.unique' => 'A role with this name already exists.',
             'permissions.required' => 'Please select at least one permission.',
@@ -176,17 +205,20 @@ class Rolecontroller extends Controller
             'permissions.*.exists' => 'One or more selected permissions are invalid.',
         ]);
 
-        // Only super_admin role is not editable
-        abort_if($role->name === 'super_admin', 403, 'Cannot edit super_admin role.');
-
         try {
             DB::beginTransaction();
-            $role->update([
-                'name' => $validated['name'],
-            ]);
 
+            // Only update name if it's not a default role
+            if (! $isDefaultRole) {
+                $role->update([
+                    'name' => $validated['name'],
+                ]);
+            }
+
+            // Always allow permission updates (including for default roles)
             $permissions = Permission::whereIn('id', $validated['permissions'])->get();
             $role->syncPermissions($permissions);
+
             DB::commit();
 
             return redirect()->route('admin.roles.index')
@@ -205,11 +237,11 @@ class Rolecontroller extends Controller
         try {
             $role = Role::findOrFail($id);
 
-            // Prevent deletion of super_admin role
-            if ($role->name === 'super_admin') {
+            // Prevent deletion of default roles
+            if ($this->isDefaultRole($role->name)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete super_admin role.',
+                    'message' => 'Cannot delete default role.',
                 ], 403);
             }
 
