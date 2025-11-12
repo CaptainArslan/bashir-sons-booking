@@ -116,6 +116,30 @@
                             </div>
                             
                             <div class="col-md-6">
+                                <label for="code" class="form-label">
+                                    City Code
+                                    <small class="text-muted">(Optional - Auto-generated if empty)</small>
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('code') is-invalid @enderror" 
+                                       id="code"
+                                       name="code" 
+                                       placeholder="Enter City Code (e.g., LHR, KHI)" 
+                                       value="{{ old('code') }}"
+                                       style="text-transform: uppercase;"
+                                       maxlength="10">
+                                <div class="form-text">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Code will be auto-generated from city name if left empty (first 3 alphanumeric characters)
+                                </div>
+                                @error('code')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
                                 <label for="status" class="form-label">
                                     Status 
                                     <span class="text-danger">*</span>

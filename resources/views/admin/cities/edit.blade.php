@@ -129,6 +129,30 @@
                             </div>
                             
                             <div class="col-md-6">
+                                <label for="code" class="form-label">
+                                    City Code
+                                    <small class="text-muted">(Optional - Auto-generated if empty)</small>
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('code') is-invalid @enderror" 
+                                       id="code"
+                                       name="code" 
+                                       placeholder="Enter City Code (e.g., LHR, KHI)" 
+                                       value="{{ old('code', $city->code) }}"
+                                       style="text-transform: uppercase;"
+                                       maxlength="10">
+                                <div class="form-text">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Code will be auto-generated from city name if left empty (first 3 alphanumeric characters)
+                                </div>
+                                @error('code')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
                                 <label for="status" class="form-label">
                                     Status 
                                     <span class="text-danger">*</span>
@@ -151,39 +175,7 @@
                             </div>
                         </div>
                         
-                        <!-- City Information Card -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card city-info-card">
-                                    <div class="card-body" style="padding: 0.75rem;">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>City ID:</strong> 
-                                                    <span class="badge bg-secondary">{{ $city->id }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Status:</strong> 
-                                                    <span class="badge bg-{{ $city->status->getStatusColor($city->status->value) }} stats-badge">
-                                                        {{ $city->status->getName() }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Created:</strong> 
-                                                    {{ $city->created_at->format('M d, Y') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                
                     <!-- Action Buttons -->
                     <div class="card-footer bg-light">
                         <div class="d-flex justify-content-between align-items-center">

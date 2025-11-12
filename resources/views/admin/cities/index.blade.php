@@ -78,6 +78,7 @@
                         <tr>
                             <th>ID</th>
                             <th>City Name</th>
+                            <th>City Code</th>
                             <th>Status</th>
                             <th>Created Date</th>
                             @if(auth()->user()->can('edit cities') || auth()->user()->can('delete cities'))
@@ -109,6 +110,10 @@
                     {
                         data: 'formatted_name',
                         name: 'name',
+                    },
+                    {
+                        data: 'code',
+                        name: 'code',
                     },
                     {
                         data: 'status_badge',

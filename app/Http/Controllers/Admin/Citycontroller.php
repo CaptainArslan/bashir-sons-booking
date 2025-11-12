@@ -24,18 +24,21 @@ class Citycontroller extends Controller
             $hasAnyActionPermission = $hasEditPermission || $hasDeletePermission;
 
             $cities = City::query()
-                ->select('id', 'name', 'status', 'created_at');
+                ->select('id', 'name', 'code', 'status', 'created_at');
 
             $dataTable = DataTables::eloquent($cities)
                 ->addColumn('formatted_name', function ($city) {
-                    return '<span class="fw-bold text-primary">' . e($city->name) . '</span>';
+                    return '<div class="d-flex flex-column">
+                                <span class="fw-bold text-primary">'.e($city->name).'</span>
+                                <small class="text-muted">Code: '.e($city->code ?? 'N/A').'</small>
+                            </div>';
                 })
                 ->addColumn('status_badge', function ($city) {
                     $statusValue = $city->status instanceof CityEnum ? $city->status->value : $city->status;
                     $statusName = CityEnum::getStatusName($statusValue);
                     $statusColor = CityEnum::getStatusColor($statusValue);
 
-                    return '<span class="badge bg-' . $statusColor . '">' . e($statusName) . '</span>';
+                    return '<span class="badge bg-'.$statusColor.'">'.e($statusName).'</span>';
                 });
 
             // Only add actions column if user has at least one action permission
@@ -53,7 +56,7 @@ class Citycontroller extends Controller
                     if ($hasEditPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="' . route('admin.cities.edit', $city->id) . '">
+                               href="'.route('admin.cities.edit', $city->id).'">
                                 <i class="bx bx-edit me-2"></i>Edit City
                             </a>
                         </li>';
@@ -66,7 +69,7 @@ class Citycontroller extends Controller
                         $actions .= '<li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteCity(' . $city->id . ')">
+                               onclick="deleteCity('.$city->id.')">
                                 <i class="bx bx-trash me-2"></i>Delete City
                             </a>
                         </li>';
@@ -79,11 +82,11 @@ class Citycontroller extends Controller
             }
 
             return $dataTable
-                ->editColumn('created_at', fn($city) => $city->created_at->format('d M Y'))
+                ->editColumn('created_at', fn ($city) => $city->created_at->format('d M Y'))
                 ->escapeColumns([]) // ensures HTML isn't escaped
-                ->rawColumns($hasAnyActionPermission 
-                    ? ['formatted_name', 'status_badge', 'actions']
-                    : ['formatted_name', 'status_badge']
+                ->rawColumns($hasAnyActionPermission
+                    ? ['formatted_name', 'code', 'status_badge', 'actions']
+                    : ['formatted_name', 'code', 'status_badge']
                 )
                 ->make(true);
         }
@@ -100,19 +103,39 @@ class Citycontroller extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:cities,name',
-            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+            'code' => 'nullable|string|max:10|unique:cities,code|regex:/^[A-Z0-9]+$/',
+            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
             'name.max' => 'City name must be less than 255 characters',
             'name.unique' => 'City name must be unique',
+            'code.string' => 'City code must be a string',
+            'code.max' => 'City code must be less than 10 characters',
+            'code.unique' => 'City code must be unique',
+            'code.regex' => 'City code must contain only uppercase letters and numbers',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
+        // Auto-generate code if not provided
+        $code = $validated['code'] ?? null;
+        if (empty($code)) {
+            $code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 3));
+
+            // Ensure uniqueness
+            $baseCode = $code;
+            $counter = 1;
+            while (City::where('code', $code)->exists()) {
+                $code = $baseCode.$counter;
+                $counter++;
+            }
+        }
+
         City::create([
             'name' => $validated['name'],
+            'code' => $code,
             'status' => $validated['status'],
         ]);
 
@@ -130,20 +153,41 @@ class Citycontroller extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:cities,name,' . $id,
-            'status' => 'required|string|in:' . implode(',', CityEnum::getStatuses()),
+            'name' => 'required|string|max:255|unique:cities,name,'.$id,
+            'code' => 'nullable|string|max:10|unique:cities,code,'.$id.'|regex:/^[A-Z0-9]+$/',
+            'status' => 'required|string|in:'.implode(',', CityEnum::getStatuses()),
         ], [
             'name.required' => 'City name is required',
             'name.string' => 'City name must be a string',
             'name.max' => 'City name must be less than 255 characters',
+            'code.string' => 'City code must be a string',
+            'code.max' => 'City code must be less than 10 characters',
+            'code.unique' => 'City code must be unique',
+            'code.regex' => 'City code must contain only uppercase letters and numbers',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
         ]);
 
         $city = City::findOrFail($id);
+
+        // Auto-generate code if not provided
+        $code = $validated['code'] ?? null;
+        if (empty($code)) {
+            $code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['name']), 0, 3));
+
+            // Ensure uniqueness (exclude current city)
+            $baseCode = $code;
+            $counter = 1;
+            while (City::where('code', $code)->where('id', '!=', $id)->exists()) {
+                $code = $baseCode.$counter;
+                $counter++;
+            }
+        }
+
         $city->update([
             'name' => $validated['name'],
+            'code' => $code,
             'status' => $validated['status'],
         ]);
 

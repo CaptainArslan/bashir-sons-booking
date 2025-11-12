@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RouteStatusEnum;
+use App\Models\City;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
-use App\Enums\RouteStatusEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class RouteSeeder extends Seeder
@@ -18,66 +18,92 @@ class RouteSeeder extends Seeder
     {
         $this->command->info('Creating sample routes...');
 
-        // Get some terminals for creating routes
+        // Get cities
+        $cities = City::where('status', 'active')->get();
+
+        if ($cities->isEmpty()) {
+            $this->command->warn('No cities found. Please run CitySeeder first.');
+
+            return;
+        }
+
+        // Get terminals for creating routes
         $terminals = Terminal::with('city')->where('status', 'active')->get();
 
         if ($terminals->isEmpty()) {
             $this->command->warn('No terminals found. Please run TerminalSeeder first.');
+
             return;
         }
 
-        // Create sample routes
-        $routes = [
-            [
-                'name' => 'Karachi to Lahore Express',
-                'code' => 'KAR-LAH-001',
-                'direction' => 'forward',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
-            [
-                'name' => 'Lahore to Karachi Express',
-                'code' => 'LAH-KAR-001',
-                'direction' => 'return',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
-            [
-                'name' => 'Islamabad to Karachi',
-                'code' => 'ISL-KAR-001',
-                'direction' => 'forward',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
-            [
-                'name' => 'Karachi to Islamabad',
-                'code' => 'KAR-ISL-001',
-                'direction' => 'return',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
-            [
-                'name' => 'Lahore to Peshawar',
-                'code' => 'LAH-PES-001',
-                'direction' => 'forward',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
-            [
-                'name' => 'Peshawar to Lahore',
-                'code' => 'PES-LAH-001',
-                'direction' => 'return',
-                'base_currency' => 'PKR',
-                'status' => RouteStatusEnum::ACTIVE->value,
-            ],
+        // Define routes using city names (will be matched to city codes)
+        $routeDefinitions = [
+            ['from' => 'Lahore', 'to' => 'Faisalabad'],
+            ['from' => 'Faisalabad', 'to' => 'Lahore'],
+            ['from' => 'Islamabad', 'to' => 'Lahore'],
+            ['from' => 'Lahore', 'to' => 'Islamabad'],
+            ['from' => 'Lahore', 'to' => 'Multan'],
+            ['from' => 'Multan', 'to' => 'Lahore'],
+            ['from' => 'Rawalpindi', 'to' => 'Lahore'],
+            ['from' => 'Lahore', 'to' => 'Rawalpindi'],
+            ['from' => 'Gujranwala', 'to' => 'Lahore'],
+            ['from' => 'Lahore', 'to' => 'Gujranwala'],
         ];
 
         $createdRoutes = [];
 
-        foreach ($routes as $routeData) {
-            $route = Route::create($routeData);
+        foreach ($routeDefinitions as $routeDef) {
+            // Find cities by name (case-insensitive)
+            $fromCity = $cities->first(function ($city) use ($routeDef) {
+                return strcasecmp($city->name, $routeDef['from']) === 0;
+            });
+
+            $toCity = $cities->first(function ($city) use ($routeDef) {
+                return strcasecmp($city->name, $routeDef['to']) === 0;
+            });
+
+            if (! $fromCity || ! $toCity) {
+                $this->command->warn("Skipping route: {$routeDef['from']} to {$routeDef['to']} - cities not found");
+
+                continue;
+            }
+
+            // Auto-generate route code and name from cities
+            $baseRouteCode = $fromCity->code.'-'.$toCity->code;
+            $routeCode = $baseRouteCode;
+            $routeName = $fromCity->code.' → '.$toCity->code;
+
+            // Check if route already exists by city IDs
+            $existingRoute = Route::where('from_city_id', $fromCity->id)
+                ->where('to_city_id', $toCity->id)
+                ->first();
+
+            if ($existingRoute) {
+                $this->command->info("Route already exists: {$routeName} ({$routeCode})");
+                $createdRoutes[] = $existingRoute;
+
+                continue;
+            }
+
+            // Ensure route code uniqueness (append number if needed)
+            $counter = 1;
+            while (Route::where('code', $routeCode)->exists()) {
+                $routeCode = $baseRouteCode.$counter;
+                $counter++;
+            }
+
+            $route = Route::create([
+                'from_city_id' => $fromCity->id,
+                'to_city_id' => $toCity->id,
+                'code' => $routeCode,
+                'name' => $routeName,
+                'direction' => 'forward',
+                'base_currency' => 'PKR',
+                'status' => RouteStatusEnum::ACTIVE->value,
+            ]);
+
             $createdRoutes[] = $route;
-            $this->command->info("Created route: {$route->name} ({$route->code})");
+            $this->command->info("Created route: {$routeName} ({$routeCode})");
         }
 
         // Create route stops for each route
@@ -88,8 +114,8 @@ class RouteSeeder extends Seeder
         }
 
         $this->command->info('Route seeding completed!');
-        $this->command->info('Total routes created: ' . Route::count());
-        $this->command->info('Total route stops created: ' . RouteStop::count());
+        $this->command->info('Total routes created: '.Route::count());
+        $this->command->info('Total route stops created: '.RouteStop::count());
     }
 
     /**
@@ -97,11 +123,30 @@ class RouteSeeder extends Seeder
      */
     private function createRouteStops(Route $route, $terminals)
     {
-        // Get terminals based on route direction and cities
-        $routeStops = $this->getRouteStopsForRoute($route, $terminals);
+        // Load city relationships
+        $route->load('fromCity', 'toCity');
 
-        if (empty($routeStops)) {
-            $this->command->warn("No suitable terminals found for route: {$route->name}");
+        if (! $route->fromCity || ! $route->toCity) {
+            $this->command->warn("Route {$route->name} is missing city relationships");
+
+            return;
+        }
+
+        // Get terminals for from and to cities
+        $fromTerminals = $terminals->filter(function ($terminal) use ($route) {
+            return $terminal->city_id === $route->from_city_id;
+        });
+
+        $toTerminals = $terminals->filter(function ($terminal) use ($route) {
+            return $terminal->city_id === $route->to_city_id;
+        });
+
+        // Combine terminals: from city terminals first, then to city terminals
+        $routeStops = $fromTerminals->merge($toTerminals);
+
+        if ($routeStops->isEmpty()) {
+            $this->command->warn("No terminals found for route: {$route->name}");
+
             return;
         }
 
@@ -112,66 +157,12 @@ class RouteSeeder extends Seeder
                 'route_id' => $route->id,
                 'terminal_id' => $terminal->id,
                 'sequence' => $sequence,
+                'online_booking_allowed' => true,
             ]);
 
             $sequence++;
         }
 
-        $this->command->info("Created " . ($sequence - 1) . " stops for route: {$route->name}");
-    }
-
-    /**
-     * Get terminals for a specific route based on route name and direction
-     */
-    private function getRouteStopsForRoute(Route $route, $terminals)
-    {
-        $routeName = strtolower($route->name);
-        $stops = [];
-
-        // Define route patterns
-        if (strpos($routeName, 'karachi to lahore') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['karachi', 'lahore']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Karachi' ? 1 : 2;
-            });
-        } elseif (strpos($routeName, 'lahore to karachi') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['karachi', 'lahore']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Lahore' ? 1 : 2;
-            });
-        } elseif (strpos($routeName, 'islamabad to karachi') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['islamabad', 'karachi']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Islamabad' ? 1 : 2;
-            });
-        } elseif (strpos($routeName, 'karachi to islamabad') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['karachi', 'islamabad']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Karachi' ? 1 : 2;
-            });
-        } elseif (strpos($routeName, 'lahore to peshawar') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['lahore', 'peshawar']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Lahore' ? 1 : 2;
-            });
-        } elseif (strpos($routeName, 'peshawar to lahore') !== false) {
-            $stops = $terminals->filter(function ($terminal) {
-                return in_array(strtolower($terminal->city->name), ['peshawar', 'lahore']);
-            })->sortBy(function ($terminal) {
-                return $terminal->city->name === 'Peshawar' ? 1 : 2;
-            });
-        }
-
-        // If no specific pattern found, create a generic route with first 3 terminals
-        if (empty($stops)) {
-            $stops = $terminals->take(3);
-        }
-
-        return $stops->values();
+        $this->command->info('Created '.($sequence - 1).' stops for route: '.$route->name);
     }
 }
