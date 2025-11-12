@@ -6,6 +6,7 @@ use App\Enums\DiscountTypeEnum;
 use App\Enums\FareStatusEnum;
 use App\Enums\RouteStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Fare;
 use App\Models\Route;
 use App\Models\Terminal;
@@ -36,8 +37,8 @@ class RouteController extends Controller
             $dataTable = DataTables::eloquent($routes)
                 ->addColumn('formatted_name', function ($route) {
                     return '<div class="d-flex flex-column">
-                                <span class="fw-bold text-primary">'.e($route->name).'</span>
-                                <small class="text-muted">Code: '.e($route->code).'</small>
+                                <span class="fw-bold text-primary">' . e($route->name) . '</span>
+                                <small class="text-muted">Code: ' . e($route->code) . '</small>
                             </div>';
                 })
                 ->addColumn('total_fare', function ($route) {
@@ -54,7 +55,7 @@ class RouteController extends Controller
                         $query->whereIn('from_terminal_id', $terminalIds)
                             ->whereIn('to_terminal_id', $terminalIds);
                     })->get()->keyBy(function ($fare) {
-                        return $fare->from_terminal_id.'-'.$fare->to_terminal_id;
+                        return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
                     });
 
                     // Generate all possible stop combinations
@@ -65,17 +66,17 @@ class RouteController extends Controller
                         for ($j = $i + 1; $j < $stopCount; $j++) {
                             $fromStop = $stops[$i];
                             $toStop = $stops[$j];
-                            $key = $fromStop->terminal_id.'-'.$toStop->terminal_id;
+                            $key = $fromStop->terminal_id . '-' . $toStop->terminal_id;
                             $fare = $fares->get($key);
 
                             if ($fare) {
                                 $html .= '<div class="mb-1"><small>';
-                                $html .= '<strong>'.e($fromStop->terminal->code).'</strong> → <strong>'.e($toStop->terminal->code).'</strong>: ';
-                                $html .= '<span class="badge bg-primary">'.$fare->final_fare.' '.$fare->currency.'</span>';
+                                $html .= '<strong>' . e($fromStop->terminal->code) . '</strong> → <strong>' . e($toStop->terminal->code) . '</strong>: ';
+                                $html .= '<span class="badge bg-primary">' . $fare->final_fare . ' ' . $fare->currency . '</span>';
                                 $html .= '</small></div>';
                             } else {
                                 $html .= '<div class="mb-1"><small>';
-                                $html .= '<strong>'.e($fromStop->terminal->code).'</strong> → <strong>'.e($toStop->terminal->code).'</strong>: ';
+                                $html .= '<strong>' . e($fromStop->terminal->code) . '</strong> → <strong>' . e($toStop->terminal->code) . '</strong>: ';
                                 $html .= '<span class="badge bg-danger" title="No fare configured">❌ Not Set</span>';
                                 $html .= '</small></div>';
                             }
@@ -90,7 +91,7 @@ class RouteController extends Controller
                     $count = $route->routeStops()->count();
                     $badgeClass = $count > 0 ? 'bg-success' : 'bg-secondary';
 
-                    return '<span class="badge '.$badgeClass.'">'.$count.' stop'.($count !== 1 ? 's' : '').'</span>';
+                    return '<span class="badge ' . $badgeClass . '">' . $count . ' stop' . ($count !== 1 ? 's' : '') . '</span>';
                 })
                 ->addColumn('status_badge', function ($route) {
                     $statusValue = $route->status instanceof RouteStatusEnum ? $route->status->value : $route->status;
@@ -114,7 +115,7 @@ class RouteController extends Controller
                     if ($hasEditPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="'.route('admin.routes.edit', $route->id).'">
+                               href="' . route('admin.routes.edit', $route->id) . '">
                                 <i class="bx bx-edit me-2"></i>Edit Route
                             </a>
                         </li>';
@@ -124,7 +125,7 @@ class RouteController extends Controller
                     if ($hasViewPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="'.route('admin.routes.stops', $route->id).'">
+                               href="' . route('admin.routes.stops', $route->id) . '">
                                 <i class="bx bx-map me-2"></i>Manage Stops
                             </a>
                         </li>';
@@ -134,7 +135,7 @@ class RouteController extends Controller
                     if ($hasEditPermission) {
                         $actions .= '<li>
                             <a class="dropdown-item" 
-                               href="'.route('admin.routes.manage-fares', $route->id).'">
+                               href="' . route('admin.routes.manage-fares', $route->id) . '">
                                 <i class="bx bx-money me-2"></i>Manage Fares
                             </a>
                         </li>';
@@ -149,7 +150,7 @@ class RouteController extends Controller
                         $actions .= '<li>
                             <a class="dropdown-item text-danger" 
                                href="javascript:void(0)" 
-                               onclick="deleteRoute('.$route->id.')">
+                               onclick="deleteRoute(' . $route->id . ')">
                                 <i class="bx bx-trash me-2"></i>Delete Route
                             </a>
                         </li>';
@@ -162,11 +163,12 @@ class RouteController extends Controller
             }
 
             return $dataTable
-                ->editColumn('created_at', fn ($route) => $route->created_at->format('d M Y'))
+                ->editColumn('created_at', fn($route) => $route->created_at->format('d M Y'))
                 ->escapeColumns([])
-                ->rawColumns($hasAnyActionPermission
-                    ? ['formatted_name', 'total_fare', 'stops_count', 'status_badge', 'actions']
-                    : ['formatted_name', 'total_fare', 'stops_count', 'status_badge']
+                ->rawColumns(
+                    $hasAnyActionPermission
+                        ? ['formatted_name', 'total_fare', 'stops_count', 'status_badge', 'actions']
+                        : ['formatted_name', 'total_fare', 'stops_count', 'status_badge']
                 )
                 ->make(true);
         }
@@ -174,38 +176,28 @@ class RouteController extends Controller
 
     public function create()
     {
-        $currencies = ['PKR'];
         $statuses = RouteStatusEnum::getStatusOptions();
+        $cities = City::where('status', 'active')->orderBy('name')->get();
         $terminals = Terminal::with('city')->where('status', 'active')->get();
-
         return view('admin.routes.create', get_defined_vars());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => [
+            'from_city_id' => [
                 'required',
-                'string',
-                'max:20',
-                'min:3',
-                'unique:routes,code',
+                'exists:cities,id',
             ],
-            'name' => [
+            'to_city_id' => [
                 'required',
-                'string',
-                'max:255',
-                'min:3',
-            ],
-            'base_currency' => [
-                'required',
-                'string',
-                'in:PKR',
+                'exists:cities,id',
+                'different:from_city_id',
             ],
             'status' => [
                 'required',
                 'string',
-                'in:'.implode(',', RouteStatusEnum::getStatuses()),
+                'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
             'stops' => [
                 'required',
@@ -227,20 +219,13 @@ class RouteController extends Controller
                 'boolean',
             ],
         ], [
-            'code.required' => 'Route code is required',
-            'code.string' => 'Route code must be a string',
-            'code.max' => 'Route code cannot exceed 20 characters',
-            'code.min' => 'Route code must be at least 3 characters',
-            'code.unique' => 'Route code already exists. Please choose a different code',
-            'name.required' => 'Route name is required',
-            'name.string' => 'Route name must be a string',
-            'name.max' => 'Route name cannot exceed 255 characters',
-            'name.min' => 'Route name must be at least 3 characters',
-            'base_currency.required' => 'Base currency is required',
-            'base_currency.string' => 'Base currency must be a string',
-            'base_currency.in' => 'Base currency must be PKR',
+            'from_city_id.required' => 'From city is required',
+            'from_city_id.exists' => 'Selected from city does not exist',
+            'to_city_id.required' => 'To city is required',
+            'to_city_id.exists' => 'Selected to city does not exist',
+            'to_city_id.different' => 'From city and To city must be different',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: '.implode(', ', RouteStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
             'stops.required' => 'At least 2 stops are required for a route',
             'stops.min' => 'A route must have at least 2 stops',
             'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
@@ -255,11 +240,23 @@ class RouteController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create the route - only include validated fields that exist in the form
+            // Get cities
+            $fromCity = City::findOrFail($validated['from_city_id']);
+            $toCity = City::findOrFail($validated['to_city_id']);
+
+            // Auto-generate route code from city terminal codes
+            $routeCode = $this->generateRouteCode($fromCity, $toCity);
+
+            // Auto-generate route name from city names
+            $routeName = $fromCity->name . ' to ' . $toCity->name;
+
+            // Create the route
             $routeData = [
-                'code' => $validated['code'],
-                'name' => $validated['name'],
-                'base_currency' => $validated['base_currency'],
+                'from_city_id' => $validated['from_city_id'],
+                'to_city_id' => $validated['to_city_id'],
+                'code' => $routeCode,
+                'name' => $routeName,
+                'base_currency' => 'PKR',
                 'status' => $validated['status'],
                 'direction' => 'forward',
                 'is_return_of' => null,
@@ -283,22 +280,37 @@ class RouteController extends Controller
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route created successfully with '.count($stops).' stops!');
+                ->with('success', 'Route created successfully with ' . count($stops) . ' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create route: '.$e->getMessage());
+                ->with('error', 'Failed to create route: ' . $e->getMessage());
         }
     }
 
     public function edit($id)
     {
-        $route = Route::with(['routeStops.terminal.city'])->findOrFail($id);
-        $currencies = ['PKR'];
+        $route = Route::with(['routeStops.terminal.city', 'fromCity', 'toCity'])->findOrFail($id);
         $statuses = RouteStatusEnum::getStatusOptions();
+        $cities = City::with(['terminals' => function ($query) {
+            $query->where('status', 'active')->orderBy('id');
+        }])->where('status', 'active')->orderBy('name')->get();
         $terminals = Terminal::with('city')->where('status', 'active')->get();
+
+        // Prepare cities data for JavaScript
+        $citiesData = $cities->mapWithKeys(function ($city) {
+            $firstTerminal = $city->terminals->first();
+            $terminalCode = $firstTerminal && $firstTerminal->code
+                ? strtoupper(substr($firstTerminal->code, 0, 3))
+                : strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $city->name), 0, 3));
+
+            return [$city->id => [
+                'name' => $city->name,
+                'code' => $terminalCode,
+            ]];
+        });
 
         return view('admin.routes.edit', get_defined_vars());
     }
@@ -308,28 +320,19 @@ class RouteController extends Controller
         $route = Route::findOrFail($id);
 
         $validated = $request->validate([
-            'code' => [
+            'from_city_id' => [
                 'required',
-                'string',
-                'max:20',
-                'min:3',
-                'unique:routes,code,'.$route->id,
+                'exists:cities,id',
             ],
-            'name' => [
+            'to_city_id' => [
                 'required',
-                'string',
-                'max:255',
-                'min:3',
-            ],
-            'base_currency' => [
-                'required',
-                'string',
-                'in:PKR',
+                'exists:cities,id',
+                'different:from_city_id',
             ],
             'status' => [
                 'required',
                 'string',
-                'in:'.implode(',', RouteStatusEnum::getStatuses()),
+                'in:' . implode(',', RouteStatusEnum::getStatuses()),
             ],
             'stops' => [
                 'required',
@@ -351,20 +354,13 @@ class RouteController extends Controller
                 'boolean',
             ],
         ], [
-            'code.required' => 'Route code is required',
-            'code.string' => 'Route code must be a string',
-            'code.max' => 'Route code cannot exceed 20 characters',
-            'code.min' => 'Route code must be at least 3 characters',
-            'code.unique' => 'Route code already exists. Please choose a different code',
-            'name.required' => 'Route name is required',
-            'name.string' => 'Route name must be a string',
-            'name.max' => 'Route name cannot exceed 255 characters',
-            'name.min' => 'Route name must be at least 3 characters',
-            'base_currency.required' => 'Base currency is required',
-            'base_currency.string' => 'Base currency must be a string',
-            'base_currency.in' => 'Base currency must be PKR',
+            'from_city_id.required' => 'From city is required',
+            'from_city_id.exists' => 'Selected from city does not exist',
+            'to_city_id.required' => 'To city is required',
+            'to_city_id.exists' => 'Selected to city does not exist',
+            'to_city_id.different' => 'From city and To city must be different',
             'status.required' => 'Status is required',
-            'status.in' => 'Status must be one of: '.implode(', ', RouteStatusEnum::getStatuses()),
+            'status.in' => 'Status must be one of: ' . implode(', ', RouteStatusEnum::getStatuses()),
             'stops.required' => 'At least 2 stops are required for a route',
             'stops.min' => 'A route must have at least 2 stops',
             'stops.*.terminal_id.required' => 'Terminal selection is required for each stop',
@@ -379,11 +375,23 @@ class RouteController extends Controller
         try {
             DB::beginTransaction();
 
-            // Update the route - only include validated fields that exist in the form
+            // Get cities
+            $fromCity = City::findOrFail($validated['from_city_id']);
+            $toCity = City::findOrFail($validated['to_city_id']);
+
+            // Auto-generate route code from city terminal codes
+            $routeCode = $this->generateRouteCode($fromCity, $toCity);
+
+            // Auto-generate route name from city names
+            $routeName = $fromCity->name . ' to ' . $toCity->name;
+
+            // Update the route
             $routeData = [
-                'code' => $validated['code'],
-                'name' => $validated['name'],
-                'base_currency' => $validated['base_currency'],
+                'from_city_id' => $validated['from_city_id'],
+                'to_city_id' => $validated['to_city_id'],
+                'code' => $routeCode,
+                'name' => $routeName,
+                'base_currency' => 'PKR',
                 'status' => $validated['status'],
                 'direction' => 'forward',
                 'is_return_of' => null,
@@ -430,13 +438,13 @@ class RouteController extends Controller
             DB::commit();
 
             return redirect()->route('admin.routes.index')
-                ->with('success', 'Route updated successfully with '.count($stops).' stops!');
+                ->with('success', 'Route updated successfully with ' . count($stops) . ' stops!');
         } catch (\Exception $e) {
             DB::rollBack();
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to update route: '.$e->getMessage());
+                ->with('error', 'Failed to update route: ' . $e->getMessage());
         }
     }
 
@@ -488,12 +496,12 @@ class RouteController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error deleting route: '.$e->getMessage(),
+                    'message' => 'Error deleting route: ' . $e->getMessage(),
                 ], 500);
             }
 
             return redirect()->route('admin.routes.index')
-                ->with('error', 'Error deleting route: '.$e->getMessage());
+                ->with('error', 'Error deleting route: ' . $e->getMessage());
         }
     }
 
@@ -762,7 +770,7 @@ class RouteController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terminal already exists in this route at sequence '.$existingStop->sequence.'.',
+                    'message' => 'Terminal already exists in this route at sequence ' . $existingStop->sequence . '.',
                 ], 400);
             }
 
@@ -917,7 +925,7 @@ class RouteController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching stop data: '.$e->getMessage(),
+                'message' => 'Error fetching stop data: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -932,7 +940,7 @@ class RouteController extends Controller
 
         // Get existing fares for this route
         $existingFares = Fare::forRoute($id)->get()->keyBy(function ($fare) {
-            return $fare->from_terminal_id.'-'.$fare->to_terminal_id;
+            return $fare->from_terminal_id . '-' . $fare->to_terminal_id;
         });
 
         return view('admin.routes.manage-fares', compact('route', 'stops', 'stopCombinations', 'existingFares'));
@@ -994,7 +1002,7 @@ class RouteController extends Controller
             DB::rollBack();
 
             return redirect()->back()
-                ->with('error', 'Error updating fares: '.$e->getMessage())
+                ->with('error', 'Error updating fares: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -1022,5 +1030,44 @@ class RouteController extends Controller
         }
 
         return collect($combinations);
+    }
+
+    /**
+     * Generate route code from city terminal codes
+     * Uses first terminal code from each city, or first 3 letters of city name if no terminals
+     */
+    private function generateRouteCode(City $fromCity, City $toCity): string
+    {
+        // Get first terminal code from from city
+        $fromTerminal = $fromCity->terminals()->where('status', 'active')->orderBy('id')->first();
+        $fromCode = $fromTerminal && $fromTerminal->code
+            ? strtoupper(substr($fromTerminal->code, 0, 3))
+            : strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $fromCity->name), 0, 3));
+
+        // Get first terminal code from to city
+        $toTerminal = $toCity->terminals()->where('status', 'active')->orderBy('id')->first();
+        $toCode = $toTerminal && $toTerminal->code
+            ? strtoupper(substr($toTerminal->code, 0, 3))
+            : strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $toCity->name), 0, 3));
+
+        // Ensure codes are at least 2 characters
+        if (strlen($fromCode) < 2) {
+            $fromCode = strtoupper(substr($fromCity->name, 0, 2));
+        }
+        if (strlen($toCode) < 2) {
+            $toCode = strtoupper(substr($toCity->name, 0, 2));
+        }
+
+        $baseCode = $fromCode . '-' . $toCode;
+
+        // Check if code already exists, if so append a number
+        $counter = 1;
+        $routeCode = $baseCode;
+        while (Route::where('code', $routeCode)->exists()) {
+            $routeCode = $baseCode . '-' . $counter;
+            $counter++;
+        }
+
+        return $routeCode;
     }
 }

@@ -16,6 +16,8 @@ class Route extends Model
 
     protected $fillable = [
         'operator_id',
+        'from_city_id',
+        'to_city_id',
         'code',
         'name',
         'direction',
@@ -45,6 +47,16 @@ class Route extends Model
     public function operator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'operator_id');
+    }
+
+    public function fromCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'from_city_id');
+    }
+
+    public function toCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'to_city_id');
     }
 
     public function returnRoute(): BelongsTo
