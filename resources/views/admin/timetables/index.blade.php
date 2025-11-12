@@ -67,16 +67,6 @@
             background: #f8f9fa;
             padding: 0.75rem 1rem;
             border-bottom: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .timetable-header:hover {
-            background: #e9ecef;
-        }
-        
-        .timetable-header.collapsed {
-            border-bottom: none;
         }
         
         .timetable-title {
@@ -96,14 +86,6 @@
             margin-right: 0.75rem;
         }
         
-        .collapse-icon {
-            transition: transform 0.2s;
-            font-size: 0.9rem;
-        }
-        
-        .timetable-header.collapsed .collapse-icon {
-            transform: rotate(-90deg);
-        }
         
         .status-badge {
             padding: 0.4rem 0.8rem;
@@ -157,10 +139,6 @@
         }
         
         .timetable-body {
-            display: none;
-        }
-        
-        .timetable-body.show {
             display: block;
         }
         
@@ -432,35 +410,31 @@ function displayTimetables(timetables) {
     let html = '';
     
     timetables.forEach(function(timetable, index) {
-        const collapseId = `collapse-${timetable.id}`;
         html += `
             <div class="timetable-group">
                 <!-- Timetable Header -->
-                <div class="timetable-header collapsed" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false">
+                <div class="timetable-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2 flex-grow-1">
-                            <i class="bx bx-chevron-down collapse-icon"></i>
-                            <div class="flex-grow-1">
-                                <h3 class="timetable-title mb-0">
-                                    ${timetable.route_name} <span class="text-muted">(${timetable.route_code})</span>
-                                </h3>
-                                <div class="timetable-meta">
-                                    <span class="meta-item">
-                                        <i class="fas fa-map-marker-alt me-1"></i>
-                                        ${timetable.start_terminal} → ${timetable.end_terminal}
-                                    </span>
-                                    <span class="meta-item">
-                                        <i class="fas fa-clock me-1"></i>
-                                        ${timetable.start_departure_time || 'N/A'}
-                                    </span>
-                                    <span class="meta-item">
-                                        <i class="fas fa-list-ol me-1"></i>
-                                        ${timetable.total_stops} stops
-                                    </span>
-                                </div>
+                        <div class="flex-grow-1">
+                            <h3 class="timetable-title mb-0">
+                                ${timetable.route_name} <span class="text-muted">(${timetable.route_code})</span>
+                            </h3>
+                            <div class="timetable-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    ${timetable.start_terminal} → ${timetable.end_terminal}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-clock me-1"></i>
+                                    ${timetable.start_departure_time || 'N/A'}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-list-ol me-1"></i>
+                                    ${timetable.total_stops} stops
+                                </span>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
+                        <div class="d-flex align-items-center gap-2">
                             <span class="status-badge ${timetable.status === 'active' ? 'active' : 'inactive'}">
                                 ${timetable.status}
                             </span>
@@ -520,7 +494,7 @@ function displayTimetables(timetables) {
                 </div>
                 
                 <!-- Stops Table -->
-                <div class="collapse timetable-body" id="${collapseId}">
+                <div class="timetable-body">
                     <div class="p-2">
                         <table class="stops-table">
                             <thead>
@@ -546,13 +520,6 @@ function displayTimetables(timetables) {
     });
     
     $('#timetables-list').html(html);
-    
-    // Initialize collapse behavior
-    $('.timetable-header').on('click', function() {
-        const target = $(this).data('bs-target');
-        const isExpanded = $(target).hasClass('show');
-        $(this).toggleClass('collapsed', !isExpanded);
-    });
 }
 
 function generateStopsTableRows(stops, timetableId) {
@@ -945,15 +912,6 @@ $('#filterSearch').on('keypress', function(e) {
     if (e.which === 13) {
         applyFilters();
     }
-});
-
-// Initialize collapse icons
-$(document).on('shown.bs.collapse', '.collapse', function() {
-    $(this).closest('.timetable-group').find('.timetable-header').removeClass('collapsed');
-});
-
-$(document).on('hidden.bs.collapse', '.collapse', function() {
-    $(this).closest('.timetable-group').find('.timetable-header').addClass('collapsed');
 });
 </script>
 @endsection
