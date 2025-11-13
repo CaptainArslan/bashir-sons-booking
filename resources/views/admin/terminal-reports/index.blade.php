@@ -31,70 +31,132 @@
             </div>
         </div>
         <div class="collapse show" id="filterCollapse">
-            <div class="card-body bg-light">
-            <div class="row g-3">
-                @if ($canSelectTerminal)
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">
-                            <i class="bx bx-building"></i> Terminal <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select form-select-sm" id="terminalSelect" required>
-                            <option value="">-- Select Terminal --</option>
-                            @foreach ($terminals as $terminal)
-                                <option value="{{ $terminal->id }}">{{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}</option>
-                            @endforeach
-                        </select>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Date Range & Terminal Section -->
+                    <div class="col-lg-12 mb-3">
+                        <h6 class="text-muted mb-3 fw-semibold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bx bx-calendar"></i> Date Range & Terminal
+                        </h6>
+                        <div class="row g-2">
+                            @if ($canSelectTerminal)
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">
+                                        <i class="bx bx-building"></i> Terminal <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-select-sm" id="terminalSelect" required>
+                                        <option value="">-- Select Terminal --</option>
+                                        @foreach ($terminals as $terminal)
+                                            <option value="{{ $terminal->id }}">{{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @else
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">
+                                        <i class="bx bx-building"></i> Terminal
+                                    </label>
+                                    @php
+                                        $terminal = $terminals->first();
+                                    @endphp
+                                    <input type="text" class="form-control form-control-sm"
+                                        value="{{ ($terminal ? $terminal->name . ($terminal->code ? ' (' . $terminal->code . ')' : '') : 'N/A') }}"
+                                        readonly>
+                                    <input type="hidden" id="terminalSelect" value="{{ $terminal->id ?? '' }}">
+                                </div>
+                            @endif
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-calendar"></i> Start Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control form-control-sm" id="startDate"
+                                    value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-calendar"></i> End Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control form-control-sm" id="endDate" value="{{ date('Y-m-d') }}" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-user"></i> User (Booked By)
+                                </label>
+                                <select class="form-select form-select-sm" id="filterUser">
+                                    @if ($canViewAllReports)
+                                        <option value="">All Users</option>
+                                    @endif
+                                    @foreach ($users as $reportUser)
+                                        <option value="{{ $reportUser->id }}" {{ isset($selectedUserId) && (string) $selectedUserId === (string) $reportUser->id ? 'selected' : '' }}>
+                                            {{ $reportUser->name }}{{ $reportUser->email ? ' (' . $reportUser->email . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                @else
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">
-                            <i class="bx bx-building"></i> Terminal
-                        </label>
-                        @php
-                            $terminal = $terminals->first();
-                        @endphp
-                        <input type="text" class="form-control form-control-sm"
-                            value="{{ ($terminal ? $terminal->name . ($terminal->code ? ' (' . $terminal->code . ')' : '') : 'N/A') }}"
-                            readonly>
-                        <input type="hidden" id="terminalSelect" value="{{ $terminal->id ?? '' }}">
+
+                    <!-- Status & Payment Filters -->
+                    <div class="col-lg-12 mb-3">
+                        <h6 class="text-muted mb-3 fw-semibold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bx bx-filter"></i> Status & Payment Filters
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Booking Status</label>
+                                <select class="form-select form-select-sm" id="filterStatus">
+                                    <option value="">All Status</option>
+                                    @foreach ($bookingStatuses as $status)
+                                        <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Payment Status</label>
+                                <select class="form-select form-select-sm" id="filterPaymentStatus">
+                                    <option value="">All Payments</option>
+                                    @foreach ($paymentStatuses as $status)
+                                        <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Payment Method</label>
+                                <select class="form-select form-select-sm" id="filterPaymentMethod">
+                                    <option value="">All Methods</option>
+                                    @foreach ($paymentMethods as $method)
+                                        @if($method['value'] !== 'other')
+                                            <option value="{{ $method['value'] }}">{{ $method['label'] }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Channel</label>
+                                <select class="form-select form-select-sm" id="filterChannel">
+                                    <option value="">All Channels</option>
+                                    @foreach ($channels as $channel)
+                                        <option value="{{ $channel->value }}">{{ $channel->getLabel() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                @endif
 
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">
-                        <i class="bx bx-calendar"></i> Start Date <span class="text-danger">*</span>
-                    </label>
-                    <input type="date" class="form-control form-control-sm" id="startDate"
-                        value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">
-                        <i class="bx bx-calendar"></i> End Date <span class="text-danger">*</span>
-                    </label>
-                    <input type="date" class="form-control form-control-sm" id="endDate" value="{{ date('Y-m-d') }}" required>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">
-                        <i class="bx bx-user"></i> User (Booked By)
-                    </label>
-                    <select class="form-select form-select-sm" id="filterUser">
-                        @if ($canViewAllReports)
-                            <option value="">All Users</option>
-                        @endif
-                        @foreach ($users as $reportUser)
-                            <option value="{{ $reportUser->id }}" {{ isset($selectedUserId) && (string) $selectedUserId === (string) $reportUser->id ? 'selected' : '' }}>
-                                {{ $reportUser->name }}{{ $reportUser->email ? ' (' . $reportUser->email . ')' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button class="btn btn-primary btn-sm flex-grow-1" onclick="loadReport()">
-                        <i class="bx bx-search"></i> Generate Report
-                    </button>
+                    <!-- Action Buttons -->
+                    <div class="col-lg-12 mt-3 pt-3 border-top">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="loadReport()">
+                                <i class="bx bx-search"></i> Generate Report
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                                <i class="bx bx-refresh"></i> Reset Filters
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -110,6 +172,7 @@
 
     <!-- Report Content -->
     <div id="reportContent" style="display: none;">
+
         <!-- Summary Statistics Cards -->
         <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
             <div class="col">
@@ -118,7 +181,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-1 text-secondary small">Total Revenue</p>
-                                <h4 class="mb-0 fw-bold text-primary" id="totalRevenue">PKR 0.00</h4>
+                                <h4 class="mb-0 fw-bold text-primary" id="totalRevenue">PKR 0</h4>
                                 <small class="text-muted">From bookings</small>
                             </div>
                             <div class="widgets-icons-2 rounded-circle bg-light-primary text-primary ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -152,7 +215,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-1 text-secondary small">Total Expenses</p>
-                                <h4 class="mb-0 fw-bold text-warning" id="totalExpenses">PKR 0.00</h4>
+                                <h4 class="mb-0 fw-bold text-warning" id="totalExpenses">PKR 0</h4>
                                 <small class="text-muted">Terminal expenses</small>
                             </div>
                             <div class="widgets-icons-2 rounded-circle bg-light-warning text-warning ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -169,7 +232,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <p class="mb-1 text-secondary small">Net Profit</p>
-                                <h4 class="mb-0 fw-bold text-info" id="netProfit">PKR 0.00</h4>
+                                <h4 class="mb-0 fw-bold text-info" id="netProfit">PKR 0</h4>
                                 <small class="text-muted">Revenue - Expenses</small>
                             </div>
                             <div class="widgets-icons-2 rounded-circle bg-light-info text-info ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -310,44 +373,86 @@
             </div>
         </div>
 
-        <!-- Bookings Table -->
+        <!-- Bookings Table with DataTable -->
         <div class="card shadow-sm mb-4 border-0">
             <div class="card-header bg-white border-bottom py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-bold">
                         <i class="bx bx-list-ul text-primary"></i> Bookings from This Terminal
                     </h6>
-                    <span class="badge bg-light text-dark" id="bookingsTableCount">0 records</span>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                    <table class="table table-hover table-striped table-sm mb-0" id="bookingsTable">
-                        <thead class="table-light sticky-top">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0" id="bookingsTable">
+                        <thead class="table-light">
                             <tr>
-                                <th class="small">Booking #</th>
-                                <th class="small">Date & Time</th>
-                                <th class="small">From → To</th>
-                                <th class="small">Channel</th>
-                                <th class="small">Status</th>
-                                <th class="small">Payment Method</th>
-                                <th class="small">Payment Status</th>
-                                <th class="small text-end">Fare</th>
-                                <th class="small text-end">Discount</th>
-                                <th class="small text-end">Tax</th>
-                                <th class="small text-end">Final Amount</th>
-                                <th class="small">Passengers</th>
-                                <th class="small">Booked By</th>
+                                <th><i class="bx bx-ticket"></i> Booking #</th>
+                                <th><i class="bx bx-calendar"></i> Date & Time</th>
+                                <th><i class="bx bx-route"></i> Route</th>
+                                <th><i class="bx bx-chair"></i> Seats</th>
+                                <th><i class="bx bx-store"></i> Channel</th>
+                                <th><i class="bx bx-check-circle"></i> Status</th>
+                                <th><i class="bx bx-credit-card"></i> Payment Method</th>
+                                <th><i class="bx bx-credit-card"></i> Payment Status</th>
+                                <th><i class="bx bx-money"></i> Amount</th>
+                                <th><i class="bx bx-user"></i> Booked By</th>
                             </tr>
                         </thead>
-                        <tbody id="bookingsTableBody">
-                            <tr>
-                                <td colspan="13" class="text-center text-muted py-3 small">
-                                    No data available. Please generate a report.
-                                </td>
-                            </tr>
+                        <tbody>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash Summary Table -->
+        <div class="card shadow-sm mb-4 border-0 border-start border-4 border-success">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bx bx-money text-success"></i> Daily Cash Summary Report
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0" id="cashSummaryTable">
+                        <thead class="table-success">
+                            <tr>
+                                <th class="text-center" style="width: 20%;">Employee / Terminal</th>
+                                <th class="text-center" style="width: 20%;">Total Sales (PKR)</th>
+                                <th class="text-center" style="width: 20%;">Cash in Hand (PKR)</th>
+                                <th class="text-center" style="width: 20%;">Total Expenses (PKR)</th>
+                                <th class="text-center" style="width: 20%;">Net Balance / Remaining Cash (PKR)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold" id="summaryEmployeeName">-</td>
+                                <td class="text-end fw-bold text-primary" id="summaryTotalSales">PKR 0</td>
+                                <td class="text-end fw-bold text-success" id="summaryCashInHand">PKR 0</td>
+                                <td class="text-end fw-bold text-danger" id="summaryTotalExpenses">PKR 0</td>
+                                <td class="text-end fw-bold text-info" id="summaryNetBalance">PKR 0</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-secondary">
+                            <tr>
+                                <td class="fw-bold">Summary:</td>
+                                <td class="text-end fw-bold" id="footerTotalSales">PKR 0</td>
+                                <td class="text-end fw-bold" id="footerCashInHand">PKR 0</td>
+                                <td class="text-end fw-bold" id="footerTotalExpenses">PKR 0</td>
+                                <td class="text-end fw-bold" id="footerNetBalance">PKR 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="card-body bg-light border-top">
+                    <div class="row g-2">
+                        <div class="col-md-12">
+                            <small class="text-muted">
+                                <strong>Note:</strong> Net Balance / Remaining Cash = Cash in Hand - Total Expenses. This is the amount that should be handed over to the company.
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -542,6 +647,41 @@
             top: 0;
             z-index: 10;
         }
+
+        /* Cash Summary Table Styling */
+        #cashSummaryTable {
+            font-size: 0.9rem;
+        }
+
+        #cashSummaryTable thead th {
+            background-color: #198754 !important;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+
+        #cashSummaryTable tbody td {
+            font-size: 1rem;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        #cashSummaryTable tfoot td {
+            font-size: 1.1rem;
+            padding: 1rem;
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+
+        #cashSummaryTable tbody tr {
+            background-color: #ffffff;
+        }
+
+        #cashSummaryTable tbody tr:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 @endsection
 
@@ -614,8 +754,11 @@
             });
         }
 
+        let bookingsTable = null;
+
         function renderReport(data) {
             const stats = data.stats;
+            const summary = data.summary || {};
 
             // Update terminal info
             if (data.terminal) {
@@ -623,43 +766,94 @@
                     `${data.terminal.name} (${data.terminal.code}) | ${data.date_range.start} to ${data.date_range.end}`;
             }
 
-            // Update financial summary section
+            // Update Cash Summary Table
+            const cashInHand = parseFloat(summary.cash_in_hand || stats.cash?.cash_in_hand || 0) || 0;
+            const totalExpenses = parseFloat(summary.total_expenses || stats.expenses?.total_expenses || 0) || 0;
+            const netBalance = parseFloat(summary.net_balance || stats.cash?.net_balance || 0) || 0;
             const totalSales = parseFloat(stats.revenue.total_revenue) || 0;
-            const totalExpenses = parseFloat(stats.expenses.total_expenses) || 0;
+
+            // Get employee/terminal name
+            const selectedUserId = document.getElementById('filterUser').value;
+            let employeeName = 'All Employees';
+            if (selectedUserId) {
+                const selectedOption = document.getElementById('filterUser').options[document.getElementById('filterUser').selectedIndex];
+                employeeName = selectedOption ? selectedOption.text.split(' (')[0] : 'Selected Employee';
+            } else if (data.terminal) {
+                employeeName = data.terminal.name + ' (' + data.terminal.code + ')';
+            }
+
+            // Update cash summary table
+            document.getElementById('summaryEmployeeName').textContent = employeeName;
+            document.getElementById('summaryTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('summaryCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('summaryTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('summaryNetBalance').textContent = 'PKR ' + netBalance.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+
+            // Update footer (same values for now, can be expanded for multiple employees)
+            document.getElementById('footerTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('footerCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('footerTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            document.getElementById('footerNetBalance').textContent = 'PKR ' + netBalance.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+
+            // Update financial summary section
             const netAmount = totalSales - totalExpenses;
             const profitMargin = totalSales > 0 ? ((netAmount / totalSales) * 100).toFixed(2) : 0;
 
             document.getElementById('summaryTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
             document.getElementById('summaryBookingsCount').textContent = `${stats.bookings.total} bookings`;
 
             document.getElementById('summaryTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
             document.getElementById('summaryExpensesCount').textContent = `${data.expenses.length} expenses`;
 
             document.getElementById('summaryNetAmount').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
             document.getElementById('summaryProfitMargin').textContent = `${profitMargin}% margin`;
 
             // Update summary cards (existing)
             document.getElementById('totalRevenue').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
             document.getElementById('totalBookings').textContent = stats.bookings.total;
             document.getElementById('totalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
             document.getElementById('netProfit').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
 
             // Update booking statistics
@@ -673,83 +867,27 @@
             // Update revenue breakdown
             document.getElementById('totalFare').textContent = 'PKR ' + parseFloat(stats.revenue.total_fare).toLocaleString(
                 'en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                 });
             document.getElementById('totalDiscount').textContent = '-PKR ' + parseFloat(stats.revenue.total_discount)
                 .toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                 });
             document.getElementById('totalTax').textContent = '+PKR ' + parseFloat(stats.revenue.total_tax).toLocaleString(
                 'en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                 });
             document.getElementById('finalRevenue').textContent = 'PKR ' + parseFloat(stats.revenue.total_revenue)
                 .toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                 });
 
-            // Render bookings table (detailed)
-            const bookingsBody = document.getElementById('bookingsTableBody');
-            document.getElementById('bookingsTableCount').textContent = data.bookings.length;
-
-            if (data.bookings.length === 0) {
-                bookingsBody.innerHTML = `
-                    <tr>
-                        <td colspan="13" class="text-center text-muted py-3">No bookings found for this period.</td>
-                    </tr>
-                `;
-            } else {
-                let bookingsHtml = '';
-                let totalSalesCalc = 0;
-                data.bookings.forEach(booking => {
-                    const statusBadge = booking.status === 'confirmed' ? 'bg-success' :
-                        booking.status === 'hold' ? 'bg-warning' :
-                        booking.status === 'cancelled' ? 'bg-danger' : 'bg-secondary';
-                    const paymentBadge = booking.payment_status === 'paid' ? 'bg-success' :
-                        booking.payment_status === 'unpaid' ? 'bg-danger' :
-                        booking.payment_status === 'partial' ? 'bg-warning' : 'bg-secondary';
-                    const channelBadge = booking.channel === 'counter' ? 'bg-info' :
-                        booking.channel === 'phone' ? 'bg-warning' :
-                        booking.channel === 'online' ? 'bg-success' : 'bg-secondary';
-
-                    const finalAmount = parseFloat(booking.final_amount) || 0;
-                    totalSalesCalc += finalAmount;
-
-                    bookingsHtml += `
-                        <tr>
-                            <td><span class="badge bg-primary">#${booking.booking_number}</span></td>
-                            <td><small>${booking.created_at}</small></td>
-                            <td><strong>${booking.from_terminal} → ${booking.to_terminal}</strong></td>
-                            <td><span class="badge ${channelBadge}">${booking.channel}</span></td>
-                            <td><span class="badge ${statusBadge}">${booking.status}</span></td>
-                            <td><small>${booking.payment_method || 'N/A'}</small></td>
-                            <td><span class="badge ${paymentBadge}">${booking.payment_status}</span></td>
-                            <td class="text-end">${(parseFloat(booking.total_fare) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td class="text-end text-danger">-${(parseFloat(booking.discount_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td class="text-end text-info">+${(parseFloat(booking.tax_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td class="text-end fw-bold text-success">PKR ${finalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td><span class="badge bg-info">${booking.passengers_count || 0} pax</span></td>
-                            <td><small>${booking.user || 'N/A'}</small></td>
-                        </tr>
-                    `;
-                });
-                // Add totals row
-                bookingsHtml += `
-                    <tr class="table-secondary fw-bold">
-                        <td colspan="7" class="text-end">Total Sales:</td>
-                        <td class="text-end">${stats.revenue.total_fare.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td class="text-end text-danger">-${stats.revenue.total_discount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td class="text-end text-info">+${stats.revenue.total_tax.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td class="text-end text-success">PKR ${totalSalesCalc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td colspan="2"></td>
-                    </tr>
-                `;
-                bookingsBody.innerHTML = bookingsHtml;
-            }
+            // Initialize DataTable for bookings
+            initializeBookingsTable();
 
             // Render expenses table (detailed)
             const expensesBody = document.getElementById('expensesTableBody');
@@ -761,7 +899,7 @@
                         <td colspan="8" class="text-center text-muted py-3">No expenses found for this period.</td>
                     </tr>
                 `;
-                document.getElementById('expensesTableTotal').textContent = 'PKR 0.00';
+                document.getElementById('expensesTableTotal').textContent = 'PKR 0';
             } else {
                 let expensesHtml = '';
                 let totalExpensesCalc = 0;
@@ -774,7 +912,7 @@
                             <td><small>${expense.expense_date}</small></td>
                             <td><span class="badge bg-info">${expense.expense_type}</span></td>
                             <td><strong>${expense.from_terminal} → ${expense.to_terminal}</strong></td>
-                            <td class="text-end text-danger fw-bold">PKR ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td class="text-end text-danger fw-bold">PKR ${amount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
                             <td><small>${expense.description || '-'}</small></td>
                             <td><small>${expense.trip_id ? 'Trip #' + expense.trip_id : 'N/A'}</small></td>
                             <td><small>${expense.user || 'N/A'}</small></td>
@@ -785,8 +923,8 @@
                 expensesBody.innerHTML = expensesHtml;
                 document.getElementById('expensesTableTotal').textContent =
                     'PKR ' + totalExpensesCalc.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
                     });
             }
 
@@ -805,7 +943,7 @@
                                 <small class="d-block text-muted">${data.count} bookings</small>
                             </div>
                             <div class="text-end">
-                                <strong class="text-success">PKR ${parseFloat(data.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                                <strong class="text-success">PKR ${parseFloat(data.amount).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong>
                             </div>
                         </div>
                     `;
@@ -828,7 +966,7 @@
                                 <small class="d-block text-muted">${data.count} bookings</small>
                             </div>
                             <div class="text-end">
-                                <strong class="text-success">PKR ${parseFloat(data.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                                <strong class="text-success">PKR ${parseFloat(data.amount).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</strong>
                             </div>
                         </div>
                     `;
@@ -837,6 +975,203 @@
             }
         }
 
+
+        function initializeBookingsTable() {
+            // Destroy existing table if it exists
+            if (bookingsTable) {
+                bookingsTable.destroy();
+                bookingsTable = null;
+            }
+
+            const terminalId = document.getElementById('terminalSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!terminalId || !startDate || !endDate) {
+                return;
+            }
+
+            bookingsTable = $('#bookingsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('admin.terminal-reports.bookings-data') }}',
+                    data: function(d) {
+                        d.terminal_id = terminalId;
+                        d.start_date = startDate;
+                        d.end_date = endDate;
+                        d.user_id = document.getElementById('filterUser').value;
+                        d.status = document.getElementById('filterStatus').value;
+                        d.payment_status = document.getElementById('filterPaymentStatus').value;
+                        d.payment_method = document.getElementById('filterPaymentMethod').value;
+                        d.channel = document.getElementById('filterChannel').value;
+                    },
+                    error: function(xhr, error, thrown) {
+                        console.error('DataTable AJAX Error:', error, thrown);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Loading Error',
+                            text: 'Failed to load bookings data. Please try again.',
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                },
+                columns: [
+                    { data: 'booking_number', name: 'booking_number' },
+                    { data: 'created_at', name: 'created_at' },
+                    { data: 'route', name: 'route' },
+                    { data: 'seats', name: 'seats', orderable: false, searchable: false },
+                    { data: 'channel', name: 'channel' },
+                    { data: 'status', name: 'status' },
+                    { data: 'payment_method', name: 'payment_method' },
+                    { data: 'payment_status', name: 'payment_status' },
+                    { data: 'amount', name: 'final_amount' },
+                    { data: 'booked_by', name: 'booked_by', orderable: false, searchable: false }
+                ],
+                order: [[1, 'desc']],
+                pageLength: 25,
+                language: {
+                    search: '_INPUT_',
+                    searchPlaceholder: 'Search bookings...',
+                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                    emptyTable: 'No bookings found',
+                    zeroRecords: 'No matching bookings found'
+                },
+                dom: 'lBfrtip',
+            });
+
+            // Add event listeners for filter changes - reload DataTable only, not full report
+            $('#filterStatus, #filterPaymentStatus, #filterPaymentMethod, #filterChannel').on('change', function() {
+                if (bookingsTable) {
+                    bookingsTable.ajax.reload(null, false);
+                }
+            });
+
+            // Reload full report when user filter changes (to update cash summary)
+            $('#filterUser').on('change', function() {
+                if (bookingsTable) {
+                    bookingsTable.ajax.reload(null, false);
+                    // Reload summary data when user filter changes
+                    const terminalId = document.getElementById('terminalSelect').value;
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+                    
+                    if (terminalId && startDate && endDate) {
+                        $.ajax({
+                            url: "{{ route('admin.terminal-reports.data') }}",
+                            type: 'GET',
+                            data: {
+                                terminal_id: terminalId,
+                                start_date: startDate,
+                                end_date: endDate,
+                                user_id: document.getElementById('filterUser').value || null
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    // Update only the cash summary table
+                                    const summary = response.summary || {};
+                                    const stats = response.stats;
+                                    const cashInHand = parseFloat(summary.cash_in_hand || stats.cash?.cash_in_hand || 0) || 0;
+                                    const totalExpenses = parseFloat(summary.total_expenses || stats.expenses?.total_expenses || 0) || 0;
+                                    const netBalance = parseFloat(summary.net_balance || stats.cash?.net_balance || 0) || 0;
+                                    const totalSales = parseFloat(stats.revenue.total_revenue) || 0;
+
+                                    const selectedUserId = document.getElementById('filterUser').value;
+                                    let employeeName = 'All Employees';
+                                    if (selectedUserId) {
+                                        const selectedOption = document.getElementById('filterUser').options[document.getElementById('filterUser').selectedIndex];
+                                        employeeName = selectedOption ? selectedOption.text.split(' (')[0] : 'Selected Employee';
+                                    } else if (response.terminal) {
+                                        employeeName = response.terminal.name + ' (' + response.terminal.code + ')';
+                                    }
+
+                                    document.getElementById('summaryEmployeeName').textContent = employeeName;
+                                    document.getElementById('summaryTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('summaryCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('summaryTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('summaryNetBalance').textContent = 'PKR ' + netBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+                                    document.getElementById('footerTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('footerCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('footerTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                    document.getElementById('footerNetBalance').textContent = 'PKR ' + netBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterPaymentStatus').value = '';
+            document.getElementById('filterPaymentMethod').value = '';
+            document.getElementById('filterChannel').value = '';
+            document.getElementById('filterUser').value = '';
+            
+            if (bookingsTable) {
+                bookingsTable.ajax.reload(null, false);
+            }
+        }
+
+        function exportReport() {
+            const terminalId = document.getElementById('terminalSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!terminalId || !startDate || !endDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please select terminal and date range before exporting.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Generating PDF...',
+                text: 'Please wait while we prepare your report.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const params = new URLSearchParams({
+                terminal_id: terminalId,
+                start_date: startDate,
+                end_date: endDate,
+                user_id: document.getElementById('filterUser').value || '',
+                status: document.getElementById('filterStatus').value || '',
+                payment_status: document.getElementById('filterPaymentStatus').value || '',
+                payment_method: document.getElementById('filterPaymentMethod').value || '',
+                channel: document.getElementById('filterChannel').value || '',
+                format: 'pdf'
+            });
+
+            const exportUrl = '{{ route('admin.terminal-reports.export') }}?' + params.toString();
+            const link = document.createElement('a');
+            link.href = exportUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'PDF Generated',
+                    text: 'Your report download should begin shortly.',
+                    confirmButtonColor: '#198754',
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            }, 500);
+        }
 
         // Auto-load report for users with assigned terminal (their terminal)
         @if (!$canSelectTerminal && $terminals->isNotEmpty())
