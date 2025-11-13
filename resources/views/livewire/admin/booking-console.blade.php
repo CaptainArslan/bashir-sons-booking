@@ -78,10 +78,9 @@
                     <!-- Arrival Time -->
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Arrival Time</label>
-                        <input type="text" class="form-control form-control-lg" 
-                            value="{{ $arrivalTime ?? '' }}" 
-                            placeholder="{{ $departureTimeId ? 'Calculating...' : 'Select departure time' }}"
-                            disabled readonly>
+                        <input type="text" class="form-control form-control-lg" value="{{ $arrivalTime ?? '' }}"
+                            placeholder="{{ $departureTimeId ? 'Calculating...' : 'Select departure time' }}" disabled
+                            readonly>
                     </div>
 
                     <!-- Load Trip Button -->
@@ -119,8 +118,10 @@
                                     <i class="fas fa-route"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Route</small>
-                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">{{ $routeData['name'] ?? '-' }}</div>
+                                    <small class="text-muted d-block"
+                                        style="font-size: 0.7rem; font-weight: 500;">Route</small>
+                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+                                        {{ $routeData['name'] ?? '-' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -130,8 +131,10 @@
                                     <i class="fas fa-calendar-alt"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Date</small>
-                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">{{ \Carbon\Carbon::parse($travelDate)->format('d M Y') }}</div>
+                                    <small class="text-muted d-block"
+                                        style="font-size: 0.7rem; font-weight: 500;">Date</small>
+                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+                                        {{ \Carbon\Carbon::parse($travelDate)->format('d M Y') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -141,7 +144,8 @@
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Time</small>
+                                    <small class="text-muted d-block"
+                                        style="font-size: 0.7rem; font-weight: 500;">Time</small>
                                     <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
                                         @if ($departureTimeId)
                                             {{ \Carbon\Carbon::parse(collect($departureTimes)->firstWhere('id', $departureTimeId)['departure_at'] ?? '')->format('H:i A') }}
@@ -166,15 +170,18 @@
                                         <i class="fas fa-bus"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
-                                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">{{ $tripData->bus->name ?? 'N/A' }}</div>
+                                        <small class="text-muted d-block"
+                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
+                                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+                                            {{ $tripData->bus->name ?? 'N/A' }}</div>
                                         @if ($tripData->driver_name || $tripData->driver_phone)
                                             <small class="text-muted" style="font-size: 0.75rem;">
                                                 @if ($tripData->driver_name)
                                                     <i class="fas fa-user-tie"></i> {{ $tripData->driver_name }}
                                                 @endif
                                                 @if ($tripData->driver_phone)
-                                                    @if ($tripData->driver_name) | @endif
+                                                    @if ($tripData->driver_name)
+                                                        | @endif
                                                     <i class="fas fa-phone"></i> {{ $tripData->driver_phone }}
                                                 @endif
                                             </small>
@@ -202,7 +209,8 @@
                                         <i class="fas fa-bus"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
+                                        <small class="text-muted d-block"
+                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
                                         <div class="text-muted mb-1" style="font-size: 0.85rem;">Not Assigned</div>
                                         <button type="button" class="btn btn-sm btn-primary"
                                             wire:click="openBusAssignmentModal">
@@ -217,9 +225,11 @@
                                         <i class="fas fa-bus"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
+                                        <small class="text-muted d-block"
+                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
                                         <div class="text-muted mb-1" style="font-size: 0.85rem;">Not Assigned</div>
-                                        <small class="text-muted d-block mb-1" style="font-size: 0.7rem;">Assign at origin terminal</small>
+                                        <small class="text-muted d-block mb-1" style="font-size: 0.7rem;">Assign at
+                                            origin terminal</small>
                                         <button type="button" class="btn btn-sm btn-outline-success"
                                             wire:click="openExpenseModal" title="Manage Expenses">
                                             <i class="fas fa-receipt"></i> Expenses
@@ -288,12 +298,12 @@
                                                                     @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
                                                                         @elseif($seatGender === 'female') seat-booked-female
                                                                         @else seat-booked-male @endif
-                                @elseif($status === 'held' || $isLockedByOtherUser)
-                                seat-held
-                                @elseif($isSelected)
-                                seat-selected
-                                @else
-                                seat-available
+@elseif($status === 'held' || $isLockedByOtherUser)
+seat-held
+@elseif($isSelected)
+seat-selected
+@else
+seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
@@ -868,28 +878,31 @@ seat-available
                                                         <input type="text" class="form-control form-control-sm"
                                                             wire:model.blur="passengers.{{ $index }}.cnic"
                                                             id="cnic-{{ $index }}"
-                                                            placeholder="12345-1234567-1"
-                                                            pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
-                                                            maxlength="15"
+                                                            placeholder="12345-9999999-1"
+                                                            pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$" maxlength="15"
                                                             inputmode="numeric"
-                                                            oninput="this.value = this.value.replace(/[^0-9-]/g, '').replace(/(\d{5})(\d)/, '$1-$2').replace(/(\d{5}-\d{7})(\d)/, '$1-$2')"
-                                                            title="Please enter a valid CNIC in format: 12345-1234567-1 (5 digits, hyphen, 7 digits, hyphen, 1 digit)"
+                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57 || event.charCode === 45)"
+                                                            oninput="
+                                                                    let v = this.value.replace(/[^0-9]/g, '');
+                                                                    if (v.length > 5 && v.length <= 12) v = v.slice(0,5) + '-' + v.slice(5);
+                                                                    else if (v.length > 12) v = v.slice(0,5) + '-' + v.slice(5,12) + '-' + v.slice(12,13);
+                                                                    this.value = v.slice(0,15);
+                                                                "
+                                                            title="Please enter a valid CNIC in format: 12345-9999999-1 (5 digits, hyphen, 7 digits, hyphen, 1 digit)"
                                                             required>
                                                         @error("passengers.{$index}.cnic")
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
-                                                        <small class="text-muted">Format: 12345-1234567-1</small>
+                                                        <small class="text-muted">Format: 12345-9999999-1</small>
                                                     </div>
                                                     <div class="col-lg-4 col-md-6">
                                                         <label class="form-label small">Phone</label>
                                                         <input type="tel" class="form-control form-control-sm"
                                                             wire:model.blur="passengers.{{ $index }}.phone"
-                                                            id="phone-{{ $index }}"
-                                                            placeholder="03001234567"
-                                                            pattern="^0[0-9]{10}$"
-                                                            maxlength="11"
-                                                            inputmode="numeric"
-                                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                                            id="phone-{{ $index }}" placeholder="03001234567"
+                                                            pattern="^0[0-9]{10}$" maxlength="11" inputmode="numeric"
+                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
+                                                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
                                                             title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
                                                         @error("passengers.{$index}.phone")
                                                             <small class="text-danger">{{ $message }}</small>
@@ -1001,10 +1014,14 @@ seat-available
                                                     <td class="small">
                                                         @php
                                                             $channel = $passenger['channel'] ?? 'online';
-                                                            $channelEnum = \App\Enums\ChannelEnum::tryFrom($channel) ?? \App\Enums\ChannelEnum::ONLINE;
+                                                            $channelEnum =
+                                                                \App\Enums\ChannelEnum::tryFrom($channel) ??
+                                                                \App\Enums\ChannelEnum::ONLINE;
                                                         @endphp
-                                                        <span class="{{ $channelEnum->getBadge() }}" title="{{ $channelEnum->getLabel() }}">
-                                                            <i class="{{ $channelEnum->getIcon() }}"></i> {{ $channelEnum->getLabel() }}
+                                                        <span class="{{ $channelEnum->getBadge() }}"
+                                                            title="{{ $channelEnum->getLabel() }}">
+                                                            <i class="{{ $channelEnum->getIcon() }}"></i>
+                                                            {{ $channelEnum->getLabel() }}
                                                         </span>
                                                     </td>
                                                     <td class="small text-end">
@@ -1098,13 +1115,15 @@ seat-available
                         <!-- General Error Display -->
                         @if ($errors->any())
                             <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</strong>
+                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following
+                                    errors:</strong>
                                 <ul class="mb-0 mt-2">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
                             </div>
                         @endif
 
@@ -1143,8 +1162,12 @@ seat-available
                                 <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Driver Phone <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverPhone" placeholder="03001234567" maxlength="20">
+                                    <input type="tel" class="form-control form-control-sm"
+                                        wire:model="driverPhone" placeholder="03001234567" pattern="^0[0-9]{10}$"
+                                        maxlength="11" inputmode="numeric"
+                                        onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
+                                        title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
                                     @error('driverPhone')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
@@ -1174,8 +1197,12 @@ seat-available
                                 </div>
                                 <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Host Phone</label>
-                                    <input type="text" class="form-control form-control-sm" wire:model="hostPhone"
-                                        placeholder="03001234567" maxlength="20">
+                                    <input type="tel" class="form-control form-control-sm" wire:model="hostPhone"
+                                        placeholder="03001234567" pattern="^0[0-9]{10}$" maxlength="11"
+                                        inputmode="numeric"
+                                        onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
+                                        title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
                                     @error('hostPhone')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
@@ -1203,9 +1230,11 @@ seat-available
                                                 <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
                                                 @if (isset($expense['from_terminal_name']) && isset($expense['to_terminal_name']))
                                                     <small class="text-muted">
-                                                        <i class="fas fa-route"></i> 
-                                                        From <span class="fw-semibold">{{ $expense['from_terminal_name'] }}</span> 
-                                                        to <span class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
+                                                        <i class="fas fa-route"></i>
+                                                        From <span
+                                                            class="fw-semibold">{{ $expense['from_terminal_name'] }}</span>
+                                                        to <span
+                                                            class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
                                                     </small>
                                                 @endif
                                             </div>
@@ -1286,21 +1315,22 @@ seat-available
                     <h5 class="modal-title fw-bold">
                         <i class="fas fa-receipt"></i> Manage Expenses
                     </h5>
-                    <button type="button" class="btn-close btn-close-white"
-                        wire:click="closeExpenseModal"></button>
+                    <button type="button" class="btn-close btn-close-white" wire:click="closeExpenseModal"></button>
                 </div>
                 <div class="modal-body py-4">
                     @if ($showExpenseModal)
                         <!-- General Error Display -->
                         @if ($errors->any())
                             <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</strong>
+                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following
+                                    errors:</strong>
                                 <ul class="mb-0 mt-2">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
                             </div>
                         @endif
 
@@ -1324,9 +1354,11 @@ seat-available
                                                 <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
                                                 @if (isset($expense['from_terminal_name']) && isset($expense['to_terminal_name']))
                                                     <small class="text-muted">
-                                                        <i class="fas fa-route"></i> 
-                                                        From <span class="fw-semibold">{{ $expense['from_terminal_name'] }}</span> 
-                                                        to <span class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
+                                                        <i class="fas fa-route"></i>
+                                                        From <span
+                                                            class="fw-semibold">{{ $expense['from_terminal_name'] }}</span>
+                                                        to <span
+                                                            class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
                                                     </small>
                                                 @endif
                                             </div>
@@ -1720,75 +1752,75 @@ seat-available
 
             // Define printVoucher function for police records
             window.printVoucher = function() {
-            // Get current data from Livewire component dynamically
-            const tripPassengers = $wire.get('tripPassengers') || [];
-            const tripData = $wire.get('tripDataForJs') || null;
-            const travelDate = $wire.get('travelDate') || '';
-            const routeData = $wire.get('routeData') || null;
-            const fromStop = $wire.get('fromStop') || null;
-            const toStop = $wire.get('toStop') || null;
-            const tripStops = tripData?.stops || [];
+                // Get current data from Livewire component dynamically
+                const tripPassengers = $wire.get('tripPassengers') || [];
+                const tripData = $wire.get('tripDataForJs') || null;
+                const travelDate = $wire.get('travelDate') || '';
+                const routeData = $wire.get('routeData') || null;
+                const fromStop = $wire.get('fromStop') || null;
+                const toStop = $wire.get('toStop') || null;
+                const tripStops = tripData?.stops || [];
 
-            // Get departure and arrival times
-            let departureTime = 'N/A';
-            let arrivalTime = 'N/A';
+                // Get departure and arrival times
+                let departureTime = 'N/A';
+                let arrivalTime = 'N/A';
 
-            if (fromStop?.departure_at) {
-                const depDate = new Date(fromStop.departure_at);
-                departureTime = depDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-            } else if (tripData?.departure_datetime) {
-                const depDate = new Date(tripData.departure_datetime);
-                departureTime = depDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-            }
-
-            if (toStop?.arrival_at) {
-                const arrDate = new Date(toStop.arrival_at);
-                arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-            } else if (tripData?.estimated_arrival_datetime) {
-                const arrDate = new Date(tripData.estimated_arrival_datetime);
-                arrivalTime = arrDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-            }
-
-            // Extract host information from trip notes
-            let hostInfo = null;
-            if (tripData?.notes) {
-                const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
-                if (hostMatch) {
-                    hostInfo = {
-                        name: hostMatch[1]?.trim() || 'N/A',
-                        phone: hostMatch[2]?.trim() || null
-                    };
+                if (fromStop?.departure_at) {
+                    const depDate = new Date(fromStop.departure_at);
+                    departureTime = depDate.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                } else if (tripData?.departure_datetime) {
+                    const depDate = new Date(tripData.departure_datetime);
+                    departureTime = depDate.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
                 }
-            }
 
-            if (!tripPassengers || tripPassengers.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No passengers found to print voucher.',
-                    confirmButtonColor: '#d33'
-                });
-                return;
-            }
+                if (toStop?.arrival_at) {
+                    const arrDate = new Date(toStop.arrival_at);
+                    arrivalTime = arrDate.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                } else if (tripData?.estimated_arrival_datetime) {
+                    const arrDate = new Date(tripData.estimated_arrival_datetime);
+                    arrivalTime = arrDate.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                }
 
-            // Create voucher content (NO fare information for police record)
-            const voucherContent = `
+                // Extract host information from trip notes
+                let hostInfo = null;
+                if (tripData?.notes) {
+                    const hostMatch = tripData.notes.match(/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i);
+                    if (hostMatch) {
+                        hostInfo = {
+                            name: hostMatch[1]?.trim() || 'N/A',
+                            phone: hostMatch[2]?.trim() || null
+                        };
+                    }
+                }
+
+                if (!tripPassengers || tripPassengers.length === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No passengers found to print voucher.',
+                        confirmButtonColor: '#d33'
+                    });
+                    return;
+                }
+
+                // Create voucher content (NO fare information for police record)
+                const voucherContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -1897,13 +1929,13 @@ seat-available
                                 <td><strong>${arrivalTime}</strong></td>
                             </tr>
                             ${fromStop && toStop ? `
-                                                                                    <tr>
-                                                                                        <td>From Terminal:</td>
-                                                                                        <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
-                                                                                        <td>To Terminal:</td>
-                                                                                        <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>From Terminal:</td>
+                                                                                                <td><strong>${fromStop.terminal_name || 'N/A'} (${fromStop.terminal_code || 'N/A'})</strong></td>
+                                                                                                <td>To Terminal:</td>
+                                                                                                <td><strong>${toStop.terminal_name || 'N/A'} (${toStop.terminal_code || 'N/A'})</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                             <tr>
                                 <td>Total Passengers:</td>
                                 <td><strong>${tripPassengers.length}</strong></td>
@@ -1941,17 +1973,17 @@ seat-available
                                 <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                                                    <tr>
-                                                                                        <td>Driver Address:</td>
-                                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>Driver Address:</td>
+                                                                                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                             ${routeData ? `
-                                                                                    <tr>
-                                                                                        <td>Route:</td>
-                                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>Route:</td>
+                                                                                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                         </table>
                     </div>
                     
@@ -1982,17 +2014,17 @@ seat-available
                         </thead>
                         <tbody>
                             ${tripPassengers.map((passenger, index) => `
-                                                                                        <tr>
-                                                                                            <td class="text-center">${index + 1}</td>
-                                                                                            <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
-                                                                                            <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
-                                                                                            <td><strong>${passenger.name || 'N/A'}</strong></td>
-                                                                                            <td>${passenger.cnic || 'N/A'}</td>
-                                                                                            <td>${passenger.phone || 'N/A'}</td>
-                                                                                            <td>${passenger.from_code || 'N/A'}</td>
-                                                                                            <td>${passenger.to_code || 'N/A'}</td>
-                                                                                        </tr>
-                                                                                    `).join('')}
+                                                                                                <tr>
+                                                                                                    <td class="text-center">${index + 1}</td>
+                                                                                                    <td class="text-center"><strong>${passenger.booking_number || 'N/A'}</strong></td>
+                                                                                                    <td class="text-center"><strong>${passenger.seat_number || 'N/A'}</strong></td>
+                                                                                                    <td><strong>${passenger.name || 'N/A'}</strong></td>
+                                                                                                    <td>${passenger.cnic || 'N/A'}</td>
+                                                                                                    <td>${passenger.phone || 'N/A'}</td>
+                                                                                                    <td>${passenger.from_code || 'N/A'}</td>
+                                                                                                    <td>${passenger.to_code || 'N/A'}</td>
+                                                                                                </tr>
+                                                                                            `).join('')}
                         </tbody>
                     </table>
                     
@@ -2007,27 +2039,27 @@ seat-available
                 </html>
             `;
 
-            // Open print window
-            const printWindow = window.open('', '_blank');
-            if (!printWindow) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Popup Blocked',
-                    text: 'Please allow popups for this site to print the voucher.',
-                    confirmButtonColor: '#3085d6'
-                });
-                return;
-            }
+                // Open print window
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Popup Blocked',
+                        text: 'Please allow popups for this site to print the voucher.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    return;
+                }
 
-            printWindow.document.write(voucherContent);
-            printWindow.document.close();
+                printWindow.document.write(voucherContent);
+                printWindow.document.close();
 
-            // Wait for content to load, then print
-            printWindow.onload = function() {
-                setTimeout(function() {
-                    printWindow.print();
-                }, 250);
-            };
+                // Wait for content to load, then print
+                printWindow.onload = function() {
+                    setTimeout(function() {
+                        printWindow.print();
+                    }, 250);
+                };
             };
 
             // Define printPassengerList directly on window object
@@ -2247,17 +2279,17 @@ seat-available
                                 <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
-                                                                                    <tr>
-                                                                                        <td>Driver Address:</td>
-                                                                                        <td colspan="3"><strong>${tripData.driver_address}</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>Driver Address:</td>
+                                                                                                <td colspan="3"><strong>${tripData.driver_address}</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                             ${routeData ? `
-                                                                                    <tr>
-                                                                                        <td>Route:</td>
-                                                                                        <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>Route:</td>
+                                                                                                <td colspan="3"><strong>${routeData.name || 'N/A'}</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                         </table>
                     </div>
                     
@@ -2289,11 +2321,11 @@ seat-available
                                 <td class="text-success"><strong>PKR ${parseFloat(totalEarnings || 0).toFixed(2)}</strong></td>
                             </tr>
                             ${fareData && fareData.from_terminal ? `
-                                                                                    <tr>
-                                                                                        <td>Fare Route:</td>
-                                                                                        <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
-                                                                                    </tr>
-                                                                                    ` : ''}
+                                                                                            <tr>
+                                                                                                <td>Fare Route:</td>
+                                                                                                <td colspan="3"><strong>${fareData.from_terminal.name || 'N/A'} (${fareData.from_terminal.code || 'N/A'}) → ${fareData.to_terminal?.name || 'N/A'} (${fareData.to_terminal?.code || 'N/A'})</strong></td>
+                                                                                            </tr>
+                                                                                            ` : ''}
                         </table>
                     </div>
                     
