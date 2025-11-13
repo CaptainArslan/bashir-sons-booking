@@ -127,6 +127,8 @@ class BookingConsole extends Component
     // Bus Assignment Modal
     public $showBusAssignmentModal = false;
 
+    public $showExpenseModal = false;
+
     public $availableBuses = [];
 
     public $selectedBusId = null;
@@ -1618,6 +1620,131 @@ class BookingConsole extends Component
         $this->hostName = '';
         $this->hostPhone = '';
         $this->expenses = [];
+    }
+
+    public function openExpenseModal(): void
+    {
+        if (! $this->tripId || ! $this->fromStop) {
+            $this->dispatch('show-error', message: 'Please select a trip and terminal first');
+
+            return;
+        }
+
+        // Load existing expenses for this trip from the current stop to next stop
+        $nextStop = $this->getNextStop();
+        $fromTerminalId = $this->fromStop['terminal_id'] ?? null;
+        $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
+
+        // Load expenses that match the current segment
+        $existingExpenses = Expense::with(['fromTerminal:id,name,code', 'toTerminal:id,name,code'])
+            ->where('trip_id', $this->tripId)
+            ->where('from_terminal_id', $fromTerminalId)
+            ->when($toTerminalId, function ($query) use ($toTerminalId) {
+                $query->where('to_terminal_id', $toTerminalId);
+            })
+            ->orderBy('created_at')
+            ->get();
+
+        if ($existingExpenses->isNotEmpty()) {
+            $this->expenses = $existingExpenses->map(function ($expense) {
+                return [
+                    'id' => $expense->id,
+                    'expense_type' => $expense->expense_type instanceof \App\Enums\ExpenseTypeEnum
+                        ? $expense->expense_type->value
+                        : $expense->expense_type,
+                    'amount' => (string) $expense->amount,
+                    'description' => $expense->description ?? '',
+                    'from_terminal_name' => $expense->fromTerminal?->name ?? 'N/A',
+                    'to_terminal_name' => $expense->toTerminal?->name ?? 'N/A',
+                ];
+            })->toArray();
+        } else {
+            // Initialize expenses array with one empty expense if no existing expenses
+            $this->expenses = [
+                [
+                    'id' => null,
+                    'expense_type' => '',
+                    'amount' => '',
+                    'description' => '',
+                    'from_terminal_name' => $this->fromStop['terminal_name'] ?? 'N/A',
+                    'to_terminal_name' => $nextStop?->terminal?->name ?? 'Next Stop',
+                ],
+            ];
+        }
+
+        $this->showExpenseModal = true;
+
+        // Dispatch event to show modal
+        $this->dispatch('open-expense-modal');
+    }
+
+    public function closeExpenseModal(): void
+    {
+        $this->showExpenseModal = false;
+        $this->expenses = [];
+
+        // Dispatch event to close modal
+        $this->dispatch('close-expense-modal');
+    }
+
+    public function saveExpenses(): void
+    {
+        $this->validate([
+            'expenses' => 'nullable|array',
+            'expenses.*.expense_type' => 'required_with:expenses.*.amount|in:'.implode(',', array_column(ExpenseTypeEnum::cases(), 'value')),
+            'expenses.*.amount' => 'required_with:expenses.*.expense_type|numeric|min:0',
+            'expenses.*.description' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $trip = Trip::findOrFail($this->tripId);
+
+            // Get next stop for expenses
+            $nextStop = $this->getNextStop();
+            $fromTerminalId = $this->fromStop['terminal_id'] ?? null;
+            $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
+
+            // Handle expenses: update existing or create new
+            if (! empty($this->expenses)) {
+                foreach ($this->expenses as $expenseData) {
+                    // Skip empty expenses
+                    if (empty($expenseData['expense_type']) || empty($expenseData['amount'])) {
+                        continue;
+                    }
+
+                    // If expense has an ID, update it; otherwise create new
+                    if (!empty($expenseData['id'])) {
+                        Expense::where('id', $expenseData['id'])->update([
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'description' => $expenseData['description'] ?? null,
+                        ]);
+                    } else {
+                        Expense::create([
+                            'trip_id' => $trip->id,
+                            'user_id' => Auth::id(),
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'from_terminal_id' => $fromTerminalId,
+                            'to_terminal_id' => $toTerminalId,
+                            'description' => $expenseData['description'] ?? null,
+                            'expense_date' => $trip->departure_date,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            $this->closeExpenseModal();
+
+            $this->dispatch('show-success', message: 'Expenses saved successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('show-error', message: $e->getMessage());
+        }
     }
 
     private function isOriginStop(): bool

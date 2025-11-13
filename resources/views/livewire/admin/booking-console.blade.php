@@ -179,14 +179,20 @@
                                                 @endif
                                             </small>
                                         @endif
-                                        @if ($isOrigin)
-                                            <div class="mt-1">
+                                        <div class="mt-1 d-flex gap-1">
+                                            @if ($isOrigin)
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
                                                     wire:click="openBusAssignmentModal" title="Edit Bus Assignment">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
-                                            </div>
-                                        @endif
+                                            @endif
+                                            @if (!$isOrigin)
+                                                <button type="button" class="btn btn-sm btn-outline-success"
+                                                    wire:click="openExpenseModal" title="Manage Expenses">
+                                                    <i class="fas fa-receipt"></i> Expenses
+                                                </button>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @elseif ($isOrigin)
@@ -212,8 +218,12 @@
                                     </div>
                                     <div class="flex-grow-1">
                                         <small class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
-                                        <div class="text-muted" style="font-size: 0.85rem;">Not Assigned</div>
-                                        <small class="text-muted" style="font-size: 0.7rem;">Assign at origin terminal</small>
+                                        <div class="text-muted mb-1" style="font-size: 0.85rem;">Not Assigned</div>
+                                        <small class="text-muted d-block mb-1" style="font-size: 0.7rem;">Assign at origin terminal</small>
+                                        <button type="button" class="btn btn-sm btn-outline-success"
+                                            wire:click="openExpenseModal" title="Manage Expenses">
+                                            <i class="fas fa-receipt"></i> Expenses
+                                        </button>
                                     </div>
                                 </div>
                             @endif
@@ -1252,6 +1262,128 @@ seat-available
                         </span>
                         <span wire:loading>
                             <i class="fas fa-spinner fa-spin"></i> Processing...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Management Modal -->
+    <div class="modal fade" id="expenseModal" tabindex="-1" wire:ignore.self data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-receipt"></i> Manage Expenses
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                        wire:click="closeExpenseModal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    @if ($showExpenseModal)
+                        <!-- General Error Display -->
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</strong>
+                                <ul class="mb-0 mt-2">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        <!-- Expenses Section -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">
+                                    <i class="fas fa-receipt"></i> Expenses (From
+                                    {{ $fromStop['terminal_name'] ?? 'Current' }} to Next Stop)
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    wire:click="addExpense">
+                                    <i class="fas fa-plus"></i> Add Expense
+                                </button>
+                            </div>
+                            @foreach ($expenses as $index => $expense)
+                                <div class="card mb-3 border-2">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
+                                                @if (isset($expense['from_terminal_name']) && isset($expense['to_terminal_name']))
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-route"></i> 
+                                                        From <span class="fw-semibold">{{ $expense['from_terminal_name'] }}</span> 
+                                                        to <span class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
+                                                    </small>
+                                                @endif
+                                            </div>
+                                            @if (count($expenses) > 1)
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    wire:click="removeExpense({{ $index }})">
+                                                    <i class="bx bx-trash"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-lg-4 col-md-12">
+                                                <label class="form-label small">Expense Type</label>
+                                                <select class="form-select form-select-sm"
+                                                    wire:model="expenses.{{ $index }}.expense_type">
+                                                    <option value="">-- Select Type --</option>
+                                                    @foreach ($expenseTypes as $type)
+                                                        <option value="{{ $type['value'] }}">{{ $type['label'] }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error("expenses.{$index}.expense_type")
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                            </div>
+                                            <div class="col-lg-4 col-md-6">
+                                                <label class="form-label small">Amount (PKR)</label>
+                                                <input type="number" class="form-control form-control-sm"
+                                                    wire:model="expenses.{{ $index }}.amount"
+                                                    placeholder="0.00" min="0" step="0.01">
+                                                @error("expenses.{$index}.amount")
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                            </div>
+                                            <div class="col-lg-4 col-md-6">
+                                                <label class="form-label small">Description</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    wire:model="expenses.{{ $index }}.description"
+                                                    placeholder="Optional description" maxlength="500">
+                                                @error("expenses.{$index}.description")
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> Expenses will be recorded from
+                                {{ $fromStop['terminal_name'] ?? 'current terminal' }} to the next stop.
+                            </small>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" wire:click="closeExpenseModal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-success fw-bold" wire:click="saveExpenses"
+                        wire:loading.attr="disabled">
+                        <span wire:loading.remove>
+                            <i class="fas fa-save"></i> Save Expenses
+                        </span>
+                        <span wire:loading>
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            Saving...
                         </span>
                     </button>
                 </div>
@@ -2372,6 +2504,35 @@ seat-available
             $wire.on('close-bus-assignment-modal', () => {
                 console.log('Closing bus assignment modal');
                 hideBusAssignmentModal();
+            });
+
+            // Expense Modal Functions
+            function showExpenseModal() {
+                const modalElement = document.getElementById('expenseModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }
+
+            function hideExpenseModal() {
+                const modalElement = document.getElementById('expenseModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+            }
+
+            $wire.on('open-expense-modal', () => {
+                console.log('Opening expense modal');
+                setTimeout(() => showExpenseModal(), 200);
+            });
+
+            $wire.on('close-expense-modal', () => {
+                console.log('Closing expense modal');
+                hideExpenseModal();
             });
 
             // Listen for seat map update after bus assignment
