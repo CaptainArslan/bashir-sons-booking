@@ -871,6 +871,8 @@ seat-available
                                                             placeholder="12345-1234567-1"
                                                             pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
                                                             maxlength="15"
+                                                            inputmode="numeric"
+                                                            oninput="this.value = this.value.replace(/[^0-9-]/g, '').replace(/(\d{5})(\d)/, '$1-$2').replace(/(\d{5}-\d{7})(\d)/, '$1-$2')"
                                                             title="Please enter a valid CNIC in format: 12345-1234567-1 (5 digits, hyphen, 7 digits, hyphen, 1 digit)"
                                                             required>
                                                         @error("passengers.{$index}.cnic")
@@ -886,6 +888,8 @@ seat-available
                                                             placeholder="03001234567"
                                                             pattern="^0[0-9]{10}$"
                                                             maxlength="11"
+                                                            inputmode="numeric"
+                                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                                             title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
                                                         @error("passengers.{$index}.phone")
                                                             <small class="text-danger">{{ $message }}</small>
