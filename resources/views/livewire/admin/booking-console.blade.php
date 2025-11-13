@@ -869,7 +869,9 @@ seat-available
                                                             wire:model.blur="passengers.{{ $index }}.cnic"
                                                             id="cnic-{{ $index }}"
                                                             placeholder="12345-1234567-1"
-                                                            pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}" maxlength="15"
+                                                            pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
+                                                            maxlength="15"
+                                                            title="Please enter a valid CNIC in format: 12345-1234567-1 (5 digits, hyphen, 7 digits, hyphen, 1 digit)"
                                                             required>
                                                         @error("passengers.{$index}.cnic")
                                                             <small class="text-danger">{{ $message }}</small>
@@ -878,10 +880,13 @@ seat-available
                                                     </div>
                                                     <div class="col-lg-4 col-md-6">
                                                         <label class="form-label small">Phone</label>
-                                                        <input type="text" class="form-control form-control-sm"
+                                                        <input type="tel" class="form-control form-control-sm"
                                                             wire:model.blur="passengers.{{ $index }}.phone"
-                                                            id="phone-{{ $index }}" placeholder="03001234567"
-                                                            pattern="0[0-9]{10}" maxlength="11">
+                                                            id="phone-{{ $index }}"
+                                                            placeholder="03001234567"
+                                                            pattern="^0[0-9]{10}$"
+                                                            maxlength="11"
+                                                            title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
                                                         @error("passengers.{$index}.phone")
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
