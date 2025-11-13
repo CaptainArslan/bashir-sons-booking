@@ -60,13 +60,9 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
-        // Get users who have created bookings (distinct booked_by_user_id or user_id)
-        // Exclude users with 'Customer' role
+        // Get employees who have created bookings (booked_by_user_id) - exclude Customer role
         $bookedByUserIds = Booking::whereNotNull('booked_by_user_id')->distinct()->pluck('booked_by_user_id');
-        $userIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
-        $allUserIds = $bookedByUserIds->merge($userIds)->unique();
-
-        $users = User::whereIn('id', $allUserIds)
+        $employees = User::whereIn('id', $bookedByUserIds)
             ->whereDoesntHave('roles', function ($q) {
                 $q->where('name', 'Customer');
             })
@@ -74,23 +70,20 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Get active routes
-        $routes = Route::where('status', RouteStatusEnum::ACTIVE->value)
-            ->select('id', 'name', 'code')
+        // Get all users who have bookings (user_id) - includes customers
+        $customerUserIds = Booking::whereNotNull('user_id')->distinct()->pluck('user_id');
+        $customers = User::whereIn('id', $customerUserIds)
+            ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
-
-        // Get payment methods
-        $paymentMethods = PaymentMethodEnum::options();
 
         return view('admin.bookings.index', compact(
             'bookingStatuses',
             'paymentStatuses',
             'channels',
             'terminals',
-            'users',
-            'routes',
-            'paymentMethods'
+            'employees',
+            'customers'
         ));
     }
 
@@ -134,13 +127,6 @@ class BookingController extends Controller
             $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
         }
 
-        // Filter by terminal (from terminal)
-        if ($request->filled('terminal_id')) {
-            $query->whereHas('fromStop', function ($q) use ($request) {
-                $q->where('terminal_id', $request->terminal_id);
-            });
-        }
-
         // Filter by from terminal
         if ($request->filled('from_terminal_id')) {
             $query->whereHas('fromStop', function ($q) use ($request) {
@@ -155,21 +141,14 @@ class BookingController extends Controller
             });
         }
 
-        // Filter by route
-        if ($request->filled('route_id')) {
-            $query->whereHas('trip', function ($q) use ($request) {
-                $q->where('route_id', $request->route_id);
-            });
+        // Filter by employee (booked by)
+        if ($request->filled('employee_id')) {
+            $query->where('booked_by_user_id', $request->employee_id);
         }
 
-        // Filter by user (booked by)
-        if ($request->filled('user_id')) {
-            $query->where('booked_by_user_id', $request->user_id);
-        }
-
-        // Filter by payment method
-        if ($request->filled('payment_method')) {
-            $query->where('payment_method', $request->payment_method);
+        // Filter by customer/user (booking owner)
+        if ($request->filled('customer_id')) {
+            $query->where('user_id', $request->customer_id);
         }
 
         return datatables()
@@ -202,10 +181,21 @@ class BookingController extends Controller
                 try {
                     $channel = ChannelEnum::from($booking->channel ?? '');
 
-                    return '<i class="'.$channel->getIcon().'"></i> '.$channel->getLabel();
+                    return '<span class="badge '.$channel->getBadge().'"><i class="'.$channel->getIcon().'"></i> '.$channel->getLabel().'</span>';
                 } catch (\ValueError $e) {
-                    return $booking->channel ?? 'N/A';
+                    return '<span class="badge bg-secondary">'.($booking->channel ?? 'N/A').'</span>';
                 }
+            })
+            ->addColumn('employee', function (Booking $booking) {
+                $employee = $booking->bookedByUser;
+                if ($employee) {
+                    return '<div class="text-nowrap">
+                        <div class="fw-semibold small">'.$employee->name.'</div>
+                        <small class="text-muted">'.$employee->email.'</small>
+                    </div>';
+                }
+
+                return '<span class="text-muted small">N/A</span>';
             })
             ->addColumn('status', function (Booking $booking) {
                 try {
@@ -262,7 +252,7 @@ class BookingController extends Controller
 
                 return $actions;
             })
-            ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'status', 'payment_status', 'actions'])
+            ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'employee', 'status', 'payment_status', 'actions'])
             ->make(true);
     }
 

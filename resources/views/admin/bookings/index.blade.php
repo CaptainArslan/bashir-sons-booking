@@ -38,144 +38,134 @@
             </div>
         </div>
         <div class="collapse show" id="filterCollapse">
-            <div class="card-body bg-light">
-                <!-- Quick Date Range and Terminal Filter -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold mb-2">Quick Date Range:</label>
-                        <select class="form-select form-select-sm" id="quickDateRange" onchange="handleQuickDateRange()">
-                            <option value="">Select Date Range</option>
-                            <option value="today">Today</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="this_week">This Week</option>
-                            <option value="last_week">Last Week</option>
-                            <option value="this_month">This Month</option>
-                            <option value="last_month">Last Month</option>
-                            <option value="this_year">This Year</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold mb-2">Terminal:</label>
-                        <select class="form-select form-select-sm" id="filterTerminal">
-                            <option value="">All Terminals</option>
-                            @foreach ($terminals as $terminal)
-                                <option value="{{ $terminal->id }}">
-                                    {{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold mb-2">From Terminal:</label>
-                        <select class="form-select form-select-sm" id="filterFromTerminal">
-                            <option value="">All From Terminals</option>
-                            @foreach ($terminals as $terminal)
-                                <option value="{{ $terminal->id }}">
-                                    {{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold mb-2">To Terminal:</label>
-                        <select class="form-select form-select-sm" id="filterToTerminal">
-                            <option value="">All To Terminals</option>
-                            @foreach ($terminals as $terminal)
-                                <option value="{{ $terminal->id }}">
-                                    {{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
+            <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">Date From</label>
-                        <input type="date" class="form-control form-control-sm" id="filterDateFrom">
+                    <!-- Date Range Section -->
+                    <div class="col-lg-12 mb-3">
+                        <h6 class="text-muted mb-3 fw-semibold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bx bx-calendar"></i> Date Range
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Date From</label>
+                                <input type="date" class="form-control form-control-sm" id="filterDateFrom">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Date To</label>
+                                <input type="date" class="form-control form-control-sm" id="filterDateTo">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Booking Number</label>
+                                <input type="text" class="form-control form-control-sm" id="filterBookingNumber"
+                                    placeholder="Search by booking number">
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">Date To</label>
-                        <input type="date" class="form-control form-control-sm" id="filterDateTo">
+
+                    <!-- Terminal Section -->
+                    <div class="col-lg-12 mb-3">
+                        <h6 class="text-muted mb-3 fw-semibold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bx bx-map"></i> Terminal
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">From Terminal</label>
+                                <select class="form-select form-select-sm" id="filterFromTerminal">
+                                    <option value="">All From Terminals</option>
+                                    @foreach ($terminals as $terminal)
+                                        <option value="{{ $terminal->id }}">
+                                            {{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">To Terminal</label>
+                                <select class="form-select form-select-sm" id="filterToTerminal">
+                                    <option value="">All To Terminals</option>
+                                    @foreach ($terminals as $terminal)
+                                        <option value="{{ $terminal->id }}">
+                                            {{ $terminal->name }}{{ $terminal->code ? ' (' . $terminal->code . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Status</label>
-                        <select class="form-select form-select-sm" id="filterStatus">
-                            <option value="">All Status</option>
-                            @foreach ($bookingStatuses as $status)
-                                <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
-                            @endforeach
-                            <option value="checked_in">Checked In</option>
-                            <option value="boarded">Boarded</option>
-                        </select>
+
+                    <!-- Status & User Section -->
+                    <div class="col-lg-12 mb-3">
+                        <h6 class="text-muted mb-3 fw-semibold" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bx bx-user"></i> Status & User
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Employee (Booked By)</label>
+                                <select class="form-select form-select-sm" id="filterEmployee">
+                                    <option value="">All Employees</option>
+                                    @foreach ($employees as $employee)
+                                        <option value="{{ $employee->id }}">
+                                            {{ $employee->name }}{{ $employee->email ? ' (' . $employee->email . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Customer/User</label>
+                                <select class="form-select form-select-sm" id="filterCustomer">
+                                    <option value="">All Customers</option>
+                                    @foreach ($customers as $customer)
+                                        <option value="{{ $customer->id }}">
+                                            {{ $customer->name }}{{ $customer->email ? ' (' . $customer->email . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Booking Status</label>
+                                <select class="form-select form-select-sm" id="filterStatus">
+                                    <option value="">All Status</option>
+                                    @foreach ($bookingStatuses as $status)
+                                        <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
+                                    @endforeach
+                                    <option value="checked_in">Checked In</option>
+                                    <option value="boarded">Boarded</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Payment Status</label>
+                                <select class="form-select form-select-sm" id="filterPaymentStatus">
+                                    <option value="">All Payments</option>
+                                    @foreach ($paymentStatuses as $status)
+                                        <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
+                                    @endforeach
+                                    <option value="partial">Partial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Channel</label>
+                                <select class="form-select form-select-sm" id="filterChannel">
+                                    <option value="">All Channels</option>
+                                    @foreach ($channels as $channel)
+                                        <option value="{{ $channel->value }}">{{ $channel->getLabel() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Payment Status</label>
-                        <select class="form-select form-select-sm" id="filterPaymentStatus">
-                            <option value="">All Payments</option>
-                            @foreach ($paymentStatuses as $status)
-                                <option value="{{ $status->value }}">{{ $status->getLabel() }}</option>
-                            @endforeach
-                            <option value="partial">Partial</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Channel</label>
-                        <select class="form-select form-select-sm" id="filterChannel">
-                            <option value="">All Channels</option>
-                            @foreach ($channels as $channel)
-                                <option value="{{ $channel->value }}">{{ $channel->getLabel() }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">Route</label>
-                        <select class="form-select form-select-sm" id="filterRoute">
-                            <option value="">All Routes</option>
-                            @foreach ($routes as $route)
-                                <option value="{{ $route->id }}">
-                                    {{ $route->name }}{{ $route->code ? ' (' . $route->code . ')' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">User (Booked By)</label>
-                        <select class="form-select form-select-sm" id="filterUser">
-                            <option value="">All Users</option>
-                            @foreach ($users as $user)
-                                <option value="{{ $user->id }}">
-                                    {{ $user->name }}{{ $user->email ? ' (' . $user->email . ')' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Payment Method</label>
-                        <select class="form-select form-select-sm" id="filterPaymentMethod">
-                            <option value="">All Methods</option>
-                            @foreach ($paymentMethods as $method)
-                                @if($method['value'] !== 'other')
-                                    <option value="{{ $method['value'] }}">{{ $method['label'] }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold">Booking Number</label>
-                        <input type="text" class="form-control form-control-sm" id="filterBookingNumber"
-                            placeholder="e.g., 000123">
-                    </div>
-                    <div class="col-md-12 d-flex align-items-end gap-2">
-                        <button class="btn btn-primary btn-sm" onclick="reloadTable()">
-                            <i class="bx bx-search"></i> Apply Filters
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="resetFilters()">
-                            <i class="bx bx-refresh"></i> Reset
-                        </button>
-                        <button class="btn btn-success btn-sm" onclick="exportReport()">
-                            <i class="bx bx-export"></i> Export
-                        </button>
+
+                    <!-- Action Buttons -->
+                    <div class="col-lg-12 mt-3 pt-3 border-top">
+                        <div class="d-flex gap-2 justify-content-end flex-wrap">
+                            <button class="btn btn-primary btn-sm" onclick="reloadTable()">
+                                <i class="bx bx-search"></i> Apply Filters
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                                <i class="bx bx-refresh"></i> Reset Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -203,6 +193,7 @@
                             <th><i class="bx bx-group"></i> Passengers</th>
                             <th><i class="bx bx-money"></i> Amount</th>
                             <th><i class="bx bx-store"></i> Channel</th>
+                            <th><i class="bx bx-user"></i> Employee</th>
                             <th><i class="bx bx-check-circle"></i> Status</th>
                             <th><i class="bx bx-credit-card"></i> Payment</th>
                             <th class="text-center"><i class="bx bx-cog"></i> Actions</th>
@@ -383,78 +374,6 @@
             initializeDataTable();
         });
 
-        function handleQuickDateRange() {
-            const quickRange = document.getElementById('quickDateRange').value;
-            if (quickRange) {
-                setDateRange(quickRange);
-            }
-        }
-
-        function setDateRange(range) {
-            const today = new Date();
-            const dateFrom = document.getElementById('filterDateFrom');
-            const dateTo = document.getElementById('filterDateTo');
-            
-            let fromDate, toDate;
-            
-            switch(range) {
-                case 'today':
-                    fromDate = today;
-                    toDate = today;
-                    break;
-                case 'yesterday':
-                    const yesterday = new Date(today);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    fromDate = yesterday;
-                    toDate = yesterday;
-                    break;
-                case 'this_week':
-                    const startOfWeek = new Date(today);
-                    startOfWeek.setDate(today.getDate() - today.getDay());
-                    fromDate = startOfWeek;
-                    toDate = today;
-                    break;
-                case 'last_week':
-                    const lastWeekStart = new Date(today);
-                    lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
-                    const lastWeekEnd = new Date(lastWeekStart);
-                    lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
-                    fromDate = lastWeekStart;
-                    toDate = lastWeekEnd;
-                    break;
-                case 'this_month':
-                    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                    toDate = today;
-                    break;
-                case 'last_month':
-                    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-                    fromDate = lastMonthStart;
-                    toDate = lastMonthEnd;
-                    break;
-                case 'this_year':
-                    fromDate = new Date(today.getFullYear(), 0, 1);
-                    toDate = today;
-                    break;
-                default:
-                    return;
-            }
-            
-            dateFrom.value = fromDate.toISOString().split('T')[0];
-            dateTo.value = toDate.toISOString().split('T')[0];
-            // Reset quick date range dropdown after setting dates
-            document.getElementById('quickDateRange').value = '';
-            reloadTable();
-        }
-
-        function exportReport() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Export Report',
-                text: 'Export functionality will be available soon.',
-                confirmButtonColor: '#3085d6'
-            });
-        }
 
         function initializeDataTable() {
             bookingsTable = $('#bookingsTable').DataTable({
@@ -469,12 +388,10 @@
                         d.payment_status = document.getElementById('filterPaymentStatus').value;
                         d.channel = document.getElementById('filterChannel').value;
                         d.booking_number = document.getElementById('filterBookingNumber').value;
-                        d.terminal_id = document.getElementById('filterTerminal').value;
                         d.from_terminal_id = document.getElementById('filterFromTerminal').value;
                         d.to_terminal_id = document.getElementById('filterToTerminal').value;
-                        d.route_id = document.getElementById('filterRoute').value;
-                        d.user_id = document.getElementById('filterUser').value;
-                        d.payment_method = document.getElementById('filterPaymentMethod').value;
+                        d.employee_id = document.getElementById('filterEmployee').value;
+                        d.customer_id = document.getElementById('filterCustomer').value;
                     },
                     error: function(xhr, error, thrown) {
                         console.error('DataTable AJAX Error:', error, thrown);
@@ -534,6 +451,12 @@
                     {
                         data: 'channel',
                         name: 'channel'
+                    },
+                    {
+                        data: 'employee',
+                        name: 'employee',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'status',
@@ -612,13 +535,10 @@
                 document.getElementById('filterPaymentStatus').value = '';
                 document.getElementById('filterChannel').value = '';
                 document.getElementById('filterBookingNumber').value = '';
-                document.getElementById('filterTerminal').value = '';
                 document.getElementById('filterFromTerminal').value = '';
                 document.getElementById('filterToTerminal').value = '';
-                document.getElementById('filterRoute').value = '';
-                document.getElementById('filterUser').value = '';
-                document.getElementById('filterPaymentMethod').value = '';
-                document.getElementById('quickDateRange').value = '';
+                document.getElementById('filterEmployee').value = '';
+                document.getElementById('filterCustomer').value = '';
                 reloadTable();
             } catch (error) {
                 console.error('Error resetting filters:', error);
