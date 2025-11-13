@@ -1,10 +1,17 @@
 <style>
     /* Responsive Layout Styles */
-    @media (max-width: 1440px) {
-        .col-lg-3,
-        .col-lg-5,
-        .col-lg-4 {
-            margin-bottom: 1rem;
+    /* For screens smaller than 1440px: Seat Map and Booking Summary side by side (col-6 each), Passenger List below (col-12) */
+    @media (max-width: 1439.98px) {
+        .booking-console-row .col-xxl-3,
+        .booking-console-row .col-xxl-5 {
+            flex: 0 0 auto;
+            width: 50%;
+        }
+        
+        .booking-console-row .col-xxl-4 {
+            flex: 0 0 auto;
+            width: 100%;
+            margin-top: 1rem;
         }
     }
 

@@ -1375,7 +1375,8 @@ class BookingConsole extends Component
             $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
 
             // Load expenses that match the current segment
-            $existingExpenses = Expense::where('trip_id', $this->tripId)
+            $existingExpenses = Expense::with(['fromTerminal:id,name,code', 'toTerminal:id,name,code'])
+                ->where('trip_id', $this->tripId)
                 ->where('from_terminal_id', $fromTerminalId)
                 ->when($toTerminalId, function ($query) use ($toTerminalId) {
                     $query->where('to_terminal_id', $toTerminalId);
@@ -1386,30 +1387,40 @@ class BookingConsole extends Component
             if ($existingExpenses->isNotEmpty()) {
                 $this->expenses = $existingExpenses->map(function ($expense) {
                     return [
+                        'id' => $expense->id,
                         'expense_type' => $expense->expense_type instanceof \App\Enums\ExpenseTypeEnum
                             ? $expense->expense_type->value
                             : $expense->expense_type,
                         'amount' => (string) $expense->amount,
                         'description' => $expense->description ?? '',
+                        'from_terminal_name' => $expense->fromTerminal?->name ?? 'N/A',
+                        'to_terminal_name' => $expense->toTerminal?->name ?? 'N/A',
                     ];
                 })->toArray();
             } else {
                 // Initialize expenses array with one empty expense if no existing expenses
                 $this->expenses = [
                     [
+                        'id' => null,
                         'expense_type' => '',
                         'amount' => '',
                         'description' => '',
+                        'from_terminal_name' => $this->fromStop['terminal_name'] ?? 'N/A',
+                        'to_terminal_name' => $nextStop?->terminal?->name ?? 'Next Stop',
                     ],
                 ];
             }
         } else {
             // Initialize expenses array with one empty expense if no bus assigned
+            $nextStop = $this->getNextStop();
             $this->expenses = [
                 [
+                    'id' => null,
                     'expense_type' => '',
                     'amount' => '',
                     'description' => '',
+                    'from_terminal_name' => $this->fromStop['terminal_name'] ?? 'N/A',
+                    'to_terminal_name' => $nextStop?->terminal?->name ?? 'Next Stop',
                 ],
             ];
         }
@@ -1431,18 +1442,39 @@ class BookingConsole extends Component
 
     public function addExpense(): void
     {
+        $nextStop = $this->getNextStop();
         $this->expenses[] = [
+            'id' => null,
             'expense_type' => '',
             'amount' => '',
             'description' => '',
+            'from_terminal_name' => $this->fromStop['terminal_name'] ?? 'N/A',
+            'to_terminal_name' => $nextStop?->terminal?->name ?? 'Next Stop',
         ];
     }
 
     public function removeExpense($index): void
     {
         if (isset($this->expenses[$index])) {
+            $expense = $this->expenses[$index];
+            
+            // If expense has an ID, delete it from the database
+            if (!empty($expense['id'])) {
+                try {
+                    Expense::where('id', $expense['id'])->delete();
+                } catch (\Exception $e) {
+                    $this->dispatch('show-error', message: 'Failed to delete expense: '.$e->getMessage());
+                    return;
+                }
+            }
+            
             unset($this->expenses[$index]);
             $this->expenses = array_values($this->expenses);
+            
+            // If no expenses left, add one empty expense
+            if (empty($this->expenses)) {
+                $this->addExpense();
+            }
         }
     }
 
@@ -1500,7 +1532,7 @@ class BookingConsole extends Component
             $fromTerminalId = $this->fromStop['terminal_id'] ?? null;
             $toTerminalId = $nextStop ? ($nextStop->terminal_id ?? null) : null;
 
-            // Create expenses if provided
+            // Handle expenses: update existing or create new
             if (! empty($this->expenses)) {
                 foreach ($this->expenses as $expenseData) {
                     // Skip empty expenses
@@ -1508,16 +1540,25 @@ class BookingConsole extends Component
                         continue;
                     }
 
-                    Expense::create([
-                        'trip_id' => $trip->id,
-                        'user_id' => Auth::id(),
-                        'expense_type' => $expenseData['expense_type'],
-                        'amount' => $expenseData['amount'],
-                        'from_terminal_id' => $fromTerminalId,
-                        'to_terminal_id' => $toTerminalId,
-                        'description' => $expenseData['description'] ?? null,
-                        'expense_date' => $trip->departure_date,
-                    ]);
+                    // If expense has an ID, update it; otherwise create new
+                    if (!empty($expenseData['id'])) {
+                        Expense::where('id', $expenseData['id'])->update([
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'description' => $expenseData['description'] ?? null,
+                        ]);
+                    } else {
+                        Expense::create([
+                            'trip_id' => $trip->id,
+                            'user_id' => Auth::id(),
+                            'expense_type' => $expenseData['expense_type'],
+                            'amount' => $expenseData['amount'],
+                            'from_terminal_id' => $fromTerminalId,
+                            'to_terminal_id' => $toTerminalId,
+                            'description' => $expenseData['description'] ?? null,
+                            'expense_date' => $trip->departure_date,
+                        ]);
+                    }
                 }
             }
 
@@ -1605,8 +1646,9 @@ class BookingConsole extends Component
             return null;
         }
 
-        // Get the next stop after current stop
-        return TripStop::where('trip_id', $this->tripId)
+        // Get the next stop after current stop with terminal relationship
+        return TripStop::with('terminal:id,name,code')
+            ->where('trip_id', $this->tripId)
             ->where('sequence', '>', $currentSequence)
             ->orderBy('sequence')
             ->first();

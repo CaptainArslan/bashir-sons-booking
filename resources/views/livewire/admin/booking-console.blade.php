@@ -231,9 +231,9 @@
                 </div>
             </div>
 
-            <div class="row g-3">
+            <div class="row g-3 booking-console-row">
                 <!-- Left Column: Seat Map (3 columns) -->
-                <div class="col-lg-3 col-md-6">
+                <div class="col-xxl-3 col-xl-6 col-lg-6 col-md-6">
                     <div class="card shadow-sm h-100 border-0">
                         <div class="card-header bg-white border-bottom">
                             <h6 class="mb-0 fw-semibold text-dark">
@@ -287,12 +287,12 @@
                                                                     @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
                                                                         @elseif($seatGender === 'female') seat-booked-female
                                                                         @else seat-booked-male @endif
-@elseif($status === 'held' || $isLockedByOtherUser)
-seat-held
-@elseif($isSelected)
-seat-selected
-@else
-seat-available
+                                @elseif($status === 'held' || $isLockedByOtherUser)
+                                seat-held
+                                @elseif($isSelected)
+                                seat-selected
+                                @else
+                                seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
@@ -457,7 +457,7 @@ seat-available
                 </div>
 
                 <!-- Middle Column: Booking Form (5 columns) -->
-                <div class="col-lg-5 col-md-6">
+                <div class="col-xxl-5 col-xl-6 col-lg-6 col-md-6">
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-info text-white">
                             <h6 class="mb-0">
@@ -577,7 +577,7 @@ seat-available
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
                                 <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type & Payment</h6>
                                 <div class="row g-2">
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-lg-6 col-md-12 mb-2">
                                         <label class="form-label small fw-bold">Booking Type</label>
                                         <select class="form-select form-select-sm" wire:model.live="bookingType"
                                             wire:loading.attr="disabled">
@@ -593,7 +593,7 @@ seat-available
                                         </div>
                                     </div>
                                     @if ($bookingType === 'counter')
-                                        <div class="col-md-6 mb-2">
+                                        <div class="col-lg-6 col-md-12 mb-2">
                                             <label class="form-label small fw-bold">Payment Method</label>
                                             <select class="form-select form-select-sm" wire:model.live="paymentMethod"
                                                 wire:loading.attr="disabled">
@@ -827,7 +827,7 @@ seat-available
                                             </div>
                                             <div class="card-body">
                                                 <div class="row g-2">
-                                                    <div class="col-md-6">
+                                                    <div class="col-lg-6 col-md-12">
                                                         <label class="form-label small">Name <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control form-control-sm"
@@ -837,7 +837,7 @@ seat-available
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
                                                     </div>
-                                                    <div class="col-md-3">
+                                                    <div class="col-lg-3 col-md-6">
                                                         <label class="form-label small">Age <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="number" class="form-control form-control-sm"
@@ -848,7 +848,7 @@ seat-available
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
                                                     </div>
-                                                    <div class="col-md-3">
+                                                    <div class="col-lg-3 col-md-6">
                                                         <label class="form-label small">Gender <span
                                                                 class="text-danger">*</span></label>
                                                         <select class="form-select form-select-sm"
@@ -861,7 +861,7 @@ seat-available
                                                             <small class="text-danger">{{ $message }}</small>
                                                         @enderror
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-lg-4 col-md-12">
                                                         <label class="form-label small">CNIC <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control form-control-sm"
@@ -875,7 +875,7 @@ seat-available
                                                         @enderror
                                                         <small class="text-muted">Format: 12345-1234567-1</small>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-lg-4 col-md-6">
                                                         <label class="form-label small">Phone</label>
                                                         <input type="text" class="form-control form-control-sm"
                                                             wire:model.blur="passengers.{{ $index }}.phone"
@@ -887,7 +887,7 @@ seat-available
                                                         <small class="text-muted">Format: 03001234567 (11
                                                             digits)</small>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-lg-4 col-md-6">
                                                         <label class="form-label small">Email</label>
                                                         <input type="email" class="form-control form-control-sm"
                                                             wire:model="passengers.{{ $index }}.email"
@@ -918,7 +918,7 @@ seat-available
                 </div>
 
                 <!-- Right Column: Trip Passengers List (4 columns) -->
-                <div class="col-lg-4 col-md-12">
+                <div class="col-xxl-4 col-xl-12 col-lg-12 col-md-12">
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
                         <div
@@ -1111,7 +1111,7 @@ seat-available
                         <div class="mb-4 p-3 bg-light rounded">
                             <h6 class="fw-bold mb-3"><i class="fas fa-user-tie"></i> Driver Information</h6>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Driver Name <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control form-control-sm"
@@ -1120,7 +1120,7 @@ seat-available
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Driver Phone <span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control form-control-sm"
@@ -1144,7 +1144,7 @@ seat-available
                         <div class="mb-4 p-3 bg-light rounded">
                             <h6 class="fw-bold mb-3"><i class="fas fa-user"></i> Host/Hostess Information</h6>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Host Name</label>
                                     <input type="text" class="form-control form-control-sm" wire:model="hostName"
                                         placeholder="Enter host name" maxlength="255">
@@ -1152,7 +1152,7 @@ seat-available
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-lg-6 col-md-12">
                                     <label class="form-label small">Host Phone</label>
                                     <input type="text" class="form-control form-control-sm" wire:model="hostPhone"
                                         placeholder="03001234567" maxlength="20">
@@ -1179,7 +1179,16 @@ seat-available
                                 <div class="card mb-3 border-2">
                                     <div class="card-body p-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
+                                            <div>
+                                                <h6 class="mb-0 small fw-bold">Expense {{ $index + 1 }}</h6>
+                                                @if (isset($expense['from_terminal_name']) && isset($expense['to_terminal_name']))
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-route"></i> 
+                                                        From <span class="fw-semibold">{{ $expense['from_terminal_name'] }}</span> 
+                                                        to <span class="fw-semibold">{{ $expense['to_terminal_name'] }}</span>
+                                                    </small>
+                                                @endif
+                                            </div>
                                             @if (count($expenses) > 1)
                                                 <button type="button" class="btn btn-sm btn-outline-danger"
                                                     wire:click="removeExpense({{ $index }})">
@@ -1188,7 +1197,7 @@ seat-available
                                             @endif
                                         </div>
                                         <div class="row g-2">
-                                            <div class="col-md-4">
+                                            <div class="col-lg-4 col-md-12">
                                                 <label class="form-label small">Expense Type</label>
                                                 <select class="form-select form-select-sm"
                                                     wire:model="expenses.{{ $index }}.expense_type">
@@ -1202,7 +1211,7 @@ seat-available
                                                     <small class="text-danger">{{ $message }}</small>
                                                 @enderror
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-lg-4 col-md-6">
                                                 <label class="form-label small">Amount (PKR)</label>
                                                 <input type="number" class="form-control form-control-sm"
                                                     wire:model="expenses.{{ $index }}.amount"
@@ -1211,7 +1220,7 @@ seat-available
                                                     <small class="text-danger">{{ $message }}</small>
                                                 @enderror
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-lg-4 col-md-6">
                                                 <label class="form-label small">Description</label>
                                                 <input type="text" class="form-control form-control-sm"
                                                     wire:model="expenses.{{ $index }}.description"
