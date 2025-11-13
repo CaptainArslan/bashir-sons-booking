@@ -293,6 +293,8 @@ Route::middleware('auth')->group(function () {
         // Terminal Reports Routes
         Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view terminal reports')->name('terminal-reports.index');
         Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view terminal reports')->name('terminal-reports.data');
+        Route::get('/terminal-reports/bookings-data', [TerminalReportController::class, 'getBookingsData'])->can('view terminal reports')->name('terminal-reports.bookings-data');
+        Route::get('/terminal-reports/export', [TerminalReportController::class, 'export'])->can('view terminal reports')->name('terminal-reports.export');
 
         // Sales Reports Routes (Admin)
         Route::get('/reports', [AdminReportController::class, 'index'])->can('view bookings')->name('reports.index');
