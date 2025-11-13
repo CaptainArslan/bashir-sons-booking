@@ -33,8 +33,8 @@
                 padding: 0 !important;
                 overflow: hidden;
                 font-family: 'Arial', 'Helvetica', sans-serif;
-                font-size: 9px;
-                line-height: 1.3;
+                font-size: 7px;
+                line-height: 1.2;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -48,7 +48,7 @@
                 max-width: 80mm !important;
                 min-width: 80mm !important;
                 margin: 0 !important;
-                padding: 3mm 2mm !important;
+                padding: 1.5mm 2mm !important;
                 box-sizing: border-box;
             }
         }
@@ -67,10 +67,10 @@
         
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 10px;
+            font-size: 8px;
             width: 80mm;
             max-width: 80mm;
-            padding: 5mm;
+            padding: 3mm;
             margin: 0 auto;
             background: #fff;
         }
@@ -83,161 +83,161 @@
         
         .customer-ticket {
             width: 100%;
-            border: 2px solid #000;
-            border-radius: 2px;
-            padding: 3mm;
+            border: 1.5px solid #000;
+            border-radius: 1px;
+            padding: 1.5mm;
             margin-bottom: 0;
             background: #fff;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 3mm;
-            padding-bottom: 2mm;
+            margin-bottom: 1mm;
+            padding-bottom: 0.5mm;
         }
         
         .company-name {
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 900;
-            margin-bottom: 1.5mm;
+            margin-bottom: 0.5mm;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #000;
-            line-height: 1.2;
+            line-height: 1.1;
         }
         
         .uan {
-            font-size: 9px;
-            margin-bottom: 2mm;
+            font-size: 7px;
+            margin-bottom: 0.5mm;
             font-weight: 600;
             color: #000;
         }
         
         .urdu-text {
-            font-size: 8px;
+            font-size: 6px;
             text-align: center;
-            margin: 2mm 0 0 0;
+            margin: 0.5mm 0 0 0;
             direction: rtl;
             font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
-            line-height: 1.4;
-            padding: 1.5mm;
+            line-height: 1.2;
+            padding: 0.8mm;
             background: #fff;
-            border: 1px solid #000;
-            border-radius: 2px;
+            border: 0.5px solid #000;
+            border-radius: 1px;
         }
         
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5mm 2mm;
-            margin: 2.5mm 0;
-            font-size: 8px;
+            gap: 0.8mm 1.2mm;
+            margin: 1mm 0;
+            font-size: 7px;
         }
         
         .info-item {
             display: flex;
             flex-direction: column;
-            padding: 1mm 0;
+            padding: 0.3mm 0;
         }
         
         .info-label {
             font-weight: 700;
-            font-size: 7px;
-            margin-bottom: 0.5mm;
+            font-size: 6px;
+            margin-bottom: 0.2mm;
             color: #000;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
         }
         
         .info-value {
-            font-size: 9px;
+            font-size: 7px;
             font-weight: 600;
             color: #000;
             word-break: break-word;
-            line-height: 1.3;
+            line-height: 1.2;
         }
         
         .perforated-line {
-            border-top: 2px dashed #000;
-            margin: 3mm 0;
+            border-top: 1px dashed #000;
+            margin: 1mm 0;
             text-align: center;
             position: relative;
-            padding: 1mm 0;
+            padding: 0.5mm 0;
         }
         
         .perforated-line::before {
-            content: 'CUT HERE';
+            content: 'CUT';
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
             background: #fff;
-            padding: 0 3mm;
-            font-size: 6px;
+            padding: 0 2mm;
+            font-size: 5px;
             font-weight: bold;
-            top: -6px;
-            letter-spacing: 0.5px;
+            top: -4px;
+            letter-spacing: 0.3px;
         }
         
         .boarding-coupon {
             width: 100%;
-            border: 2px solid #000;
-            border-radius: 2px;
-            padding: 2.5mm;
-            margin-top: 2mm;
+            border: 1.5px solid #000;
+            border-radius: 1px;
+            padding: 1.5mm;
+            margin-top: 1mm;
             background: #fff;
         }
         
         .boarding-header {
             text-align: center;
-            padding-bottom: 1.5mm;
-            margin-bottom: 2mm;
+            padding-bottom: 0.5mm;
+            margin-bottom: 1mm;
         }
         
         .boarding-company-name {
-            font-size: 10px;
+            font-size: 8px;
             font-weight: 800;
-            margin-bottom: 1mm;
+            margin-bottom: 0.3mm;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         
         .boarding-title {
-            font-size: 10px;
+            font-size: 8px;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #000;
         }
         
         .instructions {
-            font-size: 8px;
-            margin: 2.5mm 0;
+            font-size: 6px;
+            margin: 1mm 0;
             direction: rtl;
             text-align: right;
             font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
-            line-height: 1.5;
-            padding: 2mm;
+            line-height: 1.3;
+            padding: 0.8mm;
             background: #fff;
-            border: 1px solid #000;
-            border-radius: 2px;
+            border: 0.5px solid #000;
+            border-radius: 1px;
         }
         
         .contact-info {
             text-align: center;
-            font-size: 8px;
-            margin-top: 2.5mm;
-            padding-top: 2mm;
-            line-height: 1.4;
+            font-size: 6px;
+            margin-top: 1mm;
+            padding-top: 0.5mm;
+            line-height: 1.2;
         }
         
         .contact-info > div:first-child {
             font-weight: 700;
-            margin-bottom: 1mm;
-            font-size: 8px;
+            margin-bottom: 0.3mm;
+            font-size: 6px;
         }
         
         .contact-info > div:last-child {
-            font-size: 8px;
+            font-size: 6px;
             font-weight: 600;
         }
         
@@ -265,30 +265,30 @@
         
         .status-badge {
             display: inline-block;
-            padding: 1.5mm 3mm;
+            padding: 0.5mm 1.5mm;
             background: #000;
             color: #fff;
             font-weight: 900;
-            font-size: 8px;
-            border-radius: 2px;
+            font-size: 6px;
+            border-radius: 1px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         
         .highlight-box {
             background: #f0f0f0;
-            border: 1px solid #000;
-            padding: 1.5mm;
-            margin: 1mm 0;
-            border-radius: 2px;
+            border: 0.5px solid #000;
+            padding: 0.8mm;
+            margin: 0.5mm 0;
+            border-radius: 1px;
         }
         
         .section-heading {
-            font-size: 9px;
+            font-size: 7px;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 2.5mm 0 1.5mm 0;
+            letter-spacing: 0.3px;
+            margin: 1mm 0 0.5mm 0;
             color: #000;
         }
         
