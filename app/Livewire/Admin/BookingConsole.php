@@ -135,10 +135,6 @@ class BookingConsole extends Component
 
     public $driverPhone = '';
 
-    public $driverCnic = '';
-
-    public $driverLicense = '';
-
     public $driverAddress = '';
 
     public $hostName = '';
@@ -1362,8 +1358,6 @@ class BookingConsole extends Component
             $this->selectedBusId = $this->tripData->bus_id;
             $this->driverName = $this->tripData->driver_name ?? '';
             $this->driverPhone = $this->tripData->driver_phone ?? '';
-            $this->driverCnic = $this->tripData->driver_cnic ?? '';
-            $this->driverLicense = $this->tripData->driver_license ?? '';
             $this->driverAddress = $this->tripData->driver_address ?? '';
 
             // Extract host information from trip notes
@@ -1458,8 +1452,6 @@ class BookingConsole extends Component
             'selectedBusId' => 'required|exists:buses,id',
             'driverName' => 'required|string|max:255',
             'driverPhone' => 'required|string|max:20',
-            'driverCnic' => 'required|string|max:50',
-            'driverLicense' => 'required|string|max:100',
             'driverAddress' => 'nullable|string|max:500',
             'hostName' => 'nullable|string|max:255',
             'hostPhone' => 'nullable|string|max:20',
@@ -1471,8 +1463,6 @@ class BookingConsole extends Component
             'selectedBusId.required' => 'Please select a bus',
             'driverName.required' => 'Driver name is required',
             'driverPhone.required' => 'Driver phone is required',
-            'driverCnic.required' => 'Driver CNIC is required',
-            'driverLicense.required' => 'Driver license is required',
         ]);
 
         try {
@@ -1485,8 +1475,6 @@ class BookingConsole extends Component
                 'bus_id' => $this->selectedBusId,
                 'driver_name' => $this->driverName,
                 'driver_phone' => $this->driverPhone,
-                'driver_cnic' => $this->driverCnic,
-                'driver_license' => $this->driverLicense,
                 'driver_address' => $this->driverAddress ?? null,
             ]);
 
@@ -1585,8 +1573,6 @@ class BookingConsole extends Component
         $this->selectedBusId = null;
         $this->driverName = '';
         $this->driverPhone = '';
-        $this->driverCnic = '';
-        $this->driverLicense = '';
         $this->driverAddress = '';
         $this->hostName = '';
         $this->hostPhone = '';
@@ -1671,8 +1657,6 @@ class BookingConsole extends Component
             'estimated_arrival_datetime' => $trip->estimated_arrival_datetime?->format('Y-m-d H:i:s'),
             'driver_name' => $trip->driver_name,
             'driver_phone' => $trip->driver_phone,
-            'driver_cnic' => $trip->driver_cnic,
-            'driver_license' => $trip->driver_license,
             'driver_address' => $trip->driver_address,
             'notes' => $trip->notes,
             'bus' => $trip->bus ? [

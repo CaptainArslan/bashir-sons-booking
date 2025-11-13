@@ -1075,6 +1075,19 @@ seat-available
                 </div>
                 <div class="modal-body py-4">
                     @if ($showBusAssignmentModal)
+                        <!-- General Error Display -->
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                <strong><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</strong>
+                                <ul class="mb-0 mt-2">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
                         <!-- Bus Selection -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">
@@ -1113,24 +1126,6 @@ seat-available
                                     <input type="text" class="form-control form-control-sm"
                                         wire:model="driverPhone" placeholder="03001234567" maxlength="20">
                                     @error('driverPhone')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small">Driver CNIC <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverCnic" placeholder="42101-1234567-1" maxlength="50">
-                                    @error('driverCnic')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small">Driver License <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        wire:model="driverLicense" placeholder="PK-DL-2023-001" maxlength="100">
-                                    @error('driverLicense')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
                                 </div>
@@ -1794,12 +1789,6 @@ seat-available
                                 <td>Driver Phone:</td>
                                 <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
-                            <tr>
-                                <td>Driver CNIC:</td>
-                                <td><strong>${tripData?.driver_cnic || 'N/A (Not Assigned)'}</strong></td>
-                                <td>Driver License:</td>
-                                <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
-                            </tr>
                             ${tripData?.driver_address ? `
                                                                                     <tr>
                                                                                         <td>Driver Address:</td>
@@ -2105,12 +2094,6 @@ seat-available
                                 <td><strong>${tripData?.driver_name || 'N/A (Not Assigned)'}</strong></td>
                                 <td>Driver Phone:</td>
                                 <td><strong>${tripData?.driver_phone || 'N/A (Not Assigned)'}</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Driver CNIC:</td>
-                                <td><strong>${tripData?.driver_cnic || 'N/A (Not Assigned)'}</strong></td>
-                                <td>Driver License:</td>
-                                <td><strong>${tripData?.driver_license || 'N/A (Not Assigned)'}</strong></td>
                             </tr>
                             ${tripData?.driver_address ? `
                                                                                     <tr>
