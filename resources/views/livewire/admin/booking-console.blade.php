@@ -235,67 +235,16 @@
                 <!-- Left Column: Seat Map (3 columns) -->
                 <div class="col-lg-3 col-md-6">
                     <div class="card shadow-sm h-100 border-0">
-                        <div class="card-header text-white"
-                            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                            <h6 class="mb-0 fw-bold">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0 fw-semibold text-dark">
                                 <i class="fas fa-chair"></i> Seat Map
                             </h6>
                         </div>
-                        <div class="card-body p-3 scrollable-content">
-                            <!-- Legend -->
-                            <div class="mb-3 p-3 bg-white rounded-lg shadow-sm w-100 border border-gray-200">
-                                <div class="seat-legend">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #E2E8F0; border: 1px solid #cbd5e1; border-radius: 4px;">
-                                        </div>
-                                        <span class="small text-dark">Available</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
-                                            <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
-                                        </div>
-                                        <span class="small text-dark">Selected (Male)</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #3B82F6; border: 1px solid #2563eb; border-radius: 4px; position: relative;">
-                                            <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
-                                        </div>
-                                        <span class="small text-dark">Selected (Female)</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #22D3EE; border: 1px solid #06b6d4; border-radius: 4px; position: relative;">
-                                            <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👨</span>
-                                        </div>
-                                        <span class="small text-dark">Male Booked</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #EC4899; border: 1px solid #db2777; border-radius: 4px; position: relative;">
-                                            <span
-                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.5rem;">👩</span>
-                                        </div>
-                                        <span class="small text-dark">Female Booked</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-2"
-                                            style="width: 16px; height: 16px; background: #fbbf24; border: 1px solid #f59e0b; border-radius: 4px;">
-                                        </div>
-                                        <span class="small text-dark">Held</span>
-                                    </div>
-                                </div>
-                            </div>
-
+                        <div class="card-body p-2 scrollable-content">
                             <!-- Seat Grid -->
                             <div class="seat-map-container">
-                                <h6 class="text-center mb-3"
-                                    style="color: #334155; font-weight: 600; font-size: 1rem;">
+                                <h6 class="text-center mb-2"
+                                    style="color: #334155; font-weight: 600; font-size: 0.875rem;">
                                     Select Your Seat</h6>
                                 <div class="seat-grid">
                                     @php
@@ -477,6 +426,30 @@ seat-available
                                             @endfor
                                         </div>
                                     @endif
+                                </div>
+
+                                <!-- Legend at bottom of seat map -->
+                                <div class="seat-legend">
+                                    <div class="seat-legend-item">
+                                        <div class="seat-legend-indicator available"></div>
+                                        <span>Available</span>
+                                    </div>
+                                    <div class="seat-legend-item">
+                                        <div class="seat-legend-indicator selected"></div>
+                                        <span>Selected</span>
+                                    </div>
+                                    <div class="seat-legend-item">
+                                        <div class="seat-legend-indicator booked-male"></div>
+                                        <span>Male Booked</span>
+                                    </div>
+                                    <div class="seat-legend-item">
+                                        <div class="seat-legend-indicator booked-female"></div>
+                                        <span>Female Booked</span>
+                                    </div>
+                                    <div class="seat-legend-item">
+                                        <div class="seat-legend-indicator held"></div>
+                                        <span>Held</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
