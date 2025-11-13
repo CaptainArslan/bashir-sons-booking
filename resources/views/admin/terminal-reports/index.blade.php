@@ -1115,63 +1115,6 @@
             }
         }
 
-        function exportReport() {
-            const terminalId = document.getElementById('terminalSelect').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-
-            if (!terminalId || !startDate || !endDate) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Information',
-                    text: 'Please select terminal and date range before exporting.',
-                    confirmButtonColor: '#ffc107'
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'Generating PDF...',
-                text: 'Please wait while we prepare your report.',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            const params = new URLSearchParams({
-                terminal_id: terminalId,
-                start_date: startDate,
-                end_date: endDate,
-                user_id: document.getElementById('filterUser').value || '',
-                status: document.getElementById('filterStatus').value || '',
-                payment_status: document.getElementById('filterPaymentStatus').value || '',
-                payment_method: document.getElementById('filterPaymentMethod').value || '',
-                channel: document.getElementById('filterChannel').value || '',
-                format: 'pdf'
-            });
-
-            const exportUrl = '{{ route('admin.terminal-reports.export') }}?' + params.toString();
-            const link = document.createElement('a');
-            link.href = exportUrl;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            setTimeout(() => {
-                Swal.close();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'PDF Generated',
-                    text: 'Your report download should begin shortly.',
-                    confirmButtonColor: '#198754',
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-            }, 500);
-        }
 
         // Auto-load report for users with assigned terminal (their terminal)
         @if (!$canSelectTerminal && $terminals->isNotEmpty())
