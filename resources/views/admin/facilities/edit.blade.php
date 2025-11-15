@@ -138,49 +138,6 @@
                     @csrf
                     
                     <div class="card-body">
-                        <!-- Info Box -->
-                        <div class="info-box">
-                            <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating facility information will affect all buses using this facility. Please review carefully before saving changes.</p>
-                        </div>
-                        
-                        <!-- Facility Information Card -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card facility-info-card">
-                                    <div class="card-body" style="padding: 0.75rem;">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Facility ID:</strong> 
-                                                    <span class="badge bg-secondary">{{ $facility->id }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Status:</strong> 
-                                                    <span class="badge bg-{{ $facility->status->getStatusColor($facility->status->value) }} stats-badge">
-                                                        {{ $facility->status->getName() }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Current Icon:</strong> 
-                                                    <span><i class="{{ $facility->icon }}"></i></span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <p class="mb-1" style="font-size: 0.85rem;">
-                                                    <strong>Created:</strong> 
-                                                    {{ $facility->created_at->format('M d, Y') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Basic Information -->
                         <div class="section-title">
                             <i class="bx bx-building me-1"></i>Basic Information
@@ -242,52 +199,6 @@
                             </div>
                         </div>
                         
-                        <!-- Icon Configuration -->
-                        <div class="section-divider"></div>
-                        <div class="section-title">
-                            <i class="bx bx-palette me-1"></i>Icon Configuration
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-12">
-                                <label for="icon" class="form-label">
-                                    Icon Class 
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <input type="text" 
-                                           class="form-control @error('icon') is-invalid @enderror" 
-                                           id="icon"
-                                           name="icon" 
-                                           placeholder="e.g., bx bx-wifi, bx bx-air-conditioning" 
-                                           value="{{ old('icon', $facility->icon) }}" 
-                                           required>
-                                    <button type="button" class="btn btn-outline-secondary" onclick="showIconPreview()">
-                                        <i class="bx bx-preview me-1"></i>Preview
-                                    </button>
-                                </div>
-                                <div class="form-text">
-                                    <i class="bx bx-info-circle me-1"></i>
-                                    Use Boxicons classes (e.g., bx bx-wifi, bx bx-air-conditioning, bx bx-tv, bx bx-music)
-                                </div>
-                                @error('icon')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        
-                        <!-- Icon Preview -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div id="icon-preview" class="icon-preview-box">
-                                    <p>
-                                        <i class="bx bx-eye me-1"></i>
-                                        <strong>Icon Preview:</strong> 
-                                        <span id="preview-icon"><i class="{{ $facility->icon }} me-2" style="font-size: 1.5rem;"></i><code>{{ $facility->icon }}</code></span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Action Buttons -->
@@ -315,25 +226,4 @@
 @endsection
 
 @section('scripts')
-<script>
-function showIconPreview() {
-    const iconInput = document.getElementById('icon');
-    const iconValue = iconInput.value.trim();
-    const previewDiv = document.getElementById('icon-preview');
-    const previewIcon = document.getElementById('preview-icon');
-    
-    if (iconValue) {
-        previewIcon.innerHTML = `<i class="${iconValue} me-2" style="font-size: 1.5rem;"></i><code>${iconValue}</code>`;
-        previewDiv.style.display = 'block';
-    } else {
-        previewDiv.style.display = 'none';
-    }
-}
-
-// Auto-preview on input change
-document.addEventListener('DOMContentLoaded', function() {
-    const iconInput = document.getElementById('icon');
-    iconInput.addEventListener('input', showIconPreview);
-});
-</script>
 @endsection

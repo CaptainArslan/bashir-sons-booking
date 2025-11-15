@@ -113,7 +113,6 @@ class FacilityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:facilities,name|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
-            'icon' => 'required|string|max:255|regex:/^bx\s+bx-[a-zA-Z0-9\-]+$/',
             'status' => 'required|string|in:'.implode(',', FacilityEnum::getStatuses()),
         ], [
             'name.required' => 'Facility name is required',
@@ -123,10 +122,6 @@ class FacilityController extends Controller
             'name.regex' => 'Facility name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
-            'icon.required' => 'Icon is required',
-            'icon.string' => 'Icon must be a string',
-            'icon.max' => 'Icon must be less than 255 characters',
-            'icon.regex' => 'Icon must be a valid Boxicons class (e.g., bx bx-wifi)',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -135,7 +130,6 @@ class FacilityController extends Controller
         Facility::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
-            'icon' => $validated['icon'],
             'status' => $validated['status'],
         ]);
 
@@ -157,7 +151,6 @@ class FacilityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:facilities,name,'.$facility->id.'|regex:/^[a-zA-Z0-9\s\-_]+$/',
             'description' => 'nullable|string|max:1000',
-            'icon' => 'required|string|max:255|regex:/^bx\s+bx-[a-zA-Z0-9\-]+$/',
             'status' => 'required|string|in:'.implode(',', FacilityEnum::getStatuses()),
         ], [
             'name.required' => 'Facility name is required',
@@ -167,10 +160,6 @@ class FacilityController extends Controller
             'name.regex' => 'Facility name can only contain letters, numbers, spaces, hyphens, and underscores',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must be less than 1000 characters',
-            'icon.required' => 'Icon is required',
-            'icon.string' => 'Icon must be a string',
-            'icon.max' => 'Icon must be less than 255 characters',
-            'icon.regex' => 'Icon must be a valid Boxicons class (e.g., bx bx-wifi)',
             'status.required' => 'Status is required',
             'status.string' => 'Status must be a string',
             'status.in' => 'Status must be a valid status',
@@ -179,7 +168,6 @@ class FacilityController extends Controller
         $facility->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
-            'icon' => $validated['icon'],
             'status' => $validated['status'],
         ]);
 
