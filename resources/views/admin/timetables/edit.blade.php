@@ -297,9 +297,8 @@
                                     <small class="text-muted">(Auto-calculated)</small>
                                 </label>
                                 @php
-                                    // Get raw database value to avoid accessor formatting
-                                    $rawStartTime = $timetable->getRawOriginal('start_departure_time');
-                                    $startTimeFormatted = $rawStartTime ? \Carbon\Carbon::parse($rawStartTime)->format('H:i') : '';
+                                    // Use accessor to get 12-hour formatted time for display
+                                    $startTimeFormatted = $timetable->start_departure_time ?? '';
                                 @endphp
                                 <input type="text" 
                                        id="start_departure_time_display" 
@@ -321,9 +320,8 @@
                                     <small class="text-muted">(Auto-calculated)</small>
                                 </label>
                                 @php
-                                    // Get raw database value to avoid accessor formatting
-                                    $rawEndTime = $timetable->getRawOriginal('end_arrival_time');
-                                    $endTimeFormatted = $rawEndTime ? \Carbon\Carbon::parse($rawEndTime)->format('H:i') : '';
+                                    // Use accessor to get 12-hour formatted time for display
+                                    $endTimeFormatted = $timetable->end_arrival_time ?? '';
                                 @endphp
                                 <input type="text" 
                                        id="end_arrival_time_display" 
@@ -473,12 +471,22 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Function to convert 24-hour time to 12-hour format
+    function convertTo12Hour(time24) {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours, 10);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+    
     // Function to update start and end times based on stop inputs
     function updateTimetableTimes() {
         // Get first stop's departure time (start_departure_time)
         const firstStopDeparture = $('input[name="stops[0][departure_time]"]').val();
         if (firstStopDeparture) {
-            $('#start_departure_time_display').val(firstStopDeparture);
+            $('#start_departure_time_display').val(convertTo12Hour(firstStopDeparture));
         } else {
             $('#start_departure_time_display').val('');
         }
@@ -487,7 +495,7 @@ $(document).ready(function() {
         const lastStopIndex = {{ $timetableStops->count() - 1 }};
         const lastStopArrival = $(`input[name="stops[${lastStopIndex}][arrival_time]"]`).val();
         if (lastStopArrival) {
-            $('#end_arrival_time_display').val(lastStopArrival);
+            $('#end_arrival_time_display').val(convertTo12Hour(lastStopArrival));
         } else {
             $('#end_arrival_time_display').val('');
         }

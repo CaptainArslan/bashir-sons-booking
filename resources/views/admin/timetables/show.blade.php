@@ -258,14 +258,14 @@
                             @endif
                         </span>
                         <span class="time-value {{ !$stop->arrival_time ? 'empty' : '' }}">
-                            {{ $stop->arrival_time ? \Carbon\Carbon::parse($stop->arrival_time)->format('H:i') : '--:--' }}
+                            {{ $stop->arrival_time ?? '--:--' }}
                         </span>
                     </div>
                     @if(!$isLast)
                         <div class="time-block">
                             <span class="time-label">Departure</span>
                             <span class="time-value {{ !$stop->departure_time ? 'empty' : '' }}">
-                                {{ $stop->departure_time ? \Carbon\Carbon::parse($stop->departure_time)->format('H:i') : '--:--' }}
+                                {{ $stop->departure_time ?? '--:--' }}
                             </span>
                         </div>
                     @endif

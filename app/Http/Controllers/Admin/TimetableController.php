@@ -73,8 +73,8 @@ class TimetableController extends Controller
                             'id' => $stop->id, // TimetableStop ID for toggle functionality
                             'terminal_id' => $stop->terminal_id,
                             'name' => $stop->terminal->name,
-                            'arrival_time' => $stop->arrival_time ?? null,
-                            'departure_time' => $stop->departure_time ?? null,
+                            'arrival_time' => $stop->arrival_time ?? null, // Already formatted via accessor
+                            'departure_time' => $stop->departure_time ?? null, // Already formatted via accessor
                             'sequence' => $stop->sequence,
                             'is_active' => $stop->is_active,
                         ];
@@ -89,7 +89,7 @@ class TimetableController extends Controller
                     'route_code' => $timetable->route->code ?? 'N/A',
                     'start_terminal' => $firstStop ? $firstStop['name'] : 'N/A',
                     'end_terminal' => $lastStop ? $lastStop['name'] : 'N/A',
-                    'start_departure_time' => $timetable->start_departure_time,
+                    'start_departure_time' => $timetable->start_departure_time, // Already formatted via accessor
                     'total_stops' => $stops->count(),
                     'status' => $timetable->is_active ? 'active' : 'inactive',
                     'created_at' => $timetable->created_at->format('Y-m-d H:i:s'),
