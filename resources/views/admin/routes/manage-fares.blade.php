@@ -86,10 +86,6 @@
         min-width: 100px;
     }
     
-    .discount-input {
-        min-width: 80px;
-    }
-    
     .status-badge {
         font-size: 0.75rem;
     }
@@ -162,12 +158,8 @@
                                 <thead>
                                     <tr>
                                         <th width="5%">#</th>
-                                        <th width="25%">Route Segment</th>
-                                        <th width="15%">Base Fare</th>
-                                        <th width="10%">Discount Type</th>
-                                        <th width="10%">Discount Value</th>
-                                        <th width="15%">Final Fare</th>
-                                        {{-- <th width="10%">Status</th> --}}
+                                        <th width="40%">Route Segment</th>
+                                        <th width="20%">Base Fare</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -195,39 +187,9 @@
                                                            required>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <select class="form-select discount-type" name="fares[{{ $index }}][discount_type]">
-                                                    <option value="">None</option>
-                                                    <option value="flat" {{ old('fares.' . $index . '.discount_type', $existingFare?->discount_type?->value) == 'flat' ? 'selected' : '' }}>Flat</option>
-                                                    <option value="percent" {{ old('fares.' . $index . '.discount_type', $existingFare?->discount_type?->value) == 'percent' ? 'selected' : '' }}>Percent</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="number" 
-                                                       class="form-control discount-input discount-value" 
-                                                       name="fares[{{ $index }}][discount_value]" 
-                                                       value="{{ old('fares.' . $index . '.discount_value', $existingFare?->discount_value ?? 0) }}"
-                                                       step="0.01" 
-                                                       min="0">
-                                            </td>
-                                            <td>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">{{ $route->base_currency }}</span>
-                                                    <input type="number" 
-                                                           class="form-control fare-input final-fare" 
-                                                           name="fares[{{ $index }}][final_fare]" 
-                                                           readonly>
-                                                </div>
-                                            </td>
-                                            {{-- <td>
-                                                <select class="form-select" name="fares[{{ $index }}][status]">
-                                                    <option value="active" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'active' ? 'selected' : '' }}>Active</option>
-                                                    <option value="inactive" {{ old('fares.' . $index . '.status', $existingFare?->status?->value ?? 'active') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                                </select>
-                                            </td> --}}
                                         </tr>
                                         
-                                        <!-- Hidden fields for terminal IDs -->
+                                        <!-- Hidden fields for terminal IDs and currency -->
                                         <input type="hidden" name="fares[{{ $index }}][from_terminal_id]" value="{{ $combination['from_terminal_id'] }}">
                                         <input type="hidden" name="fares[{{ $index }}][to_terminal_id]" value="{{ $combination['to_terminal_id'] }}">
                                         <input type="hidden" name="fares[{{ $index }}][currency]" value="{{ $route->base_currency }}">
@@ -261,86 +223,9 @@
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Calculate final fare when base fare, discount type, or discount value changes
-    function calculateFinalFare(row) {
-        const baseFareInput = row.querySelector('.base-fare');
-        const discountTypeSelect = row.querySelector('.discount-type');
-        const discountValueInput = row.querySelector('.discount-value');
-        const finalFareInput = row.querySelector('.final-fare');
-        
-        const baseFare = parseFloat(baseFareInput.value) || 0;
-        const discountType = discountTypeSelect.value;
-        const discountValue = parseFloat(discountValueInput.value) || 0;
-        
-        let finalFare = baseFare;
-        
-        if (discountType && discountValue > 0) {
-            if (discountType === 'flat') {
-                finalFare = Math.max(0, baseFare - discountValue);
-            } else if (discountType === 'percent') {
-                finalFare = Math.max(0, baseFare - (baseFare * discountValue / 100));
-            }
-        }
-        
-        finalFareInput.value = finalFare.toFixed(2);
-    }
-    
-    // Add event listeners to all fare calculation inputs
-    document.querySelectorAll('tbody tr').forEach(row => {
-        const baseFareInput = row.querySelector('.base-fare');
-        const discountTypeSelect = row.querySelector('.discount-type');
-        const discountValueInput = row.querySelector('.discount-value');
-        
-        [baseFareInput, discountTypeSelect, discountValueInput].forEach(input => {
-            if (input) {
-                input.addEventListener('input', () => calculateFinalFare(row));
-                input.addEventListener('change', () => calculateFinalFare(row));
-            }
-        });
-        
-        // Calculate initial values
-        calculateFinalFare(row);
-    });
-    
-    // Enable/disable discount value input based on discount type
-    document.querySelectorAll('.discount-type').forEach(select => {
-        const discountValueInput = select.closest('tr').querySelector('.discount-value');
-        
-        select.addEventListener('change', function() {
-            if (this.value) {
-                discountValueInput.disabled = false;
-                discountValueInput.required = true;
-            } else {
-                discountValueInput.disabled = true;
-                discountValueInput.required = false;
-                discountValueInput.value = '';
-            }
-            calculateFinalFare(select.closest('tr'));
-        });
-        
-        // Set initial state
-        if (select.value) {
-            discountValueInput.disabled = false;
-            discountValueInput.required = true;
-        } else {
-            discountValueInput.disabled = true;
-            discountValueInput.required = false;
-        }
-    });
-});
-
 function resetForm() {
     if (confirm('Are you sure you want to reset all fare values? This will clear all entered data.')) {
         document.getElementById('faresForm').reset();
-        
-        // Recalculate all final fares
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const finalFareInput = row.querySelector('.final-fare');
-            if (finalFareInput) {
-                finalFareInput.value = '';
-            }
-        });
     }
 }
 
