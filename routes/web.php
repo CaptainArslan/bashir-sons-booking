@@ -1,35 +1,36 @@
 <?php
 
-use App\Http\Controllers\Admin\AdvanceBookingController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BannerController;
-use App\Http\Controllers\Admin\BookingController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\CounterTerminalController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\DiscountController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\EnquiryController;
-use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\RouteController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\TerminalReportController;
-use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\FrontendBookingController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\CheckUserStatus;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BusController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwoFactorController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\FareController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BusTypeController;
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\BusLayoutController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\FrontendBookingController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\GeneralSettingController;
+use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -70,7 +71,7 @@ Route::middleware(['guest', '2fa.pending'])->group(function () {
     Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify');
 });
 
-Route::middleware(['auth', 'check.user.status'])->group(function () {
+Route::middleware(['auth', CheckUserStatus::class])->group(function () {
     // Profile routes - now using frontend views
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

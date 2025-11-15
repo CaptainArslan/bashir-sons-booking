@@ -19,7 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'check.permission' => \App\Http\Middleware\CheckPermission::class,
-            'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
         ]);
 
         // Apply user status check to all web routes
