@@ -6,6 +6,7 @@ use App\Enums\DiscountTypeEnum;
 use App\Enums\FareStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Fare;
+use App\Models\Route;
 use App\Models\Terminal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,11 @@ class FareController extends Controller
 {
     public function index()
     {
-        return view('admin.fares.index');
+        $routes = Route::with(['fromCity', 'toCity'])
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.fares.index', compact('routes'));
     }
 
     public function getData(Request $request)
@@ -28,6 +33,19 @@ class FareController extends Controller
                     'toTerminal.city',
                 ])
                 ->select('id', 'from_terminal_id', 'to_terminal_id', 'base_fare', 'discount_type', 'discount_value', 'final_fare', 'currency', 'status', 'created_at');
+
+            // Filter by route if provided
+            if ($request->has('route_id') && $request->route_id) {
+                $route = Route::with('routeStops')->find($request->route_id);
+                if ($route) {
+                    // Get all terminal IDs for this route
+                    $terminalIds = $route->routeStops->pluck('terminal_id')->toArray();
+
+                    // Filter fares where both from_terminal_id and to_terminal_id are in the route's terminals
+                    $fares->whereIn('from_terminal_id', $terminalIds)
+                        ->whereIn('to_terminal_id', $terminalIds);
+                }
+            }
 
             return DataTables::eloquent($fares)
                 ->addColumn('route_path', function ($fare) {

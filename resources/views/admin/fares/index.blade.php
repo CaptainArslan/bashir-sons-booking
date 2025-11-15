@@ -99,6 +99,30 @@
         </div>
     </div>
 
+    <!-- Route Filter -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label for="route_filter" class="form-label mb-1">
+                        <i class="bx bx-route me-1"></i>Filter by Route
+                    </label>
+                    <select class="form-select select2" id="route_filter" name="route_id">
+                        <option value="">All Routes</option>
+                        @foreach($routes as $route)
+                            <option value="{{ $route->id }}">{{ $route->name }} ({{ $route->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="clearRouteFilter()">
+                        <i class="bx bx-x me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Data Table -->
     <div class="table-container">
         <div class="p-3">
@@ -132,13 +156,23 @@
     {{-- @include('admin.layouts.datatables') --}}
     <script>
         $(document).ready(function() {
+            // Initialize Select2 for route filter
+            $('#route_filter').select2({
+                placeholder: 'Select a route to filter fares',
+                allowClear: true,
+                width: '100%'
+            });
+
             // Initialize DataTable
             var table = $('#fares-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
                     url: "{{ route('admin.fares.data') }}",
-                    type: 'GET'
+                    type: 'GET',
+                    data: function(d) {
+                        d.route_id = $('#route_filter').val();
+                    }
                 },
                 columns: [{
                         data: 'route_path',
@@ -190,6 +224,17 @@
 
             // Refresh table function
             window.refreshTable = function() {
+                table.ajax.reload();
+            };
+
+            // Route filter change handler
+            $('#route_filter').on('change', function() {
+                table.ajax.reload();
+            });
+
+            // Clear route filter function
+            window.clearRouteFilter = function() {
+                $('#route_filter').val(null).trigger('change');
                 table.ajax.reload();
             };
         });
