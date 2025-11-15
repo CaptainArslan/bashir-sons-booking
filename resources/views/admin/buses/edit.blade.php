@@ -48,22 +48,6 @@
         font-weight: 500;
     }
     
-    .bus-info-card {
-        border-left: 3px solid #6c757d;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-    }
-    
-    .bus-info-card .card-body {
-        padding: 0.5rem !important;
-    }
-    
-    .stats-badge {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-    }
-    
     .info-box {
         background: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -104,17 +88,18 @@
     .facilities-container {
         border: 1px solid #dee2e6;
         border-radius: 4px;
-        padding: 0.4rem;
+        padding: 1rem;
         background: #fff;
-        overflow: hidden;
         width: 100%;
+        min-height: 100px;
     }
     
     .facility-item {
-        padding: 0.15rem 0.4rem;
+        padding: 0.5rem;
         margin: 0;
         width: 100%;
-        overflow: hidden;
+        display: flex;
+        align-items: center;
     }
     
     .facility-item .form-check {
@@ -122,12 +107,19 @@
         display: flex;
         align-items: center;
         width: 100%;
+        position: relative;
+        z-index: 1;
     }
     
     .facility-item .form-check-input {
         flex-shrink: 0;
         margin-top: 0;
-        margin-right: 0.5rem;
+        margin-right: 0.75rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
     }
     
     .facility-item .form-check-label {
@@ -136,10 +128,9 @@
         cursor: pointer;
         margin: 0;
         flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        min-width: 0;
+        white-space: normal;
+        word-wrap: break-word;
+        line-height: 1.4;
     }
     
     .facility-item .form-check-input:checked ~ .form-check-label {
@@ -148,8 +139,8 @@
     }
     
     .facilities-container .row > div {
-        overflow: hidden;
         min-width: 0;
+        padding: 0.25rem;
     }
 </style>
 @endsection
@@ -187,56 +178,6 @@
                             <p><i class="bx bx-info-circle me-1"></i><strong>Note:</strong> Updating bus information will affect all routes and bookings using this bus. Please review carefully before saving changes.</p>
                         </div>
                         
-                        <!-- Bus Information Card -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card bus-info-card">
-                                    <div class="card-body">
-                                        <div class="row g-2">
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Bus ID:</strong> 
-                                                    <span class="badge bg-secondary">{{ $bus->id }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Registration:</strong> 
-                                                    <span class="badge bg-info">{{ $bus->registration_number ?? 'N/A' }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Current Status:</strong> 
-                                                    <span class="badge bg-{{ $bus->status->getStatusColor($bus->status->value) }} stats-badge">
-                                                        {{ $bus->status->getName() }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Seats:</strong> 
-                                                    <span class="badge bg-success">{{ $bus->total_seats ?? ($bus->seat_count ?? 'N/A') }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Type:</strong> 
-                                                    <span class="badge bg-primary">{{ $bus->busType->name ?? 'N/A' }}</span>
-                                                </p>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <p class="mb-0" style="font-size: 0.75rem;">
-                                                    <strong>Created:</strong> 
-                                                    {{ $bus->created_at->format('M d, Y') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Basic Information -->
                         <div class="section-title">
                             <i class="bx bx-bus me-1"></i>Basic Information
@@ -263,16 +204,16 @@
                             
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label">
-                                    Registration Number
+                                    Bus Number
                                 </label>
                                 <input type="text" 
                                        class="form-control @error('registration_number') is-invalid @enderror" 
                                        id="registration_number"
                                        name="registration_number" 
-                                       placeholder="Enter Registration Number (e.g., ABC-123) - Optional" 
+                                       placeholder="Enter Bus Number (e.g., ABC-123) - Optional" 
                                        value="{{ old('registration_number', $bus->registration_number) }}" 
                                        style="text-transform: uppercase;">
-                                <div class="form-text">Enter in format: ABC-123 (will be converted to uppercase). This field is optional.</div>
+                                <div class="form-text">Enter in format: ABC-123 (will be converted to uppercase).</div>
                                 @error('registration_number')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
