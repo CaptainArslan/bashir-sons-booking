@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use App\Models\Route;
-use App\Models\Profile;
-use App\Models\Terminal;
 use App\Enums\GenderEnum;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Enums\UserStatusEnum;
-use Illuminate\Validation\Rules;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
+use App\Models\Profile;
+use App\Models\Route;
+use App\Models\Terminal;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules;
+use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
 class EmployeeController extends Controller
@@ -206,7 +206,7 @@ class EmployeeController extends Controller
                         </li>';
                     }
 
-                    if ($hasActivatePermission && $userStatusValue === UserStatusEnum::BANNED->value) {
+                    if ($hasActivatePermission && $userStatusValue === UserStatusEnum::BANNED->value && $user->id !== auth()->id()) {
                         $actions .= '<li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item text-success" 
@@ -611,6 +611,18 @@ class EmployeeController extends Controller
                 }
 
                 return redirect()->back()->with('error', 'User is not an employee.');
+            }
+
+            // Prevent self-activation
+            if ($user->id === auth()->id()) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You cannot activate your own account. Please have another admin do it.',
+                    ], 403);
+                }
+
+                return redirect()->back()->with('error', 'You cannot activate your own account. Please have another admin do it.');
             }
 
             $user->update([
