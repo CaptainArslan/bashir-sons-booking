@@ -482,13 +482,16 @@
                     placeholder: 'Select Terminal'
                 });
 
-                // Remove stop and reindex
-                const removeBtn = stopDiv.querySelector('.remove-stop-btn');
-                removeBtn.addEventListener('click', function() {
-                    $(terminalSelect).select2('destroy');
-                    stopDiv.remove();
-                    updateSequences();
-                });
+            // Remove stop and reindex
+            const removeBtn = stopDiv.querySelector('.remove-stop-btn');
+            removeBtn.addEventListener('click', function() {
+                $(terminalSelect).select2('destroy');
+                stopDiv.remove();
+                updateSequences();
+            });
+            
+            // Update sequences after adding
+            updateSequences();
             }
 
             // -----------------------------
