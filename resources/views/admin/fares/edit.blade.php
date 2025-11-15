@@ -231,42 +231,6 @@
                             </div>
                         </div>
 
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <label for="discount_type" class="form-label">Discount Type</label>
-                                <select class="form-select @error('discount_type') is-invalid @enderror" 
-                                        id="discount_type" name="discount_type">
-                                    <option value="">No Discount</option>
-                                    @foreach($discountTypes as $value => $label)
-                                        <option value="{{ $value }}" 
-                                                {{ old('discount_type', $fare->discount_type) == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('discount_type')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="discount_value" class="form-label">Discount Value</label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="discount-symbol">{{ $fare->currency }}</span>
-                                    <input type="number" 
-                                           class="form-control @error('discount_value') is-invalid @enderror" 
-                                           id="discount_value" 
-                                           name="discount_value" 
-                                           value="{{ old('discount_value', $fare->discount_value) }}" 
-                                           min="0" 
-                                           max="100000"
-                                           {{ !old('discount_type', $fare->discount_type) ? 'disabled' : '' }}>
-                                </div>
-                                @error('discount_value')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
 
                         <div class="row mt-3">
                             <div class="col-md-12">
@@ -324,47 +288,20 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const baseFareInput = document.getElementById('base_fare');
-    const discountTypeSelect = document.getElementById('discount_type');
-    const discountValueInput = document.getElementById('discount_value');
     const currencySelect = document.getElementById('currency');
     const fromTerminalSelect = document.getElementById('from_terminal_id');
     const toTerminalSelect = document.getElementById('to_terminal_id');
-
-    // Function to toggle discount value field based on discount type
-    function toggleDiscountValue() {
-        const discountType = discountTypeSelect.value;
-        if (!discountType || discountType === '') {
-            discountValueInput.disabled = true;
-            discountValueInput.value = '';
-        } else {
-            discountValueInput.disabled = false;
-        }
-        calculateFinalFare();
-    }
 
     // Update currency symbol when currency changes
     currencySelect.addEventListener('change', function() {
         const currency = this.value;
         document.getElementById('currency-symbol').textContent = currency;
-        if (!discountTypeSelect.value || discountTypeSelect.value !== 'percent') {
-            document.getElementById('discount-symbol').textContent = currency;
-        }
         calculateFinalFare();
     });
 
     // Calculate final fare when inputs change
-    [baseFareInput, discountTypeSelect, discountValueInput].forEach(element => {
-        element.addEventListener('input', calculateFinalFare);
-        element.addEventListener('change', calculateFinalFare);
-    });
-
-    // Update discount symbol and enable/disable discount value based on discount type
-    discountTypeSelect.addEventListener('change', function() {
-        const discountType = this.value;
-        const symbol = discountType === 'percent' ? '%' : currencySelect.value;
-        document.getElementById('discount-symbol').textContent = symbol;
-        toggleDiscountValue();
-    });
+    baseFareInput.addEventListener('input', calculateFinalFare);
+    baseFareInput.addEventListener('change', calculateFinalFare);
 
     // Show route preview and check for existing fare when terminals are selected
     [fromTerminalSelect, toTerminalSelect].forEach(element => {
@@ -463,26 +400,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initial setup
-    toggleDiscountValue();
     calculateFinalFare();
     updateRoutePreview();
 });
 
 function calculateFinalFare() {
     const baseFare = parseInt(document.getElementById('base_fare').value) || 0;
-    const discountType = document.getElementById('discount_type').value;
-    const discountValue = parseInt(document.getElementById('discount_value').value) || 0;
     const currency = document.getElementById('currency').value;
 
-    let finalFare = baseFare;
-
-    if (discountType && discountValue > 0) {
-        if (discountType === 'flat') {
-            finalFare = Math.max(0, baseFare - discountValue);
-        } else if (discountType === 'percent') {
-            finalFare = Math.max(0, Math.round(baseFare - (baseFare * discountValue / 100)));
-        }
-    }
+    // Base fare is the final fare (no discounts)
+    const finalFare = baseFare;
 
     document.getElementById('final-fare-display').textContent = currency + ' ' + finalFare.toLocaleString();
 }

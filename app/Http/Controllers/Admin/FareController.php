@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\DiscountTypeEnum;
 use App\Enums\FareStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Fare;
@@ -32,7 +31,7 @@ class FareController extends Controller
                     'fromTerminal.city',
                     'toTerminal.city',
                 ])
-                ->select('id', 'from_terminal_id', 'to_terminal_id', 'base_fare', 'discount_type', 'discount_value', 'final_fare', 'currency', 'status', 'created_at');
+                ->select('id', 'from_terminal_id', 'to_terminal_id', 'base_fare', 'final_fare', 'currency', 'status', 'created_at');
 
             // Filter by route if provided
             if ($request->has('route_id') && $request->route_id) {
@@ -63,21 +62,10 @@ class FareController extends Controller
                 })
 
                 ->addColumn('fare_info', function ($fare) {
-                    $baseFare = $fare->currency.' '.number_format($fare->base_fare, 0);
                     $finalFare = $fare->currency.' '.number_format($fare->final_fare, 0);
-
-                    $discountHtml = '';
-                    if ($fare->discount_type && $fare->discount_value > 0) {
-                        $discount = $fare->discount_type === DiscountTypeEnum::PERCENT->value
-                            ? $fare->discount_value.'%'
-                            : $fare->currency.' '.number_format($fare->discount_value, 0);
-                        $discountHtml = '<small class="text-success">Discount: '.$discount.'</small>';
-                    }
 
                     return '<div class="d-flex flex-column">
                                 <span class="fw-bold text-success">'.$finalFare.'</span>
-                                <small class="text-muted">Base: '.$baseFare.'</small>
-                                '.$discountHtml.'
                             </div>';
                 })
                 ->addColumn('status_badge', function ($fare) {
@@ -131,10 +119,9 @@ class FareController extends Controller
     public function create()
     {
         $terminals = Terminal::with('city')->where('status', 'active')->get();
-        $discountTypes = ['flat' => 'Flat Amount', 'percent' => 'Percentage'];
         $currencies = ['PKR' => 'PKR', 'USD' => 'USD', 'EUR' => 'EUR'];
 
-        return view('admin.fares.create', compact('terminals', 'discountTypes', 'currencies'));
+        return view('admin.fares.create', compact('terminals', 'currencies'));
     }
 
     public function store(Request $request)
@@ -155,17 +142,6 @@ class FareController extends Controller
                 'min:1',
                 'max:100000',
             ],
-            'discount_type' => [
-                'nullable',
-                'string',
-                'in:'.implode(',', ['flat', 'percent']),
-            ],
-            'discount_value' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'required_if:discount_type,flat,percent',
-            ],
             'currency' => [
                 'required',
                 'string',
@@ -181,10 +157,6 @@ class FareController extends Controller
             'base_fare.integer' => 'Base fare must be a whole number',
             'base_fare.min' => 'Base fare must be at least 1',
             'base_fare.max' => 'Base fare cannot exceed 100,000',
-            'discount_type.in' => 'Discount type must be either flat or percent',
-            'discount_value.integer' => 'Discount value must be a whole number',
-            'discount_value.min' => 'Discount value cannot be negative',
-            'discount_value.required_if' => 'Discount value is required when discount type is selected',
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
         ]);
@@ -203,18 +175,22 @@ class FareController extends Controller
                     ->with('error', 'A fare already exists for this terminal pair.');
             }
 
-            // Calculate final fare
-            $finalFare = $this->calculateFinalFare(
-                $validated['base_fare'],
-                $validated['discount_type'] ?? null,
-                $validated['discount_value'] ?? null
-            );
+            // Base fare is the final fare (no discounts)
+            $finalFare = $validated['base_fare'];
 
-            // Always set status as active
-            $validated['final_fare'] = $finalFare;
-            $validated['status'] = FareStatusEnum::ACTIVE->value;
+            // Set fare data
+            $fareData = [
+                'from_terminal_id' => $validated['from_terminal_id'],
+                'to_terminal_id' => $validated['to_terminal_id'],
+                'base_fare' => $validated['base_fare'],
+                'final_fare' => $finalFare,
+                'currency' => $validated['currency'],
+                'discount_type' => null,
+                'discount_value' => 0,
+                'status' => FareStatusEnum::ACTIVE->value,
+            ];
 
-            Fare::create($validated);
+            Fare::create($fareData);
 
             DB::commit();
 
@@ -233,10 +209,9 @@ class FareController extends Controller
     {
         $fare = Fare::with(['fromTerminal.city', 'toTerminal.city'])->findOrFail($id);
         $terminals = Terminal::with('city')->where('status', 'active')->get();
-        $discountTypes = ['flat' => 'Flat Amount', 'percent' => 'Percentage'];
         $currencies = ['PKR' => 'PKR', 'USD' => 'USD', 'EUR' => 'EUR'];
 
-        return view('admin.fares.edit', compact('fare', 'terminals', 'discountTypes', 'currencies'));
+        return view('admin.fares.edit', compact('fare', 'terminals', 'currencies'));
     }
 
     public function update(Request $request, $id)
@@ -259,17 +234,6 @@ class FareController extends Controller
                 'min:1',
                 'max:100000',
             ],
-            'discount_type' => [
-                'nullable',
-                'string',
-                'in:'.implode(',', ['flat', 'percent']),
-            ],
-            'discount_value' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'required_if:discount_type,flat,percent',
-            ],
             'currency' => [
                 'required',
                 'string',
@@ -285,10 +249,6 @@ class FareController extends Controller
             'base_fare.integer' => 'Base fare must be a whole number',
             'base_fare.min' => 'Base fare must be at least 1',
             'base_fare.max' => 'Base fare cannot exceed 100,000',
-            'discount_type.in' => 'Discount type must be either flat or percent',
-            'discount_value.integer' => 'Discount value must be a whole number',
-            'discount_value.min' => 'Discount value cannot be negative',
-            'discount_value.required_if' => 'Discount value is required when discount type is selected',
             'currency.required' => 'Currency is required',
             'currency.in' => 'Currency must be PKR, USD, or EUR',
         ]);
@@ -308,18 +268,20 @@ class FareController extends Controller
                     ->with('error', 'A fare already exists for this terminal pair.');
             }
 
-            // Calculate final fare
-            $finalFare = $this->calculateFinalFare(
-                $validated['base_fare'],
-                $validated['discount_type'] ?? null,
-                $validated['discount_value'] ?? null
-            );
+            // Base fare is the final fare (no discounts)
+            $finalFare = $validated['base_fare'];
 
-            // Always keep status as active (users cannot change it)
-            $validated['final_fare'] = $finalFare;
-            $validated['status'] = FareStatusEnum::ACTIVE->value;
-
-            $fare->update($validated);
+            // Update fare data
+            $fare->update([
+                'from_terminal_id' => $validated['from_terminal_id'],
+                'to_terminal_id' => $validated['to_terminal_id'],
+                'base_fare' => $validated['base_fare'],
+                'final_fare' => $finalFare,
+                'currency' => $validated['currency'],
+                'discount_type' => null,
+                'discount_value' => 0,
+                'status' => FareStatusEnum::ACTIVE->value,
+            ]);
 
             DB::commit();
 
@@ -394,8 +356,6 @@ class FareController extends Controller
                         'id' => $fare->id,
                         'base_fare' => (int) $fare->base_fare,
                         'currency' => $fare->currency,
-                        'discount_type' => $fare->discount_type?->value,
-                        'discount_value' => (int) $fare->discount_value,
                         'final_fare' => (int) $fare->final_fare,
                     ],
                     'message' => 'A fare already exists for this terminal pair.',
@@ -414,18 +374,5 @@ class FareController extends Controller
                 'message' => 'Error checking fare: '.$e->getMessage(),
             ], 500);
         }
-    }
-
-    private function calculateFinalFare(int $baseFare, ?string $discountType, ?int $discountValue): int
-    {
-        if (! $discountType || ! $discountValue || $discountValue <= 0) {
-            return $baseFare;
-        }
-
-        return match ($discountType) {
-            DiscountTypeEnum::FLAT->value => max(0, $baseFare - $discountValue),
-            DiscountTypeEnum::PERCENT->value => max(0, (int) round($baseFare - ($baseFare * $discountValue / 100))),
-            default => $baseFare,
-        };
     }
 }
