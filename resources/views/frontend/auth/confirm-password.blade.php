@@ -14,6 +14,13 @@
                             </h3>
                         </div>
                         <div class="card-body p-4">
+                            @if (session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            @endif
+
                             <p class="text-muted mb-4">
                                 This is a secure area of the application. Please confirm your password before continuing.
                             </p>

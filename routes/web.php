@@ -24,7 +24,6 @@ use App\Http\Controllers\Admin\RouteStopController;
 use App\Http\Controllers\Admin\TerminalReportController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Auth\UserActivationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontendBookingController;
 use App\Http\Controllers\PaymentController;
@@ -66,19 +65,12 @@ Route::prefix('bookings')->name('frontend.bookings.')->group(function () {
 });
 
 // Frontend Routes
-
 Route::middleware(['guest', '2fa.pending'])->group(function () {
     Route::get('/two-factor-challenge', [TwoFactorController::class, 'challenge'])->name('2fa.challenge');
     Route::post('/two-factor-challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify');
 });
 
-// User activation route (for banned users, before authentication - guest only)
-Route::middleware('guest')->group(function () {
-    Route::get('/user/activate', [UserActivationController::class, 'show'])->name('user.activate');
-    Route::post('/user/activate', [UserActivationController::class, 'activate'])->name('user.activate.post');
-});
-
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'check.user.status'])->group(function () {
     // Profile routes - now using frontend views
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

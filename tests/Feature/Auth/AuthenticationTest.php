@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserStatusEnum;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
@@ -31,6 +32,21 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
+test('banned users cannot log in and are shown an error message', function () {
+    $user = User::factory()->create([
+        'status' => UserStatusEnum::BANNED,
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('error', 'Your account has been banned. Please contact an administrator to activate your account.');
+});
+
 test('users can logout', function () {
     $user = User::factory()->create();
 
@@ -38,4 +54,18 @@ test('users can logout', function () {
 
     $this->assertGuest();
     $response->assertRedirect('/');
+});
+
+test('banned users cannot access authenticated routes', function () {
+    $user = User::factory()->create([
+        'status' => UserStatusEnum::BANNED,
+    ]);
+
+    // Try to access an authenticated route
+    $response = $this->actingAs($user)->get('/profile');
+
+    // Should be redirected to login
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('error', 'Your account has been banned. Please contact an administrator to activate your account.');
+    $this->assertGuest();
 });

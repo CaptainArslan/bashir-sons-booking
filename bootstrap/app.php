@@ -22,7 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
         ]);
 
-        // Apply user status check to all authenticated routes
+        // Apply user status check to all web routes
+        // This middleware checks if authenticated users are banned on every request
+        // Using fresh() ensures we get the latest status from database even if user is already logged in
         $middleware->web(append: [
             \App\Http\Middleware\CheckUserStatus::class,
         ]);

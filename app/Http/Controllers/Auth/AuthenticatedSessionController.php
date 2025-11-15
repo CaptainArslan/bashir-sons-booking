@@ -33,16 +33,14 @@ class AuthenticatedSessionController extends Controller
         // Step 3: Check user status
         $user = Auth::user();
 
-        // If user is banned, redirect to activation page (only on login, not while active)
+        // If user is banned, prevent login and show error message
         if ($user && $user->status === \App\Enums\UserStatusEnum::BANNED) {
-            // Store user ID in session for activation
-            session(['banned_user_id' => $user->id]);
-
             // Logout to prevent access
             Auth::logout();
 
-            // Redirect to activation page
-            return redirect()->route('user.activate');
+            // Redirect back to login with error message
+            return redirect()->route('login')
+                ->with('error', 'Your account has been banned. Please contact an administrator to activate your account.');
         }
 
         // Step 4: Check if the user has 2FA enabled
@@ -71,6 +69,7 @@ class AuthenticatedSessionController extends Controller
         if ($user && ($user->isAdmin() || $user->isEmployee())) {
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
+
         return redirect()->intended(route('home', absolute: false));
     }
 
