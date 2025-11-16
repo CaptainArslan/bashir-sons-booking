@@ -940,7 +940,7 @@ class BookingConsole extends Component
             }
         }
 
-        $this->validate([
+        $validationRules = [
             'passengers' => 'required|array|min:1|max:'.$selectedSeatCount,
             'passengers.*.name' => 'required|string|max:100',
             'passengers.*.age' => 'required|integer|min:1|max:120',
@@ -948,13 +948,24 @@ class BookingConsole extends Component
             'passengers.*.cnic' => 'nullable|string|max:20',
             'passengers.*.phone' => 'nullable|string|max:20',
             'passengers.*.email' => 'nullable|email|max:100',
-        ], [
+        ];
+
+        $validationMessages = [
             'passengers.min' => 'Please provide at least one passenger information',
             'passengers.max' => 'You can add up to '.$selectedSeatCount.' passenger(s) for '.$selectedSeatCount.' selected seat(s)',
             'passengers.*.name.required' => 'Passenger name is required',
             'passengers.*.age.required' => 'Passenger age is required',
             'passengers.*.gender.required' => 'Passenger gender is required',
-        ]);
+        ];
+
+        // Add validation for amount received if payment method is cash
+        if ($this->bookingType === 'counter' && $this->paymentMethod === 'cash') {
+            $validationRules['amountReceived'] = 'required|numeric|min:0.01';
+            $validationMessages['amountReceived.required'] = 'Amount received from customer is required for cash payments';
+            $validationMessages['amountReceived.min'] = 'Amount received must be greater than 0';
+        }
+
+        $this->validate($validationRules, $validationMessages);
 
         if ($this->bookingType === 'counter' && $this->paymentMethod !== 'cash' && empty($this->transactionId)) {
             $this->dispatch('show-error', message: 'Transaction ID is required for non-cash payments');

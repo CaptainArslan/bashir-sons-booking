@@ -804,10 +804,14 @@ seat-available
                                         <div class="mb-2">
                                             <label class="form-label small fw-bold">
                                                 <i class="fas fa-money-bill"></i> Amount Received (PKR)
+                                                <span class="text-danger">*</span>
                                             </label>
-                                            <input type="number" class="form-control form-control-sm fw-bold"
+                                            <input type="number" class="form-control form-control-sm fw-bold @error('amountReceived') is-invalid border-danger @enderror"
                                                 wire:model.blur="amountReceived" wire:loading.attr="disabled"
-                                                id="amountReceived" min="0" step="0.01" placeholder="0.00">
+                                                id="amountReceived" min="0.01" step="0.01" placeholder="0.00" required>
+                                            @error('amountReceived')
+                                                <small class="text-danger d-block">{{ $message }}</small>
+                                            @enderror
                                             <div wire:loading wire:target="amountReceived"
                                                 class="spinner-border spinner-border-sm text-primary mt-1"
                                                 role="status">
