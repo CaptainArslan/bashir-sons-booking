@@ -247,16 +247,16 @@ function printBooking(bookingId, ticketType = null) {
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                         font-size: 10px;
                         margin: 0;
-                        padding: 15px;
+                        padding: 10px;
                         background: #fff;
                     }
                     .header-section {
                         display: grid;
                         grid-template-columns: 1fr 1fr 1fr;
-                        gap: 15px;
-                        margin-bottom: 15px;
-                        border-bottom: 3px solid #000;
-                        padding-bottom: 10px;
+                        gap: 10px;
+                        margin-bottom: 8px;
+                        border-bottom: 1px solid #000;
+                        padding-bottom: 5px;
                         background: linear-gradient(to bottom, #f8f9fa, #fff);
                     }
                     .header-left {
@@ -287,13 +287,12 @@ function printBooking(bookingId, ticketType = null) {
                     table {
                         width: 100%;
                         border-collapse: collapse;
-                        margin-top: 8px;
-                        font-size: 9px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        margin-top: 5px;
+                        font-size: 8px;
                     }
                     th, td {
-                        border: 1px solid #333;
-                        padding: 4px;
+                        border: 0.5px solid #333;
+                        padding: 2px 3px;
                         text-align: left;
                     }
                     th {
@@ -301,16 +300,17 @@ function printBooking(bookingId, ticketType = null) {
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
-                        font-size: 8px;
-                        padding: 5px;
+                        font-size: 7px;
+                        padding: 3px 2px;
                     }
                     .passenger-table th {
-                        font-size: 8px;
+                        font-size: 7px;
                         background-color: #34495e;
+                        padding: 2px;
                     }
                     .passenger-table td {
-                        font-size: 8px;
-                        padding: 3px;
+                        font-size: 7px;
+                        padding: 2px;
                     }
                     .passenger-table tbody tr:nth-child(even) {
                         background-color: #f8f9fa;
@@ -321,32 +321,32 @@ function printBooking(bookingId, ticketType = null) {
                     .booking-summary-container {
                         display: grid;
                         grid-template-columns: 1fr 0.4fr;
-                        gap: 15px;
-                        margin-top: 15px;
+                        gap: 8px;
+                        margin-top: 8px;
                     }
                     .quick-summary-box {
-                        border: 2px solid #2c3e50;
-                        border-radius: 4px;
+                        border: 1px solid #2c3e50;
+                        border-radius: 2px;
                         overflow: hidden;
                         background: #fff;
                     }
                     .quick-summary-header {
                         background-color: #2c3e50;
                         color: #fff;
-                        padding: 8px;
+                        padding: 4px;
                         text-align: center;
                         font-weight: bold;
-                        font-size: 11px;
+                        font-size: 9px;
                         text-transform: uppercase;
                     }
                     .quick-summary-table {
                         width: 100%;
                         border-collapse: collapse;
-                        font-size: 9px;
+                        font-size: 8px;
                     }
                     .quick-summary-table td {
-                        padding: 6px 8px;
-                        border-bottom: 1px solid #e0e0e0;
+                        padding: 3px 4px;
+                        border-bottom: 0.5px solid #e0e0e0;
                     }
                     .quick-summary-table td:first-child {
                         font-weight: 600;
@@ -369,7 +369,7 @@ function printBooking(bookingId, ticketType = null) {
                         text-align: center;
                     }
                     .print-date {
-                        margin-top: 15px;
+                        margin-top: 8px;
                         font-size: 8px;
                         text-align: right;
                         color: #666;
@@ -377,35 +377,27 @@ function printBooking(bookingId, ticketType = null) {
                     }
                     .report-title {
                         text-align: center;
-                        font-size: 18px;
+                        font-size: 16px;
                         font-weight: bold;
-                        margin-bottom: 15px;
-                        padding: 12px;
-                        color: #fff;
+                        margin-bottom: 10px;
+                        padding: 5px 0;
+                        color: #000;
                         text-transform: uppercase;
-                        letter-spacing: 2px;
-                        border-radius: 4px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    }
-                    .police-title {
-                        background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-                    }
-                    .head-office-title {
-                        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                        border-bottom: 2px solid #000;
                     }
                     .footer-note {
-                        margin-top: 15px;
-                        padding: 10px;
+                        margin-top: 8px;
+                        padding: 5px;
                         background-color: #fff3cd;
-                        border: 2px solid #ffc107;
-                        font-size: 10px;
+                        border: 1px solid #ffc107;
+                        font-size: 8px;
                         text-align: center;
-                        border-radius: 4px;
+                        border-radius: 2px;
                     }
                 </style>
             </head>
             <body>
-                <div class="report-title police-title">MOTORWAY POLICE VOUCHER</div>
+                <div class="report-title">MOTORWAY POLICE VOUCHER</div>
                 
                 <div class="header-section">
                     <div class="header-left">
@@ -809,16 +801,16 @@ function printBooking(bookingId, ticketType = null) {
                         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                         font-size: 10px;
                         margin: 0;
-                        padding: 15px;
+                        padding: 10px;
                         background: #fff;
                     }
                     .header-section {
                         display: grid;
                         grid-template-columns: 1fr 1fr 1fr;
-                        gap: 15px;
-                        margin-bottom: 15px;
-                        border-bottom: 3px solid #000;
-                        padding-bottom: 10px;
+                        gap: 10px;
+                        margin-bottom: 8px;
+                        border-bottom: 1px solid #000;
+                        padding-bottom: 5px;
                         background: linear-gradient(to bottom, #f8f9fa, #fff);
                     }
                     .header-left {
@@ -849,13 +841,12 @@ function printBooking(bookingId, ticketType = null) {
                     table {
                         width: 100%;
                         border-collapse: collapse;
-                        margin-top: 8px;
-                        font-size: 9px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        margin-top: 5px;
+                        font-size: 8px;
                     }
                     th, td {
-                        border: 1px solid #333;
-                        padding: 4px;
+                        border: 0.5px solid #333;
+                        padding: 2px 3px;
                         text-align: left;
                     }
                     th {
@@ -863,16 +854,17 @@ function printBooking(bookingId, ticketType = null) {
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
-                        font-size: 8px;
-                        padding: 5px;
+                        font-size: 7px;
+                        padding: 3px 2px;
                     }
                     .passenger-table th {
-                        font-size: 8px;
+                        font-size: 7px;
                         background-color: #34495e;
+                        padding: 2px;
                     }
                     .passenger-table td {
-                        font-size: 8px;
-                        padding: 3px;
+                        font-size: 7px;
+                        padding: 2px;
                     }
                     .passenger-table tbody tr:nth-child(even) {
                         background-color: #f8f9fa;
@@ -883,38 +875,38 @@ function printBooking(bookingId, ticketType = null) {
                     .financial-summary {
                         display: grid;
                         grid-template-columns: 1fr 1fr;
-                        gap: 15px;
-                        margin-top: 15px;
+                        gap: 8px;
+                        margin-top: 8px;
                     }
                     .booking-summary-container {
                         display: grid;
                         grid-template-columns: 1fr 0.4fr;
-                        gap: 15px;
-                        margin-top: 15px;
+                        gap: 8px;
+                        margin-top: 8px;
                     }
                     .quick-summary-box {
-                        border: 2px solid #2c3e50;
-                        border-radius: 4px;
+                        border: 1px solid #2c3e50;
+                        border-radius: 2px;
                         overflow: hidden;
                         background: #fff;
                     }
                     .quick-summary-header {
                         background-color: #2c3e50;
                         color: #fff;
-                        padding: 8px;
+                        padding: 4px;
                         text-align: center;
                         font-weight: bold;
-                        font-size: 11px;
+                        font-size: 9px;
                         text-transform: uppercase;
                     }
                     .quick-summary-table {
                         width: 100%;
                         border-collapse: collapse;
-                        font-size: 9px;
+                        font-size: 8px;
                     }
                     .quick-summary-table td {
-                        padding: 6px 8px;
-                        border-bottom: 1px solid #e0e0e0;
+                        padding: 3px 4px;
+                        border-bottom: 0.5px solid #e0e0e0;
                     }
                     .quick-summary-table td:first-child {
                         font-weight: 600;
@@ -931,34 +923,35 @@ function printBooking(bookingId, ticketType = null) {
                         border-bottom: none;
                     }
                     .summary-section {
-                        border: 2px solid #2c3e50;
-                        border-radius: 4px;
+                        border: 1px solid #2c3e50;
+                        border-radius: 2px;
                         overflow: hidden;
                     }
                     .summary-header {
                         background-color: #2c3e50;
                         color: #fff;
-                        padding: 8px;
+                        padding: 4px;
                         text-align: center;
                         font-weight: bold;
-                        font-size: 11px;
+                        font-size: 9px;
                         text-transform: uppercase;
                     }
                     .summary-table {
                         width: 100%;
                         border-collapse: collapse;
-                        font-size: 9px;
+                        font-size: 8px;
                     }
                     .summary-table th {
                         background-color: #2c3e50;
                         color: #fff;
-                        padding: 6px;
+                        padding: 3px 4px;
                         font-weight: bold;
-                        border: 1px solid #333;
+                        border: 0.5px solid #333;
+                        font-size: 7px;
                     }
                     .summary-table td {
-                        padding: 5px 8px;
-                        border: 1px solid #ddd;
+                        padding: 3px 4px;
+                        border: 0.5px solid #ddd;
                     }
                     .summary-table td:first-child {
                         font-weight: 600;
@@ -1021,27 +1014,29 @@ function printBooking(bookingId, ticketType = null) {
                         font-weight: bold;
                     }
                     .via-summary-table {
-                        margin-top: 10px;
-                        border: 2px solid #2c3e50;
+                        margin-top: 8px;
+                        border: 1px solid #2c3e50;
                     }
                     .via-summary-table th {
                         background-color: #34495e;
                         color: #fff;
-                        padding: 6px;
-                        font-size: 9px;
+                        padding: 3px 4px;
+                        font-size: 7px;
                     }
                     .via-summary-table td {
-                        padding: 5px;
+                        padding: 3px 4px;
                         text-align: right;
+                        font-size: 7px;
                     }
                     .expenses-table th {
                         background-color: #34495e;
                         color: #fff;
-                        padding: 6px;
-                        font-size: 9px;
+                        padding: 3px 4px;
+                        font-size: 7px;
                     }
                     .expenses-table td {
-                        padding: 5px;
+                        padding: 3px 4px;
+                        font-size: 7px;
                     }
                     .expenses-table tbody tr:last-child {
                         background-color: #e8f4f8;
@@ -1054,7 +1049,7 @@ function printBooking(bookingId, ticketType = null) {
                         text-align: center;
                     }
                     .print-date {
-                        margin-top: 15px;
+                        margin-top: 8px;
                         font-size: 8px;
                         text-align: right;
                         color: #666;
@@ -1062,26 +1057,18 @@ function printBooking(bookingId, ticketType = null) {
                     }
                     .report-title {
                         text-align: center;
-                        font-size: 18px;
+                        font-size: 16px;
                         font-weight: bold;
-                        margin-bottom: 15px;
-                        padding: 12px;
-                        color: #fff;
+                        margin-bottom: 10px;
+                        padding: 5px 0;
+                        color: #000;
                         text-transform: uppercase;
-                        letter-spacing: 2px;
-                        border-radius: 4px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    }
-                    .police-title {
-                        background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-                    }
-                    .head-office-title {
-                        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                        border-bottom: 2px solid #000;
                     }
                 </style>
             </head>
             <body>
-                <div class="report-title head-office-title">HEAD OFFICE REPORT</div>
+                <div class="report-title">HEAD OFFICE REPORT</div>
                 
                 <div class="header-section">
                     <div class="header-left">
@@ -1264,7 +1251,7 @@ function printBooking(bookingId, ticketType = null) {
                 </div>
                 
                 ${Object.keys(expensesByTerminal).length > 0 ? `
-                    <div style="margin-top: 15px;">
+                    <div style="margin-top: 8px;">
                         <div class="summary-section">
                             <div class="summary-header">Expenses by Terminal</div>
                             <table class="summary-table expenses-table">
