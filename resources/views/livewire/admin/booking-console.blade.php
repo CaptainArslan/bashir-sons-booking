@@ -617,29 +617,33 @@ seat-available
                                 </div>
                             </div>
 
-                            <!-- Selected Seats -->
-                            <div class="mb-2">
-                                <label class="form-label fw-bold small mb-1">
-                                    <i class="fas fa-list"></i> Selected Seats
-                                    <span class="badge bg-primary ms-2">({{ count($selectedSeats) }})</span>
-                                </label>
-                                <div class="d-flex flex-wrap gap-1 mb-0 align-items-center" style="min-height: 30px;">
-                                    @forelse($selectedSeats as $seatNumber => $seatData)
-                                        @if ($loop->first)
-                                            <span class="text-muted small me-1">Seats:</span>
-                                        @endif
-                                        <span class="text-primary fw-bold" style="font-size: 0.875rem;">
-                                            {{ $seatNumber }}@if (!$loop->last),@endif
-                                        </span>
-                                    @empty
-                                        <span class="text-muted small">No seats selected yet</span>
-                                    @endforelse
-                                </div>
-                            </div>
-
-                            <!-- Fare Calculation -->
+                            <!-- Booking Details Section -->
                             <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation</h6>
+                                <h6 class="fw-bold mb-2 small"><i class="fas fa-receipt"></i> Booking Details</h6>
+
+                                <!-- Selected Seats -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small mb-1">
+                                        <i class="fas fa-list"></i> Selected Seats
+                                        <span class="badge bg-primary ms-2">({{ count($selectedSeats) }})</span>
+                                    </label>
+                                    <div class="d-flex flex-wrap gap-1 mb-0 align-items-center" style="min-height: 30px;">
+                                        @forelse($selectedSeats as $seatNumber => $seatData)
+                                            @if ($loop->first)
+                                                <span class="text-muted small me-1">Seats:</span>
+                                            @endif
+                                            <span class="text-primary fw-bold" style="font-size: 0.875rem;">
+                                                {{ $seatNumber }}@if (!$loop->last),@endif
+                                            </span>
+                                        @empty
+                                            <span class="text-muted small">No seats selected yet</span>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <!-- Fare Calculation -->
+                                <div class="mb-3">
+                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation</h6>
 
                                 @php
                                     $seatCount = count($selectedSeats);
@@ -723,54 +727,54 @@ seat-available
                                         </div>
                                     </div>
                                 @endif
-                            </div>
+                                </div>
 
-                            <!-- Booking Type & Payment -->
-                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type & Payment</h6>
-                                <div class="row g-2">
-                                    <div class="col-lg-6 col-md-12 mb-2">
-                                        <label class="form-label small fw-bold">Booking Type</label>
-                                        <select class="form-select form-select-sm" wire:model.live="bookingType"
-                                            wire:loading.attr="disabled">
-                                            <option value="counter"
-                                                {{ $bookingType === 'counter' ? 'selected' : '' }}>🏪 Counter</option>
-                                            <option value="phone" {{ $bookingType === 'phone' ? 'selected' : '' }}>📞
-                                                Phone (Hold till before 60 mins of departure)
-                                            </option>
-                                        </select>
-                                        <div wire:loading wire:target="bookingType"
-                                            class="spinner-border spinner-border-sm text-primary mt-1" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                    </div>
-                                    @if ($bookingType === 'counter')
+                                <!-- Booking Type & Payment -->
+                                <div class="mb-3">
+                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-bookmark"></i> Type & Payment</h6>
+                                    <div class="row g-2">
                                         <div class="col-lg-6 col-md-12 mb-2">
-                                            <label class="form-label small fw-bold">Payment Method</label>
-                                            <select class="form-select form-select-sm" wire:model.live="paymentMethod"
+                                            <label class="form-label small fw-bold">Booking Type</label>
+                                            <select class="form-select form-select-sm" wire:model.live="bookingType"
                                                 wire:loading.attr="disabled">
-                                                @foreach ($paymentMethods as $method)
-                                                    @if ($method['value'] !== 'other')
-                                                        <option value="{{ $method['value'] }}">{{ $method['label'] }}
-                                                        </option>
-                                                    @endif
-                                                @endforeach
+                                                <option value="counter"
+                                                    {{ $bookingType === 'counter' ? 'selected' : '' }}>🏪 Counter</option>
+                                                <option value="phone" {{ $bookingType === 'phone' ? 'selected' : '' }}>📞
+                                                    Phone (Hold till before 60 mins of departure)
+                                                </option>
                                             </select>
-                                            <div wire:loading wire:target="paymentMethod"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
+                                            <div wire:loading wire:target="bookingType"
+                                                class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
-                                    @endif
+                                        @if ($bookingType === 'counter')
+                                            <div class="col-lg-6 col-md-12 mb-2">
+                                                <label class="form-label small fw-bold">Payment Method</label>
+                                                <select class="form-select form-select-sm" wire:model.live="paymentMethod"
+                                                    wire:loading.attr="disabled">
+                                                    @foreach ($paymentMethods as $method)
+                                                        @if ($method['value'] !== 'other')
+                                                            <option value="{{ $method['value'] }}">{{ $method['label'] }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                                <div wire:loading wire:target="paymentMethod"
+                                                    class="spinner-border spinner-border-sm text-primary mt-1"
+                                                    role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Payment Fields (Counter Only) -->
-                            @if ($bookingType === 'counter')
-                                <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details
-                                    </h6>
+                                <!-- Payment Fields (Counter Only) -->
+                                @if ($bookingType === 'counter')
+                                    <div class="mb-3">
+                                        <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details
+                                        </h6>
 
                                     @if ($paymentMethod !== 'cash')
                                         <div class="mb-2">
@@ -913,8 +917,9 @@ seat-available
                                             </div>
                                         @endif
                                     @endif
-                                </div>
-                            @endif
+                                    </div>
+                                @endif
+                            </div>
 
                             <!-- Notes -->
                             <div class="mb-2">
