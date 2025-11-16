@@ -997,7 +997,7 @@ seat-available
                                                             </a>
                                                             <button type="button" class="btn btn-sm btn-outline-info"
                                                                 onclick="printBothTickets({{ $passenger['booking_id'] }})"
-                                                                title="Print Both Customer and Host Tickets">
+                                                                title="Print">
                                                                 <i class="bx bx-printer"></i>
                                                             </button>
                                                         </div>
@@ -1446,7 +1446,7 @@ seat-available
                 <div class="modal-footer d-flex gap-2">
                     <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
                         @if ($lastBookingId) onclick="printBothTickets({{ $lastBookingId }})" @else disabled @endif>
-                        <i class="fas fa-print"></i> Print Both Tickets (Customer & Host)
+                        <i class="fas fa-print"></i> Print
                     </button>
                     <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
                         <i class="fas fa-check"></i> Done
