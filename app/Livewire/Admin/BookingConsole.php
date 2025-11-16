@@ -870,8 +870,10 @@ class BookingConsole extends Component
         if ($seatCount > 0) {
             // Auto-apply mobile wallet tax if payment method is mobile_wallet
             if ($this->paymentMethod === 'mobile_wallet') {
-                // Always set tax to 40 per seat for mobile_wallet
-                $this->taxAmount = 40 * $seatCount;
+                // Get mobile wallet tax from general settings (default to 40 if not set)
+                $generalSettings = GeneralSetting::first();
+                $mobileWalletTaxPerSeat = $generalSettings?->mobile_wallet_tax ?? 40;
+                $this->taxAmount = $mobileWalletTaxPerSeat * $seatCount;
             } else {
                 // For non-mobile_wallet, reset tax to 0
                 $this->taxAmount = 0;

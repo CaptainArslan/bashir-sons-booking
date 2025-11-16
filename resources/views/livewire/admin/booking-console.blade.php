@@ -693,7 +693,11 @@ seat-available
                                             <label class="form-label small mb-1">Tax/Charge
                                                 <small class="text-muted">
                                                     @if ($paymentMethod === 'mobile_wallet')
-                                                        (PKR 40 per seat)
+                                                        @php
+                                                            $generalSettings = \App\Models\GeneralSetting::first();
+                                                            $mobileWalletTaxPerSeat = $generalSettings?->mobile_wallet_tax ?? 40;
+                                                        @endphp
+                                                        (PKR {{ number_format($mobileWalletTaxPerSeat, 0) }} per seat)
                                                     @else
                                                         (Optional)
                                                     @endif

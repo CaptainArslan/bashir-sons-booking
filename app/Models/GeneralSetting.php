@@ -34,6 +34,7 @@ class GeneralSetting extends Model
         'business_hours',
         'advance_booking_enable',
         'advance_booking_days',
+        'mobile_wallet_tax',
         'is_active',
     ];
 
@@ -42,6 +43,7 @@ class GeneralSetting extends Model
         return [
             'advance_booking_enable' => 'boolean',
             'advance_booking_days' => 'integer',
+            'mobile_wallet_tax' => 'integer',
             'is_active' => 'boolean',
         ];
     }

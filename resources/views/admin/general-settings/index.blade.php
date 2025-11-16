@@ -241,6 +241,15 @@
                                     </div>
                                 </div>
                                 @endif
+                                <div class="info-item">
+                                    <div class="d-flex">
+                                        <span class="info-label">
+                                            <i class="bx bx-money me-2 text-success"></i>
+                                            Mobile Wallet Tax:
+                                        </span>
+                                        <span class="info-value">PKR {{ number_format($settings->mobile_wallet_tax ?? 40, 0) }} per seat</span>
+                                    </div>
+                                </div>
                                 @if(!$settings->support_email && !$settings->support_phone && !$settings->business_hours)
                                 <div class="text-center text-muted py-3">
                                     <i class="bx bx-info-circle me-2"></i>
