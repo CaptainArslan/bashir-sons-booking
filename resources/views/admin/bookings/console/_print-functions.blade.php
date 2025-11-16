@@ -787,9 +787,9 @@ function printBooking(bookingId, ticketType = null) {
             // Get unique agents
             const agents = Object.keys(agentFares).filter(a => a !== 'N/A').sort();
             
-            // Format fare (show actual amount with 2 decimals)
+            // Format fare (show as integer without decimals)
             const formatFare = (amount) => {
-                return parseFloat(amount || 0).toFixed(2);
+                return Math.round(parseFloat(amount || 0)).toLocaleString();
             };
 
             // Create print window content
