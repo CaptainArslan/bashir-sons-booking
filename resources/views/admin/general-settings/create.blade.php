@@ -474,6 +474,42 @@
                             </div>
                         </div>
 
+                        <!-- Payment Settings -->
+                        <div class="form-section support">
+                            <div class="section-header">
+                                <div class="section-icon support text-white">
+                                    <i class="bx bx-money font-size-24"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Payment Settings</h5>
+                                    <p class="text-muted mb-0 small">Configure payment-related settings</p>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="mobile_wallet_tax" class="form-label">Mobile Wallet Tax (Per Seat)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-success-subtle border-0">
+                                            <i class="bx bx-money text-success"></i>
+                                        </span>
+                                        <input type="number" class="form-control @error('mobile_wallet_tax') is-invalid @enderror" 
+                                            id="mobile_wallet_tax" name="mobile_wallet_tax" 
+                                            placeholder="40" value="{{ old('mobile_wallet_tax', 40) }}" 
+                                            min="0" max="1000" step="1">
+                                        <span class="input-group-text bg-light">PKR</span>
+                                    </div>
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                        <i class="bx bx-info-circle me-1"></i>
+                                        Tax amount charged per seat when payment method is mobile wallet
+                                    </div>
+                                    @error('mobile_wallet_tax')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="row mt-4">
                             <div class="col-12">
