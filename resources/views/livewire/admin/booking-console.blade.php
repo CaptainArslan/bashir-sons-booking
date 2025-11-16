@@ -920,13 +920,13 @@ seat-available
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-sm btn-outline-dark"
                                         onclick="window.printPassengerList && window.printPassengerList()"
-                                        title="Print Passenger List">
-                                        <i class="bx bx-printer"></i> Print List
+                                        title="Print List with Head Office Report">
+                                        <i class="bx bx-printer"></i> Print List with Head Office Report
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                         onclick="window.printVoucher && window.printVoucher()"
-                                        title="Print Voucher (For Police Record)">
-                                        <i class="bx bx-file"></i> Print Voucher
+                                        title="Print Voucher with Motorway Police">
+                                        <i class="bx bx-file"></i> Print Voucher with Motorway Police
                                     </button>
                                 </div>
                             @endif

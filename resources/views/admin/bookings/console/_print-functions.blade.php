@@ -174,7 +174,7 @@ function printBooking(bookingId, ticketType = null) {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Passenger Voucher - Police Record</title>
+                <title>Passenger Voucher - Motorway Police</title>
                 <style>
                     @media print {
                         @page {
@@ -261,7 +261,7 @@ function printBooking(bookingId, ticketType = null) {
             <body>
                 <div class="header">
                     <h1>PASSENGER VOUCHER</h1>
-                    <h2>For Police Record - ${routeData?.name || 'N/A'}</h2>
+                    <h2>Motorway Police - ${routeData?.name || 'N/A'}</h2>
                 </div>
                 
                 <div class="trip-info">
@@ -379,7 +379,7 @@ function printBooking(bookingId, ticketType = null) {
                 </table>
                 
                 <div class="footer-note">
-                    <strong>NOTE:</strong> This voucher is for police record purposes only. No financial information is included.
+                    <strong>NOTE:</strong> This voucher is for Motorway Police record purposes only. No financial information is included.
                 </div>
                 
                 <div class="print-date">
@@ -507,7 +507,7 @@ function printBooking(bookingId, ticketType = null) {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Passenger List - Trip Report</title>
+                <title>Passenger List - Head Office Report</title>
                 <style>
                     @media print {
                         @page {
@@ -598,7 +598,7 @@ function printBooking(bookingId, ticketType = null) {
             <body>
                 <div class="header">
                     <h1>PASSENGER LIST REPORT</h1>
-                    <h2>Trip Passenger Details</h2>
+                    <h2>Head Office Report - Trip Passenger Details</h2>
                 </div>
                 
                 <div class="trip-info" style="margin-top: 0;">
