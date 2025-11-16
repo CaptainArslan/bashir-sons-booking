@@ -870,19 +870,11 @@ class BookingConsole extends Component
         if ($seatCount > 0) {
             // Auto-apply mobile wallet tax if payment method is mobile_wallet
             if ($this->paymentMethod === 'mobile_wallet') {
-                // Only auto-set if tax is 0 or matches the auto-calculated value
-                $autoTax = 40 * $seatCount;
-                if ($this->taxAmount == 0 || $this->taxAmount == $autoTax) {
-                    $this->taxAmount = $autoTax;
-                }
-                // If user manually changed tax, keep their value
+                // Always set tax to 40 per seat for mobile_wallet
+                $this->taxAmount = 40 * $seatCount;
             } else {
-                // For non-mobile_wallet, only reset if it's the auto-calculated mobile_wallet tax
-                $autoMobileWalletTax = 40 * $seatCount;
-                if ($this->taxAmount == $autoMobileWalletTax) {
-                    $this->taxAmount = 0;
-                }
-                // Otherwise keep user's manual tax value
+                // For non-mobile_wallet, reset tax to 0
+                $this->taxAmount = 0;
             }
         } else {
             // No seats selected, reset everything
@@ -1459,20 +1451,21 @@ class BookingConsole extends Component
     {
         if (isset($this->expenses[$index])) {
             $expense = $this->expenses[$index];
-            
+
             // If expense has an ID, delete it from the database
-            if (!empty($expense['id'])) {
+            if (! empty($expense['id'])) {
                 try {
                     Expense::where('id', $expense['id'])->delete();
                 } catch (\Exception $e) {
                     $this->dispatch('show-error', message: 'Failed to delete expense: '.$e->getMessage());
+
                     return;
                 }
             }
-            
+
             unset($this->expenses[$index]);
             $this->expenses = array_values($this->expenses);
-            
+
             // If no expenses left, add one empty expense
             if (empty($this->expenses)) {
                 $this->addExpense();
@@ -1543,7 +1536,7 @@ class BookingConsole extends Component
                     }
 
                     // If expense has an ID, update it; otherwise create new
-                    if (!empty($expenseData['id'])) {
+                    if (! empty($expenseData['id'])) {
                         Expense::where('id', $expenseData['id'])->update([
                             'expense_type' => $expenseData['expense_type'],
                             'amount' => $expenseData['amount'],
@@ -1715,7 +1708,7 @@ class BookingConsole extends Component
                     }
 
                     // If expense has an ID, update it; otherwise create new
-                    if (!empty($expenseData['id'])) {
+                    if (! empty($expenseData['id'])) {
                         Expense::where('id', $expenseData['id'])->update([
                             'expense_type' => $expenseData['expense_type'],
                             'amount' => $expenseData['amount'],
