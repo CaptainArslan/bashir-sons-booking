@@ -453,11 +453,11 @@ seat-available
                                     </div>
                                     <div class="seat-legend-item">
                                         <div class="seat-legend-indicator booked-male"></div>
-                                        <span>Male Booked</span>
+                                        <span>Male</span>
                                     </div>
                                     <div class="seat-legend-item">
                                         <div class="seat-legend-indicator booked-female"></div>
-                                        <span>Female Booked</span>
+                                        <span>Female</span>
                                     </div>
                                     <div class="seat-legend-item">
                                         <div class="seat-legend-indicator held"></div>
