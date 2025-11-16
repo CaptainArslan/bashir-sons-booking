@@ -49,7 +49,7 @@
                     <div class="col-md-2">
                         <label class="form-label fw-bold">To Terminal</label>
                         <select class="form-select form-select-lg" wire:model.live="toTerminalId"
-                            wire:key="to-terminal-select-{{ count($toTerminals) }}"
+                            wire:key="to-terminal-select-{{ $fromTerminalId }}-{{ count($toTerminals) }}"
                             @if (!$fromTerminalId) disabled @endif>
                             <option value="">Select Destination</option>
                             @foreach ($toTerminals as $terminal)
