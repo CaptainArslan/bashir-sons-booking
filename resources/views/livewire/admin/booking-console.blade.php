@@ -15,12 +15,41 @@
                             {{ auth()->user()->terminal?->name ?? 'N/A' }}</span>
                     @endif
                 </h5>
-                @if ($lastBookingId)
-                    <button type="button" class="btn btn-light btn-sm fw-bold"
-                        onclick="printBothTickets({{ $lastBookingId }})" title="Print Both Customer and Host Tickets">
-                        <i class="fas fa-print"></i> Print Last Ticket
-                    </button>
-                @endif
+                <div class="d-flex gap-2 align-items-center">
+                    @if ($showTripContent && $tripLoaded)
+                        @php
+                            $isOrigin =
+                                $tripData?->originStop &&
+                                $fromStop &&
+                                $tripData->originStop->id === $fromStop['trip_stop_id'];
+                        @endphp
+                        @if ($isOrigin)
+                            @if ($tripData?->bus_id && $tripData?->bus)
+                                <button type="button" class="btn btn-light btn-sm fw-bold"
+                                    wire:click="openBusAssignmentModal" title="Edit Bus Assignment">
+                                    <i class="fas fa-edit"></i> Edit Bus
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-light btn-sm fw-bold"
+                                    wire:click="openBusAssignmentModal" title="Assign Bus">
+                                    <i class="fas fa-bus"></i> Assign Bus
+                                </button>
+                            @endif
+                        @endif
+                        @if (!$isOrigin)
+                            <button type="button" class="btn btn-light btn-sm fw-bold"
+                                wire:click="openExpenseModal" title="Manage Expenses">
+                                <i class="fas fa-receipt"></i> Expenses
+                            </button>
+                        @endif
+                    @endif
+                    @if ($lastBookingId)
+                        <button type="button" class="btn btn-light btn-sm fw-bold"
+                            onclick="printBothTickets({{ $lastBookingId }})" title="Print Both Customer and Host Tickets">
+                            <i class="fas fa-print"></i> Print Last Ticket
+                        </button>
+                    @endif
+                </div>
             </div>
             <div class="card-body bg-light">
                 <div class="row g-3">
@@ -108,140 +137,6 @@
 
         <!-- Trip Content (shown when trip loaded) -->
         @if ($showTripContent && $tripLoaded)
-            <!-- Trip Details Card -->
-            <div class="card mb-3 shadow-sm border">
-                <div class="card-body p-3">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="text-primary" style="font-size: 1.25rem;">
-                                    <i class="fas fa-route"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <small class="text-muted d-block"
-                                        style="font-size: 0.7rem; font-weight: 500;">Route</small>
-                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                        {{ $routeData['name'] ?? '-' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="text-primary" style="font-size: 1.25rem;">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <small class="text-muted d-block"
-                                        style="font-size: 0.7rem; font-weight: 500;">Date</small>
-                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                        {{ \Carbon\Carbon::parse($travelDate)->format('d M Y') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="text-primary" style="font-size: 1.25rem;">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <small class="text-muted d-block"
-                                        style="font-size: 0.7rem; font-weight: 500;">Time</small>
-                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                        @if ($departureTimeId)
-                                            {{ \Carbon\Carbon::parse(collect($departureTimes)->firstWhere('id', $departureTimeId)['departure_at'] ?? '')->format('H:i A') }}
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            @php
-                                $isOrigin =
-                                    $tripData?->originStop &&
-                                    $fromStop &&
-                                    $tripData->originStop->id === $fromStop['trip_stop_id'];
-                            @endphp
-                            @if ($tripData?->bus_id && $tripData?->bus)
-                                {{-- Bus assigned --}}
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="text-primary" style="font-size: 1.25rem;">
-                                        <i class="fas fa-bus"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <small class="text-muted d-block"
-                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
-                                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                            {{ $tripData->bus->name ?? 'N/A' }}</div>
-                                        @if ($tripData->driver_name || $tripData->driver_phone)
-                                            <small class="text-muted" style="font-size: 0.75rem;">
-                                                @if ($tripData->driver_name)
-                                                    <i class="fas fa-user-tie"></i> {{ $tripData->driver_name }}
-                                                @endif
-                                                @if ($tripData->driver_phone)
-                                                    @if ($tripData->driver_name)
-                                                        | @endif
-                                                    <i class="fas fa-phone"></i> {{ $tripData->driver_phone }}
-                                                @endif
-                                            </small>
-                                        @endif
-                                        <div class="mt-1 d-flex gap-1">
-                                            @if ($isOrigin)
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    wire:click="openBusAssignmentModal" title="Edit Bus Assignment">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                            @endif
-                                            @if (!$isOrigin)
-                                                <button type="button" class="btn btn-sm btn-outline-success"
-                                                    wire:click="openExpenseModal" title="Manage Expenses">
-                                                    <i class="fas fa-receipt"></i> Expenses
-                                                </button>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @elseif ($isOrigin)
-                                {{-- No bus assigned - show assign button at origin --}}
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="text-muted" style="font-size: 1.25rem;">
-                                        <i class="fas fa-bus"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <small class="text-muted d-block"
-                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
-                                        <div class="text-muted mb-1" style="font-size: 0.85rem;">Not Assigned</div>
-                                        <button type="button" class="btn btn-sm btn-primary"
-                                            wire:click="openBusAssignmentModal">
-                                            <i class="fas fa-bus"></i> Assign
-                                        </button>
-                                    </div>
-                                </div>
-                            @else
-                                {{-- No bus assigned - not at origin --}}
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="text-muted" style="font-size: 1.25rem;">
-                                        <i class="fas fa-bus"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <small class="text-muted d-block"
-                                            style="font-size: 0.7rem; font-weight: 500;">Bus & Driver</small>
-                                        <div class="text-muted mb-1" style="font-size: 0.85rem;">Not Assigned</div>
-                                        <small class="text-muted d-block mb-1" style="font-size: 0.7rem;">Assign at
-                                            origin terminal</small>
-                                        <button type="button" class="btn btn-sm btn-outline-success"
-                                            wire:click="openExpenseModal" title="Manage Expenses">
-                                            <i class="fas fa-receipt"></i> Expenses
-                                        </button>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="row g-3 booking-console-row">
                 <!-- Left Column: Seat Map (3 columns) -->
                 <div class="col-xxl-3 col-xl-6 col-lg-6 col-md-6">
