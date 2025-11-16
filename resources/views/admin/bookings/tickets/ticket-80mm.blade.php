@@ -272,7 +272,7 @@
 
         <div class="ticket-main">
             <h2>{{ $settings->company_name ?? 'BS/Niazi' }}</h2>
-            <p class="daewoo-bus-service">{{ $settings->tagline ?? 'Daewoo Bus Service' }}</p>
+            <p class="daewoo-bus-service">{{ $settings->tagline ?? 'Bashir Sons Group' }}</p>
 
             <div class="route-info">
                 <p>{{ $routeDisplay }}</p>

@@ -617,10 +617,10 @@ class BookingConsole extends Component
             return;
         }
 
-        // Get all bookings for this trip
+        // Get all confirmed bookings for this trip (exclude hold, cancelled, expired)
         $bookings = Booking::query()
             ->where('trip_id', $this->tripId)
-            ->where('status', '!=', 'cancelled')
+            ->where('status', 'confirmed')
             ->with([
                 'passengers' => fn ($q) => $q->orderBy('id'),
                 'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
@@ -628,6 +628,7 @@ class BookingConsole extends Component
                 'toStop:id,sequence,terminal_id',
                 'fromStop.terminal:id,name,code',
                 'toStop.terminal:id,name,code',
+                'bookedByUser:id,name',
             ])
             ->get();
 
@@ -688,6 +689,7 @@ class BookingConsole extends Component
                         'booking_number' => $booking->booking_number,
                         'channel' => $booking->channel,
                         'final_amount' => $seatAmount, // Per-seat amount
+                        'agent_name' => $booking->bookedByUser?->name ?? 'N/A', // Agent who booked
                     ];
 
                     // Add seat amount to total earnings (sum of all seat amounts in the selected segment)
@@ -1827,6 +1829,9 @@ class BookingConsole extends Component
             $trip->load('stops.terminal:id,name,code');
         }
 
+        // Load expenses for this trip with terminal relationships
+        $trip->load(['expenses.fromTerminal:id,name,code', 'expenses.toTerminal:id,name,code']);
+
         $this->tripDataForJs = [
             'id' => $trip->id,
             'bus_id' => $trip->bus_id,
@@ -1846,6 +1851,27 @@ class BookingConsole extends Component
                     'total_seats' => $trip->bus->busLayout->total_seats ?? null,
                 ] : null,
             ] : null,
+            'expenses' => $trip->expenses ? $trip->expenses->map(function ($expense) {
+                return [
+                    'id' => $expense->id,
+                    'expense_type' => $expense->expense_type?->value ?? $expense->expense_type,
+                    'expense_type_label' => $expense->expense_type?->getLabel() ?? $expense->expense_type,
+                    'amount' => $expense->amount,
+                    'from_terminal_id' => $expense->from_terminal_id,
+                    'to_terminal_id' => $expense->to_terminal_id,
+                    'from_terminal' => $expense->fromTerminal ? [
+                        'id' => $expense->fromTerminal->id,
+                        'name' => $expense->fromTerminal->name,
+                        'code' => $expense->fromTerminal->code,
+                    ] : null,
+                    'to_terminal' => $expense->toTerminal ? [
+                        'id' => $expense->toTerminal->id,
+                        'name' => $expense->toTerminal->name,
+                        'code' => $expense->toTerminal->code,
+                    ] : null,
+                    'description' => $expense->description,
+                ];
+            })->toArray() : [],
             'stops' => $trip->stops ? $trip->stops->map(function ($stop) {
                 return [
                     'id' => $stop->id,

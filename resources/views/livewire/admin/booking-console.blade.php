@@ -908,29 +908,32 @@ seat-available
                 <div class="col-xxl-4 col-xl-12 col-lg-12 col-md-12">
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
-                        <div
-                            class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-warning text-dark">
                             <h6 class="mb-0 small">
                                 <i class="bx bx-list-check"></i> Booked Passengers
                                 <span class="badge bg-info ms-2">Total Passengers: {{ count($tripPassengers) }}</span>
                                 <span class="badge bg-success ms-2">Total Earnings: PKR
                                     {{ number_format($totalEarnings, 2) }}</span>
                             </h6>
-                            @if (count($tripPassengers) > 0)
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-dark"
+                        </div>
+                        @if (count($tripPassengers) > 0)
+                            <div class="card-body border-bottom bg-light py-2 px-3">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" class="btn btn-sm btn-primary shadow-sm d-flex align-items-center gap-2"
                                         onclick="window.printPassengerList && window.printPassengerList()"
-                                        title="Print List with Head Office Report">
-                                        <i class="bx bx-printer"></i> Print List with Head Office Report
+                                        title="Print Head Office Report with complete passenger list and financial summary">
+                                        <i class="bx bx-printer fs-6"></i> 
+                                        <span>Head Office Report</span>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                    <button type="button" class="btn btn-sm btn-success shadow-sm d-flex align-items-center gap-2"
                                         onclick="window.printVoucher && window.printVoucher()"
-                                        title="Print Voucher with Motorway Police">
-                                        <i class="bx bx-file"></i> Print Voucher with Motorway Police
+                                        title="Print Motorway Police Voucher">
+                                        <i class="bx bx-file-blank fs-6"></i> 
+                                        <span>Motorway Police Voucher</span>
                                     </button>
                                 </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                         <div class="card-body p-2 scrollable-content">
                             @if (count($tripPassengers) > 0)
                                 <div class="table-responsive">
