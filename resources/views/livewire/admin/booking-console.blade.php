@@ -1075,14 +1075,13 @@ seat-available
     </div>
 
     <!-- Gender Selection Modal -->
-    <div class="modal fade" id="genderModal" tabindex="-1" wire:ignore.self>
+    <div class="modal fade" id="genderModal" tabindex="-1" wire:ignore.self data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold">
                         <i class="fas fa-user"></i> Select Gender - Seat <span id="modalSeatNumber"></span>
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body py-4">
                     <p class="text-center mb-0">Please select passenger gender:</p>
@@ -1530,9 +1529,12 @@ seat-available
                 pendingSeatNumber = event.seatNumber;
                 document.getElementById('modalSeatNumber').textContent = event.seatNumber;
 
-                // Get or create modal instance
+                // Get or create modal instance with static backdrop and keyboard disabled
                 const modalElement = document.getElementById('genderModal');
-                genderModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                genderModalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
                 genderModalInstance.show();
             });
 
