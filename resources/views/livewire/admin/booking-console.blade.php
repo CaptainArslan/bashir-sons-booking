@@ -1415,9 +1415,18 @@ seat-available
     <div class="modal fade" id="successModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow-lg">
-                <div class="modal-header bg-success text-white">
+                @php
+                    $isConfirmed = ($lastBookingData['status'] ?? '') === 'confirmed';
+                    $isHold = ($lastBookingData['status'] ?? '') === 'hold';
+                    $isPhoneBooking = ($lastBookingData['channel'] ?? '') === 'phone';
+                    $isPaid = ($lastBookingData['payment_status'] ?? '') === 'paid';
+                    $headerClass = $isConfirmed ? 'bg-success' : ($isHold ? 'bg-warning' : 'bg-secondary');
+                    $headerIcon = $isConfirmed ? 'fa-check-circle' : ($isHold ? 'fa-clock' : 'fa-info-circle');
+                    $headerTitle = $isConfirmed ? 'Booking Confirmed Successfully!' : ($isHold ? 'Booking Created Successfully!' : 'Booking Created!');
+                @endphp
+                <div class="modal-header {{ $headerClass }} text-white">
                     <h5 class="modal-title fw-bold">
-                        <i class="fas fa-check-circle"></i> Booking Confirmed Successfully!
+                        <i class="fas {{ $headerIcon }}"></i> {{ $headerTitle }}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1432,7 +1441,7 @@ seat-available
                             <p class="mb-2"><strong>Seats:</strong> <span
                                     class="badge bg-info ms-2">{{ $lastBookingData['seats'] }}</span></p>
                             <p class="mb-0"><strong>Status:</strong> <span
-                                    class="badge bg-success ms-2">{{ ucfirst($lastBookingData['status']) }}</span>
+                                    class="badge {{ $isConfirmed ? 'bg-success' : ($isHold ? 'bg-warning' : 'bg-secondary') }} ms-2">{{ ucfirst($lastBookingData['status']) }}</span>
                             </p>
                         </div>
 
@@ -1454,9 +1463,29 @@ seat-available
                                     {{ number_format($lastBookingData['final_amount'], 2) }}</span></p>
                         </div>
 
+                        @php
+                            $paymentMethodDisplay = 'Pending Payment';
+                            $paymentBadgeClass = 'bg-secondary';
+                            
+                            if ($isPaid && !empty($lastBookingData['payment_method']) && $lastBookingData['payment_method'] !== 'none') {
+                                $paymentMethodDisplay = ucfirst(str_replace('_', ' ', $lastBookingData['payment_method']));
+                                $paymentBadgeClass = 'bg-success';
+                            } elseif ($isPhoneBooking && $isHold) {
+                                $paymentMethodDisplay = 'Pending Payment';
+                                $paymentBadgeClass = 'bg-warning';
+                            } elseif (!empty($lastBookingData['payment_method']) && $lastBookingData['payment_method'] !== 'none') {
+                                $paymentMethodDisplay = ucfirst(str_replace('_', ' ', $lastBookingData['payment_method']));
+                                $paymentBadgeClass = 'bg-info';
+                            }
+                        @endphp
                         <p><strong>Payment Method:</strong> <span
-                                class="badge bg-warning ms-2">{{ ucfirst(str_replace('_', ' ', $lastBookingData['payment_method'])) }}</span>
+                                class="badge {{ $paymentBadgeClass }} ms-2">{{ $paymentMethodDisplay }}</span>
                         </p>
+                        @if ($isPhoneBooking && $isHold)
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> This is a phone booking on hold. Payment will be collected when the customer arrives.
+                            </div>
+                        @endif
                     @else
                         <div class="text-center py-4">
                             <p class="text-muted">No booking data available</p>
