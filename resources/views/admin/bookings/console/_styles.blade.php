@@ -144,19 +144,20 @@
     /* Gender badge styling - Top right corner */
     .seat-gender-badge {
         position: absolute;
-        top: -4px;
-        right: -4px;
-        width: 18px;
-        height: 18px;
+        top: -6px;
+        right: -6px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.7rem;
+        font-size: 0.9rem;
         line-height: 1;
         border: 2px solid #ffffff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         z-index: 10;
+        padding: 0;
     }
 
     .seat-gender-badge.male-badge {
@@ -165,6 +166,26 @@
 
     .seat-gender-badge.female-badge {
         background: #EC4899;
+    }
+
+    /* Locked seat badge styling */
+    .seat-locked-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #f59e0b;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        line-height: 1;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 10;
     }
 
     .seat-btn:hover:not(:disabled) {

@@ -196,6 +196,13 @@ seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
+                                                            @if ($isSelected && $seatGender)
+                                                                <span
+                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}"
+                                                                    title="Selected - {{ ucfirst($seatGender) }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
+                                                                </span>
+                                                            @endif
                                                             @if ($isLockedByOtherUser)
                                                                 <span class="seat-locked-badge"
                                                                     title="Locked by another user">
@@ -248,6 +255,13 @@ seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
+                                                            @if ($isSelected && $seatGender)
+                                                                <span
+                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}"
+                                                                    title="Selected - {{ ucfirst($seatGender) }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
+                                                                </span>
+                                                            @endif
                                                             @if ($isLockedByOtherUser)
                                                                 <span class="seat-locked-badge"
                                                                     title="Locked by another user">
@@ -349,6 +363,13 @@ seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
+                                                            @if ($isSelected && $seatGender)
+                                                                <span
+                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}"
+                                                                    title="Selected - {{ ucfirst($seatGender) }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
+                                                                </span>
+                                                            @endif
                                                             @if ($isLockedByOtherUser)
                                                                 <span class="seat-locked-badge"
                                                                     title="Locked by another user">
@@ -399,6 +420,13 @@ seat-available
                                                                     @endif"
                                                             @if ($status === 'booked' || $status === 'held' || $isLockedByOtherUser) disabled @endif>
                                                             {{ $seat }}
+                                                            @if ($isSelected && $seatGender)
+                                                                <span
+                                                                    class="seat-gender-badge {{ $seatGender === 'male' ? 'male-badge' : 'female-badge' }}"
+                                                                    title="Selected - {{ ucfirst($seatGender) }}">
+                                                                    {{ $seatGender === 'male' ? '👨' : '👩' }}
+                                                                </span>
+                                                            @endif
                                                             @if ($isLockedByOtherUser)
                                                                 <span class="seat-locked-badge"
                                                                     title="Locked by another user">
