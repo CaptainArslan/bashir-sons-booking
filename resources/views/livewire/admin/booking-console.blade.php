@@ -43,12 +43,6 @@
                             </button>
                         @endif
                     @endif
-                    @if ($lastBookingId)
-                        <button type="button" class="btn btn-light btn-sm fw-bold"
-                            onclick="printBothTickets({{ $lastBookingId }})" title="Print Both Customer and Host Tickets">
-                            <i class="fas fa-print"></i> Print Last Ticket
-                        </button>
-                    @endif
                 </div>
             </div>
             <div class="card-body bg-light">
