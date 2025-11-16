@@ -944,6 +944,7 @@ seat-available
                                                 <th class="small">Phone</th>
                                                 <th class="small">From</th>
                                                 <th class="small">To</th>
+                                                <th class="small">Status</th>
                                                 <th class="small">Channel</th>
                                                 <th class="small text-end">Fare (PKR)</th>
                                                 <th class="small text-center">Actions</th>
@@ -977,6 +978,19 @@ seat-available
                                                     </td>
                                                     <td class="small">
                                                         @php
+                                                            $status = $passenger['status'] ?? 'confirmed';
+                                                            $statusEnum =
+                                                                \App\Enums\BookingStatusEnum::tryFrom($status) ??
+                                                                \App\Enums\BookingStatusEnum::CONFIRMED;
+                                                        @endphp
+                                                        <span class="{{ $statusEnum->getBadge() }}"
+                                                            title="{{ $statusEnum->getLabel() }}">
+                                                            <i class="{{ $statusEnum->getIcon() }}"></i>
+                                                            {{ $statusEnum->getLabel() }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="small">
+                                                        @php
                                                             $channel = $passenger['channel'] ?? 'online';
                                                             $channelEnum =
                                                                 \App\Enums\ChannelEnum::tryFrom($channel) ??
@@ -999,11 +1013,13 @@ seat-available
                                                                 title="Edit Booking">
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
-                                                            <button type="button" class="btn btn-sm btn-outline-info"
-                                                                onclick="printBothTickets({{ $passenger['booking_id'] }})"
-                                                                title="Print">
-                                                                <i class="bx bx-printer"></i>
-                                                            </button>
+                                                            @if(($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone')
+                                                                <button type="button" class="btn btn-sm btn-outline-info"
+                                                                    onclick="printBothTickets({{ $passenger['booking_id'] }})"
+                                                                    title="Print Ticket">
+                                                                    <i class="bx bx-printer"></i>
+                                                                </button>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1015,7 +1031,7 @@ seat-available
                                                     <strong>Total Passengers:</strong> <span
                                                         class="badge bg-info">{{ count($tripPassengers) }}</span>
                                                 </td>
-                                                <td colspan="5" class="text-end fw-bold small">Total Earnings:</td>
+                                                <td colspan="6" class="text-end fw-bold small">Total Earnings:</td>
                                                 <td class="fw-bold text-success small text-end">PKR
                                                     {{ number_format($totalEarnings, 2) }}</td>
                                                 <td></td>
@@ -1448,10 +1464,12 @@ seat-available
                     @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
-                    <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
-                        @if ($lastBookingId) onclick="printBothTickets({{ $lastBookingId }})" @else disabled @endif>
-                        <i class="fas fa-print"></i> Print
-                    </button>
+                    @if($lastBookingId && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' && ($lastBookingData['channel'] ?? 'counter') !== 'phone')
+                        <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
+                            onclick="printBothTickets({{ $lastBookingId }})">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    @endif
                     <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
                         <i class="fas fa-check"></i> Done
                     </button>

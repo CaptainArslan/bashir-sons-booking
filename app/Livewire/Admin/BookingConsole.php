@@ -1048,6 +1048,8 @@ class BookingConsole extends Component
                 'tax_amount' => $this->taxAmount,
                 'final_amount' => $this->finalAmount,
                 'payment_method' => $this->paymentMethod ?? 'cash',
+                'payment_status' => $booking->payment_status,
+                'channel' => $booking->channel,
                 'status' => $booking->status,
             ];
 

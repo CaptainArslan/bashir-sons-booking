@@ -12,10 +12,10 @@ function printBooking(bookingId, ticketType = null) {
                 return;
             }
 
-            // Default behavior: automatically print both customer and host tickets
-            // If no ticket type is specified, print both tickets
+            // Default behavior: print customer ticket
+            // If no ticket type is specified, print customer ticket
             if (!ticketType || ticketType === 'both') {
-                printBothTickets(bookingId);
+                printTicket(bookingId);
                 return;
             }
 
@@ -45,8 +45,8 @@ function printBooking(bookingId, ticketType = null) {
             }
         }
 
-        // Function to print both customer and host tickets automatically
-        function printBothTickets(bookingId) {
+        // Function to print customer ticket
+        function printTicket(bookingId) {
             if (!bookingId) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
@@ -62,9 +62,9 @@ function printBooking(bookingId, ticketType = null) {
             }
 
             try {
-                // Open a single window with both tickets combined (always 80mm)
-                const bothTicketsUrl = `/admin/bookings/${bookingId}/print/both/80mm`;
-                const printWindow = window.open(bothTicketsUrl, 'bothTickets');
+                // Open print window with customer ticket (always 80mm)
+                const ticketUrl = `/admin/bookings/${bookingId}/print/customer/80mm`;
+                const printWindow = window.open(ticketUrl, 'ticket');
 
                 // Check if window was blocked
                 if (!printWindow) {
@@ -72,7 +72,7 @@ function printBooking(bookingId, ticketType = null) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Popup Blocked',
-                            text: 'Please allow popups for this site to print tickets. Click the browser\'s popup blocker icon and allow popups.',
+                            text: 'Please allow popups for this site to print ticket. Click the browser\'s popup blocker icon and allow popups.',
                             confirmButtonColor: '#3085d6'
                         });
                     } else {
@@ -93,6 +93,11 @@ function printBooking(bookingId, ticketType = null) {
                     alert('Failed to open print window. Please try again.');
                 }
             }
+        }
+
+        // Legacy function name for backward compatibility - now prints single ticket
+        function printBothTickets(bookingId) {
+            printTicket(bookingId);
         }
 
         // Define printVoucher function for police records
@@ -731,7 +736,8 @@ function printBooking(bookingId, ticketType = null) {
             };
         };
 
-// Make printBooking and printBothTickets available globally
+// Make printBooking, printTicket, and printBothTickets available globally
 window.printBooking = printBooking;
-window.printBothTickets = printBothTickets;
+window.printTicket = printTicket;
+window.printBothTickets = printBothTickets; // Legacy function for backward compatibility
 

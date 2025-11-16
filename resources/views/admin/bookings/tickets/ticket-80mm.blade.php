@@ -5,26 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $ticketType === 'host' ? 'Host' : 'Customer' }} Ticket - {{ $booking->booking_number }}</title>
     <style>
+        /* A font that mimics a thermal printer */
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         @media print {
             @page {
                 size: 80mm auto;
                 margin: 0;
                 padding: 0;
             }
-            
+
             html {
                 width: 80mm !important;
                 max-width: 80mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            
+
             body {
                 width: 80mm !important;
                 max-width: 80mm !important;
@@ -32,215 +35,182 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden;
-                font-family: 'Arial', 'Helvetica', sans-serif;
-                font-size: 7px;
-                line-height: 1.2;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+                background-color: #f0f0f0;
+                color: #000;
             }
-            
+
             .no-print {
                 display: none !important;
             }
-            
-            .ticket-wrapper {
+
+            .ticket {
                 width: 80mm !important;
                 max-width: 80mm !important;
                 min-width: 80mm !important;
                 margin: 0 !important;
-                padding: 1.5mm 2mm !important;
-                box-sizing: border-box;
+                padding: 0 !important;
+                background: #ffffff;
+                border: 1px solid #ccc;
             }
         }
-        
+
         @media screen {
             body {
-                font-family: 'Arial', 'Helvetica', sans-serif;
-                font-size: 10px;
-                width: 80mm;
-                max-width: 80mm;
-                padding: 5mm;
-                margin: 0 auto;
-                background: #f5f5f5;
+                font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+                background-color: #f0f0f0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+                color: #000;
+            }
+
+            .ticket {
+                width: 320px;
+                background: #ffffff;
+                border: 1px solid #ccc;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             }
         }
-        
+
         body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 8px;
-            width: 80mm;
-            max-width: 80mm;
-            padding: 3mm;
-            margin: 0 auto;
-            background: #fff;
-        }
-        
-        .ticket-wrapper {
-            width: 100%;
-            max-width: 100%;
-            background: #fff;
-        }
-        
-        .customer-ticket {
-            width: 100%;
-            border: 1.5px solid #000;
-            border-radius: 1px;
-            padding: 1.5mm;
-            margin-bottom: 0;
-            background: #fff;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 1mm;
-            padding-bottom: 0.5mm;
-        }
-        
-        .company-name {
-            font-size: 10px;
-            font-weight: 900;
-            margin-bottom: 0.5mm;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000;
-            line-height: 1.1;
-        }
-        
-        .uan {
-            font-size: 7px;
-            margin-bottom: 0.5mm;
-            font-weight: 600;
-            color: #000;
-        }
-        
-        .urdu-text {
-            font-size: 6px;
-            text-align: center;
-            margin: 0.5mm 0 0 0;
-            direction: rtl;
-            font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
-            line-height: 1.2;
-            padding: 0.8mm;
-            background: #fff;
-            border: 0.5px solid #000;
-            border-radius: 1px;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.8mm 1.2mm;
-            margin: 1mm 0;
-            font-size: 7px;
-        }
-        
-        .info-item {
+            font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+            background-color: #f0f0f0;
             display: flex;
-            flex-direction: column;
-            padding: 0.3mm 0;
-        }
-        
-        .info-label {
-            font-weight: 700;
-            font-size: 6px;
-            margin-bottom: 0.2mm;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             color: #000;
-            text-transform: uppercase;
-            letter-spacing: 0.2px;
         }
-        
-        .info-value {
-            font-size: 7px;
-            font-weight: 600;
-            color: #000;
-            word-break: break-word;
-            line-height: 1.2;
+
+        .ticket {
+            width: 320px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        
-        .perforated-line {
-            border-top: 1px dashed #000;
-            margin: 1mm 0;
+
+        /* --- Main Ticket Area --- */
+        .ticket-main {
+            padding: 20px;
             text-align: center;
-            position: relative;
-            padding: 0.5mm 0;
         }
-        
-        .perforated-line::before {
-            content: 'CUT';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #fff;
-            padding: 0 2mm;
-            font-size: 5px;
-            font-weight: bold;
-            top: -4px;
-            letter-spacing: 0.3px;
+
+        .ticket-main h2 {
+            margin: 0;
+            font-size: 20px;
         }
-        
-        .boarding-coupon {
-            width: 100%;
-            border: 1.5px solid #000;
-            border-radius: 1px;
-            padding: 1.5mm;
-            margin-top: 1mm;
-            background: #fff;
+
+        .ticket-main p {
+            margin: 4px 0;
+            font-size: 12px;
         }
-        
-        .boarding-header {
-            text-align: center;
-            padding-bottom: 0.5mm;
-            margin-bottom: 1mm;
-        }
-        
-        .boarding-company-name {
-            font-size: 8px;
+
+        .daewoo-bus-service {
             font-weight: 800;
-            margin-bottom: 0.3mm;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-size: 16px !important;
         }
-        
-        .boarding-title {
-            font-size: 8px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000;
-        }
-        
-        .instructions {
-            font-size: 6px;
-            margin: 1mm 0;
-            direction: rtl;
-            text-align: right;
-            font-family: 'Arial Unicode MS', 'Tahoma', 'Nafees Web Naskh', sans-serif;
-            line-height: 1.3;
-            padding: 0.8mm;
-            background: #fff;
-            border: 0.5px solid #000;
-            border-radius: 1px;
-        }
-        
-        .contact-info {
-            text-align: center;
-            font-size: 6px;
-            margin-top: 1mm;
-            padding-top: 0.5mm;
-            line-height: 1.2;
-        }
-        
-        .contact-info > div:first-child {
+
+        .route-info {
+            margin: 15px 0;
             font-weight: 700;
-            margin-bottom: 0.3mm;
-            font-size: 6px;
         }
-        
-        .contact-info > div:last-child {
-            font-size: 6px;
-            font-weight: 600;
+
+        .route-info p {
+            font-size: 13px;
         }
-        
+
+        .details-top,
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .details-top {
+            font-weight: 800;
+        }
+
+        .details-top .seat-info {
+            font-size: larger;
+        }
+
+        .seat-info {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .details-body {
+            text-align: left;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .details-body p {
+            margin: 5px 0;
+        }
+
+        .urdu-text {
+            font-family: 'Arial', sans-serif; /* Fallback for Urdu */
+            font-size: 14px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: 900;
+        }
+
+        .contact-info {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .website-link {
+            text-decoration: none;
+            color: #000;
+            font-weight: 900;
+        }
+
+        .contact-info .uan {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        /* --- Perforated Line --- */
+        hr {
+            border: none;
+            border-top: 2px dashed #888;
+            margin: 0;
+        }
+
+        /* --- Ticket Stub Area --- */
+        .ticket-stub {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .ticket-stub p {
+            margin: 4px 0;
+            font-size: 13px;
+        }
+
+        .stub-footer {
+            text-align: left;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .stub-footer .seat-info {
+            font-size: 12px; /* Match font size in this line */
+        }
+
+        .stub-prepared {
+            text-align: left;
+            font-size: 12px;
+        }
+
         .print-btn {
             position: fixed;
             top: 20px;
@@ -256,77 +226,11 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             transition: all 0.3s;
         }
-        
+
         .print-btn:hover {
             background: #0056b3;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 0.5mm 1.5mm;
-            background: #000;
-            color: #fff;
-            font-weight: 900;
-            font-size: 6px;
-            border-radius: 1px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        
-        .highlight-box {
-            background: #f0f0f0;
-            border: 0.5px solid #000;
-            padding: 0.8mm;
-            margin: 0.5mm 0;
-            border-radius: 1px;
-        }
-        
-        .section-heading {
-            font-size: 7px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin: 1mm 0 0.5mm 0;
-            color: #000;
-        }
-        
-        .info-item.full-width {
-            grid-column: 1 / -1;
-        }
-        
-        @media print {
-            .customer-ticket,
-            .boarding-coupon {
-                border: 2px solid #000 !important;
-                background: #fff !important;
-            }
-            
-            .urdu-text {
-                background: #fff !important;
-                border: 1px solid #000 !important;
-            }
-            
-            .instructions {
-                background: #fff !important;
-                border: 1px solid #000 !important;
-            }
-            
-            .status-badge {
-                background: #000 !important;
-                color: #fff !important;
-                border: 1px solid #000 !important;
-            }
-            
-            .section-heading {
-                color: #000 !important;
-            }
-            
-            .info-label,
-            .info-value {
-                color: #000 !important;
-            }
         }
     </style>
 </head>
@@ -335,190 +239,95 @@
         <i class="fas fa-print"></i> Print Ticket
     </button>
 
-    <div class="ticket-wrapper">
+    <div class="ticket">
         @php
             $settings = \App\Models\GeneralSetting::first();
             $fromTripStop = $booking->trip->stops->firstWhere('terminal_id', $booking->fromStop->terminal_id);
             $toTripStop = $booking->trip->stops->firstWhere('terminal_id', $booking->toStop->terminal_id);
             $departureDateTime = $fromTripStop?->departure_at ?? $booking->trip->departure_datetime;
-            $departureDate = $departureDateTime ? $departureDateTime->format('d-M-y') : 'N/A';
+            $departureDate = $departureDateTime ? $departureDateTime->format('d-m-Y') : 'N/A';
             $departureTime = $departureDateTime ? $departureDateTime->format('h:i A') : 'N/A';
             $departureDateShort = $departureDateTime ? $departureDateTime->format('d/m/Y') : 'N/A';
             $firstPassenger = $booking->passengers->first();
             $firstSeat = $booking->seats->whereNull('cancelled_at')->first() ?? $booking->seats->first();
-            $busType = $booking->trip->bus->busType->name ?? 'N/A';
-            $routeName = $booking->trip->route->name ?? 'N/A';
-            $userId = $booking->booked_by_user_id ?? $booking->user_id ?? 'N/A';
+            $bus = $booking->trip->bus;
+            $busName = $bus->name ?? 'N/A';
+            $busRegistration = $bus->registration_number ?? '';
+            $busCode = $booking->fromStop->terminal->code ?? '';
+            $routeCode = $busRegistration && $busCode ? $busRegistration . ' ' . $busCode : ($busRegistration ?: ($busCode ?: 'N/A'));
+            $fromTerminalName = strtoupper($booking->fromStop->terminal->name ?? 'N/A');
+            $toTerminalName = strtoupper($booking->toStop->terminal->name ?? 'N/A');
+            $fromTerminalCode = strtoupper($booking->fromStop->terminal->code ?? '');
+            $toTerminalCode = strtoupper($booking->toStop->terminal->code ?? '');
+            $routeDisplay = $fromTerminalCode . '-' . $toTerminalCode . ' ' . $departureTime;
             $bookedByUser = $booking->bookedByUser ?? $booking->user;
-            $bookedByName = $bookedByUser ? $bookedByUser->name : 'N/A';
+            $bookedByName = $bookedByUser ? strtoupper($bookedByUser->name) : 'N/A';
+            $passengerCount = $booking->passengers->count();
+            $seatCount = $booking->seats->whereNull('cancelled_at')->count();
+            $totalFare = number_format($booking->final_amount, 0);
+            $passengerGender = $firstPassenger && $firstPassenger->gender ? strtoupper($firstPassenger->gender->value ?? $firstPassenger->gender) : '';
+            $seatDisplay = $firstSeat ? 'SEAT NO. ' . str_pad($firstSeat->seat_number, 2, '0', STR_PAD_LEFT) . ($passengerGender ? ' (' . $passengerGender . ')' : '') : 'N/A';
+            $isDuplicate = $booking->status === 'cancelled' || $booking->created_at->lt(now()->subDay());
         @endphp
 
-        <!-- Customer Ticket Section -->
-        <div class="customer-ticket">
-            <!-- Header -->
-            <div class="header">
-                <div class="company-name">{{ $settings->company_name ?? 'BALOCH TRANSPORT SEF' }}</div>
-                <div class="uan">UAN: {{ $settings->phone ?? '03-111-155-255' }}</div>
-                <div class="urdu-text">
-                    Download {{ $settings->company_name ?? 'Bashir Sons Travels' }} App & Buy Tickets Online<br>
-                    اب گھر بیٹھے آپ سے ٹکٹ خریدے اور اپنی پسند کی سیٹ بک کریں
-                </div>
+        <div class="ticket-main">
+            <h2>{{ $settings->company_name ?? 'BS/Niazi' }}</h2>
+            <p class="daewoo-bus-service">{{ $settings->tagline ?? 'Daewoo Bus Service' }}</p>
+
+            <div class="route-info">
+                <p>{{ $routeDisplay }}</p>
+                <p>From {{ $fromTerminalName }} To {{ $toTerminalName }}</p>
+                <p>{{ $departureDate }} {{ $departureTime }}</p>
+                <p>{{ $routeCode }}</p>
             </div>
 
-            <!-- Passenger Details Section -->
-            <div class="section-heading">Passenger Details</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Passenger Name:</span>
-                    <span class="info-value">{{ $firstPassenger->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Seat No.:</span>
-                    <span class="info-value">{{ $firstSeat->seat_number ?? 'N/A' }}@if($firstPassenger && $firstPassenger->gender) ({{ ucfirst($firstPassenger->gender->value ?? $firstPassenger->gender) }})@endif</span>
-                </div>
+            <div class="details-top">
+                <p>
+                    @if($isDuplicate)
+                        Duplicate
+                    @endif
+                </p>
+                <p class="seat-info">{{ $seatDisplay }}</p>
             </div>
 
-            <!-- Journey Details Section -->
-            <div class="section-heading">Journey Details</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">From City:</span>
-                    <span class="info-value">{{ $booking->fromStop->terminal->city->name ?? $booking->fromStop->terminal->name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Destination:</span>
-                    <span class="info-value">{{ $booking->toStop->terminal->city->name ?? $booking->toStop->terminal->name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Departure Time:</span>
-                    <span class="info-value">{{ $departureTime }} {{ $departureDate }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Terminal:</span>
-                    <span class="info-value">{{ strtoupper($booking->fromStop->terminal->name) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Bus #:</span>
-                    <span class="info-value">{{ $booking->trip->bus->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Class:</span>
-                    <span class="info-value">{{ strtoupper($busType) }}</span>
-                </div>
+            <div class="details-body">
+                <p>Sr #&nbsp;&nbsp; {{ $passengerCount }} &nbsp;&nbsp;&nbsp; Pax&nbsp;&nbsp; {{ $seatCount }} &nbsp;&nbsp;&nbsp; Total&nbsp;&nbsp; {{ $totalFare }}</p>
+                <p>Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ strtoupper($firstPassenger->name ?? 'N/A') }}</p>
+                <p>CNIC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ $firstPassenger->cnic ?? 'N/A' }}</p>
+                <p>Cell&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ $firstPassenger->phone ?? 'N/A' }}</p>
             </div>
 
-            <!-- Payment Details Section -->
-            <div class="section-heading">Payment Details</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Total Fare:</span>
-                    <span class="info-value">PKR {{ number_format($booking->final_amount, 0) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Payment Method:</span>
-                    <span class="info-value">{{ strtoupper($booking->payment_method ?? 'CASH') }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Payment Status:</span>
-                    <span class="info-value">{{ strtoupper($booking->payment_status ?? 'UNPAID') }}</span>
-                </div>
+            <div class="footer-info">
+                <p>Prepared By {{ $bookedByName }}</p>
+                <p>{{ $booking->created_at->format('n/j/Y g:i a') }}</p>
             </div>
 
-            <!-- Booking Details Section -->
-            <div class="section-heading">Booking Details</div>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Ticket #:</span>
-                    <span class="info-value">{{ $booking->booking_number }}-{{ $firstSeat->seat_number ?? '' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Booked By:</span>
-                    <span class="info-value">{{ $bookedByName }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Channel:</span>
-                    <span class="info-value">{{ strtoupper($booking->channel ?? 'COUNTER') }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">{{ strtoupper($booking->status) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Print Time:</span>
-                    <span class="info-value">{{ $booking->created_at->format('h:i A d/m/Y') }}</span>
-                </div>
-            </div>
+            <p class="urdu-text" dir="rtl">
+                گاڑی روانگی ٹائم سے 15 منٹ پہلے تشریف لائیں شکریہ
+            </p>
 
-            <!-- Instructions in Urdu -->
-            <div class="instructions">
-                مسافر کو بس کی روانگی سے 10 منٹ پہلے بس میں سوار<br>
-                اس کی روانگی کے بعد ٹکٹ واپس یا تبدیل نہیں کی جانے<br>
-                ٹکٹ ریفنڈ کرنے پر 0
-            </div>
-
-            <!-- Contact Information -->
             <div class="contact-info">
-                <div>For any Complaint Call or Whatsapp Us</div>
-                <div>Call: {{ $settings->phone ?? '03-111-155-255' }} SMS: {{ $settings->support_phone ?? '0300-8439655' }}</div>
+                <p>For Booking, Complaints & Suggestions</p>
+                <p class="uan">UAN: {{ $settings->phone ?? '041 111 737 737' }}</p>
+                <p>For Online Ticket Booking Please Visit</p>
+                <p class="website-link">{{ $settings->website_url ?? 'www.bashirsonsgroup.com' }}</p>
             </div>
         </div>
 
-        <!-- Perforated Line -->
-        <div class="perforated-line"></div>
+        <hr>
 
-        <!-- Boarding Coupon (Host Copy) -->
-        <div class="boarding-coupon">
-            <div class="boarding-header">
-                <div class="boarding-company-name">{{ $settings->company_name ?? 'Bas Transport Services' }}</div>
-                <div class="boarding-title">BOARDING COUPON</div>
-            </div>
+        <div class="ticket-stub">
+            <p class="route-info">{{ $routeDisplay }}</p>
+            <p class="route-info">From {{ $fromTerminalName }} To {{ $toTerminalName }}</p>
+            <p class="route-info">{{ $departureDate }} {{ $departureTime }}</p>
+            <p class="route-info">{{ $routeCode }}</p>
 
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Name:</span>
-                    <span class="info-value">{{ $firstPassenger->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Dep Time:</span>
-                    <span class="info-value">{{ $departureTime }} {{ $departureDateShort }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">FROM:</span>
-                    <span class="info-value">{{ $booking->fromStop->terminal->city->name ?? $booking->fromStop->terminal->name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">TO:</span>
-                    <span class="info-value">{{ $booking->toStop->terminal->city->name ?? $booking->toStop->terminal->name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">SEAT NO:</span>
-                    <span class="info-value">{{ $firstSeat->seat_number ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">FARE:</span>
-                    <span class="info-value">PKR {{ number_format($booking->final_amount, 0) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Terminal:</span>
-                    <span class="info-value">{{ strtoupper($booking->fromStop->terminal->name) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">BUS#:</span>
-                    <span class="info-value">{{ $booking->trip->bus->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Ticket #:</span>
-                    <span class="info-value">{{ $booking->booking_number }}-{{ $firstSeat->seat_number ?? '' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Print Time:</span>
-                    <span class="info-value">{{ $booking->created_at->format('h:i A d/m/Y') }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">STATUS:</span>
-                    <span class="info-value"><span class="status-badge">{{ strtoupper($booking->status) }}</span></span>
-                </div>
-            </div>
+            <p class="stub-footer">
+                {{ $booking->created_at->format('d/m/Y g:i a') }}
+                <span class="seat-info">{{ $seatDisplay }}</span>
+            </p>
+
+            <p class="stub-prepared">Prepared By {{ $bookedByName }}</p>
         </div>
     </div>
 
@@ -526,13 +335,13 @@
         window.addEventListener('beforeprint', function() {
             document.body.style.width = '80mm';
             document.body.style.maxWidth = '80mm';
-            const ticket = document.querySelector('.ticket-wrapper');
+            const ticket = document.querySelector('.ticket');
             if (ticket) {
                 ticket.style.width = '80mm';
                 ticket.style.maxWidth = '80mm';
             }
         });
-        
+
         window.onload = function() {
             setTimeout(function() {
                 window.print();
