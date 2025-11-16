@@ -37,8 +37,8 @@
                             @endif
                         @endif
                         @if (!$isOrigin)
-                            <button type="button" class="btn btn-light btn-sm fw-bold"
-                                wire:click="openExpenseModal" title="Manage Expenses">
+                            <button type="button" class="btn btn-light btn-sm fw-bold" wire:click="openExpenseModal"
+                                title="Manage Expenses">
                                 <i class="fas fa-receipt"></i> Expenses
                             </button>
                         @endif
@@ -279,7 +279,8 @@ seat-available
                                     @if ($lastRowSeats > 0)
                                         @if ($lastRowSeats < 4)
                                             {{-- Less than 4 seats: display in single row without aisle --}}
-                                            <div class="seat-row-container" style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <div class="seat-row-container"
+                                                style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                                                 @for ($seat = $fullRows * 4 + 1; $seat <= $totalSeats; $seat++)
                                                     @php
                                                         $seatData = $seatMap[$seat] ?? [
@@ -300,7 +301,8 @@ seat-available
                                                             $status = 'held';
                                                         }
                                                     @endphp
-                                                    <button type="button" wire:click="selectSeat({{ $seat }})"
+                                                    <button type="button"
+                                                        wire:click="selectSeat({{ $seat }})"
                                                         class="seat-btn 
                                                                 @if ($status === 'booked') @if ($seatGender === 'male') seat-booked-male
                                                                     @elseif($seatGender === 'female') seat-booked-female
@@ -532,7 +534,8 @@ seat-available
                                                     <div class="col-lg-6 col-md-12">
                                                         <label class="form-label small">Name <span
                                                                 class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm @error("passengers.{$index}.name") is-invalid border-danger @enderror"
+                                                        <input type="text"
+                                                            class="form-control form-control-sm @error("passengers.{$index}.name") is-invalid border-danger @enderror"
                                                             wire:model="passengers.{{ $index }}.name"
                                                             placeholder="Full Name" maxlength="100"
                                                             @error("passengers.{$index}.name") autofocus @enderror>
@@ -543,7 +546,8 @@ seat-available
                                                     <div class="col-lg-3 col-md-6">
                                                         <label class="form-label small">Age <span
                                                                 class="text-danger">*</span></label>
-                                                        <input type="number" class="form-control form-control-sm @error("passengers.{$index}.age") is-invalid border-danger @enderror"
+                                                        <input type="number"
+                                                            class="form-control form-control-sm @error("passengers.{$index}.age") is-invalid border-danger @enderror"
                                                             wire:model="passengers.{{ $index }}.age"
                                                             min="1" max="120" maxlength="3"
                                                             placeholder="Age"
@@ -555,7 +559,8 @@ seat-available
                                                     <div class="col-lg-3 col-md-6">
                                                         <label class="form-label small">Gender <span
                                                                 class="text-danger">*</span></label>
-                                                        <select class="form-select form-select-sm @error("passengers.{$index}.gender") is-invalid border-danger @enderror"
+                                                        <select
+                                                            class="form-select form-select-sm @error("passengers.{$index}.gender") is-invalid border-danger @enderror"
                                                             wire:model="passengers.{{ $index }}.gender"
                                                             @error("passengers.{$index}.gender") autofocus @enderror>
                                                             <option value="">Select</option>
@@ -569,7 +574,8 @@ seat-available
                                                     <div class="col-lg-4 col-md-12">
                                                         <label class="form-label small">CNIC <span
                                                                 class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm @error("passengers.{$index}.cnic") is-invalid border-danger @enderror"
+                                                        <input type="text"
+                                                            class="form-control form-control-sm @error("passengers.{$index}.cnic") is-invalid border-danger @enderror"
                                                             wire:model.blur="passengers.{{ $index }}.cnic"
                                                             id="cnic-{{ $index }}"
                                                             placeholder="12345-9999999-1"
@@ -582,15 +588,16 @@ seat-available
                                                                     else if (v.length > 12) v = v.slice(0,5) + '-' + v.slice(5,12) + '-' + v.slice(12,13);
                                                                     this.value = v.slice(0,15);
                                                                 "
-                                                            required
-                                                            @error("passengers.{$index}.cnic") autofocus @enderror>
+                                                            required @error("passengers.{$index}.cnic") autofocus
+                                                            @enderror>
                                                         @error("passengers.{$index}.cnic")
                                                             <small class="text-danger d-block">{{ $message }}</small>
                                                         @enderror
                                                     </div>
                                                     <div class="col-lg-4 col-md-6">
                                                         <label class="form-label small">Phone</label>
-                                                        <input type="tel" class="form-control form-control-sm @error("passengers.{$index}.phone") is-invalid border-danger @enderror"
+                                                        <input type="tel"
+                                                            class="form-control form-control-sm @error("passengers.{$index}.phone") is-invalid border-danger @enderror"
                                                             wire:model.blur="passengers.{{ $index }}.phone"
                                                             id="phone-{{ $index }}" placeholder="03001234567"
                                                             pattern="^0[0-9]{10}$" maxlength="11" inputmode="numeric"
@@ -627,13 +634,16 @@ seat-available
                                         <i class="fas fa-list"></i> Selected Seats
                                         <span class="badge bg-primary ms-2">({{ count($selectedSeats) }})</span>
                                     </label>
-                                    <div class="d-flex flex-wrap gap-1 mb-0 align-items-center" style="min-height: 30px;">
+                                    <div class="d-flex flex-wrap gap-1 mb-0 align-items-center"
+                                        style="min-height: 30px;">
                                         @forelse($selectedSeats as $seatNumber => $seatData)
                                             @if ($loop->first)
                                                 <span class="text-muted small me-1">Seats:</span>
                                             @endif
                                             <span class="text-primary fw-bold" style="font-size: 0.875rem;">
-                                                {{ $seatNumber }}@if (!$loop->last),@endif
+                                                {{ $seatNumber }}@if (!$loop->last)
+                                                    ,
+                                                @endif
                                             </span>
                                         @empty
                                             <span class="text-muted small">No seats selected yet</span>
@@ -643,97 +653,99 @@ seat-available
 
                                 <!-- Fare Calculation -->
                                 <div class="mb-3">
-                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation</h6>
+                                    <h6 class="fw-bold mb-2 small"><i class="fas fa-calculator"></i> Fare Calculation
+                                    </h6>
 
-                                @php
-                                    $seatCount = count($selectedSeats);
-                                    $totalDiscount = $discountAmount * $seatCount;
-                                    $fareAfterDiscount = $totalFare - $totalDiscount;
-                                @endphp
+                                    @php
+                                        $seatCount = count($selectedSeats);
+                                        $totalDiscount = $discountAmount * $seatCount;
+                                        $fareAfterDiscount = $totalFare - $totalDiscount;
+                                    @endphp
 
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <label class="form-label small mb-1">Base Fare (Per Seat)</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            value="PKR {{ number_format($baseFare, 0) }}" readonly>
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small mb-1">Discount (Per Seat)</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 0) : 'None' }}"
-                                            readonly>
-                                    </div>
-                                </div>
-
-                                @if ($seatCount > 0)
                                     <div class="row g-2 mb-2">
                                         <div class="col-6">
-                                            <label class="form-label small mb-1">Total Fare ({{ $seatCount }}
-                                                seat{{ $seatCount > 1 ? 's' : '' }})</label>
-                                            <input type="text" class="form-control form-control-sm fw-bold"
-                                                value="PKR {{ number_format($totalFare, 0) }}" readonly>
+                                            <label class="form-label small mb-1">Base Fare (Per Seat)</label>
+                                            <input type="text" class="form-control form-control-sm"
+                                                value="PKR {{ number_format($baseFare, 0) }}" readonly>
                                         </div>
                                         <div class="col-6">
-                                            <label class="form-label small mb-1">Total Discount</label>
-                                            <input type="text"
-                                                class="form-control form-control-sm text-danger fw-bold"
-                                                value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 0) : 'PKR 0' }}"
+                                            <label class="form-label small mb-1">Discount (Per Seat)</label>
+                                            <input type="text" class="form-control form-control-sm"
+                                                value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 0) : 'None' }}"
                                                 readonly>
                                         </div>
                                     </div>
 
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-6">
-                                            <label class="form-label small mb-1">Fare After Discount</label>
-                                            <input type="text"
-                                                class="form-control form-control-sm fw-bold text-primary"
-                                                value="PKR {{ number_format($fareAfterDiscount, 0) }}" readonly>
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label small mb-1">Tax/Charge
-                                                <small class="text-muted">
-                                                    @if ($paymentMethod === 'mobile_wallet')
-                                                        @php
-                                                            $generalSettings = \App\Models\GeneralSetting::first();
-                                                            $mobileWalletTaxPerSeat = $generalSettings?->mobile_wallet_tax ?? 40;
-                                                        @endphp
-                                                        (PKR {{ number_format($mobileWalletTaxPerSeat, 0) }} per seat)
-                                                    @else
-                                                        (Optional)
-                                                    @endif
-                                                </small>
-                                            </label>
-                                            <input type="number" class="form-control form-control-sm"
-                                                wire:model.live="taxAmount" 
-                                                wire:key="tax-amount-{{ $taxAmount }}-{{ $paymentMethod }}-{{ count($selectedSeats) }}"
-                                                wire:loading.attr="disabled"
-                                                placeholder="0" min="0" step="1"
-                                                @if($paymentMethod === 'mobile_wallet' && count($selectedSeats) > 0) readonly @endif>
-                                            @error('taxAmount')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                            <div wire:loading wire:target="taxAmount"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
-                                                <span class="visually-hidden">Loading...</span>
+                                    @if ($seatCount > 0)
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Total Fare ({{ $seatCount }}
+                                                    seat{{ $seatCount > 1 ? 's' : '' }})</label>
+                                                <input type="text" class="form-control form-control-sm fw-bold"
+                                                    value="PKR {{ number_format($totalFare, 0) }}" readonly>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Total Discount</label>
+                                                <input type="text"
+                                                    class="form-control form-control-sm text-danger fw-bold"
+                                                    value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 0) : 'PKR 0' }}"
+                                                    readonly>
                                             </div>
                                         </div>
-                                    </div>
-                                @else
-                                    <div class="alert alert-info mb-1 p-1 small text-center">
-                                        <i class="fas fa-info-circle"></i> Select seats to calculate fare
-                                    </div>
-                                @endif
 
-                                @if ($seatCount > 0)
-                                    <div class="alert alert-success border-1 mb-0 p-1 small">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="fw-bold small">Final Amount:</span>
-                                            <span class="fw-bold text-success">PKR
-                                                {{ number_format($finalAmount, 0) }}</span>
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Fare After Discount</label>
+                                                <input type="text"
+                                                    class="form-control form-control-sm fw-bold text-primary"
+                                                    value="PKR {{ number_format($fareAfterDiscount, 0) }}" readonly>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Tax/Charge
+                                                    <small class="text-muted">
+                                                        @if ($paymentMethod === 'mobile_wallet')
+                                                            @php
+                                                                $generalSettings = \App\Models\GeneralSetting::first();
+                                                                $mobileWalletTaxPerSeat =
+                                                                    $generalSettings?->mobile_wallet_tax ?? 40;
+                                                            @endphp
+                                                            (PKR {{ number_format($mobileWalletTaxPerSeat, 0) }} per
+                                                            seat)
+                                                        @else
+                                                            (Optional)
+                                                        @endif
+                                                    </small>
+                                                </label>
+                                                <input type="number" class="form-control form-control-sm"
+                                                    wire:model.live="taxAmount"
+                                                    wire:key="tax-amount-{{ $taxAmount }}-{{ $paymentMethod }}-{{ count($selectedSeats) }}"
+                                                    wire:loading.attr="disabled" placeholder="0" min="0"
+                                                    step="1" @if ($paymentMethod === 'mobile_wallet' && count($selectedSeats) > 0) readonly @endif>
+                                                @error('taxAmount')
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                                <div wire:loading wire:target="taxAmount"
+                                                    class="spinner-border spinner-border-sm text-primary mt-1"
+                                                    role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endif
+                                    @else
+                                        <div class="alert alert-info mb-1 p-1 small text-center">
+                                            <i class="fas fa-info-circle"></i> Select seats to calculate fare
+                                        </div>
+                                    @endif
+
+                                    @if ($seatCount > 0)
+                                        <div class="alert alert-success border-1 mb-0 p-1 small">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold small">Final Amount:</span>
+                                                <span class="fw-bold text-success">PKR
+                                                    {{ number_format($finalAmount, 0) }}</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Booking Type & Payment -->
@@ -745,24 +757,28 @@ seat-available
                                             <select class="form-select form-select-sm" wire:model.live="bookingType"
                                                 wire:loading.attr="disabled">
                                                 <option value="counter"
-                                                    {{ $bookingType === 'counter' ? 'selected' : '' }}>🏪 Counter</option>
-                                                <option value="phone" {{ $bookingType === 'phone' ? 'selected' : '' }}>📞
+                                                    {{ $bookingType === 'counter' ? 'selected' : '' }}>🏪 Counter
+                                                </option>
+                                                <option value="phone"
+                                                    {{ $bookingType === 'phone' ? 'selected' : '' }}>📞
                                                     Phone (Hold till before 60 mins of departure)
                                                 </option>
                                             </select>
                                             <div wire:loading wire:target="bookingType"
-                                                class="spinner-border spinner-border-sm text-primary mt-1" role="status">
+                                                class="spinner-border spinner-border-sm text-primary mt-1"
+                                                role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                         </div>
                                         @if ($bookingType === 'counter')
                                             <div class="col-lg-6 col-md-12 mb-2">
                                                 <label class="form-label small fw-bold">Payment Method</label>
-                                                <select class="form-select form-select-sm" wire:model.live="paymentMethod"
-                                                    wire:loading.attr="disabled">
+                                                <select class="form-select form-select-sm"
+                                                    wire:model.live="paymentMethod" wire:loading.attr="disabled">
                                                     @foreach ($paymentMethods as $method)
                                                         @if ($method['value'] !== 'other')
-                                                            <option value="{{ $method['value'] }}">{{ $method['label'] }}
+                                                            <option value="{{ $method['value'] }}">
+                                                                {{ $method['label'] }}
                                                             </option>
                                                         @endif
                                                     @endforeach
@@ -780,100 +796,107 @@ seat-available
                                 <!-- Payment Fields (Counter Only) -->
                                 @if ($bookingType === 'counter')
                                     <div class="mb-3">
-                                        <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment Details
+                                        <h6 class="fw-bold mb-2 small"><i class="fas fa-credit-card"></i> Payment
+                                            Details
                                         </h6>
 
-                                    @if ($paymentMethod !== 'cash')
-                                        <div class="mb-2">
-                                            <label class="form-label small">Transaction ID</label>
-                                            <input type="text" class="form-control form-control-sm"
-                                                wire:model="transactionId" placeholder="TXN123456789"
-                                                maxlength="100">
-                                        </div>
-                                    @endif
-
-                                    @if ($paymentMethod === 'cash')
-                                        @php
-                                            $amountReceivedValue = (float) ($amountReceived ?? 0);
-                                            $finalAmountValue = (float) ($finalAmount ?? 0);
-                                            $calculatedReturn = max(0, $amountReceivedValue - $finalAmountValue);
-                                            $calculatedDue = max(0, $finalAmountValue - $amountReceivedValue);
-                                        @endphp
-
-                                        <!-- Amount Received Input -->
-                                        <div class="mb-2">
-                                            <label class="form-label small fw-bold">
-                                                <i class="fas fa-money-bill"></i> Amount Received (PKR)
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="number" class="form-control form-control-sm fw-bold @error('amountReceived') is-invalid border-danger @enderror"
-                                                wire:model.blur="amountReceived" wire:loading.attr="disabled"
-                                                id="amountReceived" min="0.01" step="0.01" placeholder="0.00" required>
-                                            @error('amountReceived')
-                                                <small class="text-danger d-block">{{ $message }}</small>
-                                            @enderror
-                                            <div wire:loading wire:target="amountReceived"
-                                                class="spinner-border spinner-border-sm text-primary mt-1"
-                                                role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Payment Summary -->
-                                        @if ($amountReceivedValue > 0 && $finalAmountValue > 0)
-                                            <div class="payment-summary">
-                                                <!-- Amount Remaining (Due) -->
-                                                @if ($calculatedDue > 0)
-                                                    <div class="alert alert-warning border-1 mb-1 p-1 small"
-                                                        style="background-color: #fff3cd !important;">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="fw-bold small">
-                                                                <i class="fas fa-exclamation-triangle"></i> Due:
-                                                            </span>
-                                                            <span class="fw-bold text-warning">
-                                                                PKR {{ number_format($calculatedDue, 2) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Return Amount -->
-                                                @if ($calculatedReturn > 0)
-                                                    <div class="alert alert-success border-1 mb-1 p-1 small"
-                                                        style="background-color: #d1e7dd !important;">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="fw-bold small">
-                                                                <i class="fas fa-money-bill-wave"></i> Return:
-                                                            </span>
-                                                            <span class="fw-bold text-success">
-                                                                PKR {{ number_format($calculatedReturn, 2) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Exact Payment -->
-                                                @if ($calculatedReturn == 0 && $calculatedDue == 0)
-                                                    <div class="alert alert-info border-1 mb-1 p-1 small"
-                                                        style="background-color: #cfe2ff !important;">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="fw-bold small">
-                                                                <i class="fas fa-check-circle"></i> Payment Complete
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @elseif($amountReceivedValue > 0 && $finalAmountValue == 0)
-                                            <div class="alert alert-secondary border-1 mb-1 p-1 small">
-                                                <i class="fas fa-info-circle"></i> Select seats first
-                                            </div>
-                                        @else
-                                            <div class="alert alert-secondary border-1 mb-1 p-1 small">
-                                                <i class="fas fa-info-circle"></i> Enter amount received
+                                        @if ($paymentMethod !== 'cash')
+                                            <div class="mb-2">
+                                                <label class="form-label small">Transaction ID</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    wire:model="transactionId" placeholder="TXN123456789"
+                                                    maxlength="100">
                                             </div>
                                         @endif
-                                    @endif
+
+                                        @if ($paymentMethod === 'cash')
+                                            @php
+                                                $amountReceivedValue = (float) ($amountReceived ?? 0);
+                                                $finalAmountValue = (float) ($finalAmount ?? 0);
+                                                $calculatedReturn = max(0, $amountReceivedValue - $finalAmountValue);
+                                                $calculatedDue = max(0, $finalAmountValue - $amountReceivedValue);
+                                            @endphp
+
+                                            <!-- Amount Received Input -->
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-bold">
+                                                    <i class="fas fa-money-bill"></i> Amount Received (PKR)
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="number"
+                                                    class="form-control form-control-sm fw-bold @error('amountReceived') is-invalid border-danger @enderror"
+                                                    wire:model.blur="amountReceived" wire:loading.attr="disabled"
+                                                    id="amountReceived" min="0.01" step="0.01"
+                                                    placeholder="0.00" required>
+                                                @error('amountReceived')
+                                                    <small class="text-danger d-block">{{ $message }}</small>
+                                                @enderror
+                                                <div wire:loading wire:target="amountReceived"
+                                                    class="spinner-border spinner-border-sm text-primary mt-1"
+                                                    role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Payment Summary -->
+                                            @if ($amountReceivedValue > 0 && $finalAmountValue > 0)
+                                                <div class="payment-summary">
+                                                    <!-- Amount Remaining (Due) -->
+                                                    @if ($calculatedDue > 0)
+                                                        <div class="alert alert-warning border-1 mb-1 p-1 small"
+                                                            style="background-color: #fff3cd !important;">
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center">
+                                                                <span class="fw-bold small">
+                                                                    <i class="fas fa-exclamation-triangle"></i> Due:
+                                                                </span>
+                                                                <span class="fw-bold text-warning">
+                                                                    PKR {{ number_format($calculatedDue, 2) }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+
+                                                    <!-- Return Amount -->
+                                                    @if ($calculatedReturn > 0)
+                                                        <div class="alert alert-success border-1 mb-1 p-1 small"
+                                                            style="background-color: #d1e7dd !important;">
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center">
+                                                                <span class="fw-bold small">
+                                                                    <i class="fas fa-money-bill-wave"></i> Return:
+                                                                </span>
+                                                                <span class="fw-bold text-success">
+                                                                    PKR {{ number_format($calculatedReturn, 2) }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+
+                                                    <!-- Exact Payment -->
+                                                    @if ($calculatedReturn == 0 && $calculatedDue == 0)
+                                                        <div class="alert alert-info border-1 mb-1 p-1 small"
+                                                            style="background-color: #cfe2ff !important;">
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center">
+                                                                <span class="fw-bold small">
+                                                                    <i class="fas fa-check-circle"></i> Payment
+                                                                    Complete
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @elseif($amountReceivedValue > 0 && $finalAmountValue == 0)
+                                                <div class="alert alert-secondary border-1 mb-1 p-1 small">
+                                                    <i class="fas fa-info-circle"></i> Select seats first
+                                                </div>
+                                            @else
+                                                <div class="alert alert-secondary border-1 mb-1 p-1 small">
+                                                    <i class="fas fa-info-circle"></i> Enter amount received
+                                                </div>
+                                            @endif
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -909,31 +932,34 @@ seat-available
                     <!-- Trip Passengers List Card -->
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-warning text-dark">
-                            <h6 class="mb-0 small">
-                                <i class="bx bx-list-check"></i> Booked Passengers
-                                <span class="badge bg-info ms-2">Total Passengers: {{ count($tripPassengers) }}</span>
-                                <span class="badge bg-success ms-2">Total Earnings: PKR
-                                    {{ number_format($totalEarnings, 2) }}</span>
-                            </h6>
-                        </div>
-                        @if (count($tripPassengers) > 0)
-                            <div class="card-body border-bottom bg-light py-2 px-3">
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <button type="button" class="btn btn-sm btn-primary shadow-sm d-flex align-items-center gap-2"
-                                        onclick="window.printPassengerList && window.printPassengerList()"
-                                        title="Print Head Office Report with complete passenger list and financial summary">
-                                        <i class="bx bx-printer fs-6"></i> 
-                                        <span>Head Office Report</span>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-success shadow-sm d-flex align-items-center gap-2"
-                                        onclick="window.printVoucher && window.printVoucher()"
-                                        title="Print Motorway Police Voucher">
-                                        <i class="bx bx-file-blank fs-6"></i> 
-                                        <span>Motorway Police Voucher</span>
-                                    </button>
-                                </div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h6 class="mb-0 small">
+                                    <i class="bx bx-list-check"></i> Booked Passengers
+                                    <span class="badge bg-info ms-2">Total Passengers:
+                                        {{ count($tripPassengers) }}</span>
+                                    <span class="badge bg-success ms-2">Total Earnings: PKR
+                                        {{ number_format($totalEarnings, 2) }}</span>
+                                </h6>
+                                @if (count($tripPassengers) > 0)
+                                    <div class="d-flex gap-2">
+                                        <button type="button"
+                                            class="btn btn-sm btn-primary shadow-sm d-flex align-items-center"
+                                            onclick="window.printPassengerList && window.printPassengerList()"
+                                            title="Print Head Office Report with complete passenger list and financial summary">
+                                            <i class="bx bx-printer me-1"></i>
+                                            <span>Head Office Report</span>
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm btn-success shadow-sm d-flex align-items-center"
+                                            onclick="window.printVoucher && window.printVoucher()"
+                                            title="Print Motorway Police Voucher">
+                                            <i class="bx bx-file-blank me-1"></i>
+                                            <span>Motorway Police Voucher</span>
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
-                        @endif
+                        </div>
                         <div class="card-body p-2 scrollable-content">
                             @if (count($tripPassengers) > 0)
                                 <div class="table-responsive">
@@ -1007,7 +1033,7 @@ seat-available
                                                     </td>
                                                     <td class="small text-end">
                                                         <strong>PKR
-                                                            {{ number_format($passenger['final_amount'] ?? 0, 2) }}</strong>
+                                                            {{ number_format($passenger['final_amount'] ?? 0, 0) }}</strong>
                                                     </td>
                                                     <td class="small">
                                                         <div class="d-flex gap-1 justify-content-center">
@@ -1016,8 +1042,9 @@ seat-available
                                                                 title="Edit Booking">
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
-                                                            @if(($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone')
-                                                                <button type="button" class="btn btn-sm btn-outline-info"
+                                                            @if (($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone')
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-info"
                                                                     onclick="printBothTickets({{ $passenger['booking_id'] }})"
                                                                     title="Print Ticket">
                                                                     <i class="bx bx-printer"></i>
@@ -1056,7 +1083,8 @@ seat-available
     </div>
 
     <!-- Gender Selection Modal -->
-    <div class="modal fade" id="genderModal" tabindex="-1" wire:ignore.self data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade" id="genderModal" tabindex="-1" wire:ignore.self data-bs-backdrop="static"
+        data-bs-keyboard="false">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content shadow-lg">
                 <div class="modal-header bg-primary text-white">
@@ -1425,7 +1453,11 @@ seat-available
                     $isPaid = ($lastBookingData['payment_status'] ?? '') === 'paid';
                     $headerClass = $isConfirmed ? 'bg-success' : ($isHold ? 'bg-warning' : 'bg-secondary');
                     $headerIcon = $isConfirmed ? 'fa-check-circle' : ($isHold ? 'fa-clock' : 'fa-info-circle');
-                    $headerTitle = $isConfirmed ? 'Booking Confirmed Successfully!' : ($isHold ? 'Booking Created Successfully!' : 'Booking Created!');
+                    $headerTitle = $isConfirmed
+                        ? 'Booking Confirmed Successfully!'
+                        : ($isHold
+                            ? 'Booking Created Successfully!'
+                            : 'Booking Created!');
                 @endphp
                 <div class="modal-header {{ $headerClass }} text-white">
                     <h5 class="modal-title fw-bold">
@@ -1469,15 +1501,26 @@ seat-available
                         @php
                             $paymentMethodDisplay = 'Pending Payment';
                             $paymentBadgeClass = 'bg-secondary';
-                            
-                            if ($isPaid && !empty($lastBookingData['payment_method']) && $lastBookingData['payment_method'] !== 'none') {
-                                $paymentMethodDisplay = ucfirst(str_replace('_', ' ', $lastBookingData['payment_method']));
+
+                            if (
+                                $isPaid &&
+                                !empty($lastBookingData['payment_method']) &&
+                                $lastBookingData['payment_method'] !== 'none'
+                            ) {
+                                $paymentMethodDisplay = ucfirst(
+                                    str_replace('_', ' ', $lastBookingData['payment_method']),
+                                );
                                 $paymentBadgeClass = 'bg-success';
                             } elseif ($isPhoneBooking && $isHold) {
                                 $paymentMethodDisplay = 'Pending Payment';
                                 $paymentBadgeClass = 'bg-warning';
-                            } elseif (!empty($lastBookingData['payment_method']) && $lastBookingData['payment_method'] !== 'none') {
-                                $paymentMethodDisplay = ucfirst(str_replace('_', ' ', $lastBookingData['payment_method']));
+                            } elseif (
+                                !empty($lastBookingData['payment_method']) &&
+                                $lastBookingData['payment_method'] !== 'none'
+                            ) {
+                                $paymentMethodDisplay = ucfirst(
+                                    str_replace('_', ' ', $lastBookingData['payment_method']),
+                                );
                                 $paymentBadgeClass = 'bg-info';
                             }
                         @endphp
@@ -1486,7 +1529,8 @@ seat-available
                         </p>
                         @if ($isPhoneBooking && $isHold)
                             <div class="alert alert-warning mt-3 mb-0">
-                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> This is a phone booking on hold. Payment will be collected when the customer arrives.
+                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> This is a phone booking on
+                                hold. Payment will be collected when the customer arrives.
                             </div>
                         @endif
                     @else
@@ -1496,7 +1540,10 @@ seat-available
                     @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
-                    @if($lastBookingId && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' && ($lastBookingData['channel'] ?? 'counter') !== 'phone')
+                    @if (
+                        $lastBookingId &&
+                            ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' &&
+                            ($lastBookingData['channel'] ?? 'counter') !== 'phone')
                         <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
                             onclick="printBothTickets({{ $lastBookingId }})">
                             <i class="fas fa-print"></i> Print
@@ -1777,7 +1824,10 @@ seat-available
                 setTimeout(() => {
                     const firstErrorField = document.querySelector('.is-invalid, .border-danger');
                     if (firstErrorField) {
-                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                         firstErrorField.focus();
                     }
                 }, 100);
