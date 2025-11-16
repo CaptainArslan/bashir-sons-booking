@@ -512,12 +512,12 @@ seat-available
                                     <div class="col-6">
                                         <label class="form-label small mb-1">Base Fare (Per Seat)</label>
                                         <input type="text" class="form-control form-control-sm"
-                                            value="PKR {{ number_format($baseFare, 2) }}" readonly>
+                                            value="PKR {{ number_format($baseFare, 0) }}" readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label small mb-1">Discount (Per Seat)</label>
                                         <input type="text" class="form-control form-control-sm"
-                                            value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 2) : 'None' }}"
+                                            value="{{ $discountAmount > 0 ? 'PKR ' . number_format($discountAmount, 0) : 'None' }}"
                                             readonly>
                                     </div>
                                 </div>
@@ -528,13 +528,13 @@ seat-available
                                             <label class="form-label small mb-1">Total Fare ({{ $seatCount }}
                                                 seat{{ $seatCount > 1 ? 's' : '' }})</label>
                                             <input type="text" class="form-control form-control-sm fw-bold"
-                                                value="PKR {{ number_format($totalFare, 2) }}" readonly>
+                                                value="PKR {{ number_format($totalFare, 0) }}" readonly>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small mb-1">Total Discount</label>
                                             <input type="text"
                                                 class="form-control form-control-sm text-danger fw-bold"
-                                                value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 2) : 'PKR 0.00' }}"
+                                                value="{{ $totalDiscount > 0 ? '- PKR ' . number_format($totalDiscount, 0) : 'PKR 0' }}"
                                                 readonly>
                                         </div>
                                     </div>
@@ -544,7 +544,7 @@ seat-available
                                             <label class="form-label small mb-1">Fare After Discount</label>
                                             <input type="text"
                                                 class="form-control form-control-sm fw-bold text-primary"
-                                                value="PKR {{ number_format($fareAfterDiscount, 2) }}" readonly>
+                                                value="PKR {{ number_format($fareAfterDiscount, 0) }}" readonly>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small mb-1">Tax/Charge
@@ -580,7 +580,7 @@ seat-available
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-bold">Final Amount:</span>
                                             <span class="fs-5 fw-bold text-success">PKR
-                                                {{ number_format($finalAmount, 2) }}</span>
+                                                {{ number_format($finalAmount, 0) }}</span>
                                         </div>
                                     </div>
                                 @endif
