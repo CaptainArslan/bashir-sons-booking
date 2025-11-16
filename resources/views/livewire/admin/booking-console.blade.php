@@ -478,6 +478,145 @@ seat-available
                             </h6>
                         </div>
                         <div class="card-body scrollable-content" style="padding: 1rem;">
+                            <!-- Passenger Information Section -->
+                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <span class="badge bg-info">{{ count($selectedSeats) }} seat(s)</span>
+                                        @if (count($selectedSeats) > 0 && count($passengers) < count($selectedSeats))
+                                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                                wire:click="addPassenger"
+                                                title="Add another passenger (max {{ count($selectedSeats) }})">
+                                                <i class="fas fa-plus-circle"></i> Add Passenger
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-2" style="font-size: 0.75rem;">
+                                    <strong>Required:</strong> At least 1 passenger information required.
+                                    @if (count($selectedSeats) > 0)
+                                        You can add up to {{ count($selectedSeats) }} passenger(s) for
+                                        {{ count($selectedSeats) }} selected seat(s).
+                                    @endif
+                                </p>
+                                <div style="max-height: 250px; overflow-y: auto;">
+                                    @foreach ($passengers as $index => $passenger)
+                                        <div class="card mb-3 border-2 {{ $passenger['is_required'] ? '' : 'border-warning' }}"
+                                            style="border-color: {{ $passenger['is_required'] ? '#e9ecef' : '#ffc107' }};">
+                                            <div class="card-header"
+                                                style="background-color: {{ $passenger['is_required'] ? '#f8f9fa' : '#fff3cd' }};">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">
+                                                        @if ($passenger['is_required'])
+                                                            <i class="fas fa-user"></i> Passenger {{ $index + 1 }}
+                                                            <span class="badge bg-danger ms-2">Required</span>
+                                                        @else
+                                                            <i class="fas fa-user-plus"></i> Passenger
+                                                            {{ $index + 1 }}
+                                                        @endif
+                                                    </h6>
+                                                    @if (!$passenger['is_required'])
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                                                            wire:click="removePassenger({{ $index }})"
+                                                            title="Remove this passenger">
+                                                            <i class="bx bx-trash" style="font-size: 1rem;"></i>
+                                                            <span>Remove</span>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-2">
+                                                    <div class="col-lg-6 col-md-12">
+                                                        <label class="form-label small">Name <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control form-control-sm @error("passengers.{$index}.name") is-invalid border-danger @enderror"
+                                                            wire:model="passengers.{{ $index }}.name"
+                                                            placeholder="Full Name" maxlength="100"
+                                                            @error("passengers.{$index}.name") autofocus @enderror>
+                                                        @error("passengers.{$index}.name")
+                                                            <small class="text-danger d-block">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="col-lg-3 col-md-6">
+                                                        <label class="form-label small">Age <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="number" class="form-control form-control-sm @error("passengers.{$index}.age") is-invalid border-danger @enderror"
+                                                            wire:model="passengers.{{ $index }}.age"
+                                                            min="1" max="120" maxlength="3"
+                                                            placeholder="Age"
+                                                            @error("passengers.{$index}.age") autofocus @enderror>
+                                                        @error("passengers.{$index}.age")
+                                                            <small class="text-danger d-block">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="col-lg-3 col-md-6">
+                                                        <label class="form-label small">Gender <span
+                                                                class="text-danger">*</span></label>
+                                                        <select class="form-select form-select-sm @error("passengers.{$index}.gender") is-invalid border-danger @enderror"
+                                                            wire:model="passengers.{{ $index }}.gender"
+                                                            @error("passengers.{$index}.gender") autofocus @enderror>
+                                                            <option value="">Select</option>
+                                                            <option value="male">Male</option>
+                                                            <option value="female">Female</option>
+                                                        </select>
+                                                        @error("passengers.{$index}.gender")
+                                                            <small class="text-danger d-block">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="col-lg-4 col-md-12">
+                                                        <label class="form-label small">CNIC <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control form-control-sm @error("passengers.{$index}.cnic") is-invalid border-danger @enderror"
+                                                            wire:model.blur="passengers.{{ $index }}.cnic"
+                                                            id="cnic-{{ $index }}"
+                                                            placeholder="12345-9999999-1"
+                                                            pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$" maxlength="15"
+                                                            inputmode="numeric"
+                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57 || event.charCode === 45)"
+                                                            oninput="
+                                                                    let v = this.value.replace(/[^0-9]/g, '');
+                                                                    if (v.length > 5 && v.length <= 12) v = v.slice(0,5) + '-' + v.slice(5);
+                                                                    else if (v.length > 12) v = v.slice(0,5) + '-' + v.slice(5,12) + '-' + v.slice(12,13);
+                                                                    this.value = v.slice(0,15);
+                                                                "
+                                                            required
+                                                            @error("passengers.{$index}.cnic") autofocus @enderror>
+                                                        @error("passengers.{$index}.cnic")
+                                                            <small class="text-danger d-block">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="col-lg-4 col-md-6">
+                                                        <label class="form-label small">Phone</label>
+                                                        <input type="tel" class="form-control form-control-sm @error("passengers.{$index}.phone") is-invalid border-danger @enderror"
+                                                            wire:model.blur="passengers.{{ $index }}.phone"
+                                                            id="phone-{{ $index }}" placeholder="03001234567"
+                                                            pattern="^0[0-9]{10}$" maxlength="11" inputmode="numeric"
+                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
+                                                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
+                                                            @error("passengers.{$index}.phone") autofocus @enderror>
+                                                        @error("passengers.{$index}.phone")
+                                                            <small class="text-danger d-block">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="col-lg-4 col-md-6">
+                                                        <label class="form-label small">Email</label>
+                                                        <input type="email" class="form-control form-control-sm"
+                                                            wire:model="passengers.{{ $index }}.email"
+                                                            placeholder="email@example.com" maxlength="100">
+                                                        @error("passengers.{$index}.email")
+                                                            <small class="text-danger">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <!-- Selected Seats -->
                             <div class="mb-2">
                                 <label class="form-label fw-bold small mb-1">
@@ -786,145 +925,6 @@ seat-available
                                 <div wire:loading wire:target="notes"
                                     class="spinner-border spinner-border-sm text-primary mt-1" role="status">
                                     <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-
-                            <!-- Passenger Information Section -->
-                            <div class="mb-2 p-2 bg-light rounded border border-secondary-subtle">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="fw-bold mb-0 small"><i class="fas fa-users"></i> Passengers</h6>
-                                    <div class="d-flex gap-2 align-items-center">
-                                        <span class="badge bg-info">{{ count($selectedSeats) }} seat(s)</span>
-                                        @if (count($selectedSeats) > 0 && count($passengers) < count($selectedSeats))
-                                            <button type="button" class="btn btn-outline-primary btn-sm"
-                                                wire:click="addPassenger"
-                                                title="Add another passenger (max {{ count($selectedSeats) }})">
-                                                <i class="fas fa-plus-circle"></i> Add Passenger
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                                <p class="text-muted small mb-2" style="font-size: 0.75rem;">
-                                    <strong>Required:</strong> At least 1 passenger information required.
-                                    @if (count($selectedSeats) > 0)
-                                        You can add up to {{ count($selectedSeats) }} passenger(s) for
-                                        {{ count($selectedSeats) }} selected seat(s).
-                                    @endif
-                                </p>
-                                <div style="max-height: 250px; overflow-y: auto;">
-                                    @foreach ($passengers as $index => $passenger)
-                                        <div class="card mb-3 border-2 {{ $passenger['is_required'] ? '' : 'border-warning' }}"
-                                            style="border-color: {{ $passenger['is_required'] ? '#e9ecef' : '#ffc107' }};">
-                                            <div class="card-header"
-                                                style="background-color: {{ $passenger['is_required'] ? '#f8f9fa' : '#fff3cd' }};">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">
-                                                        @if ($passenger['is_required'])
-                                                            <i class="fas fa-user"></i> Passenger {{ $index + 1 }}
-                                                            <span class="badge bg-danger ms-2">Required</span>
-                                                        @else
-                                                            <i class="fas fa-user-plus"></i> Passenger
-                                                            {{ $index + 1 }}
-                                                        @endif
-                                                    </h6>
-                                                    @if (!$passenger['is_required'])
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-                                                            wire:click="removePassenger({{ $index }})"
-                                                            title="Remove this passenger">
-                                                            <i class="bx bx-trash" style="font-size: 1rem;"></i>
-                                                            <span>Remove</span>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="row g-2">
-                                                    <div class="col-lg-6 col-md-12">
-                                                        <label class="form-label small">Name <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.name"
-                                                            placeholder="Full Name" maxlength="100">
-                                                        @error("passengers.{$index}.name")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                    </div>
-                                                    <div class="col-lg-3 col-md-6">
-                                                        <label class="form-label small">Age <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="number" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.age"
-                                                            min="1" max="120" maxlength="3"
-                                                            placeholder="Age">
-                                                        @error("passengers.{$index}.age")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                    </div>
-                                                    <div class="col-lg-3 col-md-6">
-                                                        <label class="form-label small">Gender <span
-                                                                class="text-danger">*</span></label>
-                                                        <select class="form-select form-select-sm"
-                                                            wire:model="passengers.{{ $index }}.gender">
-                                                            <option value="">Select</option>
-                                                            <option value="male">Male</option>
-                                                            <option value="female">Female</option>
-                                                        </select>
-                                                        @error("passengers.{$index}.gender")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                    </div>
-                                                    <div class="col-lg-4 col-md-12">
-                                                        <label class="form-label small">CNIC <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            wire:model.blur="passengers.{{ $index }}.cnic"
-                                                            id="cnic-{{ $index }}"
-                                                            placeholder="12345-9999999-1"
-                                                            pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$" maxlength="15"
-                                                            inputmode="numeric"
-                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57 || event.charCode === 45)"
-                                                            oninput="
-                                                                    let v = this.value.replace(/[^0-9]/g, '');
-                                                                    if (v.length > 5 && v.length <= 12) v = v.slice(0,5) + '-' + v.slice(5);
-                                                                    else if (v.length > 12) v = v.slice(0,5) + '-' + v.slice(5,12) + '-' + v.slice(12,13);
-                                                                    this.value = v.slice(0,15);
-                                                                "
-                                                            title="Please enter a valid CNIC in format: 12345-9999999-1 (5 digits, hyphen, 7 digits, hyphen, 1 digit)"
-                                                            required>
-                                                        @error("passengers.{$index}.cnic")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                        <small class="text-muted">Format: 12345-9999999-1</small>
-                                                    </div>
-                                                    <div class="col-lg-4 col-md-6">
-                                                        <label class="form-label small">Phone</label>
-                                                        <input type="tel" class="form-control form-control-sm"
-                                                            wire:model.blur="passengers.{{ $index }}.phone"
-                                                            id="phone-{{ $index }}" placeholder="03001234567"
-                                                            pattern="^0[0-9]{10}$" maxlength="11" inputmode="numeric"
-                                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57)"
-                                                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
-                                                            title="Please enter a valid phone number starting with 0 followed by 10 digits (e.g., 03001234567)">
-                                                        @error("passengers.{$index}.phone")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                        <small class="text-muted">Format: 03001234567 (11
-                                                            digits)</small>
-                                                    </div>
-                                                    <div class="col-lg-4 col-md-6">
-                                                        <label class="form-label small">Email</label>
-                                                        <input type="email" class="form-control form-control-sm"
-                                                            wire:model="passengers.{{ $index }}.email"
-                                                            placeholder="email@example.com" maxlength="100">
-                                                        @error("passengers.{$index}.email")
-                                                            <small class="text-danger">{{ $message }}</small>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
                                 </div>
                             </div>
 
@@ -2491,6 +2491,21 @@ seat-available
                 });
             });
 
+            // Function to scroll to first error field when validation fails
+            function scrollToFirstError() {
+                setTimeout(() => {
+                    const firstErrorField = document.querySelector('.is-invalid, .border-danger');
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.focus();
+                    }
+                }, 100);
+            }
+
+            // Listen for Livewire updates to scroll to errors
+            document.addEventListener('livewire:update', () => {
+                scrollToFirstError();
+            });
 
             $wire.on('show-error', (event) => {
                 hideLoader(); // Hide loader on error
