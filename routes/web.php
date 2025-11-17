@@ -1,36 +1,36 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Middleware\CheckUserStatus;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\BusController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TwoFactorController;
-use App\Http\Controllers\Admin\Citycontroller;
-use App\Http\Controllers\Admin\FareController;
-use App\Http\Controllers\Admin\Rolecontroller;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\BusController;
+use App\Http\Controllers\Admin\BusLayoutController;
 use App\Http\Controllers\Admin\BusTypeController;
-use App\Http\Controllers\Admin\EnquiryController;
+use App\Http\Controllers\Admin\Citycontroller;
+use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\BusLayoutController;
-use App\Http\Controllers\Admin\RouteStopController;
-use App\Http\Controllers\Admin\TimetableController;
-use App\Http\Controllers\FrontendBookingController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\AdvanceBookingController;
+use App\Http\Controllers\Admin\FareController;
 use App\Http\Controllers\Admin\GeneralSettingController;
-use App\Http\Controllers\Admin\TerminalReportController;
-use App\Http\Controllers\Admin\CounterTerminalController;
+use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\Rolecontroller;
+use App\Http\Controllers\Admin\RouteController;
+use App\Http\Controllers\Admin\RouteStopController;
+use App\Http\Controllers\Admin\TerminalReportController;
+use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FrontendBookingController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TwoFactorController;
+use App\Http\Middleware\CheckUserStatus;
+use Illuminate\Support\Facades\Route;
 
 // use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 
@@ -262,7 +262,7 @@ Route::middleware(['auth', CheckUserStatus::class])->group(function () {
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 
         // Booking Console Routes (Livewire Component)
-        Route::get('/bookings/console/load', fn() => view('admin.bookings.console-wrapper'))->can('create bookings')->name('bookings.console');
+        Route::get('/bookings/console/load', fn () => view('admin.bookings.console-wrapper'))->can('create bookings')->name('bookings.console');
 
         // Announcements Routes
         Route::get('/announcements', [AnnouncementController::class, 'index'])->can('view announcements')->name('announcements.index');
@@ -285,6 +285,7 @@ Route::middleware(['auth', CheckUserStatus::class])->group(function () {
 
         // Terminal Reports Routes
         Route::get('/terminal-reports', [TerminalReportController::class, 'index'])->can('view terminal reports')->name('terminal-reports.index');
+        Route::get('/terminal-reports/routes', [TerminalReportController::class, 'getRoutes'])->can('view terminal reports')->name('terminal-reports.routes');
         Route::get('/terminal-reports/data', [TerminalReportController::class, 'getData'])->can('view terminal reports')->name('terminal-reports.data');
         Route::get('/terminal-reports/bookings-data', [TerminalReportController::class, 'getBookingsData'])->can('view terminal reports')->name('terminal-reports.bookings-data');
         Route::get('/terminal-reports/export', [TerminalReportController::class, 'export'])->can('view terminal reports')->name('terminal-reports.export');
@@ -306,4 +307,4 @@ Route::middleware(['auth', CheckUserStatus::class])->group(function () {
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

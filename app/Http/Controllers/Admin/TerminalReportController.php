@@ -10,8 +10,8 @@ use App\Enums\TerminalEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Expense;
+use App\Models\Route;
 use App\Models\Terminal;
-use App\Models\Trip;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -83,6 +83,33 @@ class TerminalReportController extends Controller
         ]);
     }
 
+    public function getRoutes(Request $request): JsonResponse
+    {
+        $this->authorize('view terminal reports');
+
+        $request->validate([
+            'terminal_id' => 'required|exists:terminals,id',
+        ]);
+
+        $terminal = Terminal::findOrFail($request->terminal_id);
+        $routes = $terminal->routes()
+            ->where('routes.status', \App\Enums\RouteStatusEnum::ACTIVE->value)
+            ->orderBy('routes.name')
+            ->select('routes.id', 'routes.name', 'routes.code')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'routes' => $routes->map(function ($route) {
+                return [
+                    'id' => $route->id,
+                    'name' => $route->name,
+                    'code' => $route->code,
+                ];
+            }),
+        ]);
+    }
+
     public function getData(Request $request): JsonResponse
     {
         $this->authorize('view terminal reports');
@@ -95,6 +122,7 @@ class TerminalReportController extends Controller
         $validationRules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'route_id' => 'nullable|exists:routes,id',
         ];
 
         if ($canViewAllReports) {
@@ -138,17 +166,15 @@ class TerminalReportController extends Controller
             $terminalId,
             $startDate,
             $endDate,
-            $canViewAllReports ? ($validated['user_id'] ?? null) : $user->id
+            $canViewAllReports ? ($validated['user_id'] ?? null) : $user->id,
+            $validated['route_id'] ?? null
         );
-
-        // Get trips departing from or arriving at this terminal
-        $trips = $this->getTripsForTerminal($terminalId, $startDate, $endDate);
 
         // Get expenses for trips from/to this terminal
         $expenses = $this->getExpensesForTerminal($terminalId, $startDate, $endDate);
 
         // Calculate statistics
-        $stats = $this->calculateStats($bookings, $expenses, $trips);
+        $stats = $this->calculateStats($bookings, $expenses);
 
         // Get summary stats for quick display
         $summary = [
@@ -205,20 +231,10 @@ class TerminalReportController extends Controller
                     'created_at' => $expense->created_at->format('Y-m-d H:i:s'),
                 ];
             }),
-            'trips' => $trips->map(function ($trip) {
-                return [
-                    'id' => $trip->id,
-                    'route' => $trip->route?->name ?? 'N/A',
-                    'departure_datetime' => $trip->departure_datetime?->format('Y-m-d H:i:s') ?? 'N/A',
-                    'bus' => $trip->bus?->name ?? 'N/A',
-                    'driver_name' => $trip->driver_name ?? 'N/A',
-                    'status' => $trip->status ?? 'N/A',
-                ];
-            }),
         ]);
     }
 
-    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate, ?int $userId = null)
+    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate, ?int $userId = null, ?int $routeId = null)
     {
         // ✅ Only get bookings that START from this terminal (from_terminal_id)
         // This matches the passenger filtering logic - terminal staff sees bookings from their terminal
@@ -227,6 +243,13 @@ class TerminalReportController extends Controller
                 $query->where('terminal_id', $terminalId);
             })
             ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Filter by route if provided
+        if ($routeId) {
+            $query->whereHas('trip', function ($query) use ($routeId) {
+                $query->where('route_id', $routeId);
+            });
+        }
 
         // Filter by user if provided
         if ($userId) {
@@ -243,18 +266,6 @@ class TerminalReportController extends Controller
             'trip.route',
         ])
             ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
-    private function getTripsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate)
-    {
-        return Trip::query()
-            ->whereHas('stops', function ($query) use ($terminalId) {
-                $query->where('terminal_id', $terminalId);
-            })
-            ->whereBetween('departure_datetime', [$startDate, $endDate])
-            ->with(['route', 'bus', 'stops'])
-            ->orderBy('departure_datetime', 'desc')
             ->get();
     }
 
@@ -283,6 +294,7 @@ class TerminalReportController extends Controller
         $validationRules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'route_id' => 'nullable|exists:routes,id',
         ];
 
         if ($canViewAllReports) {
@@ -484,8 +496,7 @@ class TerminalReportController extends Controller
         $bookings = $query->orderBy('created_at', 'desc')->get();
 
         $expenses = $this->getExpensesForTerminal($terminalId, $startDate, $endDate);
-        $trips = $this->getTripsForTerminal($terminalId, $startDate, $endDate);
-        $stats = $this->calculateStats($bookings, $expenses, $trips);
+        $stats = $this->calculateStats($bookings, $expenses);
 
         $format = $request->get('format', 'pdf');
 
@@ -518,22 +529,12 @@ class TerminalReportController extends Controller
         return $pdf->download($filename);
     }
 
-    private function calculateStats($bookings, $expenses, $trips): array
+    private function calculateStats($bookings, $expenses): array
     {
         $totalBookings = $bookings->count();
-        $confirmedBookings = $bookings->where('status', 'confirmed')->count();
-        $holdBookings = $bookings->where('status', 'hold')->count();
-        $cancelledBookings = $bookings->where('status', 'cancelled')->count();
-
         $totalRevenue = $bookings->sum('final_amount');
-        $totalFare = $bookings->sum('total_fare');
-        $totalDiscount = $bookings->sum('discount_amount');
-        $totalTax = $bookings->sum('tax_amount');
 
         // Calculate cash in hand (only cash payments that are paid and not cancelled)
-        // Includes both regular bookings and advance bookings created within the date range
-        // For advance bookings: if created today and paid in cash, the cash is in hand today
-        // The whereBetween('created_at') filter ensures we only count bookings created in the period
         $cashInHand = $bookings
             ->where('payment_method', PaymentMethodEnum::CASH->value)
             ->where('payment_status', 'paid')
@@ -542,16 +543,6 @@ class TerminalReportController extends Controller
 
         $totalExpenses = $expenses->sum('amount');
         $netBalance = $cashInHand - $totalExpenses;
-        $totalProfit = $totalRevenue - $totalExpenses;
-
-        $totalPassengers = $bookings->sum(function ($booking) {
-            return $booking->passengers->count();
-        });
-        $totalSeats = $bookings->sum(function ($booking) {
-            return $booking->seats->count();
-        });
-
-        $totalTrips = $trips->count();
 
         // Payment method breakdown
         $paymentMethods = $bookings->groupBy('payment_method')->map(function ($group) {
@@ -569,26 +560,12 @@ class TerminalReportController extends Controller
             ];
         });
 
-        // Expense type breakdown
-        $expenseTypes = $expenses->groupBy('expense_type')->map(function ($group) {
-            return [
-                'count' => $group->count(),
-                'amount' => $group->sum('amount'),
-            ];
-        });
-
         return [
             'bookings' => [
                 'total' => $totalBookings,
-                'confirmed' => $confirmedBookings,
-                'hold' => $holdBookings,
-                'cancelled' => $cancelledBookings,
             ],
             'revenue' => [
                 'total_revenue' => (float) $totalRevenue,
-                'total_fare' => (float) $totalFare,
-                'total_discount' => (float) $totalDiscount,
-                'total_tax' => (float) $totalTax,
             ],
             'cash' => [
                 'cash_in_hand' => (float) $cashInHand,
@@ -596,18 +573,6 @@ class TerminalReportController extends Controller
             ],
             'expenses' => [
                 'total_expenses' => (float) $totalExpenses,
-                'by_type' => $expenseTypes,
-            ],
-            'profit' => [
-                'total_profit' => (float) $totalProfit,
-                'profit_margin' => $totalRevenue > 0 ? round(($totalProfit / $totalRevenue) * 100, 2) : 0,
-            ],
-            'passengers' => [
-                'total_passengers' => $totalPassengers,
-                'total_seats' => $totalSeats,
-            ],
-            'trips' => [
-                'total_trips' => $totalTrips,
             ],
             'payment_methods' => $paymentMethods,
             'channels' => $channels,

@@ -66,15 +66,24 @@
                                 </div>
                             @endif
 
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-route"></i> Route
+                                </label>
+                                <select class="form-select form-select-sm" id="filterRoute">
+                                    <option value="">All Routes</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
                                 <label class="form-label small fw-bold">
                                     <i class="bx bx-calendar"></i> Start Date <span class="text-danger">*</span>
                                 </label>
                                 <input type="date" class="form-control form-control-sm" id="startDate"
-                                    value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
+                                    value="{{ date('Y-m-d') }}" required>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label small fw-bold">
                                     <i class="bx bx-calendar"></i> End Date <span class="text-danger">*</span>
                                 </label>
@@ -172,206 +181,6 @@
 
     <!-- Report Content -->
     <div id="reportContent" style="display: none;">
-
-        <!-- Summary Statistics Cards -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
-            <div class="col">
-                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-primary">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <p class="mb-1 text-secondary small">Total Revenue</p>
-                                <h4 class="mb-0 fw-bold text-primary" id="totalRevenue">PKR 0</h4>
-                                <small class="text-muted">From bookings</small>
-                            </div>
-                            <div class="widgets-icons-2 rounded-circle bg-light-primary text-primary ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bx bx-money fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-success">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <p class="mb-1 text-secondary small">Total Bookings</p>
-                                <h4 class="mb-0 fw-bold text-success" id="totalBookings">0</h4>
-                                <small class="text-muted">Confirmed & active</small>
-                            </div>
-                            <div class="widgets-icons-2 rounded-circle bg-light-success text-success ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bx bx-ticket fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-warning">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <p class="mb-1 text-secondary small">Total Expenses</p>
-                                <h4 class="mb-0 fw-bold text-warning" id="totalExpenses">PKR 0</h4>
-                                <small class="text-muted">Terminal expenses</small>
-                            </div>
-                            <div class="widgets-icons-2 rounded-circle bg-light-warning text-warning ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bx bx-receipt fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card border-0 shadow-sm radius-10 border-start border-4 border-info">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <p class="mb-1 text-secondary small">Net Profit</p>
-                                <h4 class="mb-0 fw-bold text-info" id="netProfit">PKR 0</h4>
-                                <small class="text-muted">Revenue - Expenses</small>
-                            </div>
-                            <div class="widgets-icons-2 rounded-circle bg-light-info text-info ms-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bx bx-trending-up fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Detailed Statistics -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white border-bottom py-3">
-                        <h6 class="mb-0 fw-bold">
-                            <i class="bx bx-pie-chart-alt-2 text-info"></i> Booking Statistics
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded border-start border-3 border-success">
-                                    <small class="text-muted d-block">Confirmed</small>
-                                    <h5 class="mb-0 text-success fw-bold" id="confirmedBookings">0</h5>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded border-start border-3 border-warning">
-                                    <small class="text-muted d-block">On Hold</small>
-                                    <h5 class="mb-0 text-warning fw-bold" id="holdBookings">0</h5>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded border-start border-3 border-danger">
-                                    <small class="text-muted d-block">Cancelled</small>
-                                    <h5 class="mb-0 text-danger fw-bold" id="cancelledBookings">0</h5>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded border-start border-3 border-primary">
-                                    <small class="text-muted d-block">Total Trips</small>
-                                    <h5 class="mb-0 text-primary fw-bold" id="totalTrips">0</h5>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <hr class="my-2">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="p-2 bg-light rounded">
-                                            <small class="text-muted d-block">Total Passengers</small>
-                                            <h5 class="mb-0 fw-bold" id="totalPassengers">0</h5>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-2 bg-light rounded">
-                                            <small class="text-muted d-block">Total Seats</small>
-                                            <h5 class="mb-0 fw-bold" id="totalSeats">0</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white border-bottom py-3">
-                        <h6 class="mb-0 fw-bold">
-                            <i class="bx bx-money text-success"></i> Revenue Breakdown
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-borderless mb-0">
-                                <tbody>
-                                    <tr>
-                                        <td class="small text-muted">Total Fare:</td>
-                                        <td class="small text-end fw-bold" id="totalFare">PKR 0.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="small text-muted">Total Discount:</td>
-                                        <td class="small text-end text-danger fw-bold" id="totalDiscount">-PKR 0.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="small text-muted">Total Tax/Charge:</td>
-                                        <td class="small text-end text-info fw-bold" id="totalTax">+PKR 0.00</td>
-                                    </tr>
-                                    <tr class="border-top">
-                                        <td class="small fw-bold">Final Revenue:</td>
-                                        <td class="small text-end fw-bold text-success" id="finalRevenue">PKR 0.00</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Financial Summary -->
-        <div class="card shadow-sm mb-4 border-0">
-            <div class="card-header bg-white border-bottom py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bx bx-receipt text-primary"></i> Terminal Financial Summary
-                    </h6>
-                    <div id="reportTerminalInfo" class="text-muted small"></div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded border-start border-3 border-success">
-                            <small class="text-muted d-block mb-1">Total Sales (Bookings)</small>
-                            <h4 class="mb-0 text-success fw-bold" id="summaryTotalSales">PKR 0.00</h4>
-                            <small class="text-muted" id="summaryBookingsCount">0 bookings</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded border-start border-3 border-danger">
-                            <small class="text-muted d-block mb-1">Total Expenses</small>
-                            <h4 class="mb-0 text-danger fw-bold" id="summaryTotalExpenses">PKR 0.00</h4>
-                            <small class="text-muted" id="summaryExpensesCount">0 expenses</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 bg-light rounded border-start border-3 border-primary">
-                            <small class="text-muted d-block mb-1">Net Amount (Remaining)</small>
-                            <h4 class="mb-0 text-primary fw-bold" id="summaryNetAmount">PKR 0.00</h4>
-                            <small class="text-muted" id="summaryProfitMargin">0% margin</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Bookings Table with DataTable -->
         <div class="card shadow-sm mb-4 border-0">
@@ -687,6 +496,46 @@
 
 @section('scripts')
     <script>
+        // Load routes when terminal is selected
+        $('#terminalSelect').on('change', function() {
+            const terminalId = $(this).val();
+            const routeSelect = $('#filterRoute');
+            
+            routeSelect.html('<option value="">All Routes</option>');
+            
+            if (terminalId) {
+                $.ajax({
+                    url: "{{ route('admin.terminal-reports.routes') }}",
+                    type: 'GET',
+                    data: { terminal_id: terminalId },
+                    success: function(response) {
+                        if (response.success && response.routes.length > 0) {
+                            response.routes.forEach(function(route) {
+                                routeSelect.append(
+                                    $('<option></option>')
+                                        .attr('value', route.id)
+                                        .text(route.name + (route.code ? ' (' + route.code + ')' : ''))
+                                );
+                            });
+                        }
+                    },
+                    error: function() {
+                        console.error('Failed to load routes');
+                    }
+                });
+            }
+        });
+
+        // Auto-load routes if terminal is pre-selected
+        @if (!$canSelectTerminal && $terminals->isNotEmpty())
+            $(document).ready(function() {
+                const terminalId = $('#terminalSelect').val();
+                if (terminalId) {
+                    $('#terminalSelect').trigger('change');
+                }
+            });
+        @endif
+
         function loadReport() {
             const terminalId = document.getElementById('terminalSelect').value;
             const startDate = document.getElementById('startDate').value;
@@ -723,6 +572,7 @@
                     terminal_id: terminalId,
                     start_date: startDate,
                     end_date: endDate,
+                    route_id: document.getElementById('filterRoute').value || null,
                     user_id: document.getElementById('filterUser').value || null
                 },
                 success: function(response) {
@@ -759,12 +609,6 @@
         function renderReport(data) {
             const stats = data.stats;
             const summary = data.summary || {};
-
-            // Update terminal info
-            if (data.terminal) {
-                document.getElementById('reportTerminalInfo').textContent =
-                    `${data.terminal.name} (${data.terminal.code}) | ${data.date_range.start} to ${data.date_range.end}`;
-            }
 
             // Update Cash Summary Table
             const cashInHand = parseFloat(summary.cash_in_hand || stats.cash?.cash_in_hand || 0) || 0;
@@ -818,73 +662,6 @@
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });
-
-            // Update financial summary section
-            const netAmount = totalSales - totalExpenses;
-            const profitMargin = totalSales > 0 ? ((netAmount / totalSales) * 100).toFixed(2) : 0;
-
-            document.getElementById('summaryTotalSales').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            document.getElementById('summaryBookingsCount').textContent = `${stats.bookings.total} bookings`;
-
-            document.getElementById('summaryTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            document.getElementById('summaryExpensesCount').textContent = `${data.expenses.length} expenses`;
-
-            document.getElementById('summaryNetAmount').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            document.getElementById('summaryProfitMargin').textContent = `${profitMargin}% margin`;
-
-            // Update summary cards (existing)
-            document.getElementById('totalRevenue').textContent = 'PKR ' + totalSales.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            document.getElementById('totalBookings').textContent = stats.bookings.total;
-            document.getElementById('totalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            document.getElementById('netProfit').textContent = 'PKR ' + netAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-
-            // Update booking statistics
-            document.getElementById('confirmedBookings').textContent = stats.bookings.confirmed;
-            document.getElementById('holdBookings').textContent = stats.bookings.hold;
-            document.getElementById('cancelledBookings').textContent = stats.bookings.cancelled;
-            document.getElementById('totalTrips').textContent = stats.trips.total_trips;
-            document.getElementById('totalPassengers').textContent = stats.passengers.total_passengers;
-            document.getElementById('totalSeats').textContent = stats.passengers.total_seats;
-
-            // Update revenue breakdown
-            document.getElementById('totalFare').textContent = 'PKR ' + parseFloat(stats.revenue.total_fare).toLocaleString(
-                'en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                });
-            document.getElementById('totalDiscount').textContent = '-PKR ' + parseFloat(stats.revenue.total_discount)
-                .toLocaleString('en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                });
-            document.getElementById('totalTax').textContent = '+PKR ' + parseFloat(stats.revenue.total_tax).toLocaleString(
-                'en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                });
-            document.getElementById('finalRevenue').textContent = 'PKR ' + parseFloat(stats.revenue.total_revenue)
-                .toLocaleString('en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                });
 
             // Initialize DataTable for bookings
             initializeBookingsTable();
@@ -1000,6 +777,7 @@
                         d.terminal_id = terminalId;
                         d.start_date = startDate;
                         d.end_date = endDate;
+                        d.route_id = document.getElementById('filterRoute').value;
                         d.user_id = document.getElementById('filterUser').value;
                         d.status = document.getElementById('filterStatus').value;
                         d.payment_status = document.getElementById('filterPaymentStatus').value;
@@ -1041,7 +819,7 @@
             });
 
             // Add event listeners for filter changes - reload DataTable only, not full report
-            $('#filterStatus, #filterPaymentStatus, #filterPaymentMethod, #filterChannel').on('change', function() {
+            $('#filterRoute, #filterStatus, #filterPaymentStatus, #filterPaymentMethod, #filterChannel').on('change', function() {
                 if (bookingsTable) {
                     bookingsTable.ajax.reload(null, false);
                 }
@@ -1104,6 +882,7 @@
         }
 
         function resetFilters() {
+            document.getElementById('filterRoute').value = '';
             document.getElementById('filterStatus').value = '';
             document.getElementById('filterPaymentStatus').value = '';
             document.getElementById('filterPaymentMethod').value = '';
