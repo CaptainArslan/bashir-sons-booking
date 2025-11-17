@@ -295,6 +295,46 @@
             </div>
         </div>
 
+        <!-- Payment Methods Breakdown -->
+        <div class="card shadow-sm mb-4 border-0 border-start border-4 border-info">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bx bx-credit-card text-info"></i> Payment Methods Breakdown
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0" id="paymentMethodsTable">
+                        <thead class="table-info">
+                            <tr>
+                                <th class="text-center" style="width: 25%;">Payment Method</th>
+                                <th class="text-center" style="width: 15%;">Bookings Count</th>
+                                <th class="text-center" style="width: 30%;">Total Amount (PKR)</th>
+                                <th class="text-center" style="width: 30%;">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentMethodsTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    No data available. Please generate a report.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-secondary">
+                            <tr>
+                                <td class="fw-bold">Total Sales:</td>
+                                <td class="text-center fw-bold" id="paymentMethodsTotalCount">0</td>
+                                <td class="text-end fw-bold" id="paymentMethodsTotalAmount">PKR 0</td>
+                                <td class="text-muted small">
+                                    <strong>Cash in Hand:</strong> <span id="paymentMethodsCashInHand" class="fw-bold text-success">PKR 0</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Expenses Table -->
         <div class="card shadow-sm mb-4 border-0">
             <div class="card-header bg-white border-bottom py-3">
@@ -520,6 +560,41 @@
         #cashSummaryTable tbody tr:hover {
             background-color: #f8f9fa;
         }
+
+        /* Payment Methods Table Styling */
+        #paymentMethodsTable {
+            font-size: 0.9rem;
+        }
+
+        #paymentMethodsTable thead th {
+            background-color: #0dcaf0 !important;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+
+        #paymentMethodsTable tbody td {
+            font-size: 0.95rem;
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+
+        #paymentMethodsTable tfoot td {
+            font-size: 1rem;
+            padding: 0.75rem;
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+
+        #paymentMethodsTable tbody tr {
+            background-color: #ffffff;
+        }
+
+        #paymentMethodsTable tbody tr:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 @endsection
 
@@ -693,6 +768,71 @@
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });
+
+            // Render Payment Methods Breakdown Table
+            const paymentMethodsBody = document.getElementById('paymentMethodsTableBody');
+            const paymentMethods = stats.payment_methods || {};
+            
+            if (Object.keys(paymentMethods).length === 0) {
+                paymentMethodsBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">No payment method data available.</td>
+                    </tr>
+                `;
+                document.getElementById('paymentMethodsTotalCount').textContent = '0';
+                document.getElementById('paymentMethodsTotalAmount').textContent = 'PKR 0';
+                document.getElementById('paymentMethodsCashInHand').textContent = 'PKR 0';
+            } else {
+                let paymentMethodsHtml = '';
+                let totalCount = 0;
+                let totalAmount = 0;
+                
+                // Sort payment methods: Cash first, then others
+                const sortedMethods = Object.entries(paymentMethods).sort((a, b) => {
+                    if (a[0] === 'cash') return -1;
+                    if (b[0] === 'cash') return 1;
+                    return a[1].label.localeCompare(b[1].label);
+                });
+                
+                sortedMethods.forEach(([methodKey, methodData]) => {
+                    const amount = parseFloat(methodData.amount) || 0;
+                    const count = parseInt(methodData.count) || 0;
+                    totalCount += count;
+                    totalAmount += amount;
+                    
+                    let notes = '';
+                    if (methodKey === 'cash') {
+                        const paidAmount = parseFloat(methodData.paid_amount) || 0;
+                        if (paidAmount !== amount) {
+                            notes = `<small class="text-warning">Only paid & confirmed: PKR ${paidAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</small>`;
+                        } else {
+                            notes = '<small class="text-success">All paid & confirmed</small>';
+                        }
+                    } else {
+                        notes = '<small class="text-muted">Non-cash payment</small>';
+                    }
+                    
+                    paymentMethodsHtml += `
+                        <tr>
+                            <td class="fw-semibold">${methodData.label || methodKey}</td>
+                            <td class="text-center">${count}</td>
+                            <td class="text-end fw-bold">PKR ${amount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+                            <td class="text-center">${notes}</td>
+                        </tr>
+                    `;
+                });
+                
+                paymentMethodsBody.innerHTML = paymentMethodsHtml;
+                document.getElementById('paymentMethodsTotalCount').textContent = totalCount;
+                document.getElementById('paymentMethodsTotalAmount').textContent = 'PKR ' + totalAmount.toLocaleString('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+                document.getElementById('paymentMethodsCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
 
             // Initialize DataTable for bookings
             initializeBookingsTable();
@@ -909,6 +1049,70 @@
                                     document.getElementById('footerCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                                     document.getElementById('footerTotalExpenses').textContent = 'PKR ' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                                     document.getElementById('footerNetBalance').textContent = 'PKR ' + netBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+                                    // Update Payment Methods Breakdown
+                                    const paymentMethods = stats.payment_methods || {};
+                                    const paymentMethodsBody = document.getElementById('paymentMethodsTableBody');
+                                    
+                                    if (Object.keys(paymentMethods).length === 0) {
+                                        paymentMethodsBody.innerHTML = `
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No payment method data available.</td>
+                                            </tr>
+                                        `;
+                                        document.getElementById('paymentMethodsTotalCount').textContent = '0';
+                                        document.getElementById('paymentMethodsTotalAmount').textContent = 'PKR 0';
+                                        document.getElementById('paymentMethodsCashInHand').textContent = 'PKR 0';
+                                    } else {
+                                        let paymentMethodsHtml = '';
+                                        let totalCount = 0;
+                                        let totalAmount = 0;
+                                        
+                                        const sortedMethods = Object.entries(paymentMethods).sort((a, b) => {
+                                            if (a[0] === 'cash') return -1;
+                                            if (b[0] === 'cash') return 1;
+                                            return a[1].label.localeCompare(b[1].label);
+                                        });
+                                        
+                                        sortedMethods.forEach(([methodKey, methodData]) => {
+                                            const amount = parseFloat(methodData.amount) || 0;
+                                            const count = parseInt(methodData.count) || 0;
+                                            totalCount += count;
+                                            totalAmount += amount;
+                                            
+                                            let notes = '';
+                                            if (methodKey === 'cash') {
+                                                const paidAmount = parseFloat(methodData.paid_amount) || 0;
+                                                if (paidAmount !== amount) {
+                                                    notes = `<small class="text-warning">Only paid & confirmed: PKR ${paidAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</small>`;
+                                                } else {
+                                                    notes = '<small class="text-success">All paid & confirmed</small>';
+                                                }
+                                            } else {
+                                                notes = '<small class="text-muted">Non-cash payment</small>';
+                                            }
+                                            
+                                            paymentMethodsHtml += `
+                                                <tr>
+                                                    <td class="fw-semibold">${methodData.label || methodKey}</td>
+                                                    <td class="text-center">${count}</td>
+                                                    <td class="text-end fw-bold">PKR ${amount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+                                                    <td class="text-center">${notes}</td>
+                                                </tr>
+                                            `;
+                                        });
+                                        
+                                        paymentMethodsBody.innerHTML = paymentMethodsHtml;
+                                        document.getElementById('paymentMethodsTotalCount').textContent = totalCount;
+                                        document.getElementById('paymentMethodsTotalAmount').textContent = 'PKR ' + totalAmount.toLocaleString('en-US', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        });
+                                        document.getElementById('paymentMethodsCashInHand').textContent = 'PKR ' + cashInHand.toLocaleString('en-US', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        });
+                                    }
                                 }
                             }
                         });

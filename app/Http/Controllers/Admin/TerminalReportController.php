@@ -650,23 +650,39 @@ class TerminalReportController extends Controller
         $advanceRevenue = $bookings->where('is_advance', true)->sum('final_amount');
         $regularRevenue = $bookings->where('is_advance', false)->sum('final_amount');
 
-        // Calculate cash in hand (only cash payments that are paid and not cancelled)
+        // Calculate cash in hand (sum of final_amount for cash payments that are paid and confirmed)
         $cashInHand = $bookings
             ->where('payment_method', PaymentMethodEnum::CASH->value)
-            ->where('payment_status', 'paid')
-            ->where('status', '!=', 'cancelled')
-            ->sum('payment_received_from_customer') ?? 0;
+            ->where('payment_status', PaymentStatusEnum::PAID->value)
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
+            ->sum('final_amount');
 
         $totalExpenses = $expenses->sum('amount');
         $netBalance = $cashInHand - $totalExpenses;
 
-        // Payment method breakdown
-        $paymentMethods = $bookings->groupBy('payment_method')->map(function ($group) {
-            return [
-                'count' => $group->count(),
-                'amount' => $group->sum('final_amount'),
+        // Payment method breakdown with detailed information
+        $paymentMethods = [];
+        foreach (PaymentMethodEnum::cases() as $method) {
+            $methodBookings = $bookings->where('payment_method', $method->value);
+            $methodAmount = $methodBookings->sum('final_amount');
+            $methodCount = $methodBookings->count();
+
+            // For cash, also calculate paid and confirmed amount separately
+            $paidAmount = 0;
+            if ($method === PaymentMethodEnum::CASH) {
+                $paidAmount = $methodBookings
+                    ->where('payment_status', PaymentStatusEnum::PAID->value)
+                    ->where('status', BookingStatusEnum::CONFIRMED->value)
+                    ->sum('final_amount');
+            }
+
+            $paymentMethods[$method->value] = [
+                'label' => $method->getLabel(),
+                'count' => $methodCount,
+                'amount' => (float) $methodAmount,
+                'paid_amount' => (float) $paidAmount, // Only relevant for cash
             ];
-        });
+        }
 
         // Channel breakdown
         $channels = $bookings->groupBy('channel')->map(function ($group) {
