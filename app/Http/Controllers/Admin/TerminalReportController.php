@@ -257,6 +257,7 @@ class TerminalReportController extends Controller
             ->whereHas('fromStop', function ($query) use ($terminalId) {
                 $query->where('terminal_id', $terminalId);
             })
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
             ->whereBetween('created_at', [$startDate, $endDate]);
 
         // Filter by route if provided
@@ -350,6 +351,7 @@ class TerminalReportController extends Controller
             ->whereHas('fromStop', function ($q) use ($terminalId) {
                 $q->where('terminal_id', $terminalId);
             })
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->with([
                 'fromStop.terminal',
@@ -366,7 +368,9 @@ class TerminalReportController extends Controller
             $query->where('booked_by_user_id', $request->user_id);
         }
 
-        if ($request->filled('status')) {
+        // Status filter is not needed as we only show confirmed bookings
+        // But allow override if explicitly requested
+        if ($request->filled('status') && $request->status !== BookingStatusEnum::CONFIRMED->value) {
             $query->where('status', $request->status);
         }
 
@@ -530,6 +534,7 @@ class TerminalReportController extends Controller
             ->whereHas('fromStop', function ($q) use ($terminalId) {
                 $q->where('terminal_id', $terminalId);
             })
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->with([
                 'fromStop.terminal',
@@ -547,7 +552,9 @@ class TerminalReportController extends Controller
             $query->where('booked_by_user_id', $request->user_id);
         }
 
-        if ($request->filled('status')) {
+        // Status filter is not needed as we only show confirmed bookings
+        // But allow override if explicitly requested
+        if ($request->filled('status') && $request->status !== BookingStatusEnum::CONFIRMED->value) {
             $query->where('status', $request->status);
         }
 
