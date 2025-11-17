@@ -158,8 +158,22 @@ class TerminalReportController extends Controller
         }
 
         $terminal = Terminal::findOrFail($terminalId);
-        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
-        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+        // Build start datetime
+        $startDate = Carbon::parse($validated['start_date']);
+        if ($request->filled('start_time')) {
+            $startDate->setTimeFromTimeString($request->start_time);
+        } else {
+            $startDate->startOfDay();
+        }
+
+        // Build end datetime
+        $endDate = Carbon::parse($validated['end_date']);
+        if ($request->filled('end_time')) {
+            $endDate->setTimeFromTimeString($request->end_time);
+        } else {
+            $endDate->endOfDay();
+        }
 
         // Get bookings where from_stop or to_stop is at this terminal
         $bookings = $this->getBookingsForTerminal(
@@ -234,7 +248,7 @@ class TerminalReportController extends Controller
         ]);
     }
 
-    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate, ?int $userId = null, ?int $routeId = null)
+    private function getBookingsForTerminal(int $terminalId, Carbon $startDate, Carbon $endDate, ?int $userId = null, ?int $routeId = null): \Illuminate\Database\Eloquent\Collection
     {
         // ✅ Only get bookings that START from this terminal (from_terminal_id)
         // This matches the passenger filtering logic - terminal staff sees bookings from their terminal
@@ -315,8 +329,21 @@ class TerminalReportController extends Controller
             $terminalId = $user->terminal_id;
         }
 
-        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
-        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+        // Build start datetime
+        $startDate = Carbon::parse($validated['start_date']);
+        if ($request->filled('start_time')) {
+            $startDate->setTimeFromTimeString($request->start_time);
+        } else {
+            $startDate->startOfDay();
+        }
+
+        // Build end datetime
+        $endDate = Carbon::parse($validated['end_date']);
+        if ($request->filled('end_time')) {
+            $endDate->setTimeFromTimeString($request->end_time);
+        } else {
+            $endDate->endOfDay();
+        }
 
         $query = Booking::query()
             ->whereHas('fromStop', function ($q) use ($terminalId) {
@@ -354,6 +381,10 @@ class TerminalReportController extends Controller
             $query->where('channel', $request->channel);
         }
 
+        if ($request->filled('is_advance')) {
+            $query->where('is_advance', $request->is_advance === '1');
+        }
+
         return DataTables::of($query)
             ->addColumn('booking_number', function (Booking $booking) {
                 return '<span class="badge bg-primary">#'.$booking->booking_number.'</span>';
@@ -366,6 +397,15 @@ class TerminalReportController extends Controller
                 $to = $booking->toStop?->terminal?->code ?? 'N/A';
 
                 return '<strong>'.$from.' → '.$to.'</strong>';
+            })
+            ->addColumn('passengers', function (Booking $booking) {
+                $passengerNames = $booking->passengers->pluck('name')->join(', ');
+
+                if (empty($passengerNames)) {
+                    return '<span class="text-muted small">No passengers</span>';
+                }
+
+                return '<div class="text-nowrap small">'.$passengerNames.'</div>';
             })
             ->addColumn('seats', function (Booking $booking) {
                 $seatNumbers = $booking->seats->whereNull('cancelled_at')->pluck('seat_number')->join(', ');
@@ -389,6 +429,20 @@ class TerminalReportController extends Controller
                 } catch (\ValueError $e) {
                     return '<span class="badge bg-secondary">'.ucfirst($booking->status ?? 'Unknown').'</span>';
                 }
+            })
+            ->addColumn('booking_type', function (Booking $booking) {
+                if ($booking->is_advance) {
+                    return '<span class="badge bg-info"><i class="bx bx-calendar-check"></i> Advance</span>';
+                }
+
+                return '<span class="badge bg-secondary"><i class="bx bx-calendar"></i> Regular</span>';
+            })
+            ->addColumn('is_advance', function (Booking $booking) {
+                if ($booking->is_advance) {
+                    return '<span class="badge bg-success"><i class="bx bx-check"></i> Yes</span>';
+                }
+
+                return '<span class="badge bg-secondary"><i class="bx bx-x"></i> No</span>';
             })
             ->addColumn('payment_method', function (Booking $booking) {
                 try {
@@ -422,7 +476,7 @@ class TerminalReportController extends Controller
 
                 return '<span class="text-muted small">N/A</span>';
             })
-            ->rawColumns(['booking_number', 'route', 'seats', 'channel', 'status', 'payment_method', 'payment_status', 'amount', 'booked_by'])
+            ->rawColumns(['booking_number', 'route', 'passengers', 'seats', 'channel', 'status', 'booking_type', 'is_advance', 'payment_method', 'payment_status', 'amount', 'booked_by'])
             ->make(true);
     }
 
@@ -454,8 +508,22 @@ class TerminalReportController extends Controller
         }
 
         $terminal = Terminal::findOrFail($terminalId);
-        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
-        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+        // Build start datetime
+        $startDate = Carbon::parse($validated['start_date']);
+        if ($request->filled('start_time')) {
+            $startDate->setTimeFromTimeString($request->start_time);
+        } else {
+            $startDate->startOfDay();
+        }
+
+        // Build end datetime
+        $endDate = Carbon::parse($validated['end_date']);
+        if ($request->filled('end_time')) {
+            $endDate->setTimeFromTimeString($request->end_time);
+        } else {
+            $endDate->endOfDay();
+        }
 
         $query = Booking::query()
             ->whereHas('fromStop', function ($q) use ($terminalId) {
@@ -534,6 +602,12 @@ class TerminalReportController extends Controller
         $totalBookings = $bookings->count();
         $totalRevenue = $bookings->sum('final_amount');
 
+        // Calculate advance vs regular bookings
+        $advanceBookings = $bookings->where('is_advance', true)->count();
+        $regularBookings = $bookings->where('is_advance', false)->count();
+        $advanceRevenue = $bookings->where('is_advance', true)->sum('final_amount');
+        $regularRevenue = $bookings->where('is_advance', false)->sum('final_amount');
+
         // Calculate cash in hand (only cash payments that are paid and not cancelled)
         $cashInHand = $bookings
             ->where('payment_method', PaymentMethodEnum::CASH->value)
@@ -563,9 +637,13 @@ class TerminalReportController extends Controller
         return [
             'bookings' => [
                 'total' => $totalBookings,
+                'advance' => $advanceBookings,
+                'regular' => $regularBookings,
             ],
             'revenue' => [
                 'total_revenue' => (float) $totalRevenue,
+                'advance_revenue' => (float) $advanceRevenue,
+                'regular_revenue' => (float) $regularRevenue,
             ],
             'cash' => [
                 'cash_in_hand' => (float) $cashInHand,

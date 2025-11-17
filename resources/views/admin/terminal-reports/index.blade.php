@@ -90,6 +90,20 @@
                                 <input type="date" class="form-control form-control-sm" id="endDate" value="{{ date('Y-m-d') }}" required>
                             </div>
 
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-time"></i> Start Time (Shift Start)
+                                </label>
+                                <input type="time" class="form-control form-control-sm" id="startTime">
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold">
+                                    <i class="bx bx-time"></i> End Time (Shift End)
+                                </label>
+                                <input type="time" class="form-control form-control-sm" id="endTime" value="{{ date('H:i') }}">
+                            </div>
+
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">
                                     <i class="bx bx-user"></i> User (Booked By)
@@ -153,6 +167,16 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Booking Type</label>
+                                <select class="form-select form-select-sm" id="filterAdvance">
+                                    <option value="">All Bookings</option>
+                                    <option value="1">Advance Bookings Only</option>
+                                    <option value="0">Regular Bookings Only</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Action Buttons -->
@@ -199,9 +223,12 @@
                                 <th><i class="bx bx-ticket"></i> Booking #</th>
                                 <th><i class="bx bx-calendar"></i> Date & Time</th>
                                 <th><i class="bx bx-route"></i> Route</th>
+                                <th><i class="bx bx-user"></i> Passengers</th>
                                 <th><i class="bx bx-chair"></i> Seats</th>
                                 <th><i class="bx bx-store"></i> Channel</th>
                                 <th><i class="bx bx-check-circle"></i> Status</th>
+                                <th><i class="bx bx-calendar-check"></i> Type</th>
+                                <th><i class="bx bx-check-square"></i> Is Advance</th>
                                 <th><i class="bx bx-credit-card"></i> Payment Method</th>
                                 <th><i class="bx bx-credit-card"></i> Payment Status</th>
                                 <th><i class="bx bx-money"></i> Amount</th>
@@ -572,6 +599,8 @@
                     terminal_id: terminalId,
                     start_date: startDate,
                     end_date: endDate,
+                    start_time: document.getElementById('startTime').value || null,
+                    end_time: document.getElementById('endTime').value || null,
                     route_id: document.getElementById('filterRoute').value || null,
                     user_id: document.getElementById('filterUser').value || null
                 },
@@ -777,12 +806,15 @@
                         d.terminal_id = terminalId;
                         d.start_date = startDate;
                         d.end_date = endDate;
+                        d.start_time = document.getElementById('startTime').value || null;
+                        d.end_time = document.getElementById('endTime').value || null;
                         d.route_id = document.getElementById('filterRoute').value;
                         d.user_id = document.getElementById('filterUser').value;
                         d.status = document.getElementById('filterStatus').value;
                         d.payment_status = document.getElementById('filterPaymentStatus').value;
                         d.payment_method = document.getElementById('filterPaymentMethod').value;
                         d.channel = document.getElementById('filterChannel').value;
+                        d.is_advance = document.getElementById('filterAdvance').value;
                     },
                     error: function(xhr, error, thrown) {
                         console.error('DataTable AJAX Error:', error, thrown);
@@ -798,9 +830,12 @@
                     { data: 'booking_number', name: 'booking_number' },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'route', name: 'route' },
+                    { data: 'passengers', name: 'passengers', orderable: false, searchable: false },
                     { data: 'seats', name: 'seats', orderable: false, searchable: false },
                     { data: 'channel', name: 'channel' },
                     { data: 'status', name: 'status' },
+                    { data: 'booking_type', name: 'booking_type', orderable: false, searchable: false },
+                    { data: 'is_advance', name: 'is_advance', orderable: false, searchable: false },
                     { data: 'payment_method', name: 'payment_method' },
                     { data: 'payment_status', name: 'payment_status' },
                     { data: 'amount', name: 'final_amount' },
@@ -815,11 +850,11 @@
                     emptyTable: 'No bookings found',
                     zeroRecords: 'No matching bookings found'
                 },
-                dom: 'lBfrtip',
+                dom: 'lfrtip',
             });
 
             // Add event listeners for filter changes - reload DataTable only, not full report
-            $('#filterRoute, #filterStatus, #filterPaymentStatus, #filterPaymentMethod, #filterChannel').on('change', function() {
+            $('#filterRoute, #filterStatus, #filterPaymentStatus, #filterPaymentMethod, #filterChannel, #filterAdvance').on('change', function() {
                 if (bookingsTable) {
                     bookingsTable.ajax.reload(null, false);
                 }
@@ -887,7 +922,10 @@
             document.getElementById('filterPaymentStatus').value = '';
             document.getElementById('filterPaymentMethod').value = '';
             document.getElementById('filterChannel').value = '';
+            document.getElementById('filterAdvance').value = '';
             document.getElementById('filterUser').value = '';
+            document.getElementById('startTime').value = '';
+            document.getElementById('endTime').value = '';
             
             if (bookingsTable) {
                 bookingsTable.ajax.reload(null, false);
