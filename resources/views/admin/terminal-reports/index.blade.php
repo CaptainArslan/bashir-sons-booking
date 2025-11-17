@@ -213,6 +213,9 @@
                     <h6 class="mb-0 fw-bold">
                         <i class="bx bx-list-ul text-primary"></i> Bookings from This Terminal
                     </h6>
+                    <button class="btn btn-success btn-sm" onclick="exportReport()">
+                        <i class="bx bx-download"></i> Export Report
+                    </button>
                 </div>
             </div>
             <div class="card-body">
@@ -932,6 +935,51 @@
             }
         }
 
+
+        function exportReport() {
+            const terminalId = document.getElementById('terminalSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!terminalId || !startDate || !endDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please select all required fields: Terminal, Start Date, and End Date.',
+                    confirmButtonColor: '#ffc107'
+                });
+                return;
+            }
+
+            if (new Date(startDate) > new Date(endDate)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Date Range',
+                    text: 'Start date cannot be greater than end date.',
+                    confirmButtonColor: '#d33'
+                });
+                return;
+            }
+
+            // Build query string with all filters
+            const params = new URLSearchParams({
+                terminal_id: terminalId,
+                start_date: startDate,
+                end_date: endDate,
+                start_time: document.getElementById('startTime').value || '',
+                end_time: document.getElementById('endTime').value || '',
+                route_id: document.getElementById('filterRoute').value || '',
+                user_id: document.getElementById('filterUser').value || '',
+                status: document.getElementById('filterStatus').value || '',
+                payment_status: document.getElementById('filterPaymentStatus').value || '',
+                payment_method: document.getElementById('filterPaymentMethod').value || '',
+                channel: document.getElementById('filterChannel').value || '',
+                is_advance: document.getElementById('filterAdvance').value || ''
+            });
+
+            // Open export in new window
+            window.open("{{ route('admin.terminal-reports.export') }}?" + params.toString(), '_blank');
+        }
 
         // Auto-load report for users with assigned terminal (their terminal)
         @if (!$canSelectTerminal && $terminals->isNotEmpty())

@@ -10,6 +10,7 @@ use App\Enums\TerminalEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Expense;
+use App\Models\GeneralSetting;
 use App\Models\Route;
 use App\Models\Terminal;
 use App\Models\User;
@@ -538,6 +539,7 @@ class TerminalReportController extends Controller
                 'user',
                 'bookedByUser',
                 'trip.route',
+                'trip.originStop',
             ]);
 
         // Apply filters
@@ -561,7 +563,19 @@ class TerminalReportController extends Controller
             $query->where('channel', $request->channel);
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->get();
+        if ($request->filled('is_advance')) {
+            $query->where('is_advance', $request->is_advance === '1');
+        }
+
+        if ($request->filled('route_id')) {
+            $query->whereHas('trip', function ($q) use ($request) {
+                $q->where('route_id', $request->route_id);
+            });
+        }
+
+        $bookings = $query->orderBy('trip_id')
+            ->orderBy('created_at')
+            ->get();
 
         $expenses = $this->getExpensesForTerminal($terminalId, $startDate, $endDate);
         $stats = $this->calculateStats($bookings, $expenses);
@@ -580,17 +594,45 @@ class TerminalReportController extends Controller
     {
         $filename = 'terminal-report-'.$terminal->code.'-'.$startDate->format('Y-m-d').'-to-'.$endDate->format('Y-m-d').'.pdf';
 
+        // Group bookings by date, then by trip (route + time)
+        $groupedBookings = $bookings->groupBy(function ($booking) {
+            return $booking->trip->departure_date?->format('Y-m-d') ?? $booking->created_at->format('Y-m-d');
+        })->map(function ($dateBookings) {
+            return $dateBookings->groupBy(function ($booking) {
+                $fromTerminal = $booking->fromStop->terminal ?? null;
+                $toTerminal = $booking->toStop->terminal ?? null;
+
+                // Get departure time from trip's origin stop or departure_datetime
+                $departureTime = null;
+                if ($booking->trip->originStop && $booking->trip->originStop->departure_at) {
+                    $departureTime = Carbon::parse($booking->trip->originStop->departure_at);
+                } elseif ($booking->trip->departure_datetime) {
+                    $departureTime = Carbon::parse($booking->trip->departure_datetime);
+                }
+
+                $routeCode = ($fromTerminal?->code ?? '').'-'.($toTerminal?->code ?? '');
+                $time = $departureTime ? $departureTime->format('h:i A') : 'N/A';
+
+                return $routeCode.' '.$time;
+            });
+        });
+
+        $generalSettings = GeneralSetting::first();
+        $companyName = $generalSettings?->company_name ?? 'Bashir Sons Travel';
+
         $data = [
             'terminal' => $terminal,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'bookings' => $bookings,
+            'grouped_bookings' => $groupedBookings,
             'expenses' => $expenses,
             'stats' => $stats,
+            'company_name' => $companyName,
             'generated_at' => Carbon::now()->format('d M Y, H:i'),
         ];
 
-        $pdf = Pdf::loadView('admin.terminal-reports.export-pdf', $data)
+        $pdf = Pdf::loadView('admin.terminal-reports.export-advance-booking', $data)
             ->setPaper('a4', 'landscape')
             ->setOption('enable-local-file-access', true);
 
