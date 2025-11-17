@@ -230,7 +230,6 @@
                                 <th><i class="bx bx-chair"></i> Seats</th>
                                 <th><i class="bx bx-store"></i> Channel</th>
                                 <th><i class="bx bx-check-circle"></i> Status</th>
-                                <th><i class="bx bx-calendar-check"></i> Type</th>
                                 <th><i class="bx bx-check-square"></i> Is Advance</th>
                                 <th><i class="bx bx-credit-card"></i> Payment Method</th>
                                 <th><i class="bx bx-credit-card"></i> Payment Status</th>
@@ -837,7 +836,6 @@
                     { data: 'seats', name: 'seats', orderable: false, searchable: false },
                     { data: 'channel', name: 'channel' },
                     { data: 'status', name: 'status' },
-                    { data: 'booking_type', name: 'booking_type', orderable: false, searchable: false },
                     { data: 'is_advance', name: 'is_advance', orderable: false, searchable: false },
                     { data: 'payment_method', name: 'payment_method' },
                     { data: 'payment_status', name: 'payment_status' },

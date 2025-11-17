@@ -435,13 +435,6 @@ class TerminalReportController extends Controller
                     return '<span class="badge bg-secondary">'.ucfirst($booking->status ?? 'Unknown').'</span>';
                 }
             })
-            ->addColumn('booking_type', function (Booking $booking) {
-                if ($booking->is_advance) {
-                    return '<span class="badge bg-info"><i class="bx bx-calendar-check"></i> Advance</span>';
-                }
-
-                return '<span class="badge bg-secondary"><i class="bx bx-calendar"></i> Regular</span>';
-            })
             ->addColumn('is_advance', function (Booking $booking) {
                 if ($booking->is_advance) {
                     return '<span class="badge bg-success"><i class="bx bx-check"></i> Yes</span>';
@@ -481,7 +474,7 @@ class TerminalReportController extends Controller
 
                 return '<span class="text-muted small">N/A</span>';
             })
-            ->rawColumns(['booking_number', 'route', 'passengers', 'seats', 'channel', 'status', 'booking_type', 'is_advance', 'payment_method', 'payment_status', 'amount', 'booked_by'])
+            ->rawColumns(['booking_number', 'route', 'passengers', 'seats', 'channel', 'status', 'is_advance', 'payment_method', 'payment_status', 'amount', 'booked_by'])
             ->make(true);
     }
 
