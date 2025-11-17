@@ -46,15 +46,25 @@
                             <i class="bx bx-calendar"></i> Date Range
                         </h6>
                         <div class="row g-2">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label small fw-bold">Date From</label>
-                                <input type="date" class="form-control form-control-sm" id="filterDateFrom">
+                                <input type="date" class="form-control form-control-sm" id="filterDateFrom" value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label small fw-bold">Date To</label>
-                                <input type="date" class="form-control form-control-sm" id="filterDateTo">
+                                <input type="date" class="form-control form-control-sm" id="filterDateTo" value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Start Time (Shift Start)</label>
+                                <input type="time" class="form-control form-control-sm" id="filterStartTime">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">End Time (Shift End)</label>
+                                <input type="time" class="form-control form-control-sm" id="filterEndTime" value="{{ date('H:i') }}">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-12">
                                 <label class="form-label small fw-bold">Booking Number</label>
                                 <input type="text" class="form-control form-control-sm" id="filterBookingNumber"
                                     placeholder="Search by booking number">
@@ -153,6 +163,14 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Booking Type</label>
+                                <select class="form-select form-select-sm" id="filterAdvance">
+                                    <option value="">All Bookings</option>
+                                    <option value="1">Advance Bookings Only</option>
+                                    <option value="0">Regular Bookings Only</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -179,6 +197,14 @@
                 <h6 class="mb-0 fw-bold">
                     <i class="bx bx-table text-primary"></i> Bookings Report
                 </h6>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="exportReport()">
+                        <i class="bx bx-download"></i> Export Report
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="exportPassengerInfo()">
+                        <i class="bx bx-user"></i> Export Passenger Info
+                    </button>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -189,13 +215,15 @@
                             <th><i class="bx bx-ticket"></i> Booking #</th>
                             <th><i class="bx bx-calendar"></i> Date & Time</th>
                             <th><i class="bx bx-route"></i> Route</th>
+                            <th><i class="bx bx-user"></i> Passengers</th>
                             <th><i class="bx bx-chair"></i> Seats</th>
-                            <th><i class="bx bx-group"></i> Passengers</th>
-                            <th><i class="bx bx-money"></i> Amount</th>
                             <th><i class="bx bx-store"></i> Channel</th>
-                            <th><i class="bx bx-user"></i> Employee</th>
                             <th><i class="bx bx-check-circle"></i> Status</th>
+                            <th><i class="bx bx-calendar-check"></i> Type</th>
+                            <th><i class="bx bx-check-square"></i> Is Advance</th>
+                            <th><i class="bx bx-money"></i> Amount</th>
                             <th><i class="bx bx-credit-card"></i> Payment</th>
+                            <th><i class="bx bx-user"></i> Employee</th>
                             <th class="text-center"><i class="bx bx-cog"></i> Actions</th>
                         </tr>
                     </thead>
@@ -384,6 +412,8 @@
                     data: function(d) {
                         d.date_from = document.getElementById('filterDateFrom').value;
                         d.date_to = document.getElementById('filterDateTo').value;
+                        d.start_time = document.getElementById('filterStartTime').value;
+                        d.end_time = document.getElementById('filterEndTime').value;
                         d.status = document.getElementById('filterStatus').value;
                         d.payment_status = document.getElementById('filterPaymentStatus').value;
                         d.channel = document.getElementById('filterChannel').value;
@@ -392,6 +422,7 @@
                         d.to_terminal_id = document.getElementById('filterToTerminal').value;
                         d.employee_id = document.getElementById('filterEmployee').value;
                         d.customer_id = document.getElementById('filterCustomer').value;
+                        d.is_advance = document.getElementById('filterAdvance').value;
                     },
                     error: function(xhr, error, thrown) {
                         console.error('DataTable AJAX Error:', error, thrown);
@@ -437,34 +468,48 @@
                         name: 'route'
                     },
                     {
+                        data: 'passengers',
+                        name: 'passengers',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
                         data: 'seats',
                         name: 'seats'
-                    },
-                    {
-                        data: 'passengers_count',
-                        name: 'passengers_count'
-                    },
-                    {
-                        data: 'amount',
-                        name: 'final_amount'
                     },
                     {
                         data: 'channel',
                         name: 'channel'
                     },
                     {
-                        data: 'employee',
-                        name: 'employee',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
                         data: 'status',
                         name: 'status'
                     },
                     {
+                        data: 'booking_type',
+                        name: 'booking_type',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'is_advance',
+                        name: 'is_advance',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'amount',
+                        name: 'final_amount'
+                    },
+                    {
                         data: 'payment_status',
                         name: 'payment_status'
+                    },
+                    {
+                        data: 'employee',
+                        name: 'employee',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'actions',
@@ -484,7 +529,7 @@
                     emptyTable: 'No bookings found',
                     zeroRecords: 'No matching bookings found'
                 },
-                dom: 'lBfrtip',
+                dom: 'lfrtip',
                 // buttons: [{
                 //         extend: 'csv',
                 //         text: '<i class="fas fa-download"></i> CSV',
@@ -531,9 +576,12 @@
             try {
                 document.getElementById('filterDateFrom').value = '';
                 document.getElementById('filterDateTo').value = '';
+                document.getElementById('filterStartTime').value = '';
+                document.getElementById('filterEndTime').value = '';
                 document.getElementById('filterStatus').value = '';
                 document.getElementById('filterPaymentStatus').value = '';
                 document.getElementById('filterChannel').value = '';
+                document.getElementById('filterAdvance').value = '';
                 document.getElementById('filterBookingNumber').value = '';
                 document.getElementById('filterFromTerminal').value = '';
                 document.getElementById('filterToTerminal').value = '';
@@ -549,6 +597,47 @@
                     confirmButtonColor: '#d33'
                 });
             }
+        }
+
+        function exportReport() {
+            const params = new URLSearchParams({
+                date_from: document.getElementById('filterDateFrom').value || '',
+                date_to: document.getElementById('filterDateTo').value || '',
+                start_time: document.getElementById('filterStartTime').value || '',
+                end_time: document.getElementById('filterEndTime').value || '',
+                status: document.getElementById('filterStatus').value || '',
+                payment_status: document.getElementById('filterPaymentStatus').value || '',
+                channel: document.getElementById('filterChannel').value || '',
+                booking_number: document.getElementById('filterBookingNumber').value || '',
+                from_terminal_id: document.getElementById('filterFromTerminal').value || '',
+                to_terminal_id: document.getElementById('filterToTerminal').value || '',
+                employee_id: document.getElementById('filterEmployee').value || '',
+                customer_id: document.getElementById('filterCustomer').value || '',
+                is_advance: document.getElementById('filterAdvance').value || ''
+            });
+
+            window.open("{{ route('admin.bookings.export') }}?" + params.toString(), '_blank');
+        }
+
+        function exportPassengerInfo() {
+            const params = new URLSearchParams({
+                date_from: document.getElementById('filterDateFrom').value || '',
+                date_to: document.getElementById('filterDateTo').value || '',
+                start_time: document.getElementById('filterStartTime').value || '',
+                end_time: document.getElementById('filterEndTime').value || '',
+                status: document.getElementById('filterStatus').value || '',
+                payment_status: document.getElementById('filterPaymentStatus').value || '',
+                channel: document.getElementById('filterChannel').value || '',
+                booking_number: document.getElementById('filterBookingNumber').value || '',
+                from_terminal_id: document.getElementById('filterFromTerminal').value || '',
+                to_terminal_id: document.getElementById('filterToTerminal').value || '',
+                employee_id: document.getElementById('filterEmployee').value || '',
+                customer_id: document.getElementById('filterCustomer').value || '',
+                is_advance: document.getElementById('filterAdvance').value || '',
+                type: 'passenger_info'
+            });
+
+            window.open("{{ route('admin.bookings.export') }}?" + params.toString(), '_blank');
         }
 
         function viewBookingDetails(bookingId) {

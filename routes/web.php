@@ -251,6 +251,7 @@ Route::middleware(['auth', CheckUserStatus::class])->group(function () {
         // bookings Routes
         Route::get('/bookings', [BookingController::class, 'index'])->can('view all booking reports')->name('bookings.index');
         Route::get('/bookings/data', [BookingController::class, 'getData'])->can('view all booking reports')->name('bookings.data');
+        Route::get('/bookings/export', [BookingController::class, 'export'])->can('view all booking reports')->name('bookings.export');
         Route::get('/bookings/create', [BookingController::class, 'create'])->can('create bookings')->name('bookings.create');
         Route::post('/bookings', [BookingController::class, 'store'])->can('create bookings')->name('bookings.store');
         Route::get('/bookings/{booking}', [BookingController::class, 'show'])->can('view bookings')->name('bookings.show');

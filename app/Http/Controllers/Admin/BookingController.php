@@ -7,7 +7,6 @@ use App\Enums\ChannelEnum;
 use App\Enums\ExpenseTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\RouteStatusEnum;
 use App\Enums\TerminalEnum;
 use App\Events\SeatConfirmed;
 use App\Events\SeatLocked;
@@ -17,6 +16,7 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\Expense;
 use App\Models\Fare;
+use App\Models\GeneralSetting;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\Terminal;
@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Services\AvailabilityService;
 use App\Services\BookingService;
 use App\Services\TripFactoryService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -93,22 +94,33 @@ class BookingController extends Controller
 
         $query = Booking::query()
             ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user', 'cancelledByUser'])
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
             ->latest();
 
-        // Filter by date range
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->whereBetween('created_at', [
-                Carbon::parse($request->date_from)->startOfDay(),
-                Carbon::parse($request->date_to)->endOfDay(),
-            ]);
-        } elseif ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        } elseif ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        // Filter by date range with time
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $startDate = $request->filled('date_from') ? Carbon::parse($request->date_from) : Carbon::now()->startOfMonth();
+            $endDate = $request->filled('date_to') ? Carbon::parse($request->date_to) : Carbon::now();
+
+            // Apply time filters if provided
+            if ($request->filled('start_time')) {
+                $startDate->setTimeFromTimeString($request->start_time);
+            } else {
+                $startDate->startOfDay();
+            }
+
+            if ($request->filled('end_time')) {
+                $endDate->setTimeFromTimeString($request->end_time);
+            } else {
+                $endDate->endOfDay();
+            }
+
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 
-        // Filter by status
-        if ($request->filled('status')) {
+        // Status filter is not needed as we only show confirmed bookings
+        // But allow override if explicitly requested
+        if ($request->filled('status') && $request->status !== BookingStatusEnum::CONFIRMED->value) {
             $query->where('status', $request->status);
         }
 
@@ -151,6 +163,11 @@ class BookingController extends Controller
             $query->where('user_id', $request->customer_id);
         }
 
+        // Filter by advance booking
+        if ($request->filled('is_advance')) {
+            $query->where('is_advance', $request->is_advance === '1');
+        }
+
         return datatables()
             ->eloquent($query)
             ->addColumn('booking_number', function (Booking $booking) {
@@ -171,8 +188,26 @@ class BookingController extends Controller
 
                 return '<span class="badge bg-info">'.$seatNumbers.'</span>';
             })
-            ->addColumn('passengers_count', function (Booking $booking) {
-                return '<span class="badge bg-secondary">'.$booking->passengers->count().' passengers</span>';
+            ->addColumn('passengers', function (Booking $booking) {
+                $passengerNames = $booking->passengers->pluck('name')->join(', ');
+                if (empty($passengerNames)) {
+                    return '<span class="text-muted small">No passengers</span>';
+                }
+
+                return '<div class="small">'.$passengerNames.'</div>';
+            })
+            ->addColumn('booking_type', function (Booking $booking) {
+                $type = $booking->booking_type ?? 'regular';
+                $badgeClass = $type === 'advance' ? 'bg-success' : 'bg-info';
+
+                return '<span class="badge '.$badgeClass.'">'.ucfirst($type).'</span>';
+            })
+            ->addColumn('is_advance', function (Booking $booking) {
+                $isAdvance = $booking->is_advance ?? false;
+                $badgeClass = $isAdvance ? 'bg-success' : 'bg-secondary';
+                $text = $isAdvance ? 'Yes' : 'No';
+
+                return '<span class="badge '.$badgeClass.'">'.$text.'</span>';
             })
             ->addColumn('amount', function (Booking $booking) {
                 return '<strong>PKR '.number_format($booking->final_amount, 0).'</strong>';
@@ -252,7 +287,7 @@ class BookingController extends Controller
 
                 return $actions;
             })
-            ->rawColumns(['booking_number', 'route', 'seats', 'passengers_count', 'amount', 'channel', 'employee', 'status', 'payment_status', 'actions'])
+            ->rawColumns(['booking_number', 'route', 'seats', 'passengers', 'amount', 'channel', 'employee', 'status', 'payment_status', 'booking_type', 'is_advance', 'actions'])
             ->make(true);
     }
 
@@ -1764,5 +1799,180 @@ class BookingController extends Controller
                 'error' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    public function export(Request $request)
+    {
+        $this->authorize('view reports');
+
+        // Build date range with time filters
+        $startDate = $request->filled('date_from') ? Carbon::parse($request->date_from) : Carbon::now()->startOfMonth();
+        $endDate = $request->filled('date_to') ? Carbon::parse($request->date_to) : Carbon::now();
+
+        $startTime = $request->filled('start_time') ? $request->start_time : null;
+        $endTime = $request->filled('end_time') ? $request->end_time : null;
+
+        if ($startTime) {
+            $startDate->setTimeFromTimeString($startTime);
+        } else {
+            $startDate->startOfDay();
+        }
+
+        if ($endTime) {
+            $endDate->setTimeFromTimeString($endTime);
+        } else {
+            $endDate->endOfDay();
+        }
+
+        $query = Booking::query()
+            ->with(['trip.route', 'fromStop.terminal', 'toStop.terminal', 'seats', 'passengers', 'user', 'bookedByUser'])
+            ->where('status', BookingStatusEnum::CONFIRMED->value)
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Apply all filters
+        // Status filter is not needed as we only show confirmed bookings
+        // But allow override if explicitly requested
+        if ($request->filled('status') && $request->status !== BookingStatusEnum::CONFIRMED->value) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('channel')) {
+            $query->where('channel', $request->channel);
+        }
+
+        if ($request->filled('booking_number')) {
+            $query->where('booking_number', 'like', '%'.$request->booking_number.'%');
+        }
+
+        if ($request->filled('from_terminal_id')) {
+            $query->whereHas('fromStop', function ($q) use ($request) {
+                $q->where('terminal_id', $request->from_terminal_id);
+            });
+        }
+
+        if ($request->filled('to_terminal_id')) {
+            $query->whereHas('toStop', function ($q) use ($request) {
+                $q->where('terminal_id', $request->to_terminal_id);
+            });
+        }
+
+        if ($request->filled('employee_id')) {
+            $query->where('booked_by_user_id', $request->employee_id);
+        }
+
+        if ($request->filled('customer_id')) {
+            $query->where('user_id', $request->customer_id);
+        }
+
+        if ($request->filled('is_advance')) {
+            $query->where('is_advance', $request->is_advance === '1');
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')->get();
+
+        $generalSettings = GeneralSetting::first();
+        $companyName = $generalSettings?->company_name ?? 'Bashir Sons Travel';
+
+        // Prepare filter information for display
+        $filters = [
+            'date_from' => $request->filled('date_from') ? $request->date_from : null,
+            'date_to' => $request->filled('date_to') ? $request->date_to : null,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'status' => $request->filled('status') ? $request->status : null,
+            'payment_status' => $request->filled('payment_status') ? $request->payment_status : null,
+            'channel' => $request->filled('channel') ? $request->channel : null,
+            'booking_number' => $request->filled('booking_number') ? $request->booking_number : null,
+            'from_terminal_id' => $request->filled('from_terminal_id') ? $request->from_terminal_id : null,
+            'to_terminal_id' => $request->filled('to_terminal_id') ? $request->to_terminal_id : null,
+            'employee_id' => $request->filled('employee_id') ? $request->employee_id : null,
+            'customer_id' => $request->filled('customer_id') ? $request->customer_id : null,
+            'is_advance' => $request->filled('is_advance') ? $request->is_advance : null,
+        ];
+
+        // Get terminal and user names for display
+        if ($filters['from_terminal_id']) {
+            $filters['from_terminal_name'] = Terminal::find($filters['from_terminal_id'])?->name ?? 'N/A';
+        }
+        if ($filters['to_terminal_id']) {
+            $filters['to_terminal_name'] = Terminal::find($filters['to_terminal_id'])?->name ?? 'N/A';
+        }
+        if ($filters['employee_id']) {
+            $filters['employee_name'] = User::find($filters['employee_id'])?->name ?? 'N/A';
+        }
+        if ($filters['customer_id']) {
+            $filters['customer_name'] = User::find($filters['customer_id'])?->name ?? 'N/A';
+        }
+
+        // Check if passenger info export is requested
+        if ($request->get('type') === 'passenger_info') {
+            return $this->exportPassengerInfo($bookings, $startDate, $endDate, $companyName, $filters);
+        }
+
+        return $this->exportBookings($bookings, $startDate, $endDate, $companyName, $filters);
+    }
+
+    private function exportBookings($bookings, $startDate, $endDate, $companyName, $filters = [])
+    {
+        $filename = 'bookings-report-'.$startDate->format('Y-m-d').'-to-'.$endDate->format('Y-m-d').'.pdf';
+
+        $data = [
+            'bookings' => $bookings,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'company_name' => $companyName,
+            'filters' => $filters,
+            'generated_at' => Carbon::now()->format('d M Y, H:i'),
+        ];
+
+        $pdf = Pdf::loadView('admin.bookings.export', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOption('enable-local-file-access', true);
+
+        return $pdf->download($filename);
+    }
+
+    private function exportPassengerInfo($bookings, $startDate, $endDate, $companyName, $filters = [])
+    {
+        $filename = 'passenger-info-'.$startDate->format('Y-m-d').'-to-'.$endDate->format('Y-m-d').'.pdf';
+
+        // Extract all passenger information
+        $passengerData = [];
+        foreach ($bookings as $booking) {
+            foreach ($booking->passengers as $passenger) {
+                $passengerData[] = [
+                    'booking_number' => $booking->booking_number,
+                    'name' => $passenger->name,
+                    'cnic' => $passenger->cnic ?? 'N/A',
+                    'phone' => $passenger->phone ?? 'N/A',
+                    'email' => $passenger->email ?? 'N/A',
+                    'from_terminal' => $booking->fromStop?->terminal?->code ?? 'N/A',
+                    'to_terminal' => $booking->toStop?->terminal?->code ?? 'N/A',
+                    'booking_date' => $booking->created_at->format('Y-m-d'),
+                    'amount' => $booking->final_amount,
+                    'status' => $booking->status,
+                    'channel' => $booking->channel,
+                ];
+            }
+        }
+
+        $data = [
+            'passengers' => $passengerData,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'company_name' => $companyName,
+            'filters' => $filters,
+            'generated_at' => Carbon::now()->format('d M Y, H:i'),
+        ];
+
+        $pdf = Pdf::loadView('admin.bookings.export-passenger-info', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOption('enable-local-file-access', true);
+
+        return $pdf->download($filename);
     }
 }
