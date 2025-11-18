@@ -272,17 +272,19 @@ class BookingController extends Controller
                 }
 
                 if (auth()->user()->can('view bookings')) {
-                    // Check if payment is complete before allowing print
-                    $paymentReceived = $booking->payment_received_from_customer ?? 0;
-                    $finalAmount = $booking->final_amount ?? 0;
-                    $isPaymentComplete = $paymentReceived >= $finalAmount;
-                    
-                    if ($isPaymentComplete) {
+                    // Enable print if payment status is 'paid' and not a phone booking
+                    $isPhoneBooking = ($booking->channel ?? 'counter') === 'phone';
+                    $paymentStatus = $booking->payment_status ?? 'unpaid';
+
+                    if (! $isPhoneBooking && $paymentStatus === 'paid') {
                         $actions .= '<a href="'.route('admin.bookings.print', $booking->id).'" target="_blank" class="btn btn-sm btn-info" title="Print Ticket">
                             <i class="bx bx-printer"></i>
                         </a>';
                     } else {
-                        $actions .= '<button type="button" class="btn btn-sm btn-info" disabled title="Payment incomplete - Cannot print ticket">
+                        $disabledTitle = $isPhoneBooking
+                            ? 'Phone bookings cannot be printed'
+                            : 'Payment not completed - Cannot print ticket';
+                        $actions .= '<button type="button" class="btn btn-sm btn-info" disabled title="'.$disabledTitle.'">
                             <i class="bx bx-printer"></i>
                         </button>';
                     }
@@ -2081,7 +2083,7 @@ class BookingController extends Controller
         $companyTagline = $settings?->tagline ?? 'Daewoo Bus Service';
 
         // Route codes
-        $routeCode = ($fromStop?->terminal?->code ?? '') . '-' . ($toStop?->terminal?->code ?? '');
+        $routeCode = ($fromStop?->terminal?->code ?? '').'-'.($toStop?->terminal?->code ?? '');
         $fromCode = $fromStop?->terminal?->code ?? '';
         $toCode = $toStop?->terminal?->code ?? '';
 

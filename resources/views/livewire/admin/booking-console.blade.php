@@ -1075,12 +1075,9 @@ seat-available
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
                                                             @php
-                                                                $paymentReceived = $passenger['payment_received_from_customer'] ?? 0;
-                                                                $bookingFinalAmount = $passenger['booking_final_amount'] ?? $passenger['final_amount'] ?? 0;
-                                                                $isPaymentComplete = $paymentReceived >= $bookingFinalAmount;
-                                                                $canPrint = ($passenger['payment_status'] ?? 'unpaid') === 'paid' 
-                                                                    && ($passenger['channel'] ?? 'counter') !== 'phone'
-                                                                    && $isPaymentComplete;
+                                                                $isPhoneBooking = ($passenger['channel'] ?? 'counter') === 'phone';
+                                                                $paymentStatus = $passenger['payment_status'] ?? 'unpaid';
+                                                                $canPrint = !$isPhoneBooking && $paymentStatus === 'paid';
                                                             @endphp
                                                             @if ($canPrint)
                                                                 <button type="button"
@@ -1089,11 +1086,18 @@ seat-available
                                                                     title="Print Ticket">
                                                                     <i class="bx bx-printer"></i>
                                                                 </button>
-                                                            @elseif (($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone' && !$isPaymentComplete)
+                                                            @elseif ($isPhoneBooking)
                                                                 <button type="button"
                                                                     class="btn btn-sm btn-outline-info"
                                                                     disabled
-                                                                    title="Payment incomplete - Cannot print ticket">
+                                                                    title="Phone bookings cannot be printed">
+                                                                    <i class="bx bx-printer"></i>
+                                                                </button>
+                                                            @else
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-info"
+                                                                    disabled
+                                                                    title="Payment not completed - Cannot print ticket">
                                                                     <i class="bx bx-printer"></i>
                                                                 </button>
                                                             @endif
@@ -1588,23 +1592,24 @@ seat-available
                 </div>
                 <div class="modal-footer d-flex gap-2">
                     @php
-                        $lastPaymentReceived = $lastBookingData['payment_received_from_customer'] ?? 0;
-                        $lastFinalAmount = $lastBookingData['final_amount'] ?? 0;
-                        $lastIsPaymentComplete = $lastPaymentReceived >= $lastFinalAmount;
-                        $lastCanPrint = $lastBookingId
-                            && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid'
-                            && ($lastBookingData['channel'] ?? 'counter') !== 'phone'
-                            && $lastIsPaymentComplete;
+                        $lastIsPhoneBooking = ($lastBookingData['channel'] ?? 'counter') === 'phone';
+                        $lastPaymentStatus = $lastBookingData['payment_status'] ?? 'unpaid';
+                        $lastCanPrint = $lastBookingId && !$lastIsPhoneBooking && $lastPaymentStatus === 'paid';
                     @endphp
                     @if ($lastCanPrint)
                         <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
                             onclick="printBothTickets({{ $lastBookingId }})">
                             <i class="fas fa-print"></i> Print
                         </button>
-                    @elseif ($lastBookingId && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' && ($lastBookingData['channel'] ?? 'counter') !== 'phone' && !$lastIsPaymentComplete)
+                    @elseif ($lastBookingId && $lastIsPhoneBooking)
                         <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill" disabled
-                            title="Payment incomplete - Cannot print ticket">
-                            <i class="fas fa-print"></i> Print (Payment Incomplete)
+                            title="Phone bookings cannot be printed">
+                            <i class="fas fa-print"></i> Print (Phone Booking)
+                        </button>
+                    @elseif ($lastBookingId)
+                        <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill" disabled
+                            title="Payment not completed - Cannot print ticket">
+                            <i class="fas fa-print"></i> Print (Payment Not Completed)
                         </button>
                     @endif
                     <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
