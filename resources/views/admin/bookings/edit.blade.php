@@ -44,7 +44,7 @@
             <div class="row">
                 <div class="col-md-3">
                     <small class="text-muted">Booking Date</small>
-                    <p class="mb-0"><strong>{{ $booking->created_at->format('d M Y, H:i A') }}</strong></p>
+                    <p class="mb-0"><strong>{{ $booking->created_at->format('d M Y, h:i A') }}</strong></p>
                 </div>
                 <div class="col-md-3">
                     <small class="text-muted">Route</small>
@@ -73,7 +73,7 @@
                     <div class="col-12">
                         <div class="alert alert-danger border mb-0">
                             <h6 class="fw-bold mb-2"><i class="bx bx-error-circle"></i> Booking Cancelled</h6>
-                            <p class="mb-1 small"><strong>Cancelled On:</strong> {{ $booking->cancelled_at->format('d M Y, H:i A') }}</p>
+                            <p class="mb-1 small"><strong>Cancelled On:</strong> {{ $booking->cancelled_at->format('d M Y, h:i A') }}</p>
                             <p class="mb-1 small"><strong>Cancelled By:</strong>
                                 @if($booking->cancelled_by_type)
                                     <span class="badge {{ $booking->cancelled_by_type === 'admin' ? 'bg-danger' : ($booking->cancelled_by_type === 'employee' ? 'bg-warning' : 'bg-secondary') }}">
@@ -166,16 +166,16 @@
                                                 <i class="{{ \App\Enums\GenderEnum::getGenderIcon($seat->gender?->value ?? $seat->gender) }}"></i>
                                                 {{ \App\Enums\GenderEnum::getGenderName($seat->gender?->value ?? $seat->gender) }}
                                             </td>
-                                            <td>{{ number_format($seat->fare, 2) }}</td>
-                                            <td>{{ number_format($seat->tax_amount, 2) }}</td>
-                                            <td><strong>{{ number_format($seat->final_amount, 2) }}</strong></td>
+                                            <td>{{ number_format($seat->fare, 0) }}</td>
+                                            <td>{{ number_format($seat->tax_amount, 0) }}</td>
+                                            <td><strong>{{ number_format($seat->final_amount, 0) }}</strong></td>
                                             <td>
                                                 @if($seat->cancelled_at)
                                                     <span class="badge bg-danger">
                                                         <i class="fas fa-times-circle"></i> Cancelled
                                                     </span>
                                                     <br>
-                                                    <small class="text-muted">{{ $seat->cancelled_at->format('d M Y, H:i') }}</small>
+                                                    <small class="text-muted">{{ $seat->cancelled_at->format('d M Y, h:i') }}</small>
                                                     @if($seat->cancellation_reason)
                                                         <br>
                                                         <small class="text-danger">
@@ -434,7 +434,7 @@
                             {{-- Return Amount display --}}
                             <div id="returnAmountDiv" style="display: {{ ($booking->payment_received_from_customer ?? 0) > $booking->final_amount ? 'block' : 'none' }};">
                                 <div class="alert alert-success mb-0 border">
-                                    <strong>Return: PKR <span id="returnAmountDisplay">{{ number_format(max(0, ($booking->payment_received_from_customer ?? 0) - $booking->final_amount), 2) }}</span></strong>
+                                    <strong>Return: PKR <span id="returnAmountDisplay">{{ number_format(max(0, ($booking->payment_received_from_customer ?? 0) - $booking->final_amount), 0) }}</span></strong>
                                 </div>
                             </div>
                         @else
@@ -455,14 +455,14 @@
                         <div class="mb-2">
                             <div class="d-flex justify-content-between">
                                 <span>Total Fare:</span>
-                                <strong>PKR {{ number_format($booking->total_fare, 2) }}</strong>
+                                <strong>PKR {{ number_format($booking->total_fare, 0) }}</strong>
                             </div>
                         </div>
                         @if($booking->discount_amount > 0)
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between">
                                     <span>Discount:</span>
-                                    <strong class="text-danger">-PKR {{ number_format($booking->discount_amount, 2) }}</strong>
+                                    <strong class="text-danger">-PKR {{ number_format($booking->discount_amount, 0) }}</strong>
                                 </div>
                             </div>
                         @endif
@@ -470,14 +470,14 @@
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between">
                                     <span>Tax/Service:</span>
-                                    <strong class="text-success">+PKR {{ number_format($booking->tax_amount, 2) }}</strong>
+                                    <strong class="text-success">+PKR {{ number_format($booking->tax_amount, 0) }}</strong>
                                 </div>
                             </div>
                         @endif
                         <hr class="my-3">
                         <div class="d-flex justify-content-between mb-3">
                             <strong class="fs-5">Final Amount:</strong>
-                            <strong class="text-success fs-5">PKR {{ number_format($booking->final_amount, 2) }}</strong>
+                            <strong class="text-success fs-5">PKR {{ number_format($booking->final_amount, 0) }}</strong>
                         </div>
 
                         @if($booking->channel === 'counter')
@@ -485,13 +485,13 @@
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between">
                                     <span>Amount Received:</span>
-                                    <strong>PKR {{ number_format($booking->payment_received_from_customer ?? 0, 2) }}</strong>
+                                    <strong>PKR {{ number_format($booking->payment_received_from_customer ?? 0, 0) }}</strong>
                                 </div>
                             </div>
                             @if($booking->return_after_deduction_from_customer > 0)
                                 <div class="d-flex justify-content-between">
                                     <span>Return:</span>
-                                    <strong class="text-success">PKR {{ number_format($booking->return_after_deduction_from_customer, 2) }}</strong>
+                                    <strong class="text-success">PKR {{ number_format($booking->return_after_deduction_from_customer, 0) }}</strong>
                                 </div>
                             @endif
                         @endif
