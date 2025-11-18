@@ -2001,4 +2001,190 @@ class BookingController extends Controller
 
         return $pdf->download($filename);
     }
+
+    public function printMotorwayVoucher(Trip $trip): View
+    {
+        $this->authorize('view bookings');
+
+        // Load trip relationships
+        $trip->load([
+            'route',
+            'bus',
+            'stops.terminal',
+            'expenses.fromTerminal',
+            'expenses.toTerminal',
+        ]);
+
+        // Get confirmed bookings for this trip
+        $bookings = Booking::where('trip_id', $trip->id)
+            ->where('status', 'confirmed')
+            ->with([
+                'seats' => function ($query) {
+                    $query->whereNull('cancelled_at');
+                },
+                'passengers',
+                'fromStop.terminal',
+                'toStop.terminal',
+                'bookedByUser',
+            ])
+            ->get();
+
+        // Collect all passengers with their seat and booking info
+        $passengers = [];
+        foreach ($bookings as $booking) {
+            foreach ($booking->seats as $seat) {
+                $passenger = $booking->passengers->first();
+                if ($passenger) {
+                    $passengers[] = [
+                        'seat_number' => $seat->seat_number,
+                        'name' => $passenger->name,
+                        'cnic' => $passenger->cnic ?? 'N/A',
+                        'phone' => $passenger->phone ?? 'N/A',
+                        'via' => $this->formatPaymentVia($booking->payment_method, $booking->channel),
+                        'agent_name' => $booking->bookedByUser?->name ?? 'N/A',
+                        'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
+                        'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
+                        'fare' => $seat->final_amount ?? $booking->final_amount,
+                        'payment_method' => $booking->payment_method,
+                        'channel' => $booking->channel,
+                    ];
+                }
+            }
+        }
+
+        // Get from and to stops
+        $fromStop = $trip->stops->first();
+        $toStop = $trip->stops->last();
+
+        // Calculate totals
+        $totalPassengers = count($passengers);
+        $totalFare = collect($passengers)->sum('fare');
+
+        // Calculate expenses
+        $expenses = $trip->expenses;
+        $expenseTypeTotals = [];
+        foreach ($expenses as $expense) {
+            $type = $expense->expense_type_label ?? $expense->expense_type ?? 'Other';
+            if (!isset($expenseTypeTotals[$type])) {
+                $expenseTypeTotals[$type] = 0;
+            }
+            $expenseTypeTotals[$type] += $expense->amount;
+        }
+
+        $addaExpense = round($expenseTypeTotals['Commission'] ?? 0);
+        $hakriExpense = round($expenseTypeTotals['Ghakri'] ?? 0);
+        $otherExpense = round(collect($expenseTypeTotals)
+            ->filter(fn ($val, $key) => $key !== 'Commission' && $key !== 'Ghakri')
+            ->sum());
+        $totalExpenses = $addaExpense + $hakriExpense + $otherExpense;
+
+        // Calculate online and cash payments
+        $onlineTotal = collect($passengers)
+            ->filter(fn ($p) => $p['channel'] === 'online' || in_array($p['payment_method'], ['mobile_wallet', 'bank_transfer', 'card']))
+            ->sum('fare');
+
+        $cashTotal = collect($passengers)
+            ->filter(fn ($p) => $p['payment_method'] === 'cash' && $p['channel'] !== 'online')
+            ->sum('fare');
+
+        $balance = round($cashTotal) - $totalExpenses;
+
+        // Group by agent and destination for footer table
+        $agentDestinationMap = [];
+        $agents = collect();
+        foreach ($passengers as $passenger) {
+            $agent = $passenger['agent_name'];
+            $dest = $passenger['to_code'];
+            $agents->push($agent);
+            if (!isset($agentDestinationMap[$dest])) {
+                $agentDestinationMap[$dest] = [];
+            }
+            if (!isset($agentDestinationMap[$dest][$agent])) {
+                $agentDestinationMap[$dest][$agent] = 0;
+            }
+            $agentDestinationMap[$dest][$agent] += $passenger['fare'];
+        }
+        $sortedAgents = $agents->unique()->filter(fn ($a) => $a !== 'N/A')->sort()->values();
+        $destinations = collect($agentDestinationMap)->keys()->sort();
+
+        // Extract host from trip notes
+        $hostInfo = null;
+        if ($trip->notes) {
+            if (preg_match('/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i', $trip->notes, $matches)) {
+                $hostInfo = [
+                    'name' => trim($matches[1] ?? 'N/A'),
+                    'phone' => trim($matches[2] ?? '') ?: null,
+                ];
+            }
+        }
+
+        // Format dates and times
+        $departureDateTime = $fromStop?->departure_at ?? $trip->departure_datetime;
+        $departureDate = $departureDateTime ? $departureDateTime->format('Y-m-d') : 'N/A';
+        $departureTime = $departureDateTime ? $departureDateTime->format('h:i A') : 'N/A';
+        $arrivalDateTime = $toStop?->arrival_at ?? $trip->estimated_arrival_datetime;
+        $arrivalTime = $arrivalDateTime ? $arrivalDateTime->format('h:i A') : 'N/A';
+
+        // Get company info
+        $settings = GeneralSetting::first();
+        $companyName = $settings?->company_name ?? 'Bashir Sons Group';
+        $companyInitials = collect(explode(' ', $companyName))
+            ->map(fn ($word) => strtoupper($word[0] ?? ''))
+            ->join('. ') ?: 'B. S';
+        $companyTagline = $settings?->tagline ?? 'Daewoo Bus Service';
+
+        // Route codes
+        $routeCode = ($fromStop?->terminal?->code ?? '') . '-' . ($toStop?->terminal?->code ?? '');
+        $fromCode = $fromStop?->terminal?->code ?? '';
+        $toCode = $toStop?->terminal?->code ?? '';
+
+        return view('admin.bookings.console.motorway-police-voucher', [
+            'companyInitials' => $companyInitials,
+            'companyTagline' => $companyTagline,
+            'routeCode' => $routeCode,
+            'departureTime' => $departureTime,
+            'departureDate' => $departureDate,
+            'vehicleNo' => $trip->bus?->registration_number ?? 'N/A',
+            'arrivalTime' => $arrivalTime,
+            'voucherNo' => number_format($trip->id, 0, '.', ','),
+            'driverName' => $trip->driver_name ?? 'N/A',
+            'hostName' => $hostInfo['name'] ?? 'N/A',
+            'passengers' => $passengers,
+            'totalPassengers' => $totalPassengers,
+            'totalFare' => $totalFare,
+            'currentUserName' => Auth::user()->name ?? 'N/A',
+            'addaExpense' => $addaExpense,
+            'hakriExpense' => $hakriExpense,
+            'otherExpense' => $otherExpense,
+            'totalExpenses' => $totalExpenses,
+            'onlineTotal' => $onlineTotal,
+            'balance' => $balance,
+            'sortedAgents' => $sortedAgents,
+            'destinations' => $destinations,
+            'agentDestinationMap' => $agentDestinationMap,
+            'fromCode' => $fromCode,
+            'toCode' => $toCode,
+        ]);
+    }
+
+    private function formatPaymentVia(?string $method, ?string $channel): string
+    {
+        if ($channel === 'online') {
+            return 'O';
+        }
+        if ($method === 'cash') {
+            return 'C';
+        }
+        if ($method === 'card') {
+            return 'C';
+        }
+        if ($method === 'mobile_wallet') {
+            return 'M';
+        }
+        if ($method === 'bank_transfer') {
+            return 'B';
+        }
+
+        return 'C';
+    }
 }

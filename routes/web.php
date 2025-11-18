@@ -259,6 +259,7 @@ Route::middleware(['auth', CheckUserStatus::class])->group(function () {
         Route::put('/bookings/{booking}', [BookingController::class, 'update'])->can('edit bookings')->name('bookings.update');
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->can('delete bookings')->name('bookings.destroy');
         Route::get('/bookings/{booking}/print/{type?}/{size?}', [BookingController::class, 'printTicket'])->can('view bookings')->name('bookings.print');
+        Route::get('/trips/{trip}/motorway-voucher', [BookingController::class, 'printMotorwayVoucher'])->can('view bookings')->name('trips.motorway-voucher');
         Route::post('/bookings/{booking}/seats/{seat}/cancel', [BookingController::class, 'cancelSeat'])->can('edit bookings')->name('bookings.seats.cancel');
         Route::post('/bookings/{booking}/seats/{seat}/restore', [BookingController::class, 'restoreSeat'])->can('edit bookings')->name('bookings.seats.restore');
 
