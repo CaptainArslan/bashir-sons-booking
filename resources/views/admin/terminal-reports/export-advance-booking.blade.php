@@ -1,285 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Advance Booking Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Booking Report</title>
+
     <style>
-        @media print {
-            @page {
-                margin: 0.5cm;
-                size: A4 landscape;
-            }
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* Base Styles - Font Size 14px */
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 10px;
-            color: #000;
-            line-height: 1.3;
-            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            margin: 20px auto;
             padding: 10px;
-            background: #fff;
-        }
-        .report-title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            padding: 5px 0;
+            background-color: #fff;
             color: #000;
-            text-transform: uppercase;
-            border-bottom: 2px solid #000;
         }
-        .header-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 8px;
+
+        strong {
+            font-weight: 900;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        /* --- Header Section (B. S / Daewoo) --- */
+        .report-header {
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 5px;
+        }
+
+        .report-header .bs {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .report-header .title {
+            font-size: 30px;
+            font-weight: 900;
+        }
+
+        .page-num {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 10px;
+        }
+
+        /* --- Filter and Date Row --- */
+        .filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
             border-bottom: 1px solid #000;
             padding-bottom: 5px;
         }
-        .header-center {
-            text-align: center;
-        }
-        .service-name {
-            font-size: 16px;
+
+        .filter-row .adv-booking {
+            color: green;
             font-weight: bold;
-            margin-bottom: 5px;
-            color: #1a1a1a;
-            text-transform: uppercase;
+            font-size: 18px;
         }
-        .report-type {
+
+        .filter-row .terminal-info {
+            display: flex;
+            gap: 25px;
             font-size: 14px;
-            color: #000;
             font-weight: bold;
-            margin-bottom: 5px;
         }
-        .date-range {
-            font-size: 11px;
-            margin-bottom: 5px;
+
+        .filter-row span {
+            font-weight: normal;
         }
-        table {
+
+        /* --- Main Table Structure (Maximum Spacing) --- */
+        .booking-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
-            margin-bottom: 8px;
-            font-size: 8px;
+            font-size: 14px;
         }
-        th, td {
-            border: 0.5px solid #333;
-            padding: 3px 2px;
+
+        .booking-table th,
+        .booking-table td {
+            /* MAXIMUM HORIZONTAL PADDING applied here */
+            padding: 12px 20px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        /* Table Headers */
+        .booking-table thead th {
+            font-weight: bold;
+            border-bottom: 2px solid #000;
+        }
+
+        /* Column Widths adjusted for maximum separation */
+        .booking-table th:nth-child(1) {
+            width: 8%;
+        }
+
+        /* Time */
+        .booking-table th:nth-child(2) {
+            width: 5%;
+        }
+
+        /* Seat */
+        .booking-table th:nth-child(3) {
+            width: 14%;
+        }
+
+        /* Name */
+        .booking-table th:nth-child(4) {
+            width: 23%;
+        }
+
+        /* CNIC (Widest) */
+        .booking-table th:nth-child(5) {
+            width: 18%;
+        }
+
+        /* Cell */
+        .booking-table th:nth-child(6) {
+            width: 10%;
+        }
+
+        /* By */
+        .booking-table th:nth-child(7) {
+            width: 8%;
+        }
+
+        /* To */
+        .booking-table th:nth-child(8) {
+            width: 14%;
+        }
+
+        /* Fare */
+
+        /* Alignment of specific header columns */
+        .booking-table th:nth-child(4),
+        /* CNIC */
+        .booking-table th:nth-child(5),
+        /* Cell */
+        .booking-table th:last-child {
+            /* Fare */
+            text-align: right;
+        }
+
+        /* --- Date Separator (RIGHT ALIGNED) --- */
+        .date-separator {
+            text-align: right;
+            font-weight: 900;
+            color: maroon;
+            padding: 10px 20px 10px 0;
+            border-bottom: 1px solid #000;
+        }
+        
+        /* --- Time Category Header (Past/Present/Future) --- */
+        .time-category-header {
+            text-align: left;
+            font-weight: 900;
+            color: #000;
+            padding: 10px 0 10px 20px;
+            border-top: 2px solid #000;
+            border-bottom: 1px solid #000;
+            background-color: #f0f0f0;
+        }
+
+        /* --- Route Header (ALIGNED LEFT) --- */
+        .route-header-cell {
+            /* Padding-left ensures text starts far left */
+            padding: 10px 0 10px 20px !important;
+            /* Adjusted padding-left */
+            font-weight: bold;
+            border-top: 2px solid #000;
+            border-bottom: 1px solid #000;
             text-align: left;
         }
-        th {
-            background-color: #e0e0e0;
-            color: #000;
-            font-weight: bold;
-            text-align: center;
-            font-size: 7px;
-            padding: 4px 2px;
-            border: 1px solid #000;
+
+        /* --- Data Rows --- */
+        .booking-table tbody tr {
+            border-bottom: 1px solid #000;
         }
-        tbody td {
-            font-size: 7px;
-            padding: 3px 2px;
+
+        .booking-table tbody tr:last-child {
+            border-bottom: none;
         }
-        tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        .date-header {
-            background-color: #e0e0e0;
-            color: #000;
-            font-weight: bold;
-            text-align: center;
-            padding: 5px;
-            font-size: 11px;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            border: 1px solid #000;
-        }
-        .route-time-header {
-            background-color: #e0e0e0;
-            font-weight: bold;
-            padding: 4px;
-            font-size: 9px;
-            margin-top: 5px;
-            margin-bottom: 2px;
-        }
-        .subtotal-row {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        .subtotal-row td {
-            text-align: right;
-            padding: 4px;
-        }
-        .daily-total-row {
-            background-color: #e0e0e0;
-            color: #000;
-            font-weight: bold;
-            text-align: right;
-            padding: 5px;
-            margin-top: 5px;
-            margin-bottom: 2px;
-            font-size: 10px;
-            border: 1px solid #000;
-        }
-        .daily-total-row-duplicate {
-            background-color: #fff;
-            color: #000;
-            font-weight: bold;
-            text-align: right;
-            padding: 5px;
-            margin-bottom: 10px;
-            font-size: 10px;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .text-right {
+
+        /* Data Alignment */
+        .booking-table td:nth-child(4),
+        /* CNIC */
+        .booking-table td:nth-child(5),
+        /* Cell */
+        .booking-table td:last-child {
+            /* Fare */
             text-align: right;
         }
-        .overall-total {
-            margin-top: 15px;
-            text-align: center;
+
+        /* --- Route Footer Summary (Total Pax / Fare) --- */
+        .route-footer {
+            border-top: 1px solid #000;
             font-weight: bold;
-            font-size: 12px;
-            padding: 8px;
-            background-color: #e0e0e0;
-            border: 1px solid #000;
+            font-size: 14px;
+        }
+
+        .route-footer td {
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+
+        .route-footer .total-label {
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        .route-footer .total-pax-fare {
+            font-weight: 900;
+            text-align: right;
+        }
+
+        /* --- Next Route Header --- */
+        .next-route-header {
+            padding: 15px 0 10px 20px !important;
+            /* Adjusted padding-left */
+            font-weight: bold;
+            border-top: 2px solid #000;
+            text-align: left;
         }
     </style>
 </head>
+
 <body>
-    <div class="report-title">{{ $company_name ?? 'Bashir Sons Travel' }}</div>
-    
-    <div class="header-section">
-        <div class="header-center">
-            <div class="report-type">Terminal Report</div>
-            <div class="date-range">From {{ $start_date->format('Y-m-d') }} To {{ $end_date->format('Y-m-d') }}</div>
+    <div class="page-num">Page 1</div>
+    <div class="report-container">
+
+        <div class="report-header">
+            <div class="bs">{{ $company_initials }}</div>
+            <div class="title">{{ $company_tagline }}</div>
         </div>
-    </div>
 
-    @php
-        $overallTotalPax = 0;
-        $overallTotalFare = 0;
-    @endphp
+        <div class="filter-row">
+            <div class="terminal-info">
+                <span>Terminal <span style="font-size: 18px;">{{ $terminal->code }}</span></span>
+                <span>From <span>{{ $start_date->format('Y-m-d') }}</span></span>
+                <span>To <span>{{ $end_date->format('Y-m-d') }}</span></span>
+            </div>
+        </div>
 
-    @foreach($grouped_bookings as $date => $routeGroups)
-        @php
-            $dateFormatted = Carbon\Carbon::parse($date)->format('d-m-Y');
-            $dailyTotalPax = 0;
-            $dailyTotalFare = 0;
-        @endphp
+        <table class="booking-table">
+            <thead>
+                <tr>
+                    <th style="font-weight: 900;">Time</th>
+                    <th>Seat</th>
+                    <th>Name</th>
+                    <th>CNIC</th>
+                    <th>Cell</th>
+                    <th>By</th>
+                    <th>To</th>
+                    <th>Fare</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $isFirstCategory = true;
+                    $categoryLabels = [
+                        'past' => 'Past Bookings',
+                        'present' => 'Today\'s Bookings',
+                        'future' => 'Future Bookings'
+                    ];
+                @endphp
 
-        <div class="date-header">{{ $dateFormatted }}</div>
+                @foreach($grouped_seats as $timeCategory => $dateGroups)
+                    @if(!$isFirstCategory)
+                        <tr>
+                            <td colspan="8" style="padding: 20px 0;"></td>
+                        </tr>
+                    @endif
 
-        @foreach($routeGroups as $routeTime => $bookingsInGroup)
-            @php
-                $groupTotalPax = 0;
-                $groupTotalFare = 0;
-            @endphp
-
-            <div class="route-time-header">{{ $routeTime }}</div>
-            
-            <table>
-                <thead>
                     <tr>
-                        <th style="width: 8%;">Time</th>
-                        <th style="width: 6%;">Terminal</th>
-                        <th style="width: 6%;">GOJ</th>
-                        <th style="width: 5%;">Seat</th>
-                        <th style="width: 15%;">Name</th>
-                        <th style="width: 12%;">CNIC</th>
-                        <th style="width: 10%;">Cell</th>
-                        <th style="width: 10%;">By</th>
-                        <th style="width: 6%;">To</th>
-                        <th style="width: 8%;">Fare</th>
+                        <td colspan="8" class="time-category-header">{{ $categoryLabels[$timeCategory] ?? ucfirst($timeCategory) }}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach($bookingsInGroup as $booking)
+
+                    @php
+                        $isFirstDate = true;
+                    @endphp
+
+                    @foreach($dateGroups as $date => $routeGroups)
+                        @if(!$isFirstDate)
+                            <tr>
+                                <td colspan="8" style="padding: 10px 0;"></td>
+                            </tr>
+                        @endif
+
+                        <tr>
+                            <td colspan="8" class="date-separator">{{ Carbon\Carbon::parse($date)->format('d-m-Y') }}</td>
+                        </tr>
+
                         @php
-                            $activeSeats = $booking->seats->whereNull('cancelled_at');
-                            $passengers = $booking->passengers;
-                            $seatCount = $activeSeats->count();
-                            $passengerCount = $passengers->count();
-                            $routeTimeParts = explode(' ', $routeTime);
-                            $timeOnly = isset($routeTimeParts[1]) ? $routeTimeParts[1] : '';
+                            $isFirstRoute = true;
                         @endphp
-                        @if($passengerCount > 0)
-                            @foreach($passengers as $index => $passenger)
+
+                        @foreach($routeGroups as $routeTime => $seats)
+                            @if(!$isFirstRoute)
+                                <tr>
+                                    <td colspan="8" class="next-route-header">{{ $routeTime }}</td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td colspan="8" class="route-header-cell">{{ $routeTime }}</td>
+                                </tr>
+                            @endif
+
+                            @php
+                                $groupTotalPax = 0;
+                                $groupTotalFare = 0;
+                            @endphp
+
+                            @foreach($seats as $seat)
                                 @php
-                                    $seat = $activeSeats->get($index);
                                     $groupTotalPax++;
-                                    $dailyTotalPax++;
-                                    $overallTotalPax++;
-                                    if($index === 0) {
-                                        $groupTotalFare += $booking->final_amount;
-                                        $dailyTotalFare += $booking->final_amount;
-                                        $overallTotalFare += $booking->final_amount;
-                                    }
+                                    $groupTotalFare += $seat['fare'];
                                 @endphp
                                 <tr>
-                                    <td class="text-center">{{ $timeOnly }}</td>
-                                    <td class="text-center">{{ $booking->fromStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $booking->fromStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $seat->seat_number ?? '-' }}</td>
-                                    <td>{{ $passenger->name ?? 'N/A' }}</td>
-                                    <td>{{ $passenger->cnic ?? '-' }}</td>
-                                    <td>{{ $passenger->phone ?? '-' }}</td>
-                                    <td>{{ $booking->bookedByUser->name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $booking->toStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-right">{{ number_format($booking->final_amount, 0) }}</td>
+                                    <td></td>
+                                    <td>{{ $seat['seat_number'] }}</td>
+                                    <td>{{ $seat['passenger_name'] }}@if($seat['is_advance']) <span style="color: green; font-weight: bold;">(Adv)</span>@endif</td>
+                                    <td>{{ $seat['passenger_cnic'] }}</td>
+                                    <td>{{ $seat['passenger_phone'] }}</td>
+                                    <td>{{ $seat['booked_by'] }}</td>
+                                    <td>{{ $seat['to_terminal_code'] }}</td>
+                                    <td>{{ number_format($seat['fare'], 0) }}</td>
                                 </tr>
                             @endforeach
-                        @else
+
+                            <tr class="route-footer">
+                                <td colspan="5" style="border-bottom: none;"></td>
+                                <td colspan="2" class="total-label">Total</td>
+                                <td class="total-pax-fare"><strong>{{ $groupTotalPax }} Pax {{ number_format($groupTotalFare, 0) }}</strong></td>
+                            </tr>
+
                             @php
-                                $groupTotalPax += $seatCount;
-                                $groupTotalFare += $booking->final_amount;
-                                $dailyTotalPax += $seatCount;
-                                $dailyTotalFare += $booking->final_amount;
-                                $overallTotalPax += $seatCount;
-                                $overallTotalFare += $booking->final_amount;
+                                $isFirstRoute = false;
                             @endphp
-                            @foreach($activeSeats as $seat)
-                                <tr>
-                                    <td class="text-center">{{ $timeOnly }}</td>
-                                    <td class="text-center">{{ $booking->fromStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $booking->fromStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $seat->seat_number ?? '-' }}</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>{{ $booking->bookedByUser->name ?? 'N/A' }}</td>
-                                    <td class="text-center">{{ $booking->toStop->terminal->code ?? 'N/A' }}</td>
-                                    <td class="text-right">{{ number_format($booking->final_amount, 0) }}</td>
-                                </tr>
-                            @endforeach
-                        @endif
+                        @endforeach
+
+                        @php
+                            $isFirstDate = false;
+                        @endphp
                     @endforeach
-                    <tr class="subtotal-row">
-                        <td colspan="9" class="text-right"><strong>{{ $groupTotalPax }} Pax</strong></td>
-                        <td class="text-right"><strong>{{ number_format($groupTotalFare, 0) }}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-        @endforeach
 
-        <div class="daily-total-row">
-            <strong>Total {{ $dailyTotalPax }} Pax {{ number_format($dailyTotalFare, 0) }}</strong>
-        </div>
-        <div class="daily-total-row-duplicate">
-            <strong>Total {{ $dailyTotalPax }} Pax {{ number_format($dailyTotalFare, 0) }}</strong>
-        </div>
-    @endforeach
+                    @php
+                        $isFirstCategory = false;
+                    @endphp
+                @endforeach
 
-    <div class="overall-total">
-        Overall Total: {{ $overallTotalPax }} Pax, {{ number_format($overallTotalFare, 0) }} PKR
+            </tbody>
+        </table>
+
     </div>
 </body>
+
 </html>

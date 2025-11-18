@@ -594,41 +594,102 @@ class TerminalReportController extends Controller
     {
         $filename = 'terminal-report-'.$terminal->code.'-'.$startDate->format('Y-m-d').'-to-'.$endDate->format('Y-m-d').'.pdf';
 
-        // Group bookings by date, then by trip (route + time)
-        $groupedBookings = $bookings->groupBy(function ($booking) {
-            return $booking->trip->departure_date?->format('Y-m-d') ?? $booking->created_at->format('Y-m-d');
-        })->map(function ($dateBookings) {
-            return $dateBookings->groupBy(function ($booking) {
-                $fromTerminal = $booking->fromStop->terminal ?? null;
-                $toTerminal = $booking->toStop->terminal ?? null;
+        // Prepare seat-level data for the report
+        $seatRows = [];
+        foreach ($bookings as $booking) {
+            $activeSeats = $booking->seats->whereNull('cancelled_at')->sortBy('seat_number');
+            $passengers = $booking->passengers->sortBy('id');
 
-                // Get departure time from trip's origin stop or departure_datetime
-                $departureTime = null;
-                if ($booking->trip->originStop && $booking->trip->originStop->departure_at) {
-                    $departureTime = Carbon::parse($booking->trip->originStop->departure_at);
-                } elseif ($booking->trip->departure_datetime) {
-                    $departureTime = Carbon::parse($booking->trip->departure_datetime);
+            // Get departure time from trip's origin stop or departure_datetime
+            $departureTime = null;
+            if ($booking->trip->originStop && $booking->trip->originStop->departure_at) {
+                $departureTime = Carbon::parse($booking->trip->originStop->departure_at);
+            } elseif ($booking->trip->departure_datetime) {
+                $departureTime = Carbon::parse($booking->trip->departure_datetime);
+            }
+
+            $fromTerminal = $booking->fromStop->terminal ?? null;
+            $toTerminal = $booking->toStop->terminal ?? null;
+            $routeCode = ($fromTerminal?->code ?? '').'-'.($toTerminal?->code ?? '');
+            $time = $departureTime ? $departureTime->format('h:i A') : 'N/A';
+            $date = $booking->trip->departure_date?->format('Y-m-d') ?? $booking->created_at->format('Y-m-d');
+            $dateFormatted = Carbon::parse($date)->format('d-m-Y');
+            $routeTimeKey = $routeCode.' '.$time;
+
+            foreach ($activeSeats as $index => $seat) {
+                $passenger = $passengers[$index] ?? $passengers[0] ?? null;
+
+                $seatRows[] = [
+                    'date' => $date,
+                    'date_formatted' => $dateFormatted,
+                    'route_time' => $routeTimeKey,
+                    'time' => $time,
+                    'from_terminal_code' => $fromTerminal?->code ?? 'N/A',
+                    'seat_number' => $seat->seat_number,
+                    'passenger_name' => $passenger?->name ?? '-',
+                    'passenger_cnic' => $passenger?->cnic ?? '-',
+                    'passenger_phone' => $passenger?->phone ?? '-',
+                    'booked_by' => $booking->bookedByUser?->name ?? 'N/A',
+                    'to_terminal_code' => $toTerminal?->code ?? 'N/A',
+                    'fare' => $seat->final_amount ?? 0,
+                    'is_advance' => $booking->is_advance ?? false,
+                ];
+            }
+        }
+
+        // Categorize dates and group: Date -> Past/Present/Future -> Route/Time -> Seats
+        $today = Carbon::today()->format('Y-m-d');
+
+        $groupedSeats = collect($seatRows)
+            ->groupBy(function ($seat) use ($today) {
+                $seatDate = $seat['date'];
+                if ($seatDate < $today) {
+                    return 'past';
+                } elseif ($seatDate === $today) {
+                    return 'present';
+                } else {
+                    return 'future';
                 }
-
-                $routeCode = ($fromTerminal?->code ?? '').'-'.($toTerminal?->code ?? '');
-                $time = $departureTime ? $departureTime->format('h:i A') : 'N/A';
-
-                return $routeCode.' '.$time;
+            })
+            ->map(function ($timeCategoryGroup, $timeCategory) {
+                return $timeCategoryGroup
+                    ->groupBy('date')
+                    ->map(function ($dateGroup) {
+                        return $dateGroup
+                            ->sortBy('route_time')
+                            ->groupBy('route_time')
+                            ->map(function ($routeGroup) {
+                                return $routeGroup->sortBy(function ($seat) {
+                                    return (int) $seat['seat_number'];
+                                })->values();
+                            });
+                    });
             });
-        });
+
+        // Order: past, present, future
+        $orderedGroupedSeats = collect(['past', 'present', 'future'])
+            ->filter(fn ($cat) => isset($groupedSeats[$cat]))
+            ->mapWithKeys(fn ($cat) => [$cat => $groupedSeats[$cat]])
+            ->toArray();
 
         $generalSettings = GeneralSetting::first();
         $companyName = $generalSettings?->company_name ?? 'Bashir Sons Travel';
+        $companyInitials = collect(explode(' ', $companyName))
+            ->map(fn ($word) => strtoupper($word[0] ?? ''))
+            ->join('. ') ?: 'B. S';
+        $companyTagline = $generalSettings?->tagline ?? 'Daewoo Bus Service';
 
         $data = [
             'terminal' => $terminal,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'bookings' => $bookings,
-            'grouped_bookings' => $groupedBookings,
+            'grouped_seats' => $orderedGroupedSeats,
             'expenses' => $expenses,
             'stats' => $stats,
             'company_name' => $companyName,
+            'company_initials' => $companyInitials,
+            'company_tagline' => $companyTagline,
             'generated_at' => Carbon::now()->format('d M Y, H:i'),
         ];
 
