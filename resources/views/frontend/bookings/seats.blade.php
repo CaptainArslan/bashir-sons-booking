@@ -582,12 +582,12 @@
                     const leftSeat1 = (row * 4) + 1;
                     const leftSeat2 = (row * 4) + 2;
 
-                    // Right side (2 seats) - displayed first in reverse order (4, 3)
-                    if (rightSeat2 <= totalSeats && seatMap[rightSeat2]) {
-                        rowDiv.append(createSeatButton(rightSeat2, seatMap[rightSeat2]));
+                    // Left side (2 seats) - displayed first for 12.34 pattern (1, 2)
+                    if (leftSeat1 <= totalSeats && seatMap[leftSeat1]) {
+                        rowDiv.append(createSeatButton(leftSeat1, seatMap[leftSeat1]));
                     }
-                    if (rightSeat1 <= totalSeats && seatMap[rightSeat1]) {
-                        rowDiv.append(createSeatButton(rightSeat1, seatMap[rightSeat1]));
+                    if (leftSeat2 <= totalSeats && seatMap[leftSeat2]) {
+                        rowDiv.append(createSeatButton(leftSeat2, seatMap[leftSeat2]));
                     }
 
                     // Aisle (show if there are seats on both sides or if it's not the last row)
@@ -601,12 +601,12 @@
                         rowDiv.append($('<div class="aisle"></div>'));
                     }
 
-                    // Left side (2 seats) - displayed last in reverse order (2, 1)
-                    if (leftSeat2 <= totalSeats && seatMap[leftSeat2]) {
-                        rowDiv.append(createSeatButton(leftSeat2, seatMap[leftSeat2]));
+                    // Right side (2 seats) - displayed last for 12.34 pattern (3, 4)
+                    if (rightSeat1 <= totalSeats && seatMap[rightSeat1]) {
+                        rowDiv.append(createSeatButton(rightSeat1, seatMap[rightSeat1]));
                     }
-                    if (leftSeat1 <= totalSeats && seatMap[leftSeat1]) {
-                        rowDiv.append(createSeatButton(leftSeat1, seatMap[leftSeat1]));
+                    if (rightSeat2 <= totalSeats && seatMap[rightSeat2]) {
+                        rowDiv.append(createSeatButton(rightSeat2, seatMap[rightSeat2]));
                     }
                     container.append(rowDiv);
                 }

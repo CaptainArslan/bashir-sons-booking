@@ -617,10 +617,10 @@ class BookingConsole extends Component
             return;
         }
 
-        // Get all confirmed bookings for this trip (exclude hold, cancelled, expired)
+        // Get all confirmed and hold bookings for this trip (exclude cancelled, expired)
         $bookings = Booking::query()
             ->where('trip_id', $this->tripId)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'hold'])
             ->with([
                 'passengers' => fn ($q) => $q->orderBy('id'),
                 'seats' => fn ($q) => $q->whereNull('cancelled_at')->orderBy('seat_number'),
@@ -1011,22 +1011,29 @@ class BookingConsole extends Component
                 'notes' => $this->notes,
             ];
 
-            // Set payment fields - for counter bookings use actual values, for phone bookings use 0
+            // Set payment fields and status - for counter bookings use actual values, for phone bookings use 0 and hold status
             if ($this->bookingType === 'counter') {
                 $data['payment_received_from_customer'] = $this->amountReceived ?? 0;
                 $data['return_after_deduction_from_customer'] = $this->returnAmount ?? 0;
+                // Counter bookings are confirmed by default (unless explicitly set)
+                $data['status'] = $data['status'] ?? 'confirmed';
             } else {
-                // Phone bookings don't have payment at booking time
+                // Phone bookings don't have payment at booking time and are on hold
                 $data['payment_received_from_customer'] = 0;
                 $data['return_after_deduction_from_customer'] = 0;
+                $data['status'] = 'hold'; // Explicitly set status to hold for phone bookings
+                $data['payment_status'] = 'unpaid'; // Phone bookings are unpaid until customer arrives
             }
 
             // Create booking
             $bookingService = app(BookingService::class);
             $booking = $bookingService->create($data, Auth::user());
 
-            foreach ($seatNumbers as $seat) {
-                SeatConfirmed::dispatch($this->tripId, [$seat], Auth::user());
+            // Only dispatch SeatConfirmed if booking is confirmed (not for hold status)
+            if ($booking->status === 'confirmed') {
+                foreach ($seatNumbers as $seat) {
+                    SeatConfirmed::dispatch($this->tripId, [$seat], Auth::user());
+                }
             }
 
             DB::commit();
@@ -1223,12 +1230,13 @@ class BookingConsole extends Component
 
     private function getBookedSeats(Trip $trip, TripStop $fromStop, TripStop $toStop): array
     {
-        // Use the same scope as AvailabilityService for consistency
+        // Get bookings for seat map display - include all confirmed and hold bookings
+        // (hold bookings should be visible even if expired, for display purposes)
         $bookings = Booking::with(['seats' => function ($query) {
             $query->whereNull('cancelled_at');
         }, 'passengers', 'fromStop:id,sequence', 'toStop:id,sequence'])
             ->where('trip_id', $trip->id)
-            ->activeForAvailability()
+            ->whereIn('status', ['confirmed', 'hold', 'checked_in', 'boarded'])
             ->get();
 
         $bookedSeats = [];

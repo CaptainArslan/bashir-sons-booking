@@ -88,9 +88,18 @@ class BookingService
             // Use provided reserved_until or calculate based on channel
             $reservedUntil = $data['reserved_until'] ?? null;
             if (! $reservedUntil && ($channel === 'phone' || ($channel === 'online' && $status === 'hold'))) {
-                $reservedUntil = $channel === 'phone'
-                    ? $fromTripStop->departure_at->copy()->subMinutes($reservedSeatsTimeout)
-                    : now()->addMinutes(15); // 15 minutes for online bookings
+                if ($channel === 'phone') {
+                    // For phone bookings, reserve until 60 minutes before departure
+                    if ($fromTripStop->departure_at) {
+                        $reservedUntil = $fromTripStop->departure_at->copy()->subMinutes($reservedSeatsTimeout);
+                    } else {
+                        // Fallback: if departure_at is not set, use a default timeout (60 minutes from now)
+                        $reservedUntil = now()->addMinutes(60);
+                    }
+                } else {
+                    // 15 minutes for online bookings
+                    $reservedUntil = now()->addMinutes(15);
+                }
             }
 
             // Determine if this is an advance booking
