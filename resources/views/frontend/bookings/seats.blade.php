@@ -569,34 +569,45 @@
                 container.html('');
 
                 const totalSeats = Object.keys(seatMap).length;
-                const seatsPerRow = 4; // 2-2 layout (2 seats left, aisle, 2 seats right)
+                const seatsPerRow = 4; // 2-2 layout (2 seats right, aisle, 2 seats left)
                 const rows = Math.ceil(totalSeats / seatsPerRow);
 
                 let seatNum = 1;
                 for (let row = 0; row < rows; row++) {
                     const rowDiv = $('<div class="mb-3 d-flex justify-content-center align-items-center gap-2"></div>');
 
-                    // Left side (2 seats)
-                    for (let i = 0; i < 2 && seatNum <= totalSeats; i++) {
-                        if (seatMap[seatNum]) {
-                            rowDiv.append(createSeatButton(seatNum, seatMap[seatNum]));
-                        }
-                        seatNum++;
+                    // Calculate seat numbers for this row
+                    const rightSeat1 = (row * 4) + 3;
+                    const rightSeat2 = (row * 4) + 4;
+                    const leftSeat1 = (row * 4) + 1;
+                    const leftSeat2 = (row * 4) + 2;
+
+                    // Right side (2 seats) - displayed first in reverse order (4, 3)
+                    if (rightSeat2 <= totalSeats && seatMap[rightSeat2]) {
+                        rowDiv.append(createSeatButton(rightSeat2, seatMap[rightSeat2]));
+                    }
+                    if (rightSeat1 <= totalSeats && seatMap[rightSeat1]) {
+                        rowDiv.append(createSeatButton(rightSeat1, seatMap[rightSeat1]));
                     }
 
-                    // Aisle (always show, except maybe last row if odd)
-                    if (seatNum <= totalSeats || row < rows - 1) {
+                    // Aisle (show if there are seats on both sides or if it's not the last row)
+                    const hasRightSeats = (rightSeat1 <= totalSeats && seatMap[rightSeat1]) || (rightSeat2 <= totalSeats && seatMap[rightSeat2]);
+                    const hasLeftSeats = (leftSeat1 <= totalSeats && seatMap[leftSeat1]) || (leftSeat2 <= totalSeats && seatMap[leftSeat2]);
+                    if (hasRightSeats && hasLeftSeats) {
+                        rowDiv.append($('<div class="aisle"></div>'));
+                    }
+                    // Also show aisle if it's not the last row (even if one side is empty)
+                    else if (row < rows - 1) {
                         rowDiv.append($('<div class="aisle"></div>'));
                     }
 
-                    // Right side (2 seats)
-                    for (let i = 0; i < 2 && seatNum <= totalSeats; i++) {
-                        if (seatMap[seatNum]) {
-                            rowDiv.append(createSeatButton(seatNum, seatMap[seatNum]));
-                        }
-                        seatNum++;
+                    // Left side (2 seats) - displayed last in reverse order (2, 1)
+                    if (leftSeat2 <= totalSeats && seatMap[leftSeat2]) {
+                        rowDiv.append(createSeatButton(leftSeat2, seatMap[leftSeat2]));
                     }
-
+                    if (leftSeat1 <= totalSeats && seatMap[leftSeat1]) {
+                        rowDiv.append(createSeatButton(leftSeat1, seatMap[leftSeat1]));
+                    }
                     container.append(rowDiv);
                 }
             }

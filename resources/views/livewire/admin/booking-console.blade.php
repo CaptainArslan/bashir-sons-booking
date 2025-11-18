@@ -151,16 +151,16 @@
                                         // Use seatCount from bus (if assigned) or calculate from seatMap
                                         $totalSeats =
                                             $seatCount ?? (count($seatMap) > 0 ? max(array_keys($seatMap)) : 44);
-                                        // Calculate number of full rows (4 seats per row: 2 left + 2 right)
+                                        // Calculate number of full rows (4 seats per row: 2 right + 2 left)
                                         $seatsPerRow = 4;
                                         $fullRows = floor(($totalSeats - 1) / $seatsPerRow);
                                         $lastRowSeats = $totalSeats - $fullRows * $seatsPerRow;
                                     @endphp
                                     @for ($row = 1; $row <= $fullRows; $row++)
                                         <div class="seat-row-container">
-                                            <!-- Left Pair -->
-                                            <div class="seat-pair-left">
-                                                @for ($seat = ($row - 1) * 4 + 1; $seat <= ($row - 1) * 4 + 2; $seat++)
+                                            <!-- Right Pair -->
+                                            <div class="seat-pair-right">
+                                                @for ($seat = ($row - 1) * 4 + 4; $seat >= ($row - 1) * 4 + 3; $seat--)
                                                     @if ($seat <= $totalSeats)
                                                         @php
                                                             $seatData = $seatMap[$seat] ?? [
@@ -217,9 +217,9 @@ seat-available
                                             <!-- Aisle -->
                                             <div class="seat-aisle">{{ $row }}</div>
 
-                                            <!-- Right Pair -->
-                                            <div class="seat-pair-right">
-                                                @for ($seat = ($row - 1) * 4 + 3; $seat <= ($row - 1) * 4 + 4; $seat++)
+                                            <!-- Left Pair -->
+                                            <div class="seat-pair-left">
+                                                @for ($seat = ($row - 1) * 4 + 2; $seat >= ($row - 1) * 4 + 1; $seat--)
                                                     @if ($seat <= $totalSeats)
                                                         @php
                                                             $seatData = $seatMap[$seat] ?? [
@@ -328,10 +328,11 @@ seat-available
                                         @else
                                             {{-- Exactly 4 seats: display as regular row with aisle --}}
                                             <div class="seat-row-container">
-                                                <!-- Left Pair -->
-                                                <div class="seat-pair-left">
-                                                    @for ($seat = $fullRows * 4 + 1; $seat <= $fullRows * 4 + 2; $seat++)
-                                                        @php
+                                                <!-- Right Pair -->
+                                                <div class="seat-pair-right">
+                                                    @for ($seat = $totalSeats; $seat >= $fullRows * 4 + 3; $seat--)
+                                                        @if ($seat <= $totalSeats)
+                                                            @php
                                                             $seatData = $seatMap[$seat] ?? [
                                                                 'number' => $seat,
                                                                 'status' => 'available',
@@ -379,15 +380,16 @@ seat-available
                                                                 </span>
                                                             @endif
                                                         </button>
+                                                        @endif
                                                     @endfor
                                                 </div>
 
                                                 <!-- Aisle -->
                                                 <div class="seat-aisle">{{ $fullRows + 1 }}</div>
 
-                                                <!-- Right Pair -->
-                                                <div class="seat-pair-right">
-                                                    @for ($seat = $fullRows * 4 + 3; $seat <= $totalSeats; $seat++)
+                                                <!-- Left Pair -->
+                                                <div class="seat-pair-left">
+                                                    @for ($seat = $fullRows * 4 + 2; $seat >= $fullRows * 4 + 1; $seat--)
                                                         @php
                                                             $seatData = $seatMap[$seat] ?? [
                                                                 'number' => $seat,
