@@ -917,15 +917,24 @@ seat-available
 
                             <!-- Confirm Button -->
                             @php
-                                // Check if payment is complete for cash payments
+                                // Payment validation only applies to counter bookings with cash payment
                                 $amountReceivedValue = (float) ($amountReceived ?? 0);
                                 $finalAmountValue = (float) ($finalAmount ?? 0);
+                                $isCounterBooking = $bookingType === 'counter';
+                                $isPhoneBooking = $bookingType === 'phone';
                                 $isCashPayment = $paymentMethod === 'cash';
                                 $isPaymentComplete = $amountReceivedValue >= $finalAmountValue;
-                                $canConfirmBooking = !$isCashPayment || ($isCashPayment && $isPaymentComplete && $finalAmountValue > 0);
+                                
+                                // Disable only for counter + cash + incomplete payment
+                                // Enable for phone bookings (always)
+                                // Enable for counter bookings with non-cash payment
+                                // Enable for counter + cash if payment is complete
+                                $canConfirmBooking = $isPhoneBooking || 
+                                                    ($isCounterBooking && !$isCashPayment) || 
+                                                    ($isCounterBooking && $isCashPayment && $isPaymentComplete && $finalAmountValue > 0);
                             @endphp
                             
-                            @if (!$canConfirmBooking && $isCashPayment && $finalAmountValue > 0)
+                            @if (!$canConfirmBooking && $isCounterBooking && $isCashPayment && $finalAmountValue > 0)
                                 <div class="alert alert-warning mb-2 p-2 small">
                                     <i class="fas fa-exclamation-triangle"></i> 
                                     <strong>Payment Incomplete:</strong> Amount received (PKR {{ number_format($amountReceivedValue, 2) }}) 
@@ -938,7 +947,7 @@ seat-available
                                 wire:click="confirmBooking"
                                 wire:loading.attr="disabled"
                                 @if (!$canConfirmBooking) disabled @endif
-                                @if (!$canConfirmBooking && $isCashPayment) title="Payment incomplete - Cannot confirm booking" @endif>
+                                @if (!$canConfirmBooking && $isCounterBooking && $isCashPayment) title="Payment incomplete - Cannot confirm booking" @endif>
                                 <span wire:loading.remove>
                                     <i class="fas fa-check-circle"></i> Confirm Booking
                                 </span>
