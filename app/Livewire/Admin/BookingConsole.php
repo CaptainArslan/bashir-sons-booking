@@ -689,6 +689,8 @@ class BookingConsole extends Component
                         'booking_number' => $booking->booking_number,
                         'channel' => $booking->channel,
                         'final_amount' => $seatAmount, // Per-seat amount
+                        'booking_final_amount' => $booking->final_amount ?? 0, // Total booking amount
+                        'payment_received_from_customer' => $booking->payment_received_from_customer ?? 0, // Amount received
                         'agent_name' => $booking->bookedByUser?->name ?? 'N/A', // Agent who booked
                     ];
 
@@ -1051,6 +1053,7 @@ class BookingConsole extends Component
                 'final_amount' => $this->finalAmount,
                 'payment_method' => $booking->payment_method ?? 'none',
                 'payment_status' => $booking->payment_status,
+                'payment_received_from_customer' => $booking->payment_received_from_customer ?? 0,
                 'channel' => $booking->channel,
                 'status' => $booking->status,
             ];

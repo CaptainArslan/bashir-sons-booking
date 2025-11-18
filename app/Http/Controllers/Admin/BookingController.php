@@ -272,9 +272,20 @@ class BookingController extends Controller
                 }
 
                 if (auth()->user()->can('view bookings')) {
-                    $actions .= '<a href="'.route('admin.bookings.print', $booking->id).'" target="_blank" class="btn btn-sm btn-info" title="Print Ticket">
-                        <i class="bx bx-printer"></i>
-                    </a>';
+                    // Check if payment is complete before allowing print
+                    $paymentReceived = $booking->payment_received_from_customer ?? 0;
+                    $finalAmount = $booking->final_amount ?? 0;
+                    $isPaymentComplete = $paymentReceived >= $finalAmount;
+                    
+                    if ($isPaymentComplete) {
+                        $actions .= '<a href="'.route('admin.bookings.print', $booking->id).'" target="_blank" class="btn btn-sm btn-info" title="Print Ticket">
+                            <i class="bx bx-printer"></i>
+                        </a>';
+                    } else {
+                        $actions .= '<button type="button" class="btn btn-sm btn-info" disabled title="Payment incomplete - Cannot print ticket">
+                            <i class="bx bx-printer"></i>
+                        </button>';
+                    }
                 }
 
                 if (auth()->user()->can('edit bookings')) {

@@ -71,7 +71,7 @@
                 width: 320px;
                 background: #ffffff;
                 border: 1px solid #ccc;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
                 margin-bottom: 20px;
             }
         }
@@ -87,7 +87,7 @@
             width: 320px;
             background: #ffffff;
             border: 1px solid #ccc;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
             margin-bottom: 20px;
         }
 
@@ -220,14 +220,14 @@
             cursor: pointer;
             font-size: 14px;
             z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            /* box-shadow: 0 2px 8px rgba(0,0,0,0.2); */
             transition: all 0.3s;
         }
 
         .print-btn:hover {
             background: #0056b3;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            /* box-shadow: 0 4px 12px rgba(0,0,0,0.3); */
         }
     </style>
 </head>

@@ -827,7 +827,7 @@ seat-available
                                                 </label>
                                                 <input type="number"
                                                     class="form-control form-control-sm fw-bold @error('amountReceived') is-invalid border-danger @enderror"
-                                                    wire:model.blur="amountReceived" wire:loading.attr="disabled"
+                                                    wire:model.live.debounce.500ms="amountReceived" wire:loading.attr="disabled"
                                                     id="amountReceived" min="0.01" step="0.01"
                                                     placeholder="0.00" required>
                                                 @error('amountReceived')
@@ -916,8 +916,29 @@ seat-available
                             </div>
 
                             <!-- Confirm Button -->
-                            <button class="btn btn-success w-100 fw-bold py-2 small" wire:click="confirmBooking"
-                                wire:loading.attr="disabled">
+                            @php
+                                // Check if payment is complete for cash payments
+                                $amountReceivedValue = (float) ($amountReceived ?? 0);
+                                $finalAmountValue = (float) ($finalAmount ?? 0);
+                                $isCashPayment = $paymentMethod === 'cash';
+                                $isPaymentComplete = $amountReceivedValue >= $finalAmountValue;
+                                $canConfirmBooking = !$isCashPayment || ($isCashPayment && $isPaymentComplete && $finalAmountValue > 0);
+                            @endphp
+                            
+                            @if (!$canConfirmBooking && $isCashPayment && $finalAmountValue > 0)
+                                <div class="alert alert-warning mb-2 p-2 small">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    <strong>Payment Incomplete:</strong> Amount received (PKR {{ number_format($amountReceivedValue, 2) }}) 
+                                    is less than final amount (PKR {{ number_format($finalAmountValue, 2) }}). 
+                                    Please enter the full amount to proceed.
+                                </div>
+                            @endif
+                            
+                            <button class="btn btn-success w-100 fw-bold py-2 small" 
+                                wire:click="confirmBooking"
+                                wire:loading.attr="disabled"
+                                @if (!$canConfirmBooking) disabled @endif
+                                @if (!$canConfirmBooking && $isCashPayment) title="Payment incomplete - Cannot confirm booking" @endif>
                                 <span wire:loading.remove>
                                     <i class="fas fa-check-circle"></i> Confirm Booking
                                 </span>
@@ -1044,11 +1065,26 @@ seat-available
                                                                 title="Edit Booking">
                                                                 <i class="bx bx-edit"></i>
                                                             </a>
-                                                            @if (($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone')
+                                                            @php
+                                                                $paymentReceived = $passenger['payment_received_from_customer'] ?? 0;
+                                                                $bookingFinalAmount = $passenger['booking_final_amount'] ?? $passenger['final_amount'] ?? 0;
+                                                                $isPaymentComplete = $paymentReceived >= $bookingFinalAmount;
+                                                                $canPrint = ($passenger['payment_status'] ?? 'unpaid') === 'paid' 
+                                                                    && ($passenger['channel'] ?? 'counter') !== 'phone'
+                                                                    && $isPaymentComplete;
+                                                            @endphp
+                                                            @if ($canPrint)
                                                                 <button type="button"
                                                                     class="btn btn-sm btn-outline-info"
                                                                     onclick="printBothTickets({{ $passenger['booking_id'] }})"
                                                                     title="Print Ticket">
+                                                                    <i class="bx bx-printer"></i>
+                                                                </button>
+                                                            @elseif (($passenger['payment_status'] ?? 'unpaid') === 'paid' && ($passenger['channel'] ?? 'counter') !== 'phone' && !$isPaymentComplete)
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-info"
+                                                                    disabled
+                                                                    title="Payment incomplete - Cannot print ticket">
                                                                     <i class="bx bx-printer"></i>
                                                                 </button>
                                                             @endif
@@ -1542,13 +1578,24 @@ seat-available
                     @endif
                 </div>
                 <div class="modal-footer d-flex gap-2">
-                    @if (
-                        $lastBookingId &&
-                            ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' &&
-                            ($lastBookingData['channel'] ?? 'counter') !== 'phone')
+                    @php
+                        $lastPaymentReceived = $lastBookingData['payment_received_from_customer'] ?? 0;
+                        $lastFinalAmount = $lastBookingData['final_amount'] ?? 0;
+                        $lastIsPaymentComplete = $lastPaymentReceived >= $lastFinalAmount;
+                        $lastCanPrint = $lastBookingId
+                            && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid'
+                            && ($lastBookingData['channel'] ?? 'counter') !== 'phone'
+                            && $lastIsPaymentComplete;
+                    @endphp
+                    @if ($lastCanPrint)
                         <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill"
                             onclick="printBothTickets({{ $lastBookingId }})">
                             <i class="fas fa-print"></i> Print
+                        </button>
+                    @elseif ($lastBookingId && ($lastBookingData['payment_status'] ?? 'unpaid') === 'paid' && ($lastBookingData['channel'] ?? 'counter') !== 'phone' && !$lastIsPaymentComplete)
+                        <button type="button" class="btn btn-primary btn-lg fw-bold flex-fill" disabled
+                            title="Payment incomplete - Cannot print ticket">
+                            <i class="fas fa-print"></i> Print (Payment Incomplete)
                         </button>
                     @endif
                     <button type="button" class="btn btn-success btn-lg fw-bold flex-fill" data-bs-dismiss="modal">
