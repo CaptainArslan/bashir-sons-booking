@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daewoo Voucher</title>
+<title>Head Office Report</title>
 
 <style>
   body {
@@ -121,7 +121,7 @@
     border: 1px solid #000;
     padding: 5px;
     margin-top: 30px;
-    width: 500px;
+    width: 100%;
     align-self: flex-start;
 }
 .footer-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -131,31 +131,36 @@
 .total-col-header, .total-col-data { width: 15%; }
 .final-total td { border-bottom: 2px solid #000; }
 </style>
+<script>
+    window.onload = function() {
+        window.print();
+    };
+</script>
 </head>
 
 <body>
 <div>
 
-  <div class="header">B. S</div>
-  <div class="sub-header">Daewoo Bus Service</div>
+  <div class="header">{{ $companyInitials }}</div>
+  <div class="sub-header">{{ $companyTagline }}</div>
 
  <div class="info-lines">
 
   <div class="line-between">
-    <span><strong>Route:</strong> GOJ-LHR <span>5:30 AM</span></span>
-    <span><strong>Date:</strong> 2025-11-03</span>
+    <span><strong>Route:</strong> {{ $routeCode }} <span>{{ $departureTime }}</span></span>
+    <span><strong>Date:</strong> {{ $departureDate }}</span>
   </div>
 
   <div class="line-multi">
-    <span><strong>Vehicle No:</strong> 5137 CAB 20</span>
-    <span><strong>Arrival Time:</strong> 08:00 AM</span>
-    <span><strong>Departure Time:</strong> 08:30 AM</span>
-    <span><strong>Voucher No:</strong> 227,909</span>
+    <span><strong>Vehicle No:</strong> {{ $vehicleNo }}</span>
+    <span><strong>Arrival Time:</strong> {{ $arrivalTime }}</span>
+    <span><strong>Departure Time:</strong> {{ $departureTime }}</span>
+    <span><strong>Voucher No:</strong> {{ $voucherNo }}</span>
   </div>
 
   <div class="line-between">
-    <span><strong>Driver:</strong> DRIVER</span>
-    <span><strong>Host:</strong> HOST</span>
+    <span><strong>Driver:</strong> {{ $driverName }}</span>
+    <span><strong>Host:</strong> {{ $hostName }}</span>
   </div>
 
 </div>
@@ -170,12 +175,24 @@
     <th>Cell</th>
     <th>Via</th>
     <th>By</th>
+    <th>From</th>
     <th>Desti.</th>
     <th>Fare</th>
   </tr>
 
-  <tr><td>2</td><td>RASHID</td><td>333019273293</td><td>923000000000</td><td>C</td><td>ADNAN</td><td>LHR</td><td>1,250</td></tr>
-  <tr><td>4</td><td>ADNAN</td><td>3330155386277</td><td>923000000000</td><td>C</td><td>ADNAN</td><td>LHR</td><td>1,250</td></tr>
+  @foreach ($passengers as $passenger)
+  <tr>
+    <td>{{ $passenger['seat_number'] }}</td>
+    <td>{{ $passenger['name'] }}</td>
+    <td>{{ $passenger['cnic'] }}</td>
+    <td>{{ $passenger['phone'] }}</td>
+    <td>{{ $passenger['via'] }}</td>
+    <td>{{ $passenger['agent_name'] }}</td>
+    <td>{{ $passenger['from_code'] }}</td>
+    <td>{{ $passenger['to_code'] }}</td>
+    <td>{{ number_format($passenger['fare'], 0) }}</td>
+  </tr>
+  @endforeach
 </table>
 
 <br><br>
@@ -185,11 +202,11 @@
   <table style="width:100%; font-size:14px; font-weight:bold; ">
     <tr>
       <td class="text-align">Printed By:</td>
-      <td>ADMIN</td>
+      <td>{{ $currentUserName }}</td>
       <td class="text-align">Total Pax:</td>
-      <td>36</td>
+      <td>{{ $totalPassengers }}</td>
       <td class="text-align">Total Fare:</td>
-      <td>45,289</td>
+      <td>{{ number_format($totalFare, 0) }}</td>
       
     </tr>
   </table>
@@ -198,7 +215,7 @@
   <table style="width:100%; font-size:14px; font-weight:bold; border-top: 1px solid #000;">
    <tr>
      <td class="text-align">Other Income:</td>
-      <td>0</td>
+      <td>{{ number_format($otherIncome, 0) }}</td>
    </tr>
   </table>
 
@@ -209,37 +226,45 @@
 <table style="width:100%;  font-size:14px; font-weight:bold; margin:1rem 0;  border-bottom: 1px solid #000;">
     <tr style="padding-top: 10px;">
       <td class="text-align">Adda:</td>
-      <td>3,000</td>
+      <td>{{ number_format($addaExpense, 0) }}</td>
       <td class="text-align">Hakri:</td>
-      <td>200</td>
+      <td>{{ number_format($hakriExpense, 0) }}</td>
       <td class="text-align">Others:</td>
-      <td>90</td>
+      <td>{{ number_format($otherExpense, 0) }}</td>
       <td class="text-align">Total Expense:</td>
-      <td>3,290</td>
+      <td>{{ number_format($totalExpenses, 0) }}</td>
     </tr>
   </table>
 
 
 <div class="route-summary">
      <div class="goj-lhr-box">
-        <div class="lhr-box">LHR</div>
+        <div class="lhr-box">{{ $routeSummaryTo }}</div>
         <div class="goj-container">
-            <div class="goj-box">GOJ</div>
-            <div class="goj-value"><strong>36</strong></div>
+            <div class="goj-box">{{ $routeSummaryFrom }}</div>
+            <div class="goj-value"><strong>{{ $routeSummaryCount }}</strong></div>
         </div>
     </div>
 
 
     <div class="right-summary">
+        <div class="summary-line">
+            <span>Counter Sales:</span>
+            <span>{{ number_format($counterSales, 0) }}</span>
+        </div>
         <div class="summary-line online">
-            <span>Online</span>
-            <span>9,039</span>
+            <span>Online Sales:</span>
+            <span>{{ number_format($onlineSales, 0) }}</span>
+        </div>
+        <div class="summary-line" style="border-top: 1px solid #000;">
+            <span>Total Expenses:</span>
+            <span>{{ number_format($totalExpenses, 0) }}</span>
         </div>
         <div class="summary-line balance">
-            <span>Balance</span>
-            <span>32,960</span>
+            <span>Balance:</span>
+            <span>{{ number_format($balance, 0) }}</span>
         </div>
-        <div class="date-time">6-Nov-2025 9:20 am</div>
+        <div class="date-time">{{ $printDateTime }}</div>
     </div>
 </div>
  
@@ -250,29 +275,28 @@
             <thead>
                 <tr>
                     <td></td>
-                    <th>AHMAD</th>
-                    <th>ADNAN</th>
-                    <th>ALYAN SAEED</th>
-                    <th>ASAD</th>
+                    @foreach ($agents as $agent)
+                    <th>{{ $agent }}</th>
+                    @endforeach
                     <th class="total-col-header">Total</th>
                 </tr>
             </thead>
             <tbody>
+                @foreach ($destinations as $dest)
                 <tr>
-                    <td class="dest-cell">LHR</td>
-                    <td>11,250</td>
-                    <td>15,000</td>
-                    <td>8,750</td>
-                    <td>1,250</td>
-                    <td class="total-col-data">36,250</td>
+                    <td class="dest-cell">{{ $dest }}</td>
+                    @foreach ($agents as $agent)
+                    <td>{{ number_format($agentBreakdown[$agent][$dest] ?? 0, 0) }}</td>
+                    @endforeach
+                    <td class="total-col-data">{{ number_format($destinationTotals[$dest] ?? 0, 0) }}</td>
                 </tr>
+                @endforeach
                 <tr class="final-total">
                     <td class="dest-cell">Total</td>
-                    <td>11,250</td>
-                    <td>15,000</td>
-                    <td>8,750</td>
-                    <td>1,250</td>
-                    <td class="total-col-data">36,250</td>
+                    @foreach ($agents as $agent)
+                    <td>{{ number_format($agentTotals[$agent] ?? 0, 0) }}</td>
+                    @endforeach
+                    <td class="total-col-data">{{ number_format($grandTotal, 0) }}</td>
                 </tr>
             </tbody>
         </table>

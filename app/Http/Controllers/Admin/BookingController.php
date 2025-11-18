@@ -2106,6 +2106,242 @@ class BookingController extends Controller
         ]);
     }
 
+    public function printHeadOfficeReport(Trip $trip): View
+    {
+        $this->authorize('view bookings');
+
+        // Load trip relationships
+        $trip->load([
+            'route',
+            'bus',
+            'stops.terminal',
+            'expenses.fromTerminal',
+            'expenses.toTerminal',
+        ]);
+
+        // Get confirmed bookings for this trip
+        $bookings = Booking::where('trip_id', $trip->id)
+            ->where('status', 'confirmed')
+            ->with([
+                'seats' => function ($query) {
+                    $query->whereNull('cancelled_at');
+                },
+                'passengers',
+                'fromStop.terminal',
+                'toStop.terminal',
+                'bookedByUser.terminal',
+            ])
+            ->get();
+
+        // Collect all passengers with their seat and booking info (with fare information)
+        $passengers = [];
+        $totalFare = 0;
+        foreach ($bookings as $booking) {
+            $seats = $booking->seats->sortBy('seat_number')->values();
+            $passengerList = $booking->passengers->sortBy('id')->values();
+
+            foreach ($seats as $seatIndex => $seat) {
+                $passenger = $passengerList[$seatIndex] ?? $passengerList[0] ?? null;
+                if ($passenger) {
+                    $seatAmount = $seat->final_amount ?? 0;
+                    $totalFare += $seatAmount;
+
+                    $passengers[] = [
+                        'seat_number' => $seat->seat_number,
+                        'name' => $passenger->name,
+                        'cnic' => $passenger->cnic ?? 'N/A',
+                        'phone' => $passenger->phone ?? 'N/A',
+                        'via' => $this->formatPaymentVia($booking->payment_method, $booking->channel),
+                        'agent_name' => $booking->bookedByUser?->name ?? 'N/A',
+                        'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
+                        'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
+                        'fare' => $seatAmount,
+                        'payment_method' => $booking->payment_method,
+                        'channel' => $booking->channel,
+                        'booked_by_user_id' => $booking->booked_by_user_id,
+                        'booked_by_terminal' => $booking->bookedByUser?->terminal?->name ?? 'N/A',
+                    ];
+                }
+            }
+        }
+
+        // Sort passengers by seat number
+        usort($passengers, fn ($a, $b) => (int) $a['seat_number'] <=> (int) $b['seat_number']);
+
+        // Get from and to stops
+        $fromStop = $trip->stops->first();
+        $toStop = $trip->stops->last();
+
+        // Calculate totals
+        $totalPassengers = count($passengers);
+
+        // Extract host from trip notes
+        $hostInfo = null;
+        if ($trip->notes) {
+            if (preg_match('/Host:\s*([^(]+)(?:\s*\(([^)]+)\))?/i', $trip->notes, $matches)) {
+                $hostInfo = [
+                    'name' => trim($matches[1] ?? 'N/A'),
+                    'phone' => trim($matches[2] ?? '') ?: null,
+                ];
+            }
+        }
+
+        // Format dates and times
+        $departureDateTime = $fromStop?->departure_at ?? $trip->departure_datetime;
+        $departureDate = $departureDateTime ? $departureDateTime->format('Y-m-d') : 'N/A';
+        $departureTime = $departureDateTime ? $departureDateTime->format('h:i A') : 'N/A';
+        $arrivalDateTime = $toStop?->arrival_at ?? $trip->estimated_arrival_datetime;
+        $arrivalTime = $arrivalDateTime ? $arrivalDateTime->format('h:i A') : 'N/A';
+
+        // Get company info
+        $settings = GeneralSetting::first();
+        $companyName = $settings?->company_name ?? 'Bashir Sons Group';
+        $companyInitials = collect(explode(' ', $companyName))
+            ->map(fn ($word) => strtoupper($word[0] ?? ''))
+            ->join('. ') ?: 'B. S';
+        $companyTagline = $settings?->tagline ?? 'Daewoo Bus Service';
+
+        // Route codes
+        $routeCode = ($fromStop?->terminal?->code ?? '').'-'.($toStop?->terminal?->code ?? '');
+        $fromCode = $fromStop?->terminal?->code ?? '';
+        $toCode = $toStop?->terminal?->code ?? '';
+
+        // Calculate expenses by type
+        $expenses = $trip->expenses ?? collect();
+        $addaExpense = 0;
+        $hakriExpense = 0;
+        $otherExpense = 0;
+
+        foreach ($expenses as $expense) {
+            $amount = (float) ($expense->amount ?? 0);
+            $expenseType = $expense->expense_type instanceof \App\Enums\ExpenseTypeEnum
+                ? $expense->expense_type->value
+                : $expense->expense_type;
+
+            if ($expenseType === 'commission') {
+                $addaExpense += $amount;
+            } elseif ($expenseType === 'ghakri') {
+                $hakriExpense += $amount;
+            } else {
+                $otherExpense += $amount;
+            }
+        }
+
+        $totalExpenses = $addaExpense + $hakriExpense + $otherExpense;
+
+        // Calculate sales breakdown by channel
+        $counterSales = 0; // All sales from counter (cash, card, mobile wallet, etc.)
+        $onlineSales = 0; // All sales from online channel
+
+        foreach ($passengers as $passenger) {
+            $fare = (float) ($passenger['fare'] ?? 0);
+            $channel = $passenger['channel'] ?? 'counter';
+
+            // Categorize by channel
+            if ($channel === 'online') {
+                $onlineSales += $fare;
+            } else {
+                // Counter, phone, or any other channel
+                $counterSales += $fare;
+            }
+        }
+
+        // Calculate balance: Counter Sales - Total Expenses
+        // (Online sales go to bank, so balance is only from counter sales after expenses)
+        $balance = $counterSales - $totalExpenses;
+
+        // Group bookings by employee/user for footer table
+        $agentBreakdown = [];
+        foreach ($passengers as $passenger) {
+            $agentName = $passenger['agent_name'] ?? 'N/A';
+            $toCode = $passenger['to_code'] ?? 'N/A';
+            $fare = (float) ($passenger['fare'] ?? 0);
+
+            if (! isset($agentBreakdown[$agentName])) {
+                $agentBreakdown[$agentName] = [];
+            }
+
+            if (! isset($agentBreakdown[$agentName][$toCode])) {
+                $agentBreakdown[$agentName][$toCode] = 0;
+            }
+
+            $agentBreakdown[$agentName][$toCode] += $fare;
+        }
+
+        // Get all unique agents and destinations
+        $agents = array_keys($agentBreakdown);
+        sort($agents);
+        $destinations = [];
+        foreach ($agentBreakdown as $agentData) {
+            $destinations = array_merge($destinations, array_keys($agentData));
+        }
+        $destinations = array_unique($destinations);
+        sort($destinations);
+
+        // Calculate totals per destination
+        $destinationTotals = [];
+        foreach ($destinations as $dest) {
+            $destinationTotals[$dest] = 0;
+            foreach ($agentBreakdown as $agentData) {
+                $destinationTotals[$dest] += (float) ($agentData[$dest] ?? 0);
+            }
+        }
+
+        // Calculate grand totals per agent
+        $agentTotals = [];
+        foreach ($agents as $agent) {
+            $agentTotals[$agent] = array_sum($agentBreakdown[$agent] ?? []);
+        }
+
+        // Calculate grand total
+        $grandTotal = array_sum($destinationTotals);
+
+        // Other income (currently 0, can be added later)
+        $otherIncome = 0;
+
+        // Get route summary data (GOJ-LHR format)
+        $routeSummaryFrom = $fromCode;
+        $routeSummaryTo = $toCode;
+        $routeSummaryCount = $totalPassengers;
+
+        return view('admin.bookings.console.head-office-report', [
+            'companyInitials' => $companyInitials,
+            'companyTagline' => $companyTagline,
+            'routeCode' => $routeCode,
+            'departureTime' => $departureTime,
+            'departureDate' => $departureDate,
+            'vehicleNo' => $trip->bus?->registration_number ?? 'N/A',
+            'arrivalTime' => $arrivalTime,
+            'voucherNo' => number_format($trip->id, 0, '.', ','),
+            'driverName' => $trip->driver_name ?? 'N/A',
+            'hostName' => $hostInfo['name'] ?? 'N/A',
+            'passengers' => $passengers,
+            'totalPassengers' => $totalPassengers,
+            'totalFare' => $totalFare,
+            'otherIncome' => $otherIncome,
+            'addaExpense' => $addaExpense,
+            'hakriExpense' => $hakriExpense,
+            'otherExpense' => $otherExpense,
+            'totalExpenses' => $totalExpenses,
+            'counterSales' => $counterSales,
+            'onlineSales' => $onlineSales,
+            'balance' => $balance,
+            'currentUserName' => Auth::user()->name ?? 'N/A',
+            'fromCode' => $fromCode,
+            'toCode' => $toCode,
+            'routeSummaryFrom' => $routeSummaryFrom,
+            'routeSummaryTo' => $routeSummaryTo,
+            'routeSummaryCount' => $routeSummaryCount,
+            'agents' => $agents,
+            'destinations' => $destinations,
+            'agentBreakdown' => $agentBreakdown,
+            'destinationTotals' => $destinationTotals,
+            'agentTotals' => $agentTotals,
+            'grandTotal' => $grandTotal,
+            'printDateTime' => now()->format('d-M-Y h:i a'),
+        ]);
+    }
+
     private function formatPaymentVia(?string $method, ?string $channel): string
     {
         if ($channel === 'online') {
