@@ -2011,8 +2011,6 @@ class BookingController extends Controller
             'route',
             'bus',
             'stops.terminal',
-            'expenses.fromTerminal',
-            'expenses.toTerminal',
         ]);
 
         // Get confirmed bookings for this trip
@@ -2029,7 +2027,7 @@ class BookingController extends Controller
             ])
             ->get();
 
-        // Collect all passengers with their seat and booking info
+        // Collect all passengers with their seat and booking info (no fare information)
         $passengers = [];
         foreach ($bookings as $booking) {
             foreach ($booking->seats as $seat) {
@@ -2044,9 +2042,6 @@ class BookingController extends Controller
                         'agent_name' => $booking->bookedByUser?->name ?? 'N/A',
                         'from_code' => $booking->fromStop?->terminal?->code ?? 'N/A',
                         'to_code' => $booking->toStop?->terminal?->code ?? 'N/A',
-                        'fare' => $seat->final_amount ?? $booking->final_amount,
-                        'payment_method' => $booking->payment_method,
-                        'channel' => $booking->channel,
                     ];
                 }
             }
@@ -2058,54 +2053,6 @@ class BookingController extends Controller
 
         // Calculate totals
         $totalPassengers = count($passengers);
-        $totalFare = collect($passengers)->sum('fare');
-
-        // Calculate expenses
-        $expenses = $trip->expenses;
-        $expenseTypeTotals = [];
-        foreach ($expenses as $expense) {
-            $type = $expense->expense_type_label ?? $expense->expense_type ?? 'Other';
-            if (!isset($expenseTypeTotals[$type])) {
-                $expenseTypeTotals[$type] = 0;
-            }
-            $expenseTypeTotals[$type] += $expense->amount;
-        }
-
-        $addaExpense = round($expenseTypeTotals['Commission'] ?? 0);
-        $hakriExpense = round($expenseTypeTotals['Ghakri'] ?? 0);
-        $otherExpense = round(collect($expenseTypeTotals)
-            ->filter(fn ($val, $key) => $key !== 'Commission' && $key !== 'Ghakri')
-            ->sum());
-        $totalExpenses = $addaExpense + $hakriExpense + $otherExpense;
-
-        // Calculate online and cash payments
-        $onlineTotal = collect($passengers)
-            ->filter(fn ($p) => $p['channel'] === 'online' || in_array($p['payment_method'], ['mobile_wallet', 'bank_transfer', 'card']))
-            ->sum('fare');
-
-        $cashTotal = collect($passengers)
-            ->filter(fn ($p) => $p['payment_method'] === 'cash' && $p['channel'] !== 'online')
-            ->sum('fare');
-
-        $balance = round($cashTotal) - $totalExpenses;
-
-        // Group by agent and destination for footer table
-        $agentDestinationMap = [];
-        $agents = collect();
-        foreach ($passengers as $passenger) {
-            $agent = $passenger['agent_name'];
-            $dest = $passenger['to_code'];
-            $agents->push($agent);
-            if (!isset($agentDestinationMap[$dest])) {
-                $agentDestinationMap[$dest] = [];
-            }
-            if (!isset($agentDestinationMap[$dest][$agent])) {
-                $agentDestinationMap[$dest][$agent] = 0;
-            }
-            $agentDestinationMap[$dest][$agent] += $passenger['fare'];
-        }
-        $sortedAgents = $agents->unique()->filter(fn ($a) => $a !== 'N/A')->sort()->values();
-        $destinations = collect($agentDestinationMap)->keys()->sort();
 
         // Extract host from trip notes
         $hostInfo = null;
@@ -2151,17 +2098,7 @@ class BookingController extends Controller
             'hostName' => $hostInfo['name'] ?? 'N/A',
             'passengers' => $passengers,
             'totalPassengers' => $totalPassengers,
-            'totalFare' => $totalFare,
             'currentUserName' => Auth::user()->name ?? 'N/A',
-            'addaExpense' => $addaExpense,
-            'hakriExpense' => $hakriExpense,
-            'otherExpense' => $otherExpense,
-            'totalExpenses' => $totalExpenses,
-            'onlineTotal' => $onlineTotal,
-            'balance' => $balance,
-            'sortedAgents' => $sortedAgents,
-            'destinations' => $destinations,
-            'agentDestinationMap' => $agentDestinationMap,
             'fromCode' => $fromCode,
             'toCode' => $toCode,
         ]);
