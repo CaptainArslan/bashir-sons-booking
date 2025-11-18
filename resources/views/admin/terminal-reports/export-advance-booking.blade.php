@@ -9,7 +9,7 @@
     <style>
         /* Base Styles - Font Size 14px */
         body {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
             font-size: 14px;
             margin: 20px auto;
             padding: 10px;
@@ -52,17 +52,11 @@
         /* --- Filter and Date Row --- */
         .filter-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: baseline;
             margin-bottom: 10px;
             border-bottom: 1px solid #000;
             padding-bottom: 5px;
-        }
-
-        .filter-row .adv-booking {
-            color: green;
-            font-weight: bold;
-            font-size: 18px;
         }
 
         .filter-row .terminal-info {
@@ -149,12 +143,12 @@
             text-align: right;
         }
 
-        /* --- Date Separator (RIGHT ALIGNED) --- */
+        /* --- Date Separator (CENTERED) --- */
         .date-separator {
-            text-align: right;
+            text-align: center;
             font-weight: 900;
             color: maroon;
-            padding: 10px 20px 10px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #000;
         }
         
@@ -243,6 +237,7 @@
 
         <div class="filter-row">
             <div class="terminal-info">
+
                 <span>Terminal <span style="font-size: 18px;">{{ $terminal->code }}</span></span>
                 <span>From <span>{{ $start_date->format('Y-m-d') }}</span></span>
                 <span>To <span>{{ $end_date->format('Y-m-d') }}</span></span>
