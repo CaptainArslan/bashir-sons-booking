@@ -339,6 +339,21 @@ class BookingController extends Controller
             $type = 'customer';
         }
 
+        // Get active (non-cancelled) seats
+        $activeSeats = $booking->seats()->whereNull('cancelled_at')->get();
+        $passengers = $booking->passengers;
+
+        // If there are seats, generate one ticket per seat
+        if ($activeSeats->count() > 0) {
+            return view('admin.bookings.tickets.print-multiple', [
+                'booking' => $booking,
+                'ticketType' => $type,
+                'seats' => $activeSeats,
+                'passengers' => $passengers,
+            ]);
+        }
+
+        // Fallback to single ticket if no active seats
         $template = 'admin.bookings.tickets.ticket-80mm';
 
         return view($template, [
